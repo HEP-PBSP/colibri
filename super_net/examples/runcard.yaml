@@ -1,0 +1,10 @@
+meta:
+  title: Example report
+  author: Lazy Person
+  keywords: [supernet, example]
+
+template_text: |
+  # Title
+
+actions_:
+  - report(main=True)
