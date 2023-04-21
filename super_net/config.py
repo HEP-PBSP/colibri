@@ -3,10 +3,9 @@ from validphys.config import Config
 
 class SuperNetConfig(Config):
     """
-    TODO
+    Config class inherits from validphys
+    Config class
     """
     def produce_example(self):
         return "example"
     
-    # def produce_data(self):
-    #     print("ciao")
