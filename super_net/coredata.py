@@ -7,9 +7,12 @@ import numpy as np
 from scipy.interpolate import interp1d
 import pandas as pd
 
+import dataclasses
 
 class NewFKTableData(FKTableData):
-    """ """
+    """ 
+    Inherits from validphys.FKTableData dataclass
+    """
 
     # this is very ugly but works for the moment
     @property
@@ -185,3 +188,6 @@ class NewFKTableData(FKTableData):
             return self.had_sigma
         else:
             return self.dis_sigma
+
+    def with_new_sigma(self, new_sigma):    
+        return dataclasses.replace(self, sigma=new_sigma)
