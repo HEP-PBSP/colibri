@@ -6,7 +6,7 @@ from validphys.core import DataGroupSpec
 import numpy as np
 import numpy.random as npr
 
-class FilteredDataGroupSpec(DataGroupSpec):
+class NewDataGroupSpec(DataGroupSpec):
     """
     Inherits from validphys.DataGroupSpec
     """
