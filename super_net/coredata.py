@@ -4,7 +4,7 @@ Module containing similar classes or classes that inherit from those in `validph
 
 from validphys.coredata import FKTableData
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, interp2d
 import pandas as pd
 
 import dataclasses
@@ -94,7 +94,7 @@ class NewFKTableData(FKTableData):
 
         dfs = []
         # group over datapoints
-        for d, grp in self.sigma.groupby(self.sigma.index.get_level_values("data")):
+        for d, grp in self.sigma.groupby("data"):
             interpolators = [
                 interp1d(
                     xgrid[grp.index.get_level_values("x")],
@@ -147,32 +147,30 @@ class NewFKTableData(FKTableData):
 
         dfs = []
 
-        # group by datapoints and x1
-        for d, grp in self.sigma.groupby(["data", "x1"]):
+        # group by datapoints 
+        for d, grp in self.sigma.groupby("data"):
+            
+            x1_vals = xgrid[grp.index.get_level_values('x1')]
+            x2_vals = xgrid[grp.index.get_level_values('x2')]
+
             interpolators = [
-                interp1d(
-                    xgrid[grp.index.get_level_values("x2")],
-                    grp[col],
-                    fill_value="extrapolate",
+                interp2d(
+                    x1_vals,
+                    x2_vals,
+                    grp[col].values,
                 )
                 for col in grp.columns
             ]
-
-            d = dict(
-                data=tuple(
-                    np.array(
-                        np.ones(50) * grp.index.get_level_values("data").unique(),
-                        dtype=int,
-                    )
-                ),
-                x1=tuple(np.arange(0, 50)),
-                x2=tuple(np.arange(0, 50)),
-            )
-
+            
+            tmp_index = pd.MultiIndex.from_product([range(len(xgrid_new)),range(len(xgrid_new))], names=['x1','x2'])
+            d = dict()
             for col, interp in zip(grp.columns, interpolators):
-                d[f"{col}"] = interp(xgrid_new)
+                d[f"{col}"] = interp(xgrid_new, xgrid_new).flatten()
+            
+            tmp_df = pd.DataFrame(d, index=tmp_index)
 
-            dfs.append(pd.DataFrame(d))
+            dfs.append(tmp_df)
+            
 
         new_sigma = pd.concat(dfs, axis=0)
         new_sigma = (
