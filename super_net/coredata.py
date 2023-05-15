@@ -162,7 +162,7 @@ class NewFKTableData(FKTableData):
                 for col in grp.columns
             ]
             
-            tmp_index = pd.MultiIndex.from_product([range(len(xgrid_new)),range(len(xgrid_new))], names=['x1','x2'])
+            tmp_index = pd.MultiIndex.from_product([[d],range(len(xgrid_new)),range(len(xgrid_new))], names=['data','x1','x2'])
             d = dict()
             for col, interp in zip(grp.columns, interpolators):
                 d[f"{col}"] = interp(xgrid_new, xgrid_new).flatten()
@@ -171,13 +171,7 @@ class NewFKTableData(FKTableData):
 
             dfs.append(tmp_df)
             
-
         new_sigma = pd.concat(dfs, axis=0)
-        new_sigma = (
-            new_sigma.reset_index()
-            .set_index(["data", "x1", "x2"])
-            .drop(["index"], axis=1)
-        )
         return new_sigma
 
     @property
