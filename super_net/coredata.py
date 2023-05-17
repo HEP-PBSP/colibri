@@ -4,13 +4,14 @@ Module containing similar classes or classes that inherit from those in `validph
 
 from validphys.coredata import FKTableData
 import numpy as np
-from scipy.interpolate import interp1d, interp2d
+from scipy.interpolate import interp1d, griddata
 import pandas as pd
 
 import dataclasses
 
+
 class NewFKTableData(FKTableData):
-    """ 
+    """
     Inherits from validphys.FKTableData dataclass
     """
 
@@ -74,19 +75,21 @@ class NewFKTableData(FKTableData):
 
     @property
     def dis_sigma(self):
-        """ 
-        Given a DIS FKTableData instance, interpolate (using
-        linear splines) the columns of the old sigma table vs
-        the xgrid. The interpolator function is then used to 
-        compute / extrapolate fktable values on the new xgrid 
+        """
+        Given a DIS FKTableData instance, interpolate the columns
+        of the old sigma table vs the xgrid. The interpolator
+        function is then used to compute fktable values on the new xgrid.
 
+        Notes:
+        - `scipy.interpolate.interp1d` is used for the interpolation
+        - linear spline interpolation is used (`kind='slinear'`)
+        - values in extrapolation region are set to zero
 
         Returns
         -------
         pd.DataFrame
-            multiindex pandas dataframe where first index is datapoint
-            and second index is x
-
+            multiindex pandas dataframe corresponding to
+            DIS sigma table
         """
 
         xgrid = self.xgrid
@@ -95,84 +98,96 @@ class NewFKTableData(FKTableData):
         dfs = []
         # group over datapoints
         for d, grp in self.sigma.groupby("data"):
-            interpolators = [
-                interp1d(
-                    xgrid[grp.index.get_level_values("x")],
-                    grp[col],
-                    fill_value="extrapolate",
+            x_vals = xgrid[grp.index.get_level_values("x")]
+
+            interpolators = {
+                col: interp1d(
+                    x_vals,
+                    grp[col].values,
+                    kind="slinear",
+                    fill_value=0,
+                    bounds_error=False,
                 )
                 for col in grp.columns
-            ]
+            }
 
-            d = dict(
-                data=tuple(
-                    np.array(
-                        np.ones(50) * grp.index.get_level_values("data").unique(),
-                        dtype=int,
-                    )
-                ),
-                x=tuple(np.arange(0, 50)),
+            col_dict = dict()
+            for col in grp.columns:
+                col_dict[f"{col}"] = interpolators[col](xgrid_new)
+
+            # generate multiindex dataframe
+            tmp_index = pd.MultiIndex.from_product(
+                [[d], range(len(xgrid_new))], names=["data", "x"]
             )
+            tmp_df = pd.DataFrame(col_dict, index=tmp_index)
+            dfs.append(tmp_df)
 
-            for col, interp in zip(grp.columns, interpolators):
-                d[f"{col}"] = interp(xgrid_new)
-
-            dfs.append(pd.DataFrame(d))
-
-        new_sigma = pd.concat(dfs, axis=0)
-        new_sigma = (
-            new_sigma.reset_index().set_index(["data", "x"]).drop(["index"], axis=1)
-        )
-
-        return new_sigma
+        return pd.concat(dfs, axis=0)
 
     @property
     def had_sigma(self):
-        """ 
-        Given a hadronic FKTableData instance, interpolate (using
-        linear splines) the columns of the old sigma table vs
-        the xgrid. The interpolator function is then used to 
-        compute / extrapolate fktable values on the new xgrid 
-        
+        """
+        Given a hadronic FKTableData instance, perform 2D interpolation of
+        columns vs (x1,x2) grid. The interpolator function is then used to
+        compute fktable values on the new xgrid.
+
+        Notes:
+        - `scipy.interpolate.griddata` is used to interpolate
+        - 'nearest' method is used, this has to be followed by setting the
+          interpolated function to zero in the extrapolation region
+
 
         Returns
         -------
         pd.DataFrame
-            multiindex pandas dataframe where first index is datapoint
-            and second index is x
-
+            multiindex pandas dataframe corresponding to the
+            hadronic sigma table
         """
         xgrid = self.xgrid
         xgrid_new = self.xgrid_new
 
+        new_xgrid_mesh = np.meshgrid(xgrid_new, xgrid_new)
+
+        # Flatten the grid into two separate 1D arrays
+        new_x1grid_flat = np.ravel(new_xgrid_mesh[0])
+        new_x2grid_flat = np.ravel(new_xgrid_mesh[1])
+
         dfs = []
-
-        # group by datapoints 
+        # group by datapoints
         for d, grp in self.sigma.groupby("data"):
-            
-            x1_vals = xgrid[grp.index.get_level_values('x1')]
-            x2_vals = xgrid[grp.index.get_level_values('x2')]
+            x1_vals = xgrid[grp.index.get_level_values("x1")]
+            x2_vals = xgrid[grp.index.get_level_values("x2")]
 
-            interpolators = [
-                interp2d(
-                    x1_vals,
-                    x2_vals,
-                    grp[col].values,
+            interpolated_grids = {
+                col: griddata(
+                    points=(x1_vals, x2_vals),
+                    values=grp[col].values,
+                    xi=(new_x1grid_flat, new_x2grid_flat),
+                    method="nearest",
                 )
                 for col in grp.columns
-            ]
-            
-            tmp_index = pd.MultiIndex.from_product([[d],range(len(xgrid_new)),range(len(xgrid_new))], names=['data','x1','x2'])
-            d = dict()
-            for col, interp in zip(grp.columns, interpolators):
-                d[f"{col}"] = interp(xgrid_new, xgrid_new).flatten()
-            
-            tmp_df = pd.DataFrame(d, index=tmp_index)
+            }
 
+            ################### NOT SURE WHETHER THIS IS CORRECT ############################
+            # set to zero in extrapolation regions
+            smaller_than = set(np.where(new_x1grid_flat < np.min(x1_vals))[0])
+            larger_than = set(np.where(new_x1grid_flat > np.max(x1_vals))[0])
+            set_to_zero = np.array(list(larger_than.union(smaller_than)))
+            #################################################################################
+
+            col_dict = dict()
+            for col in grp.columns:
+                interpolated_grids[col][set_to_zero] = 0
+                col_dict[f"{col}"] = interpolated_grids[col]
+
+            tmp_index = pd.MultiIndex.from_product(
+                [[d], range(len(xgrid_new)), range(len(xgrid_new))],
+                names=["data", "x1", "x2"],
+            )
+            tmp_df = pd.DataFrame(col_dict, index=tmp_index)
             dfs.append(tmp_df)
-            
-        new_sigma = pd.concat(dfs, axis=0)
-        return new_sigma
+
+        return pd.concat(dfs, axis=0)
 
     @property
     def new_sigma(self):
@@ -181,5 +196,5 @@ class NewFKTableData(FKTableData):
         else:
             return self.dis_sigma
 
-    def with_new_sigma(self, new_sigma):    
+    def with_new_sigma(self, new_sigma):
         return dataclasses.replace(self, sigma=new_sigma)
