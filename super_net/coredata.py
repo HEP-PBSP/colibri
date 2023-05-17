@@ -168,16 +168,20 @@ class NewFKTableData(FKTableData):
                 for col in grp.columns
             }
 
-            ################### NOT SURE WHETHER THIS IS CORRECT ############################
             # set to zero in extrapolation regions
-            smaller_than = set(np.where(new_x1grid_flat < np.min(x1_vals))[0])
-            larger_than = set(np.where(new_x1grid_flat > np.max(x1_vals))[0])
-            set_to_zero = np.array(list(larger_than.union(smaller_than)))
-            #################################################################################
+            idx_x1_min = np.where(new_x1grid_flat<np.min(x1_vals))[0]
+            idx_x1_max = np.where(new_x1grid_flat>np.max(x1_vals))[0]
+            idx_x1 = np.unique(np.concatenate((idx_x1_min,idx_x1_max)))
+
+            idx_x2_min = np.where(new_x2grid_flat<np.min(x2_vals))[0]
+            idx_x2_max = np.where(new_x2grid_flat>np.max(x2_vals))[0]
+            idx_x2 = np.unique(np.concatenate((idx_x2_min, idx_x2_max)))
+
+            extrapolation_region = np.unique(np.concatenate((idx_x1, idx_x2)))
 
             col_dict = dict()
             for col in grp.columns:
-                interpolated_grids[col][set_to_zero] = 0
+                interpolated_grids[col][extrapolation_region] = 0
                 col_dict[f"{col}"] = interpolated_grids[col]
 
             tmp_index = pd.MultiIndex.from_product(
