@@ -35,7 +35,10 @@ class NewDataSetSpec(DataSetSpec):
         for fkspec in self.fkspecs:
             
             fk = load_fktable(fkspec).with_cuts(self.cuts)
-            pred = make_dis_prediction(fk)
+            if fk.hadronic:
+                pred = make_had_prediction(fk)
+            else:
+                pred = make_dis_prediction(fk)
             pred_funcs.append(pred)
             
         @jax.jit
