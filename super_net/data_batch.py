@@ -41,5 +41,5 @@ class DataBatch:
         
         num_complete_batches, leftover = divmod(Ndat, batch_size)
         # discard leftover to avoid the a slow down due to having to recompile make_chi2 functionm
-        num_batches = num_complete_batches #+ bool(leftover)
+        num_batches = num_complete_batches 
         return num_batches
