@@ -1,0 +1,37 @@
+dataset_inputs:
+  - {'dataset':'NMC'}
+  - {'dataset': 'SLACP_dwsh'}
+  - {'dataset': 'SLACD_dw_ite'}
+  - {'dataset': 'BCDMSP_dwsh'}
+  - {'dataset': 'BCDMSD_dw_ite'}
+  - {'dataset': 'CHORUSNUPb_dw_ite'}
+  - {'dataset': 'CHORUSNBPb_dw_ite'}
+  - {'dataset': 'NTVNUDMNFe_dw_ite', 'cfac': ['MAS']}
+  - {'dataset': 'NTVNBDMNFe_dw_ite', 'cfac': ['MAS']}
+  - {'dataset': 'HERACOMBNCEM'} 
+  - {'dataset': 'HERACOMBNCEP575'}
+  - {'dataset': 'HERACOMBNCEP820'}
+  - {'dataset': 'HERACOMBNCEP920'}
+  - {'dataset': 'HERACOMBNCEP460'}
+  - {'dataset': 'HERACOMBCCEP'}
+  - {'dataset': 'HERACOMBCCEM'} 
+  - {'dataset':'HERACOMB_SIGMARED_B'}
+  - {'dataset': 'HERACOMB_SIGMARED_C'}
+  
+
+theoryid: 400
+
+use_cuts: internal
+use_t0: True
+
+t0pdfset: NNPDF40_nnlo_as_01180
+
+wminpdfset: 210623_mnc_disonly_linear_1000
+
+max_epochs: 4000
+batch_size: 128
+batch_seed: 1
+
+actions_:
+ - plot_training_validation 
+ - plot_wmin_PDFs
