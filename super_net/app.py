@@ -10,6 +10,7 @@ providers = [
     "super_net.loss_functions",
     "super_net.optax_optimizer",
     "super_net.data_batch",
+    "super_net.monte_carlo_utils"
 ]
 
 

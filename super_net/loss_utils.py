@@ -1,20 +1,24 @@
+import jax
 import jax.numpy as jnp
 
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from validphys import covmats
 
+from reportengine import collect
+
 
 # @check_data_is_super_net(data)
 def central_covmat_index(
-    data, dataset_inputs_t0_predictions, pseudo=False, filterseed=1
+    data, dataset_inputs_t0_predictions, pseudodata=False, filterseed=1
 ):
     """
     Used to get data values, t0 covariance matrix,
     and indices of data values.
 
-    If pseudo is False, then the experimental data values are
+    If pseudodata is False, then the experimental data values are
     returned, otherwise pseudo data is generated with random
     seed given by `filterseed`
 
@@ -25,7 +29,7 @@ def central_covmat_index(
     dataset_inputs_t0_predictions : list[jnp.array]
         The t0 predictions for all datasets.
 
-    pseudo : bool, default is False
+    pseudodata : bool, default is False
             if True pseudo data generated with `make_level1_data` function
             is used instead of experimental central values
 
@@ -41,7 +45,7 @@ def central_covmat_index(
         - jnp.ndarray of indices of data values
     """
 
-    cd_list = data.load_pseudo_commondata(pseudo=pseudo, filterseed=filterseed)
+    cd_list = data.load_pseudo_commondata(pseudodata=pseudodata, filterseed=filterseed)
 
     central_values = [cd.central_values for cd in cd_list]
 
@@ -65,7 +69,7 @@ def central_covmat_index(
 def train_validation_split(
     central_covmat_index,
     test_size=0.2,
-    random_state=42,
+    trval_seed=42,
 ):
     """
     Get training validation split for the data values.
@@ -77,7 +81,7 @@ def train_validation_split(
     test_size : float, default is 0.2
             size of the test/validation set, float between 0 and 1
 
-    random_state : int, default is 42
+    trval_seed : int, default is 42
                 integer specifiying the random state of the training
                 test split
 
@@ -97,7 +101,7 @@ def train_validation_split(
 
     # Perform train-test split on indices
     indices_train, indices_val = train_test_split(
-        indices, test_size=test_size, random_state=random_state
+        indices, test_size=test_size, random_state=trval_seed
     )
 
     # Use indices to split central values, covariance matrix and predictions

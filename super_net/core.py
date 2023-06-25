@@ -20,14 +20,14 @@ class SuperNetDataGroupSpec(DataGroupSpec):
                 tuples.append(tp)
         return pd.MultiIndex.from_tuples(tuples, names=("group", "dataset", "id"))
 
-    def load_pseudo_commondata(self, pseudo=False, filterseed=1):
+    def load_pseudo_commondata(self, pseudodata=False, filterseed=1):
         """
         Like `load_commondata_instance` but allowing for the generation
         of pseudodata trough make_level1_data function
 
         Parameters
         ----------
-        pseudo : bool, default is False
+        pseudodata : bool, default is False
                     when False, load_commondata_instance, i.e. the experimental
                     commondata is returned. Otherwise noise is added to the
                     central values of the commondata
@@ -40,7 +40,7 @@ class SuperNetDataGroupSpec(DataGroupSpec):
             list of commondata
         """
 
-        if not pseudo:
+        if not pseudodata:
             return self.load_commondata_instance()
 
         else:
