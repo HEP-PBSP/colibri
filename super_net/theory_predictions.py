@@ -125,3 +125,73 @@ def make_pred_data(data):
         return jnp.array(list(itertools.chain(*[f(pdf) for f in predictions])))
 
     return eval_preds
+
+
+def make_penalty_posdataset(posdataset):
+    """
+    Given a PositivitySetSpec compute the positivity penalty
+    as a lagrange multiplier times elu of minus the theory prediction 
+
+    Parameters
+    ----------
+    posdataset : validphys.core.PositivitySetSpec
+
+    Returns
+    -------
+    @jax.jit CompiledFunction
+        Compiled function taking pdf grid and alpha parameter
+        of jax.nn.elu function in input and returning 
+        elu function evaluated on minus the theory prediction
+
+        Note: this is needed in order to compute the positivity
+        loss function. Elu function is used to avoid a big discontinuity 
+        in the derivative at 0 when the lagrange multiplier is very big.
+
+        In practice this function can produce results in the range (-alpha, inf)
+
+        see also nnpdf.n3fit.src.layers.losses.LossPositivity
+        
+    """
+
+    pred_funcs = []
+
+    for fkspec in posdataset.fkspecs:
+        fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
+        if fk.hadronic:
+            pred = make_had_prediction(fk)
+        else:
+            pred = make_dis_prediction(fk)
+        pred_funcs.append(pred)
+
+    @jax.jit
+    def pos_penalty(pdf, alpha, lambda_positivity):
+        return lambda_positivity * jax.nn.elu(-OP[posdataset.op](*[f(pdf) for f in pred_funcs]), alpha)
+
+    return pos_penalty
+
+
+def make_penalty_posdata(posdatasets):
+    """
+    Compute positivity penalty for list of PositivitySetSpec
+
+    Parameters
+    ----------
+    posdatasets: list
+            list of PositivitySetSpec
+
+    Returns
+    -------
+    @jax.jit CompiledFunction
+        
+    """
+
+    predictions = []
+
+    for posdataset in posdatasets:
+        predictions.append(make_penalty_posdataset(posdataset))
+
+    @jax.jit
+    def pos_penalties(pdf, alpha, lambda_positivity):
+        return jnp.array(list(itertools.chain(*[f(pdf, alpha, lambda_positivity) for f in predictions])))
+
+    return pos_penalties
