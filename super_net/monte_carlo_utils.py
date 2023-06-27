@@ -49,19 +49,19 @@ def data_validation_monte_carlo(train_validation_split_monte_carlo):
     return res
 
 
-def make_chi2_training_data_monte_carlo(data, data_training_monte_carlo):
+def make_chi2_training_data_monte_carlo(data, data_training_monte_carlo, posdatasets, posdata_training_index):
     
     res=[]
     for data_training in data_training_monte_carlo:
-        res.append(make_chi2_training_data(data, data_training))
+        res.append(make_chi2_training_data(data, data_training, posdatasets, posdata_training_index))
     return res
 
 
-def make_chi2_validation_data_monte_carlo(data, data_validation_monte_carlo):
+def make_chi2_validation_data_monte_carlo(data, data_validation_monte_carlo, posdatasets, posdata_validation_index):
     
     res=[]
     for data_validation in data_validation_monte_carlo:
-        res.append(make_chi2_validation_data(data, data_validation))
+        res.append(make_chi2_validation_data(data, data_validation, posdatasets, posdata_validation_index))
     return res
    
 
@@ -74,6 +74,8 @@ def weight_minimization_fit(
     max_epochs,
     data_batch_info,
     nr_validation_points,
+    alpha=1e-7,
+    lambda_positivity=1000
 ):
     """
     TODO
@@ -85,13 +87,13 @@ def weight_minimization_fit(
     def loss_training(weights, batch_idx):
         wmin_weights = jnp.concatenate((jnp.array([1.0]), weights))
         pdf = jnp.einsum("i,ijk", wmin_weights, wmin_INPUT_GRID)
-        return make_chi2_training_data(pdf, batch_idx)
+        return make_chi2_training_data(pdf, batch_idx, alpha, lambda_positivity)
 
     @jax.jit
     def loss_validation(weights):
         wmin_weights = jnp.concatenate((jnp.array([1.0]), weights))
         pdf = jnp.einsum("i,ijk", wmin_weights, wmin_INPUT_GRID)
-        return make_chi2_validation_data(pdf)
+        return make_chi2_validation_data(pdf, alpha, lambda_positivity)
 
     @jax.jit
     def step(params, opt_state, batch_idx):
@@ -159,6 +161,8 @@ def monte_carlo_fit(
     max_epochs,
     data_batch_info,
     nr_validation_points,
+    alpha=1e-7, 
+    lambda_positivity=1000
 ):
     """
     """
@@ -173,5 +177,7 @@ def monte_carlo_fit(
                     max_epochs,
                     data_batch_info,
                     nr_validation_points,
+                    alpha, 
+                    lambda_positivity
             ))
     return fit_data
