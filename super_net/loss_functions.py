@@ -2,13 +2,15 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
-from super_net.theory_predictions import make_pred_data
+from super_net.theory_predictions import make_pred_data, make_penalty_posdata
 from super_net.covmats import sqrt_covmat_jax
 
 
 def make_chi2_training_data(
     data,
     data_training,
+    posdatasets,
+    posdata_training_index
 ):
     """
     Compute the chi2 between experimental (or pseudo data) central values
@@ -31,8 +33,10 @@ def make_chi2_training_data(
 
     pred = make_pred_data(data)
 
+    pos_penalty_func = make_penalty_posdata(posdatasets)
+
     @jax.jit
-    def chi2(pdf, batch_idx):
+    def chi2(pdf, batch_idx, alpha, lambda_positivity):
         """
         Compute batched chi2
 
@@ -52,13 +56,17 @@ def make_chi2_training_data(
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
-
-        return jnp.sum(chi2_vec**2)
+        loss = jnp.sum(chi2_vec**2)
+        
+        pos_penalty = pos_penalty_func(pdf, alpha, lambda_positivity)[posdata_training_index]
+        loss += jnp.sum(pos_penalty)
+        
+        return loss
 
     return chi2
 
 
-def make_chi2_validation_data(data, data_validation):
+def make_chi2_validation_data(data, data_validation, posdatasets, posdata_validation_index):
     """
     Compute the chi2 on the validation set. The chi2 is
     computed between experimental central values
@@ -79,8 +87,10 @@ def make_chi2_validation_data(data, data_validation):
 
     pred = make_pred_data(data)
 
+    pos_penalty_func = make_penalty_posdata(posdatasets)
+
     @jax.jit
-    def chi2(pdf):
+    def chi2(pdf, alpha, lambda_positivity):
         """
 
         Parameters
@@ -94,7 +104,10 @@ def make_chi2_validation_data(data, data_validation):
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
+        loss = jnp.sum(chi2_vec**2)
 
-        return jnp.sum(chi2_vec**2)
+        pos_penalty = pos_penalty_func(pdf, alpha, lambda_positivity)[posdata_validation_index]
+        loss += jnp.sum(pos_penalty)
+        return loss
 
     return chi2
