@@ -195,3 +195,66 @@ def data_validation(train_validation_split):
 def nr_validation_points(data_validation):
     """ """
     return data_validation["nr_validation_points"]
+
+
+def posdata_train_validation_split(
+    posdatasets,
+    pos_test_size=0.5,
+    trval_seed=42,
+):
+    """
+    Get training validation split for the positivity data values.
+
+    Parameters
+    ----------
+    posdatasets : list
+            list of PositivitySetSpec
+
+    test_size : float, default is 0.5
+            size of the test/validation set, float between 0 and 1
+
+    trval_seed : int, default is 42
+                integer specifiying the random state of the training
+                test split
+
+    Returns
+    -------
+    tuple
+    
+    """
+
+    ndata_pos = np.sum([pos_ds.load_commondata().with_cuts(pos_ds.cuts).ndata for pos_ds in posdatasets])
+    indices = np.arange(ndata_pos)
+
+    indices_tr, indices_val = train_test_split(indices, test_size=pos_test_size, random_state=trval_seed)
+
+    return indices_tr, indices_val
+
+
+def posdata_training_index(posdata_train_validation_split):
+    idx_tr, _ = posdata_train_validation_split
+    return idx_tr
+
+
+def posdata_validation_index(posdata_train_validation_split):
+    _, idx_val = posdata_train_validation_split
+    return idx_val
+
+
+def pos_test(posdatasets):
+    from validphys.fkparser import load_fktable
+
+    for ds in posdatasets:
+        for fkspec in ds.fkspecs:
+            fk = load_fktable(fkspec)
+            print(f"ds = {ds}, fk.hadronic = {fk.hadronic}")
+            
+    
+    # pos_ds = posdatasets[0]
+    # print(dir(posdatasets))
+    # print(type(posdatasets))
+    # print(type(posdatasets.data))
+    # nposdata = np.sum([pos_ds.load_commondata().with_cuts(pos_ds.cuts).ndata for pos_ds in posdatasets])
+    # print(nposdata)
+    # print([ds for ds in posdatasets])
+    
