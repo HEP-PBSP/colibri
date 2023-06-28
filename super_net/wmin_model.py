@@ -82,7 +82,7 @@ def weight_minimization_grid(wminpdfset, n_replicas_wmin=50, Q0=1.65, rng_jax=0x
 
     # initial weights for weight minimization
     
-    weight_base_num = jax.random.normal(rng, shape=(INPUT_GRID.shape[0] - 1,))
+    weight_base_num = jnp.zeros(INPUT_GRID.shape[0] - 1) #jax.random.normal(rng, shape=(INPUT_GRID.shape[0] - 1,))
 
     return INPUT_GRID, wmin_INPUT_GRID, weight_base_num
 
