@@ -6,36 +6,100 @@ import optax
 
 import numpy as np
 
-from super_net.loss_utils import central_covmat_index, train_validation_split, data_training, data_validation
+from super_net.loss_utils import (
+    central_covmat_index,
+    train_validation_split,
+    data_training,
+    data_validation,
+)
 from super_net.loss_functions import make_chi2_training_data, make_chi2_validation_data
+from super_net.wmin_utils import lhapdf_from_weights
 
 log = logging.getLogger(__name__)
 
 
-def central_covmat_index_monte_carlo(data, dataset_inputs_t0_predictions, monte_carlo_replicas=2):
+def central_covmat_index_monte_carlo(
+    data, dataset_inputs_t0_predictions, monte_carlo_replicas=2
+):
     """
-    For each Monte Carlo replica 
+    This function is responsible for the pseudodata generation
+    needed in a Monte Carlo fit.
+
+    Parameters
+    ----------
+    data : super_net.core.SuperNetDataGroupSpec
+
+    dataset_inputs_t0_predictions : list
+            list of t0 predictions each element corresponds to t0
+            prediction for a dataset
+
+    monte_carlo_replicas : int, default is 2
+            number of wmin replicas to be fitted
+
+    Returns
+    -------
+    list
+    list of len monte_carlo_replicas, each element is central_covmat_index
+    computed with a random filterseed.
     """
+
     res = []
     for _ in range(monte_carlo_replicas):
         filterseed = np.random.randint(10000)
-        res.append(central_covmat_index(data, dataset_inputs_t0_predictions, pseudodata=True, filterseed=filterseed))
+        res.append(
+            central_covmat_index(
+                data,
+                dataset_inputs_t0_predictions,
+                pseudodata=True,
+                filterseed=filterseed,
+            )
+        )
     return res
 
 
 def train_validation_split_monte_carlo(central_covmat_index_monte_carlo, test_size=0.2):
+    """
+
+    Parameters
+    ----------
+    central_covmat_index_monte_carlo : list
+                output of function super_net.monte_carlo_utils.central_covmat_index_monte_carlo
+
+    test_size : float, default is 0.2
+
+    Returns
+    -------
+    list
+    list of len monte_carlo_replicas.
+    """
     res = []
     for cv_cov_idx in central_covmat_index_monte_carlo:
         trval_seed = np.random.randint(10000)
-        res.append(train_validation_split(
-                    cv_cov_idx,
-                    test_size=test_size,
-                    trval_seed=trval_seed,
-                    ))
+        res.append(
+            train_validation_split(
+                cv_cov_idx,
+                test_size=test_size,
+                trval_seed=trval_seed,
+            )
+        )
     return res
 
 
 def data_training_monte_carlo(train_validation_split_monte_carlo):
+    """
+    Returns a list of the training data. Each element corresponds
+    to training data for a separate replica.
+
+    Parameters
+    ----------
+    train_validation_split_monte_carlo: list
+        output of the function train_validation_split_monte_carlo
+
+    Returns
+    -------
+    list
+
+    """
     res = []
     for trval_split in train_validation_split_monte_carlo:
         res.append(data_training(trval_split))
@@ -43,27 +107,55 @@ def data_training_monte_carlo(train_validation_split_monte_carlo):
 
 
 def data_validation_monte_carlo(train_validation_split_monte_carlo):
+    """
+    Same as `data_training_monte_carlo` but for validation data.
+
+    Parameters
+    ----------
+    train_validation_split_monte_carlo : list
+        output of the function train_validation_split_monte_carlo
+
+    Returns
+    -------
+    list
+    """
     res = []
     for trval_split in train_validation_split_monte_carlo:
         res.append(data_validation(trval_split))
     return res
 
 
-def make_chi2_training_data_monte_carlo(data, data_training_monte_carlo, posdatasets, posdata_training_index):
-    
-    res=[]
+def make_chi2_training_data_monte_carlo(
+    data, data_training_monte_carlo, posdatasets, posdata_training_index
+):
+    """
+    Same as `make_chi2_training_data` but for a list of pseudodata.
+    """
+    res = []
     for data_training in data_training_monte_carlo:
-        res.append(make_chi2_training_data(data, data_training, posdatasets, posdata_training_index))
+        res.append(
+            make_chi2_training_data(
+                data, data_training, posdatasets, posdata_training_index
+            )
+        )
     return res
 
 
-def make_chi2_validation_data_monte_carlo(data, data_validation_monte_carlo, posdatasets, posdata_validation_index):
-    
-    res=[]
+def make_chi2_validation_data_monte_carlo(
+    data, data_validation_monte_carlo, posdatasets, posdata_validation_index
+):
+    """
+    Same as `make_chi2_validation_data` but for a list of pseudodata.
+    """
+    res = []
     for data_validation in data_validation_monte_carlo:
-        res.append(make_chi2_validation_data(data, data_validation, posdatasets, posdata_validation_index))
+        res.append(
+            make_chi2_validation_data(
+                data, data_validation, posdatasets, posdata_validation_index
+            )
+        )
     return res
-   
+
 
 def weight_minimization_fit(
     make_chi2_training_data,
@@ -75,13 +167,19 @@ def weight_minimization_fit(
     data_batch_info,
     nr_validation_points,
     alpha=1e-7,
-    lambda_positivity=1000
+    lambda_positivity=1000,
 ):
     """
     TODO
     """
 
-    INPUT_GRID, wmin_INPUT_GRID, init_weights = weight_minimization_grid
+    (
+        INPUT_GRID,
+        wmin_INPUT_GRID,
+        init_weights,
+        wmin_basis_idx,
+        rep1_idx,
+    ) = weight_minimization_grid
 
     @jax.jit
     def loss_training(weights, batch_idx):
@@ -134,7 +232,7 @@ def weight_minimization_fit(
             log.info("Met early stopping criteria, breaking...")
             break
 
-        if i % 100 == 0:
+        if i % 5 == 0:
             log.info(
                 f"step {i}, loss: {epoch_loss:.3f}, validation_loss: {epoch_val_loss:.3f}"
             )
@@ -146,10 +244,9 @@ def weight_minimization_fit(
         "validation_loss": val_loss,
         "INPUT_GRID": INPUT_GRID,
         "wmin_INPUT_GRID": wmin_INPUT_GRID,
+        "wmin_basis_idx": wmin_basis_idx,
+        "rep1_idx": rep1_idx,
     }
-
-
-
 
 
 def monte_carlo_fit(
@@ -161,23 +258,55 @@ def monte_carlo_fit(
     max_epochs,
     data_batch_info,
     nr_validation_points,
-    alpha=1e-7, 
-    lambda_positivity=1000
+    alpha=1e-7,
+    lambda_positivity=1000,
 ):
     """
+    TODO
     """
     fit_data = []
-    for make_chi2_tr, make_chi2_val in zip(make_chi2_training_data_monte_carlo, make_chi2_validation_data_monte_carlo):
-        fit_data.append(weight_minimization_fit(
-                    make_chi2_tr,
-                    make_chi2_val,
-                    weight_minimization_grid,
-                    optimizer_provider,
-                    early_stopper,
-                    max_epochs,
-                    data_batch_info,
-                    nr_validation_points,
-                    alpha, 
-                    lambda_positivity
-            ))
+    for make_chi2_tr, make_chi2_val in zip(
+        make_chi2_training_data_monte_carlo, make_chi2_validation_data_monte_carlo
+    ):
+        fit_data.append(
+            weight_minimization_fit(
+                make_chi2_tr,
+                make_chi2_val,
+                weight_minimization_grid,
+                optimizer_provider,
+                early_stopper,
+                max_epochs,
+                data_batch_info,
+                nr_validation_points,
+                alpha,
+                lambda_positivity,
+            )
+        )
     return fit_data
+
+
+def snmc_fit(monte_carlo_fit, wminpdfset, folder="", set_name=None):
+    """
+    TODO
+    """
+
+    weights = []
+    wmin_basis_idxs = []
+    rep1_idxs = []
+
+    for replica_fit in monte_carlo_fit:
+        weights.append(replica_fit["weights"])
+        wmin_basis_idxs.append(replica_fit["wmin_basis_idx"])
+        rep1_idxs.append(replica_fit["rep1_idx"])
+
+    weights = np.array(weights)
+
+    lhapdf_from_weights(
+        wminpdfset,
+        weights,
+        folder=folder,
+        set_name=set_name,
+        errortype="replicas",
+        wmin_basis_idxs=wmin_basis_idxs,
+        rep1_idxs=rep1_idxs,
+    )
