@@ -38,7 +38,9 @@ def weight_minimization_grid(wminpdfset, n_replicas_wmin=50, Q0=1.65, rng_jax=0x
     Q0 : float, default is 1.65
         scale at which wmin parametrization is done.
 
-    rng_jax : 
+    rng_jax : seed
+        Create a pseudo-random number generator (PRNG) key given an integer seed.
+
     
     Returns
     -------
@@ -59,21 +61,20 @@ def weight_minimization_grid(wminpdfset, n_replicas_wmin=50, Q0=1.65, rng_jax=0x
         )
 
     # reduce INPUT_GRID to only keep n_replicas_wmin PDF replicas
-    random_replicas = jax.random.choice(
+    wmin_basis_idx = jax.random.choice(
         rng, INPUT_GRID.shape[0], shape=(n_replicas_wmin,), replace=False
     )
     
     # include central replica
-    if not jnp.any(random_replicas == 0):
-        random_replicas = jnp.append(random_replicas, 0)
+    if not jnp.any(wmin_basis_idx == 0):
+        wmin_basis_idx = jnp.append(wmin_basis_idx, 0)
     
     # shuffle random replicas
-    random_replicas = jax.random.permutation(rng, random_replicas, independent=True)
+    wmin_basis_idx = jax.random.permutation(rng, wmin_basis_idx, independent=True)
     
-    INPUT_GRID = INPUT_GRID[random_replicas]
+    INPUT_GRID = INPUT_GRID[wmin_basis_idx]
 
     # generate weight minimization grid so that sum rules are automatically fulfilled
-
     rep1_idx = jax.random.choice(rng, INPUT_GRID.shape[0])
     wmin_INPUT_GRID = (
         jnp.delete(INPUT_GRID, rep1_idx, axis=0) - INPUT_GRID[jnp.newaxis, rep1_idx]
@@ -81,10 +82,9 @@ def weight_minimization_grid(wminpdfset, n_replicas_wmin=50, Q0=1.65, rng_jax=0x
     wmin_INPUT_GRID = jnp.vstack((INPUT_GRID[jnp.newaxis, rep1_idx], wmin_INPUT_GRID))
 
     # initial weights for weight minimization
-    
-    weight_base_num = jnp.zeros(INPUT_GRID.shape[0] - 1) #jax.random.normal(rng, shape=(INPUT_GRID.shape[0] - 1,))
+    weight_base_num = jnp.zeros(INPUT_GRID.shape[0] - 1) 
 
-    return INPUT_GRID, wmin_INPUT_GRID, weight_base_num
+    return INPUT_GRID, wmin_INPUT_GRID, weight_base_num, wmin_basis_idx, rep1_idx
 
 
 
