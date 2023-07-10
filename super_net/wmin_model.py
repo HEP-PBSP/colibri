@@ -12,7 +12,7 @@ from super_net.checks import check_wminpdfset_is_montecarlo
 
 
 @check_wminpdfset_is_montecarlo
-def weight_minimization_grid(wminpdfset, n_replicas_wmin=50, Q0=1.65, rng_jax=0xDEAFBEEF):
+def weight_minimization_grid(wminpdfset, weights_initializer_provider, n_replicas_wmin=50, Q0=1.65, rng_jax=0xDEAFBEEF):
     """
     Weight minimization grid is in the evolution basis.
     The following parametrization is used:
@@ -82,9 +82,6 @@ def weight_minimization_grid(wminpdfset, n_replicas_wmin=50, Q0=1.65, rng_jax=0x
     wmin_INPUT_GRID = jnp.vstack((INPUT_GRID[jnp.newaxis, rep1_idx], wmin_INPUT_GRID))
 
     # initial weights for weight minimization
-    weight_base_num = jnp.zeros(INPUT_GRID.shape[0] - 1) 
+    weight_base_num = weights_initializer_provider(INPUT_GRID.shape[0] - 1) 
 
     return INPUT_GRID, wmin_INPUT_GRID, weight_base_num, wmin_basis_idx, rep1_idx
-
-
-

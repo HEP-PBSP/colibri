@@ -1,13 +1,18 @@
 import os
 import pathlib
+import logging
 
 import lhapdf
 import numpy as np
+import jax
+import jax.numpy as jnp
 
 from validphys.lhio import load_all_replicas, write_replica, rep_matrix
 from tqdm import tqdm
 
 from super_net.checks import check_wminpdfset_is_montecarlo
+
+log = logging.getLogger(__name__)
 
 
 @check_wminpdfset_is_montecarlo
@@ -94,3 +99,42 @@ def lhapdf_from_weights(
         
 
     return wm_pdf
+
+
+def weights_initializer_provider(weights_initializer='zeros', weights_seed=0xABCDEF, uniform_minval=-0.1, uniform_maxval=0.1):
+    """
+    Function responsible for the initialization of the weights in a weight minimization fit.
+
+    Parameters
+    ----------
+    weights_initializer: str, default is 'zeros'
+            the available options are: ('zeros', 'normal', 'uniform')
+            if an unknown option is specified, the 'zeros' will be used
+
+    weights_seed: (Union[int, Array]) – a 64- or 32-bit integer used as the value of the key.
+
+    uniform_minval: see minval of jax.random.uniform
+
+    uniform_maxval: see maxval of jax.random.uniform
+
+    Returns
+    -------
+    function that takes shape=integer in input and returns array of shape = (shape, )
+
+    """
+    if weights_initializer not in ('zeros', 'normal', 'uniform'):
+        log.warning(f"weights_initializer {weights_initializer} name not recognized, using default: 'zeros' instead")
+        weights_initializer = 'zeros'
+
+    if weights_initializer=='zeros':
+        return jnp.zeros
+    
+    elif weights_initializer=='normal':
+        rng = jax.random.PRNGKey(weights_seed)
+        initializer = lambda shape : jax.random.normal(key=rng, shape=(shape,))
+        return initializer
+    
+    elif weights_initializer=='uniform':
+        rng = jax.random.PRNGKey(weights_seed)
+        initializer = lambda shape: jax.random.uniform(key=rng, shape=(shape,), minval=uniform_minval, maxval=uniform_maxval)
+        return initializer
