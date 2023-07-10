@@ -41,6 +41,7 @@ def central_covmat_index_monte_carlo(
     list
     list of len monte_carlo_replicas, each element is central_covmat_index
     computed with a random filterseed.
+
     """
 
     res = []
@@ -59,6 +60,8 @@ def central_covmat_index_monte_carlo(
 
 def train_validation_split_monte_carlo(central_covmat_index_monte_carlo, test_size=0.2):
     """
+    This function is responsible for splitting the monte carlo pseudo data into
+    training and validation set
 
     Parameters
     ----------
@@ -71,6 +74,7 @@ def train_validation_split_monte_carlo(central_covmat_index_monte_carlo, test_si
     -------
     list
     list of len monte_carlo_replicas.
+
     """
     res = []
     for cv_cov_idx in central_covmat_index_monte_carlo:
@@ -118,6 +122,7 @@ def data_validation_monte_carlo(train_validation_split_monte_carlo):
     Returns
     -------
     list
+
     """
     res = []
     for trval_split in train_validation_split_monte_carlo:
