@@ -1,8 +1,11 @@
-from validphys.config import Config
+from validphys.config import Config, Environment
 from validphys import covmats
 
 from super_net.core import SuperNetDataGroupSpec
 
+
+class Environment(Environment):
+    pass
 
 class SuperNetConfig(Config):
     """
