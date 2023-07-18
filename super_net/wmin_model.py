@@ -65,9 +65,9 @@ def weight_minimization_grid(wminpdfset, weights_initializer_provider, n_replica
         rng, INPUT_GRID.shape[0], shape=(n_replicas_wmin,), replace=False
     )
     
-    # include central replica
-    if not jnp.any(wmin_basis_idx == 0):
-        wmin_basis_idx = jnp.append(wmin_basis_idx, 0)
+    # # include central replica
+    # if not jnp.any(wmin_basis_idx == 0):
+    #     wmin_basis_idx = jnp.append(wmin_basis_idx, 0)
     
     # shuffle random replicas
     wmin_basis_idx = jax.random.permutation(rng, wmin_basis_idx, independent=True)
