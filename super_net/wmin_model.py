@@ -8,11 +8,14 @@ from super_net.constants import XGRID
 from super_net.checks import check_wminpdfset_is_montecarlo
 
 
-
-
-
 @check_wminpdfset_is_montecarlo
-def weight_minimization_grid(wminpdfset, weights_initializer_provider, n_replicas_wmin=50, Q0=1.65, rng_jax=0xDEAFBEEF):
+def weight_minimization_grid(
+    wminpdfset,
+    weights_initializer_provider,
+    n_replicas_wmin=50,
+    Q0=1.65,
+    rng_jax=0xDEAFBEEF,
+):
     """
     Weight minimization grid is in the evolution basis.
     The following parametrization is used:
@@ -21,7 +24,7 @@ def weight_minimization_grid(wminpdfset, weights_initializer_provider, n_replica
 
     this has the advantage of automatically satisfying the sum rules.
 
-    Notes: 
+    Notes:
         - the central replica of the wminpdfset is always included in the
           wmin parametrization
         - the replicas to be used in the parametrization are chosen at random
@@ -29,32 +32,47 @@ def weight_minimization_grid(wminpdfset, weights_initializer_provider, n_replica
 
     Parameters
     ----------
-    wminpdfset : 'validphys.core.PDF'
+    wminpdfset: validphys.core.PDF
 
-    n_replicas_wmin : int
+    weights_initializer_provider: super_net.wmin_utils.weights_initializer_provider
+            Function responsible for the initialization of the weights in a weight minimization fit
+
+    n_replicas_wmin: int
                 number of replicas from wminpdfset to be used in the weight
                 minimization parametrization
 
-    Q0 : float, default is 1.65
+    Q0: float, default is 1.65
         scale at which wmin parametrization is done.
 
-    rng_jax : seed
+    rng_jax: seed
         Create a pseudo-random number generator (PRNG) key given an integer seed.
 
-    
+
     Returns
     -------
+    5D tuple:
 
-    TODO
+        - INPUT_GRID: PDF grid of the Monte Carlo set used as wmin basis
+
+        - wmin_INPUT_GRID: grid used for the weight minimisation fit. Defined in such a way
+                           as to fulfill the sum rules automatically.
+
+        - weight_base_num: initial random weights
+
+        - wmin_basis_idx: index (of INPUT_GRID replicas) of the weight minimisation basis excluding the
+                          replica that is used as central replica in the wmin parametrisation
+
+        - rep1_idx: index of central wmin replica
+
     """
 
     rng = jax.random.PRNGKey(rng_jax)
-    
+
     # dimensions here are N_rep x N_fl x N_x
     INPUT_GRID = evolution.grid_values(
         wminpdfset, convolution.FK_FLAVOURS, XGRID, [Q0]
     ).squeeze(-1)
-    
+
     if n_replicas_wmin > INPUT_GRID.shape[0]:
         raise (
             f"n_replicas_wmin should be <= than the number of replicas contained in the PDF set {wminpdfset}"
@@ -64,24 +82,19 @@ def weight_minimization_grid(wminpdfset, weights_initializer_provider, n_replica
     wmin_basis_idx = jax.random.choice(
         rng, INPUT_GRID.shape[0], shape=(n_replicas_wmin,), replace=False
     )
-    
-    # # include central replica
-    # if not jnp.any(wmin_basis_idx == 0):
-    #     wmin_basis_idx = jnp.append(wmin_basis_idx, 0)
-    
-    # shuffle random replicas
-    wmin_basis_idx = jax.random.permutation(rng, wmin_basis_idx, independent=True)
-    
-    INPUT_GRID = INPUT_GRID[wmin_basis_idx]
 
-    # generate weight minimization grid so that sum rules are automatically fulfilled
-    rep1_idx = jax.random.choice(rng, INPUT_GRID.shape[0])
-    wmin_INPUT_GRID = (
-        jnp.delete(INPUT_GRID, rep1_idx, axis=0) - INPUT_GRID[jnp.newaxis, rep1_idx]
-    )
+    # == generate weight minimization grid so that sum rules are automatically fulfilled == #
+    # pick central wmin replica at random
+    rep1_idx = jax.random.permutation(rng, wmin_basis_idx, independent=True)[0]
+
+    # discard central wmin replica from wmin basis
+    wmin_basis_idx = wmin_basis_idx[jnp.where(wmin_basis_idx != rep1_idx)]
+
+    wmin_INPUT_GRID = INPUT_GRID[wmin_basis_idx] - INPUT_GRID[jnp.newaxis, rep1_idx]
+
     wmin_INPUT_GRID = jnp.vstack((INPUT_GRID[jnp.newaxis, rep1_idx], wmin_INPUT_GRID))
 
     # initial weights for weight minimization
-    weight_base_num = weights_initializer_provider(INPUT_GRID.shape[0] - 1) 
+    weight_base_num = weights_initializer_provider(wmin_INPUT_GRID.shape[0] - 1)
 
     return INPUT_GRID, wmin_INPUT_GRID, weight_base_num, wmin_basis_idx, rep1_idx
