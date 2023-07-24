@@ -89,10 +89,10 @@ def lhapdf_from_weights(
         # take care of different indexing. Central replica is at index 1
         wmin_basis_idx = np.array(wmin_basis_idx) + 1
         rep1_idx += 1
-        
+
         rep0, replica = (
             replicas_df.loc[:, [int(rep1_idx)]],
-            replicas_df.loc[:, np.delete(wmin_basis_idx, int(rep1_idx))],
+            replicas_df.loc[:, wmin_basis_idx],
         )
     
         wm_replica = rep0.dot([1.0 - np.sum(weight)]) + replica.dot(weight)
