@@ -46,7 +46,7 @@ def central_covmat_index_monte_carlo(
 
     res = []
     for _ in range(monte_carlo_replicas):
-        filterseed = np.random.randint(10000)
+        filterseed = np.random.randint(1000000)
         res.append(
             central_covmat_index(
                 data,
@@ -78,7 +78,7 @@ def train_validation_split_monte_carlo(central_covmat_index_monte_carlo, test_si
     """
     res = []
     for cv_cov_idx in central_covmat_index_monte_carlo:
-        trval_seed = np.random.randint(10000)
+        trval_seed = np.random.randint(1000000)
         res.append(
             train_validation_split(
                 cv_cov_idx,
@@ -323,7 +323,7 @@ def monte_carlo_fit(
         ):
             from super_net.wmin_model import weight_minimization_grid
 
-            rng_seed = np.random.randint(100000)
+            rng_seed = np.random.randint(1000000)
             # for each wmin replica fit, pick a random replica from the basis to be
             # used as the central replica of the wmin parametrisation
             wmin_grid = weight_minimization_grid(
