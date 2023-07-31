@@ -7,6 +7,7 @@ from super_net.core import SuperNetDataGroupSpec
 class Environment(Environment):
     pass
 
+
 class SuperNetConfig(Config):
     """
     Config class inherits from validphys
@@ -50,4 +51,8 @@ class SuperNetConfig(Config):
 
     def parse_wminpdfset(self, name):
         """PDF set used to generate the weight minimization grid"""
+        return self.parse_pdf(name)
+
+    def parse_closure_test_pdf(self, name):
+        """PDF set used to generate fakedata"""
         return self.parse_pdf(name)
