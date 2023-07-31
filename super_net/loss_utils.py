@@ -12,7 +12,12 @@ from reportengine import collect
 
 # @check_data_is_super_net(data)
 def central_covmat_index(
-    data, dataset_inputs_t0_predictions, pseudodata=False, filterseed=1
+    data,
+    dataset_inputs_t0_predictions,
+    pseudodata=False,
+    filterseed=1,
+    closure_test_pdf=None,
+    fakedata=False,
 ):
     """
     Used to get data values, t0 covariance matrix,
@@ -45,7 +50,12 @@ def central_covmat_index(
         - jnp.ndarray of indices of data values
     """
 
-    cd_list = data.load_pseudo_commondata(pseudodata=pseudodata, filterseed=filterseed)
+    cd_list = data.load_pseudo_commondata(
+        pseudodata=pseudodata,
+        filterseed=filterseed,
+        closure_test_pdf=closure_test_pdf,
+        fakedata=fakedata,
+    )
 
     central_values = [cd.central_values for cd in cd_list]
 
@@ -220,13 +230,20 @@ def posdata_train_validation_split(
     Returns
     -------
     tuple
-    
+
     """
 
-    ndata_pos = np.sum([pos_ds.load_commondata().with_cuts(pos_ds.cuts).ndata for pos_ds in posdatasets])
+    ndata_pos = np.sum(
+        [
+            pos_ds.load_commondata().with_cuts(pos_ds.cuts).ndata
+            for pos_ds in posdatasets
+        ]
+    )
     indices = np.arange(ndata_pos)
 
-    indices_tr, indices_val = train_test_split(indices, test_size=pos_test_size, random_state=trval_seed)
+    indices_tr, indices_val = train_test_split(
+        indices, test_size=pos_test_size, random_state=trval_seed
+    )
 
     return indices_tr, indices_val
 
@@ -248,8 +265,7 @@ def pos_test(posdatasets):
         for fkspec in ds.fkspecs:
             fk = load_fktable(fkspec)
             print(f"ds = {ds}, fk.hadronic = {fk.hadronic}")
-            
-    
+
     # pos_ds = posdatasets[0]
     # print(dir(posdatasets))
     # print(type(posdatasets))
@@ -257,4 +273,3 @@ def pos_test(posdatasets):
     # nposdata = np.sum([pos_ds.load_commondata().with_cuts(pos_ds.cuts).ndata for pos_ds in posdatasets])
     # print(nposdata)
     # print([ds for ds in posdatasets])
-    

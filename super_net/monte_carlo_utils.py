@@ -14,12 +14,18 @@ from super_net.loss_utils import (
 )
 from super_net.loss_functions import make_chi2_training_data, make_chi2_validation_data
 from super_net.wmin_utils import lhapdf_from_weights
+from super_net.wmin_model import weight_minimization_grid
+
 
 log = logging.getLogger(__name__)
 
 
 def central_covmat_index_monte_carlo(
-    data, dataset_inputs_t0_predictions, monte_carlo_replicas=2
+    data,
+    dataset_inputs_t0_predictions,
+    monte_carlo_replicas=2,
+    closure_test_pdf=None,
+    fakedata=False,
 ):
     """
     This function is responsible for the pseudodata generation
@@ -45,7 +51,20 @@ def central_covmat_index_monte_carlo(
     """
 
     res = []
+    if fakedata:
+        
+        res.append(central_covmat_index(
+            data,
+            dataset_inputs_t0_predictions,
+            closure_test_pdf=closure_test_pdf,
+            fakedata=fakedata,
+        )
+    )
+        # level0 closure test, each replica trained on the same central values
+        return monte_carlo_replicas * res
+
     for _ in range(monte_carlo_replicas):
+
         filterseed = np.random.randint(1000000)
         res.append(
             central_covmat_index(
@@ -257,8 +276,10 @@ def weight_minimization_fit(
 def monte_carlo_fit(
     make_chi2_training_data_monte_carlo,
     make_chi2_validation_data_monte_carlo,
-    weight_minimization_grid,
-    weights_initializer_provider,
+    rng_jax,
+    weights_initializer,
+    uniform_minval,
+    uniform_maxval,
     n_replicas_wmin,
     wminpdfset,
     optimizer_provider,
@@ -272,9 +293,9 @@ def monte_carlo_fit(
 ):
     """
     Fits Monte Carlo pseudodata using weight minimisation parametrisation.
-    If random_parametrisation is True, then for each Monte Carlo replica a 
+    If random_parametrisation is True, then for each Monte Carlo replica a
     different 'weight minimisation' parametrisation is used.
-    
+
     Parameters
     ----------
     make_chi2_training_data_monte_carlo: list, list of jit compiled jax functions
@@ -283,21 +304,21 @@ def monte_carlo_fit(
 
     weight_minimization_grid: tuple, contains the weight minimisation grid at Q0=1.65Gev
 
-    weights_initializer_provider: function 
+    weights_initializer_provider: function
         takes shape=integer in input and returns array of shape = (shape, )
-    
+
     n_replicas_wmin: int
         number of replicas from wminpdfset to be used in the weight
         minimization parametrization
 
     wminpdfset: validphys.core.PDF
-    
+
     optimizer_provider: optax._src.base.GradientTransformationExtraArgs
 
     early_stopper: int
 
     max_epochs: int
-    
+
     data_batch_info: dict, contains info about data batches
 
     nr_validation_points: int
@@ -316,21 +337,25 @@ def monte_carlo_fit(
     list
 
     """
+
     if random_parametrisation:
         fit_data = []
         for make_chi2_tr, make_chi2_val in zip(
             make_chi2_training_data_monte_carlo, make_chi2_validation_data_monte_carlo
         ):
-            from super_net.wmin_model import weight_minimization_grid
-
             rng_seed = np.random.randint(1000000)
+            rng_weights_seed = np.random.randint(1000000)
             # for each wmin replica fit, pick a random replica from the basis to be
             # used as the central replica of the wmin parametrisation
+            # also use different random initialisation weights
             wmin_grid = weight_minimization_grid(
                 wminpdfset,
-                weights_initializer_provider,
                 n_replicas_wmin,
                 rng_jax=rng_seed,
+                weights_initializer=weights_initializer,
+                weights_seed=rng_weights_seed,
+                uniform_minval=uniform_minval,
+                uniform_maxval=uniform_maxval,
             )
             fit_data.append(
                 weight_minimization_fit(
@@ -349,24 +374,37 @@ def monte_carlo_fit(
         return fit_data
 
     else:
-        return [
-            weight_minimization_fit(
-                make_chi2_tr,
-                make_chi2_val,
-                weight_minimization_grid,
-                optimizer_provider,
-                early_stopper,
-                max_epochs,
-                data_batch_info,
-                nr_validation_points,
-                alpha,
-                lambda_positivity,
+        fit_data = []
+        for make_chi2_tr, make_chi2_val in zip(
+            make_chi2_training_data_monte_carlo, make_chi2_validation_data_monte_carlo
+        ):
+            # for each wmin replica fit, use different random initialisation weights
+            rng_weights_seed = np.random.randint(1000000)
+
+            wmin_grid = weight_minimization_grid(
+                wminpdfset,
+                n_replicas_wmin,
+                rng_jax=rng_jax,
+                weights_initializer=weights_initializer,
+                weights_seed=rng_weights_seed,
+                uniform_minval=uniform_minval,
+                uniform_maxval=uniform_maxval,
             )
-            for make_chi2_tr, make_chi2_val in zip(
-                make_chi2_training_data_monte_carlo,
-                make_chi2_validation_data_monte_carlo,
+            fit_data.append(
+                weight_minimization_fit(
+                    make_chi2_tr,
+                    make_chi2_val,
+                    wmin_grid,
+                    optimizer_provider,
+                    early_stopper,
+                    max_epochs,
+                    data_batch_info,
+                    nr_validation_points,
+                    alpha,
+                    lambda_positivity,
+                )
             )
-        ]
+        return fit_data
 
 
 def snmc_fit(monte_carlo_fit, wminpdfset, folder="", set_name=None):
