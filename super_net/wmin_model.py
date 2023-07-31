@@ -6,15 +6,19 @@ from validphys import convolution
 
 from super_net.constants import XGRID
 from super_net.checks import check_wminpdfset_is_montecarlo
+from super_net.wmin_utils import weights_initializer_provider
 
 
 @check_wminpdfset_is_montecarlo
 def weight_minimization_grid(
     wminpdfset,
-    weights_initializer_provider,
     n_replicas_wmin=50,
     Q0=1.65,
     rng_jax=0xDEAFBEEF,
+    weights_initializer="zeros",
+    weights_seed=0xABCDEF,
+    uniform_minval=-0.1,
+    uniform_maxval=0.1,
 ):
     """
     Weight minimization grid is in the evolution basis.
@@ -89,12 +93,17 @@ def weight_minimization_grid(
 
     # discard central wmin replica from wmin basis
     wmin_basis_idx = wmin_basis_idx[jnp.where(wmin_basis_idx != rep1_idx)]
-
-    wmin_INPUT_GRID = INPUT_GRID[wmin_basis_idx] - INPUT_GRID[jnp.newaxis, rep1_idx]
-
+    
+    wmin_INPUT_GRID = INPUT_GRID[wmin_basis_idx,:,:] - INPUT_GRID[jnp.newaxis, rep1_idx]
+    
     wmin_INPUT_GRID = jnp.vstack((INPUT_GRID[jnp.newaxis, rep1_idx], wmin_INPUT_GRID))
 
     # initial weights for weight minimization
-    weight_base_num = weights_initializer_provider(wmin_INPUT_GRID.shape[0] - 1)
+    weight_base_num = weights_initializer_provider(
+        weights_initializer=weights_initializer,
+        weights_seed=weights_seed,
+        uniform_minval=uniform_minval,
+        uniform_maxval=uniform_maxval,
+    )(wmin_INPUT_GRID.shape[0] - 1)
 
     return INPUT_GRID, wmin_INPUT_GRID, weight_base_num, wmin_basis_idx, rep1_idx
