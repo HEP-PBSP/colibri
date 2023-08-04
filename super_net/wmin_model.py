@@ -105,5 +105,5 @@ def weight_minimization_grid(
         uniform_minval=uniform_minval,
         uniform_maxval=uniform_maxval,
     )(wmin_INPUT_GRID.shape[0] - 1)
-
+    # output should be dataclass
     return INPUT_GRID, wmin_INPUT_GRID, weight_base_num, wmin_basis_idx, rep1_idx
