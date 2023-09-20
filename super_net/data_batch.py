@@ -52,29 +52,29 @@ class DataBatch:
 def data_batch_stream_index(nr_training_points, batch_size, batch_seed):
     """yields array of indices of specified shape.
     The indices are chosen at random via shuffling.
-
-    Parameters
-    ----------
-
     """
+    def closure():
+        """
+        Mutable objects like generators should not be used as valiphys
+        actions, hence the need to add the closure.
+        """
+        if batch_size > nr_training_points:
+            raise ValueError(
+                f"size of batch = {batch_size} should be smaller or equal to the number of data {nr_training_points}"
+            )
 
-    if batch_size > nr_training_points:
-        raise ValueError(
-            f"size of batch = {batch_size} should be smaller or equal to the number of data {nr_training_points}"
-        )
+        rng = npr.RandomState(batch_seed)
+        num_complete_batches, leftover = divmod(nr_training_points, batch_size)
+        # discard leftover to avoid the a slow down due to having to recompile make_chi2 functionm
+        num_batches = num_complete_batches  # + bool(leftover)
 
-    rng = npr.RandomState(batch_seed)
-    num_complete_batches, leftover = divmod(nr_training_points, batch_size)
-    # discard leftover to avoid the a slow down due to having to recompile make_chi2 functionm
-    num_batches = num_complete_batches  # + bool(leftover)
+        while True:
+            perm = rng.permutation(nr_training_points)
 
-    while True:
-        perm = rng.permutation(nr_training_points)
-
-        for i in range(num_batches):
-            batch_idx = perm[i * batch_size : (i + 1) * batch_size]
-            yield batch_idx
-
+            for i in range(num_batches):
+                batch_idx = perm[i * batch_size : (i + 1) * batch_size]
+                yield batch_idx
+    return closure
 
 def num_batches(nr_training_points, batch_size):
     """
@@ -97,9 +97,27 @@ def num_batches(nr_training_points, batch_size):
 
 
 def data_batch_info(data_batch_stream_index, num_batches, batch_size):
-    """ """
+    """
+    TODO: have this to be a dataclass rather than a dict
+    data_batch_info function should return an instance of a dataclass
+    """
+    # kwargs = {
+    #     "data_batch_stream_index": data_batch_stream_index,
+    #     "num_batches": num_batches,
+    #     "batch_size": batch_size,
+    # }
+    # databatch = DataBatches(**kwargs)
     return {
         "data_batch_stream_index": data_batch_stream_index,
         "num_batches": num_batches,
         "batch_size": batch_size,
     }
+
+
+from typing import Callable
+from dataclasses import dataclass
+@dataclass
+class DataBatches:
+    data_batch_stream_index: Callable
+    num_batches: int
+    batch_size: int

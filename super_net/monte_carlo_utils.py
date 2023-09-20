@@ -229,8 +229,8 @@ def weight_minimization_fit(
 
     opt_state = optimizer_provider.init(init_weights)
     weights = init_weights
-
-    batches = data_batch_info["data_batch_stream_index"]
+    
+    batches = data_batch_info["data_batch_stream_index"]()
     num_batches = data_batch_info["num_batches"]
     batch_size = data_batch_info["batch_size"]
 
