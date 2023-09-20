@@ -1,9 +1,10 @@
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
+
 def sqrt_covmat_jax(covariance_matrix):
     """
-    Same as `validphys.covmats.sqrt_covmat` but 
+    Same as `validphys.covmats.sqrt_covmat` but
     for jax.numpy arrays
 
     Parameters
@@ -27,13 +28,14 @@ def sqrt_covmat_jax(covariance_matrix):
     if covariance_matrix.size == 0:
         raise ValueError("Attempting the decomposition of an empty matrix.")
     elif dimensions[0] != dimensions[1]:
-        raise ValueError("The input covariance matrix should be square but "
-                         f"instead it has dimensions {dimensions[0]} x "
-                         f"{dimensions[1]}")
+        raise ValueError(
+            "The input covariance matrix should be square but "
+            f"instead it has dimensions {dimensions[0]} x "
+            f"{dimensions[1]}"
+        )
 
     sqrt_diags = jnp.sqrt(jnp.diag(covariance_matrix))
     correlation_matrix = covariance_matrix / sqrt_diags[:, jnp.newaxis] / sqrt_diags
     decomp = jla.cholesky(correlation_matrix)
     sqrt_matrix = (decomp * sqrt_diags).T
     return sqrt_matrix
-
