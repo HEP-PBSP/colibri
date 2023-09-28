@@ -1,7 +1,10 @@
 from validphys.config import Config, Environment
 from validphys import covmats
+from reportengine.configparser import explicit_node
 
+from super_net import commondata_utils
 from super_net.core import SuperNetDataGroupSpec
+
 
 
 class Environment(Environment):
@@ -34,6 +37,31 @@ class SuperNetConfig(Config):
         return SuperNetDataGroupSpec(
             name=group_name, datasets=datasets, dsinputs=data_input
         )
+
+    @explicit_node
+    def produce_commondata_tuple(
+        self, pseudodata=False, fakedata=False
+    ):
+        """ 
+        Produces a commondata tuple node in the reportengine dag
+        according to some options
+        """
+
+        if pseudodata and fakedata:
+            # closure test pseudodata
+            return commondata_utils.closuretest_pseudodata_commondata_tuple
+
+        elif fakedata:
+            # closure test fake-data
+            return commondata_utils.closuretest_commondata_tuple
+        
+        elif pseudodata:
+            # experimental central values + random noise from covmat
+            return commondata_utils.pseudodata_commondata_tuple
+        
+        else:
+            return commondata_utils.experimental_commondata_tuple
+
 
     def produce_dataset_inputs_t0_predictions(self, data, t0set, use_t0):
         """
