@@ -12,7 +12,8 @@ providers = [
     "super_net.data_batch",
     "super_net.monte_carlo_utils",
     "super_net.wmin_utils",
-    "super_net.closure_test.closure_test_estimators"
+    "super_net.commondata_utils",
+    "super_net.closure_test.closure_test_estimators",
 ]
 
 

@@ -19,7 +19,7 @@ def experimental_commondata_tuple(data):
     return tuple(data.load_commondata_instance())
 
 
-def pseudodata_commondata_tuple(data, experimental_commondata_list, filterseed=1):
+def pseudodata_commondata_tuple(data, experimental_commondata_tuple, filterseed=1):
     """
     returns a tuple (validphys nodes should be immutable)
     of commondata instances with experimental central values
@@ -43,9 +43,9 @@ def pseudodata_commondata_tuple(data, experimental_commondata_list, filterseed=1
     """
 
     index = data.data_index()
-    dataset_order = [cd.setname for cd in experimental_commondata_list]
+    dataset_order = [cd.setname for cd in experimental_commondata_tuple]
     pseudodata_list = make_level1_data(
-        data, experimental_commondata_list, filterseed, index, sep_mult=True
+        data, experimental_commondata_tuple, filterseed, index, sep_mult=True
     )
     pseudodata_list = sorted(
         pseudodata_list, key=lambda obj: dataset_order.index(obj.setname)
