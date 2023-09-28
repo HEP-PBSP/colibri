@@ -20,9 +20,6 @@ class SuperNetConfig(Config):
     Config class
     """
 
-    def produce_example(self):
-        return "example"
-
     def produce_data(
         self,
         data_input,

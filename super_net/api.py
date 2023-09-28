@@ -2,14 +2,14 @@
 api.py
 
 This module contains the `reportengine` programmatic API, initialized with the
-validphys providers, Config and Environment.
+super_net providers, Config and Environment.
 
 Example:
 --------
 
 Simple Usage:
 
->> from validphys.api import API
+>> from super_net.api import API
 >> fig = API.plot_pdfs(pdf="NNPDF_nlo_as_0118", Q=100)
 >> fig.show()
 
