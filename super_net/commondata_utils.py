@@ -87,7 +87,9 @@ def closuretest_commondata_tuple(data, experimental_commondata_tuple, closure_te
     return tuple(fake_data)
 
 
-def closuretest_pseudodata_commondata_tuple(data, closuretest_commondata_tuple, filterseed=1):
+def closuretest_pseudodata_commondata_tuple(
+    data, closuretest_commondata_tuple, filterseed=1
+):
     """
     Like `pseudodata_commondata_tuple` but with closure test (fake-data) central values.
 
