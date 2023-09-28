@@ -1,22 +1,6 @@
 from validphys.pseudodata import make_level1_data
-from validphys.covmats import dataset_t0_predictions
 
-
-def experimental_commondata_tuple(data):
-    """
-    returns a tuple (validphys nodes should be immutable)
-    of commondata instances with experimental central values
-
-    Parameters
-    ----------
-    data: super_net.core.SuperNetDataGroupSpec
-
-    Returns
-    -------
-    tuple
-        tuple of validphys.coredata.CommonData instances
-    """
-    return tuple(data.load_commondata_instance())
+from reportengine import collect
 
 
 def pseudodata_commondata_tuple(data, experimental_commondata_tuple, filterseed=1):
@@ -53,40 +37,6 @@ def pseudodata_commondata_tuple(data, experimental_commondata_tuple, filterseed=
     return tuple(pseudodata_list)
 
 
-def closuretest_commondata_tuple(data, experimental_commondata_tuple, closure_test_pdf):
-    """
-    returns a tuple (validphys nodes should be immutable)
-    of commondata instances with experimental central values
-    replaced with theory predictions computed from a PDF `closure_test_pdf`
-    and fktables corresponding to datasets within data
-
-    Parameters
-    ----------
-    data: super_net.core.SuperNetDataGroupSpec
-
-    experimental_commondata_tuple: tuple
-        tuple of commondata with experimental central values
-
-    closure_test_pdf: validphys.core.PDF
-        PDF used to generate fake data
-
-    Returns
-    -------
-    tuple
-        tuple of validphys.coredata.CommonData instances
-    """
-
-    fake_data = []
-    for cd, ds in zip(experimental_commondata_tuple, data.datasets):
-        if cd.setname != ds.name:
-            raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
-        # replace central values with theory prediction from `closure_test_pdf`
-        fake_data.append(
-            cd.with_central_value(dataset_t0_predictions(ds, closure_test_pdf))
-        )
-    return tuple(fake_data)
-
-
 def closuretest_pseudodata_commondata_tuple(
     data, closuretest_commondata_tuple, filterseed=1
 ):
@@ -99,3 +49,20 @@ def closuretest_pseudodata_commondata_tuple(
         tuple of validphys.coredata.CommonData instances
     """
     return pseudodata_commondata_tuple(data, closuretest_commondata_tuple, filterseed)
+
+
+"""
+Collect over multiple random filterseeds so as to generate multiple commondata instances.
+To be used in a Monte Carlo fit to experimental data.
+"""
+mc_replicas_pseudodata_commondata_tuple = collect(
+    "pseudodata_commondata_tuple", ("pseudodata_replica_collector_helper",)
+)
+
+"""
+Collect over multiple random filterseeds so as to generate multiple commondata instances.
+To be used in a Monte Carlo closure test fit.
+"""
+mc_replicas_closuretest_pseudodata_commondata_tuple = collect(
+    "closuretest_pseudodata_commondata_tuple", ("closure_test_replica_collector_helper",)
+)

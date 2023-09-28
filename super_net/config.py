@@ -1,5 +1,9 @@
+import jax
+
 from validphys.config import Config, Environment
 from validphys import covmats
+from validphys.covmats import dataset_t0_predictions
+
 from reportengine.configparser import explicit_node
 
 from super_net import commondata_utils
@@ -38,6 +42,55 @@ class SuperNetConfig(Config):
             name=group_name, datasets=datasets, dsinputs=data_input
         )
 
+    def produce_experimental_commondata_tuple(self, data):
+        """
+        returns a tuple (validphys nodes should be immutable)
+        of commondata instances with experimental central values
+
+        Parameters
+        ----------
+        data: super_net.core.SuperNetDataGroupSpec
+
+        Returns
+        -------
+        tuple
+            tuple of validphys.coredata.CommonData instances
+        """
+        return tuple(data.load_commondata_instance())
+    
+    def produce_closuretest_commondata_tuple(self, data, experimental_commondata_tuple, closure_test_pdf):
+        """
+        returns a tuple (validphys nodes should be immutable)
+        of commondata instances with experimental central values
+        replaced with theory predictions computed from a PDF `closure_test_pdf`
+        and fktables corresponding to datasets within data
+
+        Parameters
+        ----------
+        data: super_net.core.SuperNetDataGroupSpec
+
+        experimental_commondata_tuple: tuple
+            tuple of commondata with experimental central values
+
+        closure_test_pdf: validphys.core.PDF
+            PDF used to generate fake data
+
+        Returns
+        -------
+        tuple
+            tuple of validphys.coredata.CommonData instances
+        """
+
+        fake_data = []
+        for cd, ds in zip(experimental_commondata_tuple, data.datasets):
+            if cd.setname != ds.name:
+                raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
+            # replace central values with theory prediction from `closure_test_pdf`
+            fake_data.append(
+                cd.with_central_value(dataset_t0_predictions(ds, closure_test_pdf))
+            )
+        return tuple(fake_data)
+
     @explicit_node
     def produce_commondata_tuple(
         self, pseudodata=False, fakedata=False
@@ -53,14 +106,57 @@ class SuperNetConfig(Config):
 
         elif fakedata:
             # closure test fake-data
-            return commondata_utils.closuretest_commondata_tuple
+            return self.produce_closuretest_commondata_tuple
         
         elif pseudodata:
             # experimental central values + random noise from covmat
             return commondata_utils.pseudodata_commondata_tuple
         
         else:
-            return commondata_utils.experimental_commondata_tuple
+            return self.produce_experimental_commondata_tuple
+
+    def produce_mc_replica_seeds(self, monte_carlo_replicas=1, monte_carlo_replica_seed=1):
+        """
+        Generate a tuple of random seeds using jax.random.PRNGKey
+
+        Parameters
+        ----------
+        monte_carlo_replicas: int
+            number of monte carlo replicas
+        
+        monte_carlo_replica_seed: int
+            seed used to initialize jax random generator
+        
+        Returns
+        -------
+        tuple
+        """
+        rng = jax.random.PRNGKey(monte_carlo_replica_seed)
+        seeds = []
+        for _ in range(monte_carlo_replicas):
+            seeds.append(int(rng[0]))
+            key, rng = jax.random.split(rng)
+        return tuple(seeds)
+
+    def produce_pseudodata_replica_collector_helper(self, data, experimental_commondata_tuple, mc_replica_seeds=[]):
+        """
+        Helper allowing commondata_utils.pseudodata_commondata_tuple to collect over different
+        monte carlo seeds
+        """
+        res = []
+        for seed in mc_replica_seeds:
+            res.append({"data": data, "experimental_commondata_tuple":experimental_commondata_tuple, "filterseed":seed} )
+        return res
+    
+    def produce_closure_test_replica_collector_helper(self, data, closuretest_commondata_tuple, mc_replica_seeds=[]):
+        """
+        Helper allowing commondata_utils.closuretest_pseudodata_commondata_tuple to collect over different
+        monte carlo seeds
+        """
+        res = []
+        for seed in mc_replica_seeds:
+            res.append({"data": data, "closuretest_commondata_tuple":closuretest_commondata_tuple, "filterseed":seed} )
+        return res
 
 
     def produce_dataset_inputs_t0_predictions(self, data, t0set, use_t0):
