@@ -158,7 +158,6 @@ class SuperNetConfig(Config):
             res.append({"data": data, "closuretest_commondata_tuple":closuretest_commondata_tuple, "filterseed":seed} )
         return res
 
-
     def produce_dataset_inputs_t0_predictions(self, data, t0set, use_t0):
         """
         produce t0 predictions for all datasets in data
