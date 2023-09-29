@@ -64,5 +64,6 @@ Collect over multiple random filterseeds so as to generate multiple commondata i
 To be used in a Monte Carlo closure test fit.
 """
 mc_replicas_closuretest_pseudodata_commondata_tuple = collect(
-    "closuretest_pseudodata_commondata_tuple", ("closure_test_replica_collector_helper",)
+    "closuretest_pseudodata_commondata_tuple",
+    ("closure_test_replica_collector_helper",),
 )

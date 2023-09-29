@@ -10,7 +10,6 @@ from super_net import commondata_utils
 from super_net.core import SuperNetDataGroupSpec
 
 
-
 class Environment(Environment):
     pass
 
@@ -57,8 +56,10 @@ class SuperNetConfig(Config):
             tuple of validphys.coredata.CommonData instances
         """
         return tuple(data.load_commondata_instance())
-    
-    def produce_closuretest_commondata_tuple(self, data, experimental_commondata_tuple, closure_test_pdf):
+
+    def produce_closuretest_commondata_tuple(
+        self, data, experimental_commondata_tuple, closure_test_pdf
+    ):
         """
         returns a tuple (validphys nodes should be immutable)
         of commondata instances with experimental central values
@@ -84,7 +85,9 @@ class SuperNetConfig(Config):
         fake_data = []
         for cd, ds in zip(experimental_commondata_tuple, data.datasets):
             if cd.setname != ds.name:
-                raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
+                raise RuntimeError(
+                    f"commondata {cd} does not correspond to dataset {ds}"
+                )
             # replace central values with theory prediction from `closure_test_pdf`
             fake_data.append(
                 cd.with_central_value(dataset_t0_predictions(ds, closure_test_pdf))
@@ -92,10 +95,8 @@ class SuperNetConfig(Config):
         return tuple(fake_data)
 
     @explicit_node
-    def produce_commondata_tuple(
-        self, pseudodata=False, fakedata=False
-    ):
-        """ 
+    def produce_commondata_tuple(self, pseudodata=False, fakedata=False):
+        """
         Produces a commondata tuple node in the reportengine dag
         according to some options
         """
@@ -107,15 +108,17 @@ class SuperNetConfig(Config):
         elif fakedata:
             # closure test fake-data
             return self.produce_closuretest_commondata_tuple
-        
+
         elif pseudodata:
             # experimental central values + random noise from covmat
             return commondata_utils.pseudodata_commondata_tuple
-        
+
         else:
             return self.produce_experimental_commondata_tuple
 
-    def produce_mc_replica_seeds(self, monte_carlo_replicas=1, monte_carlo_replica_seed=1):
+    def produce_mc_replica_seeds(
+        self, monte_carlo_replicas=1, monte_carlo_replica_seed=1
+    ):
         """
         Generate a tuple of random seeds using jax.random.PRNGKey
 
@@ -123,10 +126,10 @@ class SuperNetConfig(Config):
         ----------
         monte_carlo_replicas: int
             number of monte carlo replicas
-        
+
         monte_carlo_replica_seed: int
             seed used to initialize jax random generator
-        
+
         Returns
         -------
         tuple
@@ -138,24 +141,40 @@ class SuperNetConfig(Config):
             key, rng = jax.random.split(rng)
         return tuple(seeds)
 
-    def produce_pseudodata_replica_collector_helper(self, data, experimental_commondata_tuple, mc_replica_seeds=[]):
+    def produce_pseudodata_replica_collector_helper(
+        self, data, experimental_commondata_tuple, mc_replica_seeds=[]
+    ):
         """
         Helper allowing commondata_utils.pseudodata_commondata_tuple to collect over different
         monte carlo seeds
         """
         res = []
         for seed in mc_replica_seeds:
-            res.append({"data": data, "experimental_commondata_tuple":experimental_commondata_tuple, "filterseed":seed} )
+            res.append(
+                {
+                    "data": data,
+                    "experimental_commondata_tuple": experimental_commondata_tuple,
+                    "filterseed": seed,
+                }
+            )
         return res
-    
-    def produce_closure_test_replica_collector_helper(self, data, closuretest_commondata_tuple, mc_replica_seeds=[]):
+
+    def produce_closure_test_replica_collector_helper(
+        self, data, closuretest_commondata_tuple, mc_replica_seeds=[]
+    ):
         """
         Helper allowing commondata_utils.closuretest_pseudodata_commondata_tuple to collect over different
         monte carlo seeds
         """
         res = []
         for seed in mc_replica_seeds:
-            res.append({"data": data, "closuretest_commondata_tuple":closuretest_commondata_tuple, "filterseed":seed} )
+            res.append(
+                {
+                    "data": data,
+                    "closuretest_commondata_tuple": closuretest_commondata_tuple,
+                    "filterseed": seed,
+                }
+            )
         return res
 
     def produce_dataset_inputs_t0_predictions(self, data, t0set, use_t0):
