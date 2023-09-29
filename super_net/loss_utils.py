@@ -19,7 +19,7 @@ validphys actions should return immutable objects
 class CentralCovmatIndex:
     central_values: jnp.array
     covmat: jnp.array
-    cv_indexes: jnp.array
+    central_values_idx: jnp.array
     
 
 
@@ -30,30 +30,7 @@ def central_exp_t0covmat_index(data, dataset_inputs_t0_predictions):
     and index of the central data values.
     
     """
-    cd_list = data.load_pseudo_commondata(
-        pseudodata=pseudodata,
-        filterseed=filterseed,
-        closure_test_pdf=closure_test_pdf,
-        fakedata=fakedata,
-    )
-
-    central_values = [cd.central_values for cd in cd_list]
-
-    central_values = jnp.array(pd.concat(central_values, axis=0))
-
-    covmat = jnp.array(
-        covmats.dataset_inputs_t0_covmat_from_systematics(
-            cd_list,
-            data_input=data.dsinputs,
-            use_weights_in_covmat=False,
-            norm_threshold=None,
-            dataset_inputs_t0_predictions=dataset_inputs_t0_predictions,
-        )
-    )
-
-    indices = jnp.arange(central_values.shape[0])
-
-    return central_values, covmat, indices
+    
 
 
 def central_mc_t0covmat_index():
