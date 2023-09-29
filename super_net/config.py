@@ -4,7 +4,7 @@ from validphys.config import Config, Environment
 from validphys import covmats
 from validphys.covmats import dataset_t0_predictions
 
-from reportengine.configparser import explicit_node
+from reportengine.configparser import explicit_node, ConfigError
 
 from super_net import commondata_utils
 from super_net.core import SuperNetDataGroupSpec
@@ -183,7 +183,7 @@ class SuperNetConfig(Config):
         """
 
         if not use_t0:
-            raise (
+            raise ConfigError(
                 f"use_t0 needs to be set to True so that dataset_inputs_t0_predictions can be generated"
             )
         t0_predictions = []
