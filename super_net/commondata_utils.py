@@ -3,7 +3,7 @@ from validphys.pseudodata import make_level1_data
 from reportengine import collect
 
 
-def pseudodata_commondata_tuple(data, experimental_commondata_tuple, filterseed=1):
+def pseudodata_commondata_tuple(data, experimental_commondata_tuple, replica_seed):
     """
     returns a tuple (validphys nodes should be immutable)
     of commondata instances with experimental central values
@@ -17,7 +17,7 @@ def pseudodata_commondata_tuple(data, experimental_commondata_tuple, filterseed=
     experimental_commondata_tuple: tuple
         tuple of commondata with experimental central values
 
-    filterseed: int, default is 1
+    replica_seed: int
         seed used for the sampling of random noise
 
     Returns
@@ -29,7 +29,7 @@ def pseudodata_commondata_tuple(data, experimental_commondata_tuple, filterseed=
     index = data.data_index()
     dataset_order = [cd.setname for cd in experimental_commondata_tuple]
     pseudodata_list = make_level1_data(
-        data, experimental_commondata_tuple, filterseed, index, sep_mult=True
+        data, experimental_commondata_tuple, replica_seed, index, sep_mult=True
     )
     pseudodata_list = sorted(
         pseudodata_list, key=lambda obj: dataset_order.index(obj.setname)
@@ -38,7 +38,7 @@ def pseudodata_commondata_tuple(data, experimental_commondata_tuple, filterseed=
 
 
 def closuretest_pseudodata_commondata_tuple(
-    data, closuretest_commondata_tuple, filterseed=1
+    data, closuretest_commondata_tuple, replica_seed
 ):
     """
     Like `pseudodata_commondata_tuple` but with closure test (fake-data) central values.
@@ -48,22 +48,22 @@ def closuretest_pseudodata_commondata_tuple(
     tuple
         tuple of validphys.coredata.CommonData instances
     """
-    return pseudodata_commondata_tuple(data, closuretest_commondata_tuple, filterseed)
+    return pseudodata_commondata_tuple(data, closuretest_commondata_tuple, replica_seed)
 
 
 """
-Collect over multiple random filterseeds so as to generate multiple commondata instances.
+Collect over multiple random seeds so as to generate multiple commondata instances.
 To be used in a Monte Carlo fit to experimental data.
 """
 mc_replicas_pseudodata_commondata_tuple = collect(
-    "pseudodata_commondata_tuple", ("pseudodata_replica_collector_helper",)
+    "pseudodata_commondata_tuple", ("replica_indices",)
 )
 
 """
-Collect over multiple random filterseeds so as to generate multiple commondata instances.
+Collect over multiple random seeds so as to generate multiple commondata instances.
 To be used in a Monte Carlo closure test fit.
 """
 mc_replicas_closuretest_pseudodata_commondata_tuple = collect(
     "closuretest_pseudodata_commondata_tuple",
-    ("closure_test_replica_collector_helper",),
+    ("replica_indices",),
 )

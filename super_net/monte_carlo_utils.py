@@ -19,6 +19,15 @@ from super_net.wmin_model import weight_minimization_grid
 
 log = logging.getLogger(__name__)
 
+def replica_seed(replica_index):
+    """
+    Generate a random integer given a replica_index.
+    Note that each replica index has a unique key.
+    """
+    key = jax.random.PRNGKey(replica_index)
+    randint = jax.random.randint(key, shape=(1,), minval=0, maxval=1e10)
+    return int(randint)
+
 
 def central_covmat_index_monte_carlo(
     data,
