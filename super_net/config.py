@@ -125,70 +125,15 @@ class SuperNetConfig(Config):
         else:
             return covmats.dataset_inputs_covmat_from_systematics
 
-    def produce_mc_replica_seeds(
-        self, monte_carlo_replicas=1, monte_carlo_replica_seed=1
-    ):
+    def produce_replica_indices(self, n_replicas):
         """
-        Generate a tuple of random seeds using jax.random.PRNGKey
-
-        Parameters
-        ----------
-        monte_carlo_replicas: int
-            number of monte carlo replicas
-
-        monte_carlo_replica_seed: int
-            seed used to initialize jax random generator
-
-        Returns
-        -------
-        tuple
+        Produce replica indexes over which to collect.
         """
-        rng = jax.random.PRNGKey(monte_carlo_replica_seed)
-        seeds = []
-        for _ in range(monte_carlo_replicas):
-            seeds.append(int(rng[0]))
-            key, rng = jax.random.split(rng)
-        return tuple(seeds)
-
-    def produce_pseudodata_replica_collector_helper(
-        self, data, experimental_commondata_tuple, mc_replica_seeds=[]
-    ):
-        """
-        Helper allowing commondata_utils.pseudodata_commondata_tuple to collect over different
-        monte carlo seeds
-        """
-        res = []
-        for seed in mc_replica_seeds:
-            res.append(
-                {
-                    "data": data,
-                    "experimental_commondata_tuple": experimental_commondata_tuple,
-                    "filterseed": seed,
-                }
-            )
-        return res
-
-    def produce_closure_test_replica_collector_helper(
-        self, data, closuretest_commondata_tuple, mc_replica_seeds=[]
-    ):
-        """
-        Helper allowing commondata_utils.closuretest_pseudodata_commondata_tuple to collect over different
-        monte carlo seeds
-        """
-        res = []
-        for seed in mc_replica_seeds:
-            res.append(
-                {
-                    "data": data,
-                    "closuretest_commondata_tuple": closuretest_commondata_tuple,
-                    "filterseed": seed,
-                }
-            )
-        return res
+        return [{"replica_index":i} for i in range(n_replicas)]
 
     def produce_dataset_inputs_t0_predictions(self, data, t0set, use_t0):
         """
-        produce t0 predictions for all datasets in data
+        Produce t0 predictions for all datasets in data
         """
 
         if not use_t0:
