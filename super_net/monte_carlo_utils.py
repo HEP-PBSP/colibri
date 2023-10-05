@@ -28,6 +28,8 @@ def replica_seed(replica_index):
     randint = jax.random.randint(key, shape=(1,), minval=0, maxval=1e10)
     return int(randint)
 
+def trval_seed(trval_index):
+    replica_seed(trval_index)
 
 def central_covmat_index_monte_carlo(
     data,

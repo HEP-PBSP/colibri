@@ -131,6 +131,15 @@ class SuperNetConfig(Config):
         """
         return [{"replica_index":i} for i in range(n_replicas)]
 
+    def produce_trval_replica_indices(self, n_replicas, use_same_trval_split_per_replica=False, trval_index_default=1):
+        """
+        Produce replica and training validation split indexes over which to collect.
+        """
+        if use_same_trval_split_per_replica:
+            return [{"replica_index":i, "trval_index":trval_index_default} for i in range(n_replicas)]
+        else:
+            return [{"replica_index":i, "trval_index":i} for i in range(n_replicas)]
+
     def produce_dataset_inputs_t0_predictions(self, data, t0set, use_t0):
         """
         Produce t0 predictions for all datasets in data

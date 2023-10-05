@@ -1,3 +1,8 @@
+import pandas as pd
+from dataclasses import dataclass
+
+import jax.numpy as jnp
+
 from validphys.pseudodata import make_level1_data
 
 from reportengine import collect
@@ -5,7 +10,7 @@ from reportengine import collect
 
 def pseudodata_commondata_tuple(data, experimental_commondata_tuple, replica_seed):
     """
-    returns a tuple (validphys nodes should be immutable)
+    Returns a tuple (validphys nodes should be immutable)
     of commondata instances with experimental central values
     fluctuated with random noise sampled from experimental
     covariance matrix
@@ -67,3 +72,57 @@ mc_replicas_closuretest_pseudodata_commondata_tuple = collect(
     "closuretest_pseudodata_commondata_tuple",
     ("replica_indices",),
 )
+
+"""
+validphys actions should return immutable objects
+"""
+
+
+@dataclass(frozen=True)
+class CentralCovmatIndex:
+    central_values: jnp.array
+    covmat: jnp.array
+    central_values_idx: jnp.array
+
+
+def central_covmat_index(commondata_tuple, covariance_matrix):
+    """
+    Given a commondata_tuple and a covariance_matrix, generated
+    according to respective explicit node in config.py, store
+    relevant data into CentralCovmatIndex dataclass.
+
+    Parameters
+    ----------
+    commondata_tuple: tuple
+        tuple of commondata instances, is generated as explicit node
+        (see config.produce_commondata_tuple) and accordingly to the
+        specified options (pseudodata, fakedata).
+
+    covariance_matrix: jnp.array
+        covariance matrix, is generated as explicit node
+        (see config.covariance_matrix) can be either experimental
+        or t0 covariance matrix depending on whether `use_t0` is
+        True or False
+
+    Returns
+    -------
+    CentralCovmatIndex dataclass
+        dataclass containing central values, covariance matrix and
+        index of central values
+    """
+    central_values = jnp.array(
+        pd.concat([cd.central_values for cd in commondata_tuple], axis=0)
+    )
+    central_values_idx = jnp.arange(central_values.shape[0])
+
+    return CentralCovmatIndex(
+        central_values=central_values,
+        central_values_idx=central_values_idx,
+        covmat=covariance_matrix,
+    )
+
+
+"""
+Collect central_covmat_index over multiple replicas
+"""
+mc_central_covmat_index = collect("central_covmat_index", ("replica_indices",))

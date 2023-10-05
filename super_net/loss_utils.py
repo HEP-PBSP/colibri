@@ -1,4 +1,3 @@
-import jax
 import jax.numpy as jnp
 
 import numpy as np
@@ -10,138 +9,36 @@ from validphys import covmats
 from reportengine import collect
 from dataclasses import dataclass
 
+from super_net.commondata_utils import CentralCovmatIndex
 
 
-"""
-validphys actions should return immutable objects
-"""
 @dataclass(frozen=True)
-class CentralCovmatIndex:
-    central_values: jnp.array
-    covmat: jnp.array
-    central_values_idx: jnp.array
-    
+class TrainCentralCovmatIndex(CentralCovmatIndex):
+    n_training_points: int
 
 
-
-def central_exp_t0covmat_index(data, dataset_inputs_t0_predictions):
-    """
-    Used to get experimental central data values, t0 covariance matrix
-    and index of the central data values.
-    
-    """
-    
-
-
-def central_mc_t0covmat_index():
-    """
-    """
-
-def central_ct_t0covmat_index():
-    """
-    """
-
-
-# @check_data_is_super_net(data)
-def central_covmat_index(
-    data,
-    dataset_inputs_t0_predictions,
-    pseudodata=False,
-    filterseed=1,
-    closure_test_pdf=None,
-    fakedata=False,
-):
-    """
-    Used to get data values, t0 covariance matrix,
-    and indices of data values.
-
-    If pseudodata is False, then the experimental data values are
-    returned, otherwise pseudo data is generated with random
-    seed given by `filterseed`
-
-    Parameters
-    ----------
-    data : super_net.core.SuperNetDataGroupSpec instance
-
-    dataset_inputs_t0_predictions : list[jnp.array]
-        The t0 predictions for all datasets.
-
-    pseudodata : bool, default is False
-            if True pseudo data generated with `make_level1_data` function
-            is used instead of experimental central values
-
-    filterseed : int, default is 1
-            seed used to generate pseudo data with `make_level1_data` function
-
-    Returns
-    -------
-    tuple
-        3D tuple containing
-        - jnp.ndarray of central values of data
-        - jnp.ndarray for t0 covariance matrix of data
-        - jnp.ndarray of indices of data values
-    """
-
-    cd_list = data.load_pseudo_commondata(
-        pseudodata=pseudodata,
-        filterseed=filterseed,
-        closure_test_pdf=closure_test_pdf,
-        fakedata=fakedata,
-    )
-
-    central_values = [cd.central_values for cd in cd_list]
-
-    central_values = jnp.array(pd.concat(central_values, axis=0))
-
-    covmat = jnp.array(
-        covmats.dataset_inputs_t0_covmat_from_systematics(
-            cd_list,
-            data_input=data.dsinputs,
-            use_weights_in_covmat=False,
-            norm_threshold=None,
-            dataset_inputs_t0_predictions=dataset_inputs_t0_predictions,
-        )
-    )
-
-    indices = jnp.arange(central_values.shape[0])
-
-    return central_values, covmat, indices
+@dataclass(frozen=True)
+class ValidationCentralCovmatIndex(CentralCovmatIndex):
+    n_validation_points: int
 
 
 def train_validation_split(
-    central_covmat_index,
-    test_size=0.2,
-    trval_seed=42,
+    central_covmat_index: jnp.array,
+    trval_seed: int,
+    hyperopt: bool = False,
+    bayesian_fit: bool = False,
+    test_size: float = 0.2,
 ):
     """
-    Get training validation split for the data values.
-
-    Parameters
-    ----------
-    central_covmat_index : super_net.loss_utils.central_covmat_index function/provider
-
-    test_size : float, default is 0.2
-            size of the test/validation set, float between 0 and 1
-
-    trval_seed : int, default is 42
-                integer specifiying the random state of the training
-                test split
-
-    Returns
-    -------
-    tuple
-        6D tuple containing:
-        - jnp.ndarray of training central values
-        - jnp.ndarray of training covmat
-        - jnp.ndarray of training indices
-        - jnp.ndarray of validation central values
-        - jnp.ndarray of validation covmat
-        - jnp.ndarray of validation indices
+    TODO
     """
+    central_values = central_covmat_index.central_values
+    covmat = central_covmat_index.covmat
+    central_values_indices = central_covmat_index.central_values_idx
 
     central_values, covmat, indices = central_covmat_index
 
-    # Perform train-test split on indices
+    # Perform train-validation split on indices
     indices_train, indices_val = train_test_split(
         indices, test_size=test_size, random_state=trval_seed
     )
@@ -206,7 +103,6 @@ def data_validation(train_validation_split):
     """
     Used to get validation data values, t0 validation covariance matrix,
     and indices of validation data values.
-
 
     Returns
     -------
