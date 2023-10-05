@@ -113,6 +113,18 @@ class SuperNetConfig(Config):
         else:
             return self.produce_experimental_commondata_tuple
 
+    @explicit_node
+    def produce_covariance_matrix(self, use_t0: bool = False):
+        """Modifies which action is used as covariance matrix
+        depending on the flag `use_t0`
+        """
+        from super_net import covmats
+
+        if use_t0:
+            return covmats.dataset_inputs_t0_covmat_from_systematics
+        else:
+            return covmats.dataset_inputs_covmat_from_systematics
+
     def produce_mc_replica_seeds(
         self, monte_carlo_replicas=1, monte_carlo_replica_seed=1
     ):
