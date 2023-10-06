@@ -7,7 +7,6 @@ import optax
 import numpy as np
 
 from super_net.loss_utils import (
-    central_covmat_index,
     train_validation_split,
     data_training,
     data_validation,
@@ -29,7 +28,11 @@ def replica_seed(replica_index):
     return int(randint)
 
 def trval_seed(trval_index):
-    replica_seed(trval_index)
+    """
+    Returns a PRNGKey key given `trval_index` seed.
+    """
+    key = jax.random.PRNGKey(trval_index)
+    return key
 
 def central_covmat_index_monte_carlo(
     data,
