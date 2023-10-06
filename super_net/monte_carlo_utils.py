@@ -7,7 +7,6 @@ import optax
 import numpy as np
 
 from super_net.loss_utils import (
-    train_validation_split,
     data_training,
     data_validation,
 )

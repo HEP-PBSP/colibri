@@ -2,7 +2,7 @@
 TODO
 """
 import pandas as pd
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 import jax.numpy as jnp
 
@@ -86,6 +86,9 @@ class CentralCovmatIndex:
     central_values: jnp.array
     covmat: jnp.array
     central_values_idx: jnp.array
+
+    def to_dict(self):
+        return asdict(self)
 
 
 def central_covmat_index(commondata_tuple, covariance_matrix):

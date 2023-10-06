@@ -23,11 +23,11 @@ class ValidationCentralCovmatIndex(CentralCovmatIndex):
 
 @dataclass(frozen=True)
 class TrainValidationSplit:
-    training_data: dataclass
-    validation_data: dataclass
+    training_data: TrainCentralCovmatIndex = None
+    validation_data: ValidationCentralCovmatIndex = None
 
 
-def train_validation_split(
+def make_data_values(
     central_covmat_index: jnp.array,
     trval_seed: jnp.array,
     hyperopt: bool = False,
@@ -39,7 +39,11 @@ def train_validation_split(
     """
 
     if bayesian_fit:
-        return central_covmat_index
+        fit_data = TrainCentralCovmatIndex(
+            central_covmat_index.to_dict(),
+            n_training_points=len(central_covmat_index.central_values),
+        )
+        return TrainValidationSplit(training_data=fit_data)
 
     if hyperopt:
         raise ConfigError("hyperopt not implemented yet")
@@ -81,6 +85,6 @@ def train_validation_split(
 """
 Collect over trval and replica indices.
 """
-mc_replicas_train_validation_split = collect(
-    "train_validation_split", ("trval_replica_indices",)
+mc_replicas_make_data_values = collect(
+    "make_data_values", ("trval_replica_indices",)
 )
