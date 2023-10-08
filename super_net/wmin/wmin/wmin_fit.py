@@ -16,7 +16,6 @@ from wmin.wmin_model import WeightMinimizationGrid
 log = logging.getLogger(__name__)
 
 
-
 @dataclass(frozen=True)
 class WeightMinimizationFit(WeightMinimizationGrid):
     optimised_wmin_weights: jnp.array
@@ -44,13 +43,19 @@ def weight_minimization_fit(
     @jax.jit
     def loss_training(weights, batch_idx):
         wmin_weights = jnp.concatenate((jnp.array([1.0]), weights))
-        pdf = jnp.einsum("i,ijk", wmin_weights,weight_minimization_grid.wmin_INPUT_GRID)
-        return make_chi2_training_data_with_positivity(pdf, batch_idx, alpha, lambda_positivity)
+        pdf = jnp.einsum(
+            "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+        )
+        return make_chi2_training_data_with_positivity(
+            pdf, batch_idx, alpha, lambda_positivity
+        )
 
     @jax.jit
     def loss_validation(weights):
         wmin_weights = jnp.concatenate((jnp.array([1.0]), weights))
-        pdf = jnp.einsum("i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID)
+        pdf = jnp.einsum(
+            "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+        )
         return make_chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
 
     @jax.jit
@@ -65,8 +70,10 @@ def weight_minimization_fit(
 
     opt_state = optimizer_provider.init(weight_minimization_grid.init_wmin_weights)
     weights = weight_minimization_grid.init_wmin_weights
-    
-    data_batch = data_batches(make_data_values.training_data.n_training_points, batch_size, batch_seed)
+
+    data_batch = data_batches(
+        make_data_values.training_data.n_training_points, batch_size, batch_seed
+    )
     batches = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
     batch_size = data_batch.batch_size
@@ -82,7 +89,10 @@ def weight_minimization_fit(
 
             epoch_loss += loss_training(weights, batch) / batch_size
 
-        epoch_val_loss += loss_validation(weights) / make_data_values.validation_data.n_validation_points
+        epoch_val_loss += (
+            loss_validation(weights)
+            / make_data_values.validation_data.n_validation_points
+        )
         epoch_loss /= num_batches
 
         loss.append(epoch_loss)
@@ -103,11 +113,17 @@ def weight_minimization_fit(
         **weight_minimization_grid.to_dict(),
         optimised_wmin_weights=weights,
         training_loss=loss,
-        validation_loss=val_loss
+        validation_loss=val_loss,
     )
 
 
 """
 Collect over multiple replica fits.
 """
-mc_replicas_weight_minimization_fit = collect("weight_minimization_fit", ("all_wmin_collect_indices",))
+mc_replicas_weight_minimization_fit = collect(
+    "weight_minimization_fit", ("all_wmin_collect_indices",)
+)
+
+
+def monte_carlo_wmin_fit(lhapdf_from_collected_weights):
+    log.info("Monte Carlo weight minimization fit completed!")

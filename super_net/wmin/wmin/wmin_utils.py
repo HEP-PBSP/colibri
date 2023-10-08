@@ -6,12 +6,17 @@ import pathlib
 import logging
 
 import lhapdf
-import numpy as np
 
 import jax
 import jax.numpy as jnp
 
-from validphys.lhio import load_all_replicas, write_replica, rep_matrix
+from validphys.lhio import (
+    load_all_replicas,
+    write_replica,
+    rep_matrix,
+    generate_replica0,
+)
+from validphys import core
 
 from super_net.checks import check_wminpdfset_is_montecarlo
 
@@ -74,47 +79,21 @@ def weights_initializer_provider(
             key=rng, shape=(shape,), minval=uniform_minval, maxval=uniform_maxval
         )
         return initializer
-    
 
 
 @check_wminpdfset_is_montecarlo
-def lhapdf_from_weights(
+def lhapdf_from_collected_weights(
     wminpdfset,
-    weights,
+    mc_replicas_weight_minimization_fit,
+    n_replicas,
     *,
-    folder: str = None,
-    set_name: str = None,
+    folder=None,
+    set_name=None,
     errortype: str = "replicas",
-    wmin_basis_idxs: np.array,
-    rep1_idxs: int,
-) -> pathlib.Path:
+):
     """
     TODO
-
-    Parameters
-    ----------
-    wminpdfset: validphys.core.PDF
-
-    weights: np.ndarray
-        np.array of size monte_carlo_replicas x n_replicas_wmin.
-
-    folder : str, default is None
-
-    set_name : str, default is None
-
-    errortype: str = "replicas"
-
-    wmin_basis_idxs: np.array
-
-    rep1_idxs: int
-
-    Returns
-    -------
-
-    Weights is
     """
-
-    mc_replicas, nr_wmin_rep = np.shape(weights)
 
     original_pdf = pathlib.Path(lhapdf.paths()[-1]) / str(wminpdfset)
     if folder is None:
@@ -135,7 +114,7 @@ def lhapdf_from_weights(
             if l.find("SetDesc:") >= 0:
                 out_stream.write(f'SetDesc: "Weight-minimized {wminpdfset}"\n')
             elif l.find("NumMembers:") >= 0:
-                out_stream.write(f"NumMembers: {mc_replicas + 1}\n")
+                out_stream.write(f"NumMembers: {n_replicas + 1}\n")
             elif l.find("ErrorType: replicas") >= 0:
                 out_stream.write(f"ErrorType: {errortype}\n")
             else:
@@ -145,25 +124,29 @@ def lhapdf_from_weights(
     replicas_df = rep_matrix(grids)
 
     # each wmin replica could in principle have its own wminpdfset replica basis
-    for i, (wmin_basis_idx, rep1_idx, weight) in enumerate(
-        zip(wmin_basis_idxs, rep1_idxs, weights)
-    ):
+    for i, wmin_fit in enumerate(mc_replicas_weight_minimization_fit):
         # take care of different indexing. Central replica is at index 1
-        wmin_basis_idx = np.array(wmin_basis_idx) + 1
-        rep1_idx += 1
+        wmin_basis_idx = wmin_fit.wmin_basis_idx + 1
+        wmin_central_replica = wmin_fit.wmin_central_replica + 1
+        optimised_wmin_weights = wmin_fit.optimised_wmin_weights
 
         rep0, replica = (
-            replicas_df.loc[:, [int(rep1_idx)]],
+            replicas_df.loc[:, [int(wmin_central_replica)]],
             replicas_df.loc[:, wmin_basis_idx],
         )
 
-        wm_replica = rep0.dot([1.0 - np.sum(weight)]) + replica.dot(weight)
+        wm_replica = rep0.dot([1.0 - jnp.sum(optimised_wmin_weights)]) + replica.dot(
+            optimised_wmin_weights
+        )
 
         # for i, replica in tqdm(enumerate(result), total=len(weights)):
         wm_headers = f"PdfType: replica\nFormat: lhagrid1\nFromMCReplica: {i}\n"
         write_replica(i + 1, wm_pdf, wm_headers.encode("UTF-8"), wm_replica)
 
-    return wm_pdf
+    # TODO
+    # read pdf into validphys.core.PDF and generate central replica
 
-
-
+    # pdf_obj = core.PDF(wm_pdf)
+    # import IPython
+    # IPython.embed()
+    # generate_replica0(pdf_obj)

@@ -3,8 +3,10 @@ TODO
 """
 from super_net.config import SuperNetConfig, Environment
 
+
 class Environment(Environment):
     pass
+
 
 class WminConfig(SuperNetConfig):
     """
