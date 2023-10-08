@@ -1,5 +1,3 @@
-import jax
-
 from validphys.config import Config, Environment
 from validphys import covmats
 from validphys.covmats import dataset_t0_predictions

@@ -4,8 +4,8 @@ build-backend = "flit_core.buildapi"
 
 [tool.flit.metadata]
 module = "super_net"
-author = "PBSP"
-author-email = "jmm232@cam.ac.uk"
+author = "Mark N. Costantini"
+author-email = "mnc33@cam.ac.uk"
 home-page = "https://github.com/J-M-Moore/super_net"
 
 [tool.flit.metadata.requires-extra]
