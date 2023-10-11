@@ -11,6 +11,57 @@ from validphys.pseudodata import make_level1_data
 from reportengine import collect
 
 
+def experimental_commondata_tuple(data):
+    """
+    returns a tuple (validphys nodes should be immutable)
+    of commondata instances with experimental central values
+
+    Parameters
+    ----------
+    data: super_net.core.SuperNetDataGroupSpec
+
+    Returns
+    -------
+    tuple
+        tuple of validphys.coredata.CommonData instances
+    """
+    return tuple(data.load_commondata_instance())
+
+
+def closuretest_commondata_tuple(data, experimental_commondata_tuple, closure_test_pdf):
+    """
+    returns a tuple (validphys nodes should be immutable)
+    of commondata instances with experimental central values
+    replaced with theory predictions computed from a PDF `closure_test_pdf`
+    and fktables corresponding to datasets within data
+
+    Parameters
+    ----------
+    data: super_net.core.SuperNetDataGroupSpec
+
+    experimental_commondata_tuple: tuple
+        tuple of commondata with experimental central values
+
+    closure_test_pdf: validphys.core.PDF
+        PDF used to generate fake data
+
+    Returns
+    -------
+    tuple
+        tuple of validphys.coredata.CommonData instances
+    """
+
+    fake_data = []
+    for cd, ds in zip(experimental_commondata_tuple, data.datasets):
+        if cd.setname != ds.name:
+            raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
+        # replace central values with theory prediction from `closure_test_pdf`
+        fake_data.append(
+            cd.with_central_value(dataset_t0_predictions(ds, closure_test_pdf))
+        )
+    return tuple(fake_data)
+
+
 def pseudodata_commondata_tuple(data, experimental_commondata_tuple, replica_seed):
     """
     Returns a tuple (validphys nodes should be immutable)
