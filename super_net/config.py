@@ -59,7 +59,7 @@ class SuperNetConfig(Config):
             return commondata_utils.experimental_commondata_tuple
 
     @explicit_node
-    def produce_covariance_matrix(self, use_t0: bool = False):
+    def produce_covariance_matrix(self, use_t0: bool = True):
         """Modifies which action is used as covariance matrix
         depending on the flag `use_t0`
         """
