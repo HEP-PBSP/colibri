@@ -7,6 +7,7 @@ from dataclasses import dataclass, asdict
 import jax.numpy as jnp
 
 from validphys.pseudodata import make_level1_data
+from validphys.covmats import dataset_t0_predictions
 
 from reportengine import collect
 

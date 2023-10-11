@@ -1,6 +1,5 @@
 from validphys.config import Config, Environment
 from validphys import covmats
-from validphys.covmats import dataset_t0_predictions
 
 from reportengine.configparser import explicit_node, ConfigError
 
