@@ -1,12 +1,12 @@
 # super_net
 A reportengine app to perform PDF fits in a new parametrisation.
 
-## Super Net Installation
 
+## Super Net Installation
+Create a working environment with conda (or mamba):
 ```
-conda create -n super_net -y && conda activate super_net
-conda install mamba python=3.9.2 -c conda-forge -y
-mamba install nnpdf=4.0.6 -c https://packages.nnpdf.science/conda -y
+mamba create nnpdf=4.0.6 -n name_environment -y && conda activate name_environment
+mamba install -c conda-forge jax optax flax
 mamba install flit -c conda-forge -y
 cd super_net
 flit install --symlink
