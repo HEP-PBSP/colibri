@@ -13,6 +13,10 @@ class WminConfig(SuperNetConfig):
     WminConfig class Inherits from super_net.config.SuperNetConfig
     """
 
+    def parse_wminpdfset(self, name):
+        """PDF set used to generate the weight minimization grid"""
+        return self.parse_pdf(name)
+    
     def produce_wmin_grid_indices(
         self,
         n_replicas,

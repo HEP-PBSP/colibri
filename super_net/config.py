@@ -99,10 +99,6 @@ class SuperNetConfig(Config):
             t0_predictions.append(covmats.dataset_t0_predictions(dataset, t0set))
         return t0_predictions
 
-    def parse_wminpdfset(self, name):
-        """PDF set used to generate the weight minimization grid"""
-        return self.parse_pdf(name)
-
     def parse_closure_test_pdf(self, name):
         """PDF set used to generate fakedata"""
         return self.parse_pdf(name)

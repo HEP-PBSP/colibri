@@ -14,11 +14,9 @@ from validphys.lhio import (
     load_all_replicas,
     write_replica,
     rep_matrix,
-    generate_replica0,
 )
-from validphys import core
 
-from super_net.checks import check_wminpdfset_is_montecarlo
+from wmin.checks import check_wminpdfset_is_montecarlo
 
 log = logging.getLogger(__name__)
 

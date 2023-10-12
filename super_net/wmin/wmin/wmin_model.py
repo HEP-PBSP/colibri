@@ -9,7 +9,7 @@ from dataclasses import dataclass, asdict
 from validphys import convolution
 
 from super_net.constants import XGRID
-from super_net.checks import check_wminpdfset_is_montecarlo
+from wmin.checks import check_wminpdfset_is_montecarlo
 from wmin.wmin_utils import weights_initializer_provider
 
 
