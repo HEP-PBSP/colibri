@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
+from validphys import covmats
 
 def sqrt_covmat_jax(covariance_matrix):
     """
@@ -39,3 +40,50 @@ def sqrt_covmat_jax(covariance_matrix):
     decomp = jla.cholesky(correlation_matrix)
     sqrt_matrix = (decomp * sqrt_diags).T
     return sqrt_matrix
+
+
+def dataset_inputs_covmat_from_systematics(
+    data,
+    commondata_tuple,
+):
+    """ 
+    Similar to validphys.covmats.dataset_inputs_covmat_from_systematics
+    but jax.numpy array.
+
+    Note: see production rule in `config.py` for commondata_tuple options.
+    """
+
+    covmat = jnp.array(
+        covmats.dataset_inputs_covmat_from_systematics(
+            commondata_tuple,
+            data.dsinputs,
+            use_weights_in_covmat=False,
+            norm_threshold=None,
+            _list_of_central_values=None,
+            _only_additive=False,
+        )
+    )
+    return covmat
+
+
+def dataset_inputs_t0_covmat_from_systematics(
+    data,
+    commondata_tuple,
+    dataset_inputs_t0_predictions,
+):
+    """
+    Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
+    but jax.numpy array.
+
+    Note: see production rule in `config.py` for commondata_tuple options.
+    """
+    covmat = jnp.array(
+        covmats.dataset_inputs_t0_covmat_from_systematics(
+            commondata_tuple,
+            data_input=data.dsinputs,
+            use_weights_in_covmat=False,
+            norm_threshold=None,
+            dataset_inputs_t0_predictions=dataset_inputs_t0_predictions,
+        )
+    )
+    return covmat

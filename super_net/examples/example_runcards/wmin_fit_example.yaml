@@ -17,7 +17,7 @@ dataset_inputs:
   - {'dataset': 'HERACOMBCCEM'} 
   - {'dataset':'HERACOMB_SIGMARED_B'}
   - {'dataset': 'HERACOMB_SIGMARED_C'}
-
+  
 positivity:
   posdatasets:
   - {dataset: POSF2U, maxlambda: 1e6}        # Positivity Lagrange Multiplier
@@ -33,33 +33,30 @@ positivity:
   - {dataset: POSXSB, maxlambda: 1e6}
   - {dataset: POSXGL, maxlambda: 1e6}
 
-  # - {dataset: POSDYU, maxlambda: 1e10}      # this is for hadronic data 
-  # - {dataset: POSDYD, maxlambda: 1e10}
-  # - {dataset: POSDYS, maxlambda: 1e10}
+  - {dataset: POSDYU, maxlambda: 1e10}      # this is for hadronic data 
+  - {dataset: POSDYD, maxlambda: 1e10}
+  - {dataset: POSDYS, maxlambda: 1e10}
+
 
 theoryid: 400
-
 use_cuts: internal
-use_t0: True
 
-t0pdfset: NNPDF40_nnlo_as_01180
-wminpdfset: NNPDF40_nnlo_as_01180 #210623_mnc_disonly_linear_1000
-Q0: 1.65
 
-patience: 15
-max_epochs: 4000
-learning_rate: 1e-4
-optimizer: adam
+# wmin parametrisation
+wminpdfset: NNPDF40_nnlo_as_01180
 n_replicas_wmin: 50
-lambda_positivity: 100000 # 3000000
-pos_test_size: 0.1
 
-batch_size: 64
-batch_seed: 1
-pseudodata: true
-# filterseed: 2
+# monte carlo fit
+pseudodata: True
+use_t0: True
+t0pdfset: NNPDF40_nnlo_as_01180
+n_replicas: 99
 
-monte_carlo_replicas: 20
+# training specs
+max_epochs: 1000
+patience: 20
+
+set_name: wmin_example
 
 actions_:
-  - snmc_fit
+- monte_carlo_wmin_fit

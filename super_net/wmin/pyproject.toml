@@ -3,7 +3,7 @@ requires = ["flit_core >=2,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.metadata]
-module = "super_net"
+module = "wmin"
 author = "Mark N. Costantini"
 author-email = "mnc33@cam.ac.uk"
 home-page = "https://github.com/J-M-Moore/super_net"
@@ -20,4 +20,4 @@ doc = [
 ]
 
 [tool.flit.scripts]
-super_net = "super_net.app:main"
+wmin = "wmin.app:main"

@@ -1,113 +1,171 @@
+"""
+TODO
+"""
 import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
-from super_net.theory_predictions import make_pred_data, make_penalty_posdata
 from super_net.covmats import sqrt_covmat_jax
 
+from reportengine import collect
 
-def make_chi2_training_data(
-    data,
-    data_training,
-    posdatasets,
-    posdata_training_index
-):
+
+def make_chi2_training_data(make_data_values, make_pred_data):
     """
-    Compute the chi2 between experimental (or pseudo data) central values
-    and theoretical predictions using the (t0) experimental covariance matrix.
-    The chi2 is computed on a data batch.
-
-    Returns
-    -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid, and indexes for
-        the data batch (random subset of datapoints of the
-        whole dataset) in input and returning the chi2
-        between experimental central values and th. predictions
-        using the exp covmat.
+    TODO
     """
-
-    central_values_train = data_training["central_values_train"]
-    covmat_train = data_training["t0covmat_train"]
-    indices_train = data_training["central_values_train_index"]
-
-    pred = make_pred_data(data)
-
-    pos_penalty_func = make_penalty_posdata(posdatasets)
+    training_data = make_data_values.training_data
+    central_values = training_data.central_values
+    covmat = training_data.covmat
+    central_values_idx = training_data.central_values_idx
 
     @jax.jit
-    def chi2(pdf, batch_idx, alpha, lambda_positivity):
+    def chi2(pdf, batch_idx):
         """
-        Compute batched chi2
-
-        Parameters
-        ----------
-        pdf :
-
-        batch_idx :
-
+        TODO
         """
-        diff = pred(pdf)[indices_train][batch_idx] - central_values_train[batch_idx]
+        diff = (
+            make_pred_data(pdf)[central_values_idx][batch_idx]
+            - central_values[batch_idx]
+        )
 
         # batch covariance matrix before decomposing it
-        batched_covmat = covmat_train[batch_idx][:, batch_idx]
+        batched_covmat = covmat[batch_idx][:, batch_idx]
         # decompose covmat after having batched it!
         sqrt_covmat = jnp.array(sqrt_covmat_jax(batched_covmat))
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
         loss = jnp.sum(chi2_vec**2)
-        
-        pos_penalty = pos_penalty_func(pdf, alpha, lambda_positivity)[posdata_training_index]
-        loss += jnp.sum(pos_penalty)
-        
         return loss
 
     return chi2
 
 
-def make_chi2_validation_data(data, data_validation, posdatasets, posdata_validation_index):
+mc_replicas_make_chi2_training_data = collect(
+    "make_chi2_training_data", ("trval_replica_indices",)
+)
+
+
+def make_chi2_training_data_with_positivity(
+    make_data_values, make_pred_data, make_posdata_split, make_penalty_posdata
+):
     """
-    Compute the chi2 on the validation set. The chi2 is
-    computed between experimental central values
-    and theoretical predictions using the experimental
-    covariance matrix.
-
-    Returns
-    -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid in input and returning the chi2
-        between experimental central values and th. predictions
-        using the exp covmat.
+    TODO
     """
+    training_data = make_data_values.training_data
+    central_values = training_data.central_values
+    covmat = training_data.covmat
+    central_values_idx = training_data.central_values_idx
 
-    central_values_val = data_validation["central_values_val"]
-    covmat_val = data_validation["t0covmat_val"]
-    indices_val = data_validation["central_values_val_index"]
-
-    pred = make_pred_data(data)
-
-    pos_penalty_func = make_penalty_posdata(posdatasets)
+    posdata_training_idx = make_posdata_split.training
 
     @jax.jit
-    def chi2(pdf, alpha, lambda_positivity):
+    def chi2(pdf, batch_idx, alpha, lambda_positivity):
         """
-
-        Parameters
-        ----------
-        pdf :
-
+        TODO
         """
-        diff = pred(pdf)[indices_val] - central_values_val
+        diff = (
+            make_pred_data(pdf)[central_values_idx][batch_idx]
+            - central_values[batch_idx]
+        )
 
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat_val))
+        # batch covariance matrix before decomposing it
+        batched_covmat = covmat[batch_idx][:, batch_idx]
+        # decompose covmat after having batched it!
+        sqrt_covmat = jnp.array(sqrt_covmat_jax(batched_covmat))
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
         loss = jnp.sum(chi2_vec**2)
 
-        pos_penalty = pos_penalty_func(pdf, alpha, lambda_positivity)[posdata_validation_index]
+        # add penalty term due to positivity
+        pos_penalty = make_penalty_posdata(pdf, alpha, lambda_positivity)[
+            posdata_training_idx
+        ]
         loss += jnp.sum(pos_penalty)
+
         return loss
 
     return chi2
+
+
+mc_replicas_make_chi2_training_data_with_positivity = collect(
+    "make_chi2_training_data_with_positivity", ("trval_replica_indices",)
+)
+
+
+def make_chi2_validation_data(make_data_values, make_pred_data):
+    """
+    TODO
+    """
+    validation_data = make_data_values.validation_data
+    central_values = validation_data.central_values
+    covmat = validation_data.covmat
+    central_values_idx = validation_data.central_values_idx
+
+    @jax.jit
+    def chi2(pdf):
+        """
+        TODO
+        note: no batches training for validation data
+        """
+        diff = make_pred_data(pdf)[central_values_idx] - central_values
+
+        # decompose covmat
+        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+
+        # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
+        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
+        loss = jnp.sum(chi2_vec**2)
+        return loss
+
+    return chi2
+
+
+mc_replicas_make_chi2_validation_data = collect(
+    "make_chi2_validation_data", ("trval_replica_indices",)
+)
+
+
+def make_chi2_validation_data_with_positivity(
+    make_data_values, make_pred_data, make_posdata_split, make_penalty_posdata
+):
+    """
+    TODO
+    """
+    validation_data = make_data_values.validation_data
+    central_values = validation_data.central_values
+    covmat = validation_data.covmat
+    central_values_idx = validation_data.central_values_idx
+
+    posdata_validation_idx = make_posdata_split.validation
+
+    @jax.jit
+    def chi2(pdf, alpha, lambda_positivity):
+        """
+        TODO
+        """
+        diff = make_pred_data(pdf)[central_values_idx] - central_values
+
+        # decompose covmat
+        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+
+        # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
+        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
+        loss = jnp.sum(chi2_vec**2)
+
+        # add penalty term due to positivity
+        pos_penalty = make_penalty_posdata(pdf, alpha, lambda_positivity)[
+            posdata_validation_idx
+        ]
+        loss += jnp.sum(pos_penalty)
+
+        return loss
+
+    return chi2
+
+
+mc_replicas_make_chi2_validation_data_with_positivity = collect(
+    "make_chi2_validation_data_with_positivity", ("trval_replica_indices",)
+)
