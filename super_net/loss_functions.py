@@ -204,8 +204,8 @@ def make_chi2_with_positivity(
     make_pred_data,
     make_posdata_split,
     make_penalty_posdata,
-    alpha,
-    lambda_positivity,
+    alpha=1e-7,
+    lambda_positivity=1000,
 ):
     """
     TODO
