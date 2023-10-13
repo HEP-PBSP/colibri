@@ -1,6 +1,8 @@
 """
 TODO
 """
+from collections.abc import Mapping
+
 import logging
 from dataclasses import dataclass
 
@@ -12,15 +14,16 @@ from reportengine import collect
 
 from super_net.data_batch import data_batches
 from wmin.wmin_model import WeightMinimizationGrid
+from wmin.wmin_utils import resample_from_wmin_posterior
 
 log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class WeightMinimizationFit(WeightMinimizationGrid):
-    optimised_wmin_weights: jnp.array
-    training_loss: jnp.array
-    validation_loss: jnp.array
+    optimised_wmin_weights: jnp.array = None
+    training_loss: jnp.array = None
+    validation_loss: jnp.array = None
 
 
 def weight_minimization_fit(
@@ -127,3 +130,69 @@ mc_replicas_weight_minimization_fit = collect(
 
 def monte_carlo_wmin_fit(lhapdf_from_collected_weights):
     log.info("Monte Carlo weight minimization fit completed!")
+
+
+@dataclass(frozen=True)
+class UltranestWeightMinimizationFit(WeightMinimizationFit):
+    ultranest_result: Mapping
+
+
+def weight_minimization_ultranest(
+    make_chi2,
+    weight_minimization_grid,
+    weight_minimization_prior,
+    n_replicas_wmin,
+    min_num_live_points,
+    min_ess,
+    n_wmin_posterior_samples,
+):
+    """
+    TODO
+    note: not including positivity for the time being
+    """
+
+    parameters = [f"w{i+1}" for i in range(n_replicas_wmin - 1)]
+
+    @jax.jit
+    def log_likelihood(weights):
+        """
+        TODO
+        """
+        wmin_weights = jnp.concatenate((jnp.array([1.0]), weights))
+        pdf = jnp.einsum(
+            "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+        )
+        return -0.5 * make_chi2(pdf)
+
+    sampler = ultranest.ReactiveNestedSampler(
+        parameters,
+        log_likelihood,
+        prior_transform,
+    )
+
+    ultranest_result = sampler.run(
+        min_num_live_points=min_num_live_points,
+        min_ess=min_ess,
+    )
+
+    if n_wmin_posterior_samples > ultranest_result["samples"].shape[0]:
+        n_wmin_posterior_samples = ultranest_result["samples"].shape[0] - int(
+            0.1 * ultranest_result["samples"].shape[0]
+        )
+        log.warning(
+            f"The chosen number of posterior samples exceeds the number of posterior"
+            "samples computed by ultranest. Setting the number of resampled posterior"
+            f"samples to {n_wmin_posterior_samples}"
+        )
+
+    resampled_posterior = resample_from_wmin_posterior(
+        ultranest_result["samples"],
+        n_wmin_posterior_samples,
+        wmin_posterior_resampling_seed=123456,
+    )
+
+    return UltranestWeightMinimizationFit(
+        **weight_minimization_grid.to_dict(),
+        optimised_wmin_weights=resampled_posterior,
+        ultranest_result=ultranest_result,
+    )
