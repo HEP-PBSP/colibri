@@ -50,7 +50,7 @@ trval_index: 1
 # details for lhapdf output
 n_wmin_posterior_samples: 100
 
-set_name: wmin_nested_sampling_heracomb_nc
+set_name: 161023_wmin_nested_sampling_heracomb_nc_02
 
 actions_:
 - run_wmin_nested_sampling

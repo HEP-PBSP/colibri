@@ -70,7 +70,7 @@ uniform_maxval: 0.3
 
 # lhapdf output
 n_replicas: 100
-set_name: 161023_mnc_wmin_monte_carlo_heracomb_nc
+set_name: 161023_wmin_monte_carlo_heracomb_nc_02
 
 actions_:
 - monte_carlo_wmin_fit
