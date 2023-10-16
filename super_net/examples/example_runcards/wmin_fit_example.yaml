@@ -43,7 +43,7 @@ use_cuts: internal
 
 # wmin basis specs
 wminpdfset: NNPDF40_nnlo_as_01180
-n_replicas_wmin: 10
+n_replicas_wmin: 2
 wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
 use_same_wmin_param_per_replica: True
 
@@ -65,8 +65,8 @@ patience: 10
 trval_index: 1
 use_same_trval_split_per_replica: True
 weights_initializer: uniform
-uniform_minval: -0.2
-uniform_maxval: 0.2
+uniform_minval: -0.3
+uniform_maxval: 0.3
 
 # lhapdf output
 n_replicas: 100

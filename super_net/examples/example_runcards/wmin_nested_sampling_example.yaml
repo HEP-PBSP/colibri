@@ -24,7 +24,7 @@ use_cuts: internal
 
 # wmin basis specs
 wminpdfset: NNPDF40_nnlo_as_01180
-n_replicas_wmin: 10
+n_replicas_wmin: 2
 wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
 
 # Level 0 closure test
