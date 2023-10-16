@@ -6,10 +6,6 @@ import logging
 import jax
 import jax.numpy as jnp
 
-
-
-from wmin.checks import check_wminpdfset_is_montecarlo
-
 log = logging.getLogger(__name__)
 
 

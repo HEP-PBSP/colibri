@@ -10,6 +10,8 @@ import jax
 import jax.numpy as jnp
 import optax
 
+import ultranest
+
 from reportengine import collect
 
 from super_net.data_batch import data_batches
@@ -134,7 +136,7 @@ def monte_carlo_wmin_fit(lhapdf_from_collected_weights):
 
 @dataclass(frozen=True)
 class UltranestWeightMinimizationFit(WeightMinimizationFit):
-    ultranest_result: Mapping
+    ultranest_result: Mapping = None
 
 
 def weight_minimization_ultranest(
@@ -144,7 +146,8 @@ def weight_minimization_ultranest(
     n_replicas_wmin,
     min_num_live_points,
     min_ess,
-    n_wmin_posterior_samples,
+    n_wmin_posterior_samples=1000,
+    wmin_posterior_resampling_seed=123456
 ):
     """
     TODO
@@ -167,7 +170,7 @@ def weight_minimization_ultranest(
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
         log_likelihood,
-        prior_transform,
+        weight_minimization_prior,
     )
 
     ultranest_result = sampler.run(
@@ -188,11 +191,17 @@ def weight_minimization_ultranest(
     resampled_posterior = resample_from_wmin_posterior(
         ultranest_result["samples"],
         n_wmin_posterior_samples,
-        wmin_posterior_resampling_seed=123456,
+        wmin_posterior_resampling_seed,
     )
-
+    
     return UltranestWeightMinimizationFit(
         **weight_minimization_grid.to_dict(),
         optimised_wmin_weights=resampled_posterior,
         ultranest_result=ultranest_result,
     )
+
+
+def run_wmin_nested_sampling(lhapdf_wmin_and_ultranest_result):
+    """
+    """
+    log.info("Nested Sampling weight minimization fit completed!")
