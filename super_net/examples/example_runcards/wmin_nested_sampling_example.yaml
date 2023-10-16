@@ -39,8 +39,8 @@ t0pdfset: NNPDF40_nnlo_as_01180
 # nested sampling specs
 bayesian_fit: True
 prior_type: uniform
-unif_prior_min_val: -0.7 
-unif_prior_max_val: 0.7
+unif_prior_min_val: -2.0
+unif_prior_max_val: 2.0
 min_num_live_points: 1000
 min_ess: 50
 
