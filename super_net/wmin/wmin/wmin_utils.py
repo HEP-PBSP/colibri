@@ -68,7 +68,7 @@ def weights_initializer_provider(
 
 
 def weight_minimization_prior(
-    n_replicas_wmin, prior_type="uniform", min_val=-0.7, max_val=0.7
+    n_replicas_wmin, prior_type="uniform", unif_prior_min_val=-0.7, unif_prior_max_val=0.7
 ):
     """
     TODO
@@ -82,7 +82,7 @@ def weight_minimization_prior(
             """
             params = cube.copy()
             for i in range(n_replicas_wmin - 1):
-                params[i] = cube[i] * (max_val - min_val) + min_val
+                params[i] = cube[i] * (unif_prior_max_val - unif_prior_min_val) + unif_prior_min_val
             return params
 
         return prior_transform
