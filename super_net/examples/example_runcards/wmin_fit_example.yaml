@@ -64,10 +64,13 @@ max_epochs: 1000
 patience: 10
 trval_index: 1
 use_same_trval_split_per_replica: True
+weights_initializer: uniform
+uniform_minval: -0.2
+uniform_maxval: 0.2
 
 # lhapdf output
 n_replicas: 100
-set_name: wmin_monte_carlo_heracomb_nc
+set_name: 161023_mnc_wmin_monte_carlo_heracomb_nc
 
 actions_:
 - monte_carlo_wmin_fit
