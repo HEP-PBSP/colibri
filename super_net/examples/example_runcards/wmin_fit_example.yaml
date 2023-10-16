@@ -45,29 +45,28 @@ use_cuts: internal
 wminpdfset: NNPDF40_nnlo_as_01180
 n_replicas_wmin: 10
 wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
+use_same_wmin_param_per_replica: True
 
-# Level 0 closure test
+# closure test
 fakedata: True
-pseudodata: False
+pseudodata: True
 closure_test_pdf: NNPDF40_nnlo_as_01180
 
-# fit specs
-use_t0: True
-t0pdfset: NNPDF40_nnlo_as_01180
+# positivity
 lambda_positivity: 0 # do not include positivity
 
 # monte carlo fit specs
 use_t0: True
 t0pdfset: NNPDF40_nnlo_as_01180
 
-# details for lhapdf output
-n_replicas: 100
-
 # training specs
 max_epochs: 1000
-patience: 20
+patience: 10
 trval_index: 1
+use_same_trval_split_per_replica: True
 
+# lhapdf output
+n_replicas: 100
 set_name: wmin_monte_carlo_heracomb_nc
 
 actions_:
