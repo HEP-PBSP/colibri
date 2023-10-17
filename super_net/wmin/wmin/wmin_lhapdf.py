@@ -59,12 +59,15 @@ def lhapdf_from_collected_weights(
     headers, grids = load_all_replicas(wminpdfset)
     replicas_df = rep_matrix(grids)
 
+    replica_weights = []
     # each wmin replica could in principle have its own wminpdfset replica basis
     for i, wmin_fit in enumerate(mc_replicas_weight_minimization_fit):
         # take care of different indexing. Central replica is at index 1
         wmin_basis_idx = wmin_fit.wmin_basis_idx + 1
         wmin_central_replica = wmin_fit.wmin_central_replica + 1
         optimised_wmin_weights = wmin_fit.optimised_wmin_weights
+        
+        replica_weights.append(optimised_wmin_weights.tolist())
 
         wmin_centr_rep, replica = (
             replicas_df.loc[:, [int(wmin_central_replica)]],
@@ -78,6 +81,19 @@ def lhapdf_from_collected_weights(
         # for i, replica in tqdm(enumerate(result), total=len(weights)):
         wm_headers = f"PdfType: replica\nFormat: lhagrid1\nFromMCReplica: {i}\n"
         write_replica(i + 1, wm_pdf, wm_headers.encode("UTF-8"), wm_replica)
+
+    # write optimized wmin weights to json file
+    monte_carlo_result_set_name = str(wm_pdf) + "_monte_carlo_results"
+    monte_carlo_res = pathlib.Path(folder) / monte_carlo_result_set_name
+    if not monte_carlo_res.exists():
+        os.makedirs(monte_carlo_res)
+
+    # save ultranest results to json file
+    json_dump = json.dumps(replica_weights)
+
+    with open(monte_carlo_res/"monte_carlo_results.json", "w") as json_file:
+        json.dump(json_dump, json_file)
+
 
     # TODO
     # read pdf into validphys.core.PDF and generate central replica
