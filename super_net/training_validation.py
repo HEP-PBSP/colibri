@@ -33,7 +33,7 @@ def make_data_values(
     hyperopt: bool = False,
     bayesian_fit: bool = False,
     test_size: float = 0.2,
-    shuffle_indices: bool = True
+    shuffle_indices: bool = True,
 ):
     """
     Validphys provider for data values pre fit.
@@ -73,10 +73,12 @@ def make_data_values(
     central_values_indices = central_covmat_index.central_values_idx
 
     # perform tr/val split
-    trval_split = training_validation_split(central_values_indices, test_size, trval_seed, shuffle_indices)
+    trval_split = training_validation_split(
+        central_values_indices, test_size, trval_seed, shuffle_indices
+    )
     indices_train = trval_split.training
     indices_validation = trval_split.validation
-    
+
     # split data
     training_data = TrainCentralCovmatIndex(
         central_values=central_values[indices_train],
@@ -92,17 +94,14 @@ def make_data_values(
         n_validation_points=len(indices_validation),
     )
 
-    return MakeDataValues(
-        training_data=training_data, validation_data=validation_data
-    )
+    return MakeDataValues(training_data=training_data, validation_data=validation_data)
 
 
 """
 Collect over trval and replica indices.
 """
-mc_replicas_make_data_values = collect(
-    "make_data_values", ("trval_replica_indices",)
-)
+mc_replicas_make_data_values = collect("make_data_values", ("trval_replica_indices",))
+
 
 @dataclass(frozen=True)
 class PosdataTrainValidationSplit(TrainValidationSplit):
@@ -110,27 +109,39 @@ class PosdataTrainValidationSplit(TrainValidationSplit):
     n_validation: int
 
 
-def make_posdata_split(posdatasets, trval_seed, test_size=0.2, shuffle_indices=True):
+def make_posdata_split(
+    posdatasets, trval_seed, test_size=0.2, shuffle_indices=True, bayesian_fit=False
+):
     """
     TODO
     note: same seed as for data tr/val split.
     """
 
     ndata_pos = jnp.sum(
-        jnp.array([
-            pos_ds.load_commondata().with_cuts(pos_ds.cuts).ndata
-            for pos_ds in posdatasets
-        ])
+        jnp.array(
+            [
+                pos_ds.load_commondata().with_cuts(pos_ds.cuts).ndata
+                for pos_ds in posdatasets
+            ]
+        )
     )
     indices = jnp.arange(ndata_pos)
 
-    trval_split = training_validation_split(indices, test_size, trval_seed, shuffle_indices)
+    # no tr/vl split needed for bayesian fit
+    if bayesian_fit:
+        return PosdataTrainValidationSplit(
+            training=indices,
+            validation=None,
+            n_training=len(indices),
+            n_validation=None,
+        )
+
+    trval_split = training_validation_split(
+        indices, test_size, trval_seed, shuffle_indices
+    )
     n_training = len(trval_split.training)
     n_validation = len(trval_split.validation)
 
     return PosdataTrainValidationSplit(
-        **trval_split.to_dict(),
-        n_training=n_training,
-        n_validation=n_validation
+        **trval_split.to_dict(), n_training=n_training, n_validation=n_validation
     )
-    

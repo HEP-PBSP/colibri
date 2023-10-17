@@ -10,6 +10,7 @@ wmin_providers = [
     "wmin.wmin_fit",
     "wmin.wmin_model",
     "wmin.wmin_utils",
+    "wmin.wmin_lhapdf"
 ]
 
 

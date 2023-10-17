@@ -1,22 +1,10 @@
 """
 TODO
 """
-import os
-import pathlib
 import logging
-
-import lhapdf
 
 import jax
 import jax.numpy as jnp
-
-from validphys.lhio import (
-    load_all_replicas,
-    write_replica,
-    rep_matrix,
-)
-
-from wmin.checks import check_wminpdfset_is_montecarlo
 
 log = logging.getLogger(__name__)
 
@@ -79,72 +67,37 @@ def weights_initializer_provider(
         return initializer
 
 
-@check_wminpdfset_is_montecarlo
-def lhapdf_from_collected_weights(
-    wminpdfset,
-    mc_replicas_weight_minimization_fit,
-    n_replicas,
-    *,
-    folder=None,
-    set_name=None,
-    errortype: str = "replicas",
+def weight_minimization_prior(
+    n_replicas_wmin, prior_type="uniform", unif_prior_min_val=-0.7, unif_prior_max_val=0.7
 ):
     """
     TODO
     """
 
-    original_pdf = pathlib.Path(lhapdf.paths()[-1]) / str(wminpdfset)
-    if folder is None:
-        # requested folder for the new LHAPDF to reside
-        folder = ""
+    if prior_type == "uniform":
 
-    if set_name is None:
-        set_name = str(wminpdfset) + "_wmin"
+        def prior_transform(cube):
+            """
+            TODO
+            """
+            params = cube.copy()
+            for i in range(n_replicas_wmin - 1):
+                params[i] = cube[i] * (unif_prior_max_val - unif_prior_min_val) + unif_prior_min_val
+            return params
 
-    wm_pdf = pathlib.Path(folder) / set_name
-    if not wm_pdf.exists():
-        os.makedirs(wm_pdf)
+        return prior_transform
 
-    with open(original_pdf / f"{wminpdfset}.info", "r") as in_stream, open(
-        wm_pdf / f"{set_name}.info", "w"
-    ) as out_stream:
-        for l in in_stream.readlines():
-            if l.find("SetDesc:") >= 0:
-                out_stream.write(f'SetDesc: "Weight-minimized {wminpdfset}"\n')
-            elif l.find("NumMembers:") >= 0:
-                out_stream.write(f"NumMembers: {n_replicas + 1}\n")
-            elif l.find("ErrorType: replicas") >= 0:
-                out_stream.write(f"ErrorType: {errortype}\n")
-            else:
-                out_stream.write(l)
 
-    headers, grids = load_all_replicas(wminpdfset)
-    replicas_df = rep_matrix(grids)
+def resample_from_wmin_posterior(samples, n_wmin_posterior_samples=1000, wmin_posterior_resampling_seed=123456):
+    """
+    TODO
+    """
+    
+    current_samples = samples.copy()    
 
-    # each wmin replica could in principle have its own wminpdfset replica basis
-    for i, wmin_fit in enumerate(mc_replicas_weight_minimization_fit):
-        # take care of different indexing. Central replica is at index 1
-        wmin_basis_idx = wmin_fit.wmin_basis_idx + 1
-        wmin_central_replica = wmin_fit.wmin_central_replica + 1
-        optimised_wmin_weights = wmin_fit.optimised_wmin_weights
+    rng = jax.random.PRNGKey(wmin_posterior_resampling_seed)
 
-        rep0, replica = (
-            replicas_df.loc[:, [int(wmin_central_replica)]],
-            replicas_df.loc[:, wmin_basis_idx],
-        )
+    resampled_samples = jax.random.choice(rng, len(samples), (n_wmin_posterior_samples,), replace=False)
 
-        wm_replica = rep0.dot([1.0 - jnp.sum(optimised_wmin_weights)]) + replica.dot(
-            optimised_wmin_weights
-        )
+    return jnp.array(current_samples[resampled_samples])
 
-        # for i, replica in tqdm(enumerate(result), total=len(weights)):
-        wm_headers = f"PdfType: replica\nFormat: lhagrid1\nFromMCReplica: {i}\n"
-        write_replica(i + 1, wm_pdf, wm_headers.encode("UTF-8"), wm_replica)
-
-    # TODO
-    # read pdf into validphys.core.PDF and generate central replica
-
-    # pdf_obj = core.PDF(wm_pdf)
-    # import IPython
-    # IPython.embed()
-    # generate_replica0(pdf_obj)
