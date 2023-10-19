@@ -1,0 +1,13 @@
+meta:
+ title: Results of 2-parameter nested sampling fit
+ author: James Moore
+ keywords: ['nested sampling']
+
+ultranest_results_path: 161023_wmin_nested_sampling_heracomb_nc_02_ultranest_results
+
+template_text: |
+ # Ultranest corner plot
+ {@plot_ultranest_results@} 
+
+actions_:
+ - report(main=True) 
