@@ -141,12 +141,13 @@ def wmin_fit_name(wminpdfset, set_name=None):
         return set_name
     return str(wminpdfset)
 
-
 def perform_monte_carlo_wmin_fit(
     wminpdfset,
     mc_replicas_weight_minimization_fit,
     n_replicas,
     wmin_fit_name,
+    output_path,
+    lhapdf_path,
 ):
     """
     Performs a Monte Carlo fit using the weight-minimisation parametrisation.
@@ -157,7 +158,9 @@ def perform_monte_carlo_wmin_fit(
         wminpdfset,
         mc_replicas_weight_minimization_fit,
         n_replicas,
+        folder=lhapdf_path,
         set_name=wmin_fit_name, 
+        output_path=output_path,
     )
 
     # Produce the central replica
@@ -166,7 +169,6 @@ def perform_monte_carlo_wmin_fit(
     generate_replica0(pdf)
 
     log.info("Monte Carlo weight minimization fit completed!")
-
 
 @dataclass(frozen=True)
 class UltranestWeightMinimizationFit(WeightMinimizationFit):

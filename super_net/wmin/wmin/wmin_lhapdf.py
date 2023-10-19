@@ -28,6 +28,7 @@ def lhapdf_from_collected_weights(
     folder=lhapdf_path,
     set_name=None,
     errortype: str = "replicas",
+    output_path=None,
 ):
     """
     TODO
@@ -35,8 +36,10 @@ def lhapdf_from_collected_weights(
 
     original_pdf = pathlib.Path(lhapdf.paths()[-1]) / str(wminpdfset)
     if folder is None:
-        # requested folder for the new LHAPDF to reside
         folder = ""
+
+    if output_path is None:
+        output_path = ""
 
     if set_name is None:
         set_name = str(wminpdfset) + "_wmin"
@@ -85,8 +88,8 @@ def lhapdf_from_collected_weights(
         write_replica(i + 1, wm_pdf, wm_headers.encode("UTF-8"), wm_replica)
 
     # write optimized wmin weights to json file
-    monte_carlo_result_set_name = str(wm_pdf) + "_monte_carlo_results"
-    monte_carlo_res = pathlib.Path(folder) / monte_carlo_result_set_name
+    monte_carlo_result_set_name = "monte_carlo_results"
+    monte_carlo_res = pathlib.Path(output_path) / monte_carlo_result_set_name
     if not monte_carlo_res.exists():
         os.makedirs(monte_carlo_res)
 
@@ -95,15 +98,6 @@ def lhapdf_from_collected_weights(
 
     with open(monte_carlo_res/"monte_carlo_results.json", "w") as json_file:
         json.dump(json_dump, json_file)
-
-
-    # TODO
-    # read pdf into validphys.core.PDF and generate central replica
-
-    # pdf_obj = core.PDF(wm_pdf)
-    # import IPython
-    # IPython.embed()
-    # generate_replica0(pdf_obj)
 
 class NumpyEncoder(json.JSONEncoder):
     """ 
