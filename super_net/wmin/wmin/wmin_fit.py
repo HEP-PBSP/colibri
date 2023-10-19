@@ -6,6 +6,8 @@ from collections.abc import Mapping
 import logging
 from dataclasses import dataclass
 
+import lhapdf
+
 import jax
 import jax.numpy as jnp
 import optax
@@ -17,6 +19,11 @@ from reportengine import collect
 from super_net.data_batch import data_batches
 from wmin.wmin_model import WeightMinimizationGrid
 from wmin.wmin_utils import resample_from_wmin_posterior
+
+from wmin.wmin_lhapdf import lhapdf_from_collected_weights
+
+from validphys.loader import Loader
+from validphys.lhio import generate_replica0
 
 log = logging.getLogger(__name__)
 
@@ -129,8 +136,37 @@ mc_replicas_weight_minimization_fit = collect(
     "weight_minimization_fit", ("all_wmin_collect_indices",)
 )
 
+def wmin_fit_name(wminpdfset, set_name=None):
+    if set_name:
+        return set_name
+    return str(wminpdfset)
 
-def monte_carlo_wmin_fit(lhapdf_from_collected_weights):
+
+def perform_monte_carlo_wmin_fit(
+    wminpdfset,
+    mc_replicas_weight_minimization_fit,
+    n_replicas,
+    lhapdf_path,
+    wmin_fit_name,
+):
+    """
+    Performs a Monte Carlo fit using the weight-minimisation parametrisation.
+    """
+
+    # Produce the LHAPDF grid
+    lhapdf_from_collected_weights(
+        wminpdfset,
+        mc_replicas_weight_minimization_fit,
+        n_replicas,
+        folder=lhapdf_path,
+        set_name=wmin_fit_name, 
+    )
+
+    # Produce the central replica
+    l = Loader()
+    pdf = l.check_pdf(wmin_fit_name)
+    generate_replica0(pdf)
+
     log.info("Monte Carlo weight minimization fit completed!")
 
 

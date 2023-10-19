@@ -17,6 +17,8 @@ from validphys.lhio import (
 
 from wmin.checks import check_wminpdfset_is_montecarlo
 
+def lhapdf_path():
+    return lhapdf.paths()[0]
 
 @check_wminpdfset_is_montecarlo
 def lhapdf_from_collected_weights(
