@@ -146,7 +146,6 @@ def perform_monte_carlo_wmin_fit(
     wminpdfset,
     mc_replicas_weight_minimization_fit,
     n_replicas,
-    lhapdf_path,
     wmin_fit_name,
 ):
     """
@@ -158,7 +157,6 @@ def perform_monte_carlo_wmin_fit(
         wminpdfset,
         mc_replicas_weight_minimization_fit,
         n_replicas,
-        folder=lhapdf_path,
         set_name=wmin_fit_name, 
     )
 

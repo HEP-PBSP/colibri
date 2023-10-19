@@ -25,7 +25,7 @@ def lhapdf_from_collected_weights(
     wminpdfset,
     mc_replicas_weight_minimization_fit,
     n_replicas,
-    folder=None,
+    folder=lhapdf_path,
     set_name=None,
     errortype: str = "replicas",
 ):
