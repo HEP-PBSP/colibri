@@ -140,7 +140,7 @@ class UltranestWeightMinimizationFit(WeightMinimizationFit):
 
 
 def weight_minimization_ultranest(
-    make_chi2,
+    make_chi2_with_positivity,
     weight_minimization_grid,
     weight_minimization_prior,
     n_replicas_wmin,
@@ -165,7 +165,7 @@ def weight_minimization_ultranest(
         pdf = jnp.einsum(
             "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
-        return -0.5 * make_chi2(pdf)
+        return -0.5 * make_chi2_with_positivity(pdf)
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
