@@ -1,6 +1,10 @@
 """
-TODO
+wmin.app.py
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 from super_net.app import SuperNetApp, providers
 from wmin.config import WminConfig
 
