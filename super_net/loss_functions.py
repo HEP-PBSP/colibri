@@ -4,7 +4,7 @@ super_net.loss_functions.py
 This module provides the functions necessary for the computation of the chi2.
 
 Author: Mark N. Costantini
-Date: 11.10.2023
+Date: 11.11.2023
 """
 
 import jax
