@@ -1,3 +1,12 @@
+"""
+super_net.optax_optimizer.py
+
+Module contains functions for optax gradient descent optimisation.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
+"""
+
 import optax
 from flax.training.early_stopping import EarlyStopping
 
@@ -14,7 +23,6 @@ def optimizer_provider(
         kwargs["weight_decay"] = weight_decay
 
     return opt(**kwargs)
-    
 
 
 def early_stopper(min_delta=1e-5, patience=20):
