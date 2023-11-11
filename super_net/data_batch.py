@@ -1,6 +1,12 @@
 """
-TODO
+super_net.data_batch.py
+
+Module containing data batches provider.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 from typing import Callable
 from dataclasses import dataclass
 
@@ -17,7 +23,17 @@ class DataBatches:
 
 def data_batches(n_training_points, batch_size, batch_seed=1):
     """
-    TODO
+    Parameters
+    ----------
+    n_training_points: int
+
+    batch_size: int
+
+    batch_seed: int, default is 1
+
+    Returns
+    -------
+    DataBatches dataclass
     """
 
     if batch_size > n_training_points:
