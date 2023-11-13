@@ -1,6 +1,12 @@
 """
-TODO
+wmin.wmin_model.py
+
+Module containing functions defining the weight minimisation parameterisation.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 import jax
 import jax.numpy as jnp
 

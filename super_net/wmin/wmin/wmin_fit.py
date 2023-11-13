@@ -1,6 +1,12 @@
 """
-TODO
+wmin.wmin_fit.py
+
+Module containing functions used to perform a weight minimisation PDF fit.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 from collections.abc import Mapping
 
 import logging

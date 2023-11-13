@@ -1,6 +1,12 @@
 """
-TODO
+super_net.commondata_utils.py
+
+Module containing commondata and central covmat index functions.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 import pandas as pd
 from dataclasses import dataclass, asdict
 
