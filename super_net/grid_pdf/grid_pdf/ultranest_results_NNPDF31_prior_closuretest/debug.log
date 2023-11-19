@@ -1,0 +1,11 @@
+13:32:19 [ultranest] [DEBUG] ReactiveNestedSampler: dims=150+0, resume=True, log_dir=ultranest_results_NNPDF31_prior_closuretest, backend=hdf5, vectorized=False, nbootstraps=30, ndraw=128..65536
+13:32:20 [ultranest] [INFO] Sampling 400 live points from prior ...
+13:32:32 [ultranest] [DEBUG] run_iter dlogz=0.5, dKL=0.5, frac_remain=0.01, Lepsilon=0.0010, min_ess=50
+13:32:32 [ultranest] [DEBUG] max_iters=-1, max_ncalls=-1, max_num_improvement_loops=-1, min_num_live_points=400, cluster_num_live_points=40
+13:32:32 [ultranest] [DEBUG] minimal_widths_sequence: [(-inf, 400.0), (inf, 400.0)]
+13:32:33 [ultranest] [DEBUG] not updating t-ellipsoid
+Traceback (most recent call last):
+  File "/Users/markcostantini/miniconda3/envs/new_jax_env/lib/python3.10/site-packages/ultranest/integrator.py", line 2130, in _update_region
+    tregion.create_ellipsoid()
+  File "ultranest/mlfriends.pyx", line 1419, in ultranest.mlfriends.WrappingEllipsoid.create_ellipsoid
+FloatingPointError: invalid value encountered in sqrt
