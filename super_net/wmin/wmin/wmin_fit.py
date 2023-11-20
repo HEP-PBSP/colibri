@@ -146,14 +146,14 @@ class UltranestWeightMinimizationFit(WeightMinimizationFit):
 
 
 def weight_minimization_ultranest(
-    make_chi2_with_positivity,
+    make_chi2_wmin_opt,
     weight_minimization_grid,
     weight_minimization_prior,
     n_replicas_wmin,
     min_num_live_points,
     min_ess,
     n_wmin_posterior_samples=1000,
-    wmin_posterior_resampling_seed=123456
+    wmin_posterior_resampling_seed=123456,
 ):
     """
     TODO
@@ -168,10 +168,8 @@ def weight_minimization_ultranest(
         TODO
         """
         wmin_weights = jnp.concatenate((jnp.array([1.0]), weights))
-        pdf = jnp.einsum(
-            "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
-        )
-        return -0.5 * make_chi2_with_positivity(pdf)
+
+        return -0.5 * make_chi2_wmin_opt(wmin_weights)
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
@@ -199,7 +197,7 @@ def weight_minimization_ultranest(
         n_wmin_posterior_samples,
         wmin_posterior_resampling_seed,
     )
-    
+
     return UltranestWeightMinimizationFit(
         **weight_minimization_grid.to_dict(),
         optimised_wmin_weights=resampled_posterior,
@@ -208,6 +206,5 @@ def weight_minimization_ultranest(
 
 
 def run_wmin_nested_sampling(lhapdf_wmin_and_ultranest_result):
-    """
-    """
+    """ """
     log.info("Nested Sampling weight minimization fit completed!")
