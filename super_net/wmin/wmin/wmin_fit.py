@@ -17,6 +17,7 @@ import jax.numpy as jnp
 import optax
 
 import ultranest
+import time
 
 from reportengine import collect
 
@@ -177,10 +178,13 @@ def weight_minimization_ultranest(
         weight_minimization_prior,
     )
 
+    t0 = time.time()
     ultranest_result = sampler.run(
         min_num_live_points=min_num_live_points,
         min_ess=min_ess,
     )
+    t1 = time.time()
+    log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
     if n_wmin_posterior_samples > ultranest_result["samples"].shape[0]:
         n_wmin_posterior_samples = ultranest_result["samples"].shape[0] - int(
