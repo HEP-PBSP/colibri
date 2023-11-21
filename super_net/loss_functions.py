@@ -312,6 +312,8 @@ def make_chi2(make_data_values, make_pred_data):
     central_values_idx = training_data.central_values_idx
 
     # Invert the covmat
+    # We use this instead of Cholesky decomposition
+    # since we do it only once and for all at the beginning
     inv_covmat = jla.inv(covmat)
 
     @jax.jit
@@ -388,52 +390,6 @@ def make_chi2_with_positivity(
         ]
         loss += jnp.sum(pos_penalty)
 
-        return loss
-
-    return chi2
-
-
-def make_chi2_old(make_data_values, make_pred_data):
-    """
-    Returns a jax.jit compiled function that computes the chi2
-    of a pdf grid on a dataset.
-
-    Notes:
-        - Does not include positivity constraint.
-        - This function is designed for Bayesian like PDF fits.
-
-    Parameters
-    ----------
-    make_data_values: training_validation.MakeDataValues
-        dataclass containing data for training and validation.
-
-    make_pred_data: theory_predictions.make_pred_data
-        super_net provider for (fktable) theory predictions.
-
-    Returns
-    -------
-    @jax.jit Callable
-        function to compute chi2 of a pdf grid.
-
-    """
-    training_data = make_data_values.training_data
-    central_values = training_data.central_values
-    covmat = training_data.covmat
-    central_values_idx = training_data.central_values_idx
-
-    print("HOLA")
-
-    @jax.jit
-    def chi2(pdf):
-        """ """
-        diff = make_pred_data(pdf)[central_values_idx] - central_values
-
-        # decompose covmat after having batched it!
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
-
-        # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
-        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
-        loss = jnp.sum(chi2_vec**2)
         return loss
 
     return chi2
