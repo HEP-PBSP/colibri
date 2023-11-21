@@ -172,7 +172,7 @@ def weight_minimization_ultranest(
         TODO
         """
         wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
-        # wmin_weights = jnp.concatenate((jnp.array([[1.0], [1.0]]), weights), axis=1)
+
         pdf = jnp.einsum(
             "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
