@@ -319,9 +319,9 @@ def make_chi2(make_data_values, make_pred_data):
     @jax.jit
     def chi2(pdf):
         """ """
-        diff = make_pred_data(pdf)[central_values_idx] - central_values
+        diff = make_pred_data(pdf)[:, central_values_idx] - central_values
 
-        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
+        loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
 
         return loss
 

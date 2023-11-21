@@ -171,16 +171,15 @@ def weight_minimization_ultranest(
         """
         TODO
         """
-        wmin_weights = jnp.concatenate((jnp.array([1.0]), weights))
+        wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
+        # wmin_weights = jnp.concatenate((jnp.array([[1.0], [1.0]]), weights), axis=1)
         pdf = jnp.einsum(
-            "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+            "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
         return -0.5 * make_chi2(pdf)
 
     sampler = ultranest.ReactiveNestedSampler(
-        parameters,
-        log_likelihood,
-        weight_minimization_prior,
+        parameters, log_likelihood, weight_minimization_prior, vectorized=True
     )
 
     t0 = time.time()

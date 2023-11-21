@@ -41,7 +41,7 @@ def make_dis_prediction(fktable):
 
     @jax.jit
     def dis_prediction(pdf):
-        return jnp.einsum("ijk, jk ->i", fk_arr, pdf[indices, :])
+        return jnp.einsum("ijk, rjk ->ri", fk_arr, pdf[:, indices, :])
 
     return dis_prediction
 
@@ -132,7 +132,7 @@ def make_pred_data(data):
 
     @jax.jit
     def eval_preds(pdf):
-        return jnp.array(list(itertools.chain(*[f(pdf) for f in predictions])))
+        return jnp.concatenate([f(pdf) for f in predictions], axis=1)
 
     return eval_preds
 
