@@ -11,7 +11,6 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
-from super_net.covmats import sqrt_covmat_jax
 
 
 def make_chi2_wmin_opt(make_data_values, make_pred_data, weight_minimization_grid):
