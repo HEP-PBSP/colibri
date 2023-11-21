@@ -313,7 +313,6 @@ def make_chi2(make_data_values, make_pred_data):
 
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
-    print("HERE")
 
     @jax.jit
     def chi2(pdf):
