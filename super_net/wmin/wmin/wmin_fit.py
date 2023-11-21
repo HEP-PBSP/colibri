@@ -147,7 +147,7 @@ class UltranestWeightMinimizationFit(WeightMinimizationFit):
 
 
 def weight_minimization_ultranest(
-    make_chi2_wmin_opt,
+    make_chi2,
     weight_minimization_grid,
     weight_minimization_prior,
     n_replicas_wmin,
@@ -159,6 +159,9 @@ def weight_minimization_ultranest(
     """
     TODO
     note: not including positivity for the time being
+    The function being used for the chi2 is not the optimised one
+    in wmin.wmin_loss_functions. Performances are similar with
+    the generic one.
     """
 
     parameters = [f"w{i+1}" for i in range(n_replicas_wmin - 1)]
@@ -169,8 +172,10 @@ def weight_minimization_ultranest(
         TODO
         """
         wmin_weights = jnp.concatenate((jnp.array([1.0]), weights))
-
-        return -0.5 * make_chi2_wmin_opt(wmin_weights)
+        pdf = jnp.einsum(
+            "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+        )
+        return -0.5 * make_chi2(pdf)
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,

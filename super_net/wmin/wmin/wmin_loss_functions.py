@@ -24,6 +24,7 @@ def make_chi2_wmin_opt(make_data_values, make_pred_data, weight_minimization_gri
     Notes:
         - Does not include positivity constraint.
         - This function is designed for Bayesian like PDF fits.
+        - Works only for DIS datasets.
 
     Parameters
     ----------
