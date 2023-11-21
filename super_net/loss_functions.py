@@ -311,17 +311,18 @@ def make_chi2(make_data_values, make_pred_data):
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
+    # Invert the covmat
+    # We use this instead of Cholesky decomposition
+    # since we do it only once and for all at the beginning
+    inv_covmat = jla.inv(covmat)
+
     @jax.jit
     def chi2(pdf):
         """ """
         diff = make_pred_data(pdf)[central_values_idx] - central_values
 
-        # decompose covmat after having batched it!
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
-        # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
-        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
-        loss = jnp.sum(chi2_vec**2)
         return loss
 
     return chi2
@@ -371,6 +372,9 @@ def make_chi2_with_positivity(
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
+    # Invert the covmat
+    inv_covmat = jla.inv(covmat)
+
     posdata_training_idx = make_posdata_split.training
 
     @jax.jit
@@ -378,11 +382,7 @@ def make_chi2_with_positivity(
         """ """
         diff = make_pred_data(pdf)[central_values_idx] - central_values
 
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
-
-        # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
-        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
-        loss = jnp.sum(chi2_vec**2)
+        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
         # add penalty term due to positivity
         pos_penalty = make_penalty_posdata(pdf, alpha, lambda_positivity)[
