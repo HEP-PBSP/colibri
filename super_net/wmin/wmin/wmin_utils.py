@@ -110,3 +110,17 @@ def resample_from_wmin_posterior(
     )
 
     return jnp.array(current_samples[resampled_samples])
+
+
+def precomputed_predictions(make_pred_data_non_vectorised, weight_minimization_grid):
+    """ """
+
+    # Precompute predictions for the basis of wmin
+    predictions = jnp.array(
+        [
+            make_pred_data_non_vectorised(weight_minimization_grid.wmin_INPUT_GRID[i])
+            for i in range(len(weight_minimization_grid.wmin_INPUT_GRID))
+        ]
+    )
+
+    return predictions

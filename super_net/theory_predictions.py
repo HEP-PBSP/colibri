@@ -21,7 +21,7 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def make_dis_prediction(fktable):
+def make_dis_prediction(fktable, vectorised=False):
     """
     given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -39,18 +39,22 @@ def make_dis_prediction(fktable):
     indices = fktable.luminosity_mapping
     fk_arr = jnp.array(fktable.get_np_fktable())
 
-    @jax.jit
-    def dis_prediction(pdf):
-        # Check if input comes from vectorised sample.
-        if pdf.ndim == 3:
+    if vectorised:
+
+        @jax.jit
+        def dis_prediction(pdf):
             return jnp.einsum("ijk, rjk ->ri", fk_arr, pdf[:, indices, :])
-        elif pdf.ndim == 2:
+
+    else:
+
+        @jax.jit
+        def dis_prediction(pdf):
             return jnp.einsum("ijk, jk ->i", fk_arr, pdf[indices, :])
 
     return dis_prediction
 
 
-def make_had_prediction(fktable):
+def make_had_prediction(fktable, vectorised=False):
     """
     given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -71,16 +75,29 @@ def make_had_prediction(fktable):
     second_indices = indices[1::2]
     fk_arr = jnp.array(fktable.get_np_fktable())
 
-    @jax.jit
-    def had_prediction(pdf):
-        return jnp.einsum(
-            "ijkl,jk,jl->i", fk_arr, pdf[first_indices, :], pdf[second_indices, :]
-        )
+    if vectorised:
+
+        @jax.jit
+        def had_prediction(pdf):
+            return jnp.einsum(
+                "ijkl,rjk,rjl->ri",
+                fk_arr,
+                pdf[:, first_indices, :],
+                pdf[:, second_indices, :],
+            )
+
+    else:
+
+        @jax.jit
+        def had_prediction(pdf):
+            return jnp.einsum(
+                "ijkl,jk,jl->i", fk_arr, pdf[first_indices, :], pdf[second_indices, :]
+            )
 
     return had_prediction
 
 
-def make_pred_dataset(dataset):
+def make_pred_dataset(dataset, vectorised=False):
     """
     Compute theory prediction for a DataSetSpec
 
@@ -101,9 +118,9 @@ def make_pred_dataset(dataset):
     for fkspec in dataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk)
+            pred = make_had_prediction(fk, vectorised)
         else:
-            pred = make_dis_prediction(fk)
+            pred = make_dis_prediction(fk, vectorised)
         pred_funcs.append(pred)
 
     @jax.jit
@@ -113,7 +130,7 @@ def make_pred_dataset(dataset):
     return prediction
 
 
-def make_pred_data(data):
+def make_pred_data(data, vectorised=False):
     """
     Compute theory prediction for entire DataGroupSpec
 
@@ -132,7 +149,7 @@ def make_pred_data(data):
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(make_pred_dataset(ds))
+        predictions.append(make_pred_dataset(ds, vectorised))
 
     @jax.jit
     def eval_preds(pdf):
@@ -141,7 +158,11 @@ def make_pred_data(data):
     return eval_preds
 
 
-def make_penalty_posdataset(posdataset):
+def make_pred_data_non_vectorised(data):
+    return make_pred_data(data, vectorised=False)
+
+
+def make_penalty_posdataset(posdataset, vectorised=False):
     """
     Given a PositivitySetSpec compute the positivity penalty
     as a lagrange multiplier times elu of minus the theory prediction
@@ -172,9 +193,9 @@ def make_penalty_posdataset(posdataset):
     for fkspec in posdataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk)
+            pred = make_had_prediction(fk, vectorised)
         else:
-            pred = make_dis_prediction(fk)
+            pred = make_dis_prediction(fk, vectorised)
         pred_funcs.append(pred)
 
     @jax.jit
@@ -186,7 +207,7 @@ def make_penalty_posdataset(posdataset):
     return pos_penalty
 
 
-def make_penalty_posdata(posdatasets):
+def make_penalty_posdata(posdatasets, vectorised=False):
     """
     Compute positivity penalty for list of PositivitySetSpec
 
@@ -204,16 +225,12 @@ def make_penalty_posdata(posdatasets):
     predictions = []
 
     for posdataset in posdatasets:
-        predictions.append(make_penalty_posdataset(posdataset))
+        predictions.append(make_penalty_posdataset(posdataset, vectorised))
 
     @jax.jit
     def pos_penalties(pdf, alpha, lambda_positivity):
-        return jnp.array(
-            list(
-                itertools.chain(
-                    *[f(pdf, alpha, lambda_positivity) for f in predictions]
-                )
-            )
+        return jnp.concatenate(
+            [f(pdf, alpha, lambda_positivity) for f in predictions], axis=-1
         )
 
     return pos_penalties

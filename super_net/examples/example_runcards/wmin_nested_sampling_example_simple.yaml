@@ -61,6 +61,7 @@ lambda_positivity: 1000
 # nested sampling specs
 bayesian_fit: True
 prior_type: uniform
+vectorised: True
 unif_prior_min_val: -2.0
 unif_prior_max_val: 2.0
 min_num_live_points: 500

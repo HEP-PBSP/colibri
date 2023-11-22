@@ -147,7 +147,7 @@ class UltranestWeightMinimizationFit(WeightMinimizationFit):
 
 
 def weight_minimization_ultranest(
-    make_chi2,
+    make_chi2_with_positivity,
     weight_minimization_grid,
     weight_minimization_prior,
     n_replicas_wmin,
@@ -155,6 +155,7 @@ def weight_minimization_ultranest(
     min_ess,
     n_wmin_posterior_samples=1000,
     wmin_posterior_resampling_seed=123456,
+    vectorised=False,
 ):
     """
     TODO
@@ -171,25 +172,39 @@ def weight_minimization_ultranest(
         """
         TODO
         """
-        # Check dimensions of weights
-        # If dim = 2, it means vectorized=True
-        if weights.ndim == 2:
-            wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
-            pdf = jnp.einsum(
-                "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
-            )
+        wmin_weights = jnp.concatenate([jnp.ones(1), weights])
+        pdf = jnp.einsum(
+            "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+        )
 
-        elif weights.ndim == 1:
-            wmin_weights = jnp.concatenate([jnp.ones(1), weights])
-            pdf = jnp.einsum(
-                "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
-            )
+        return -0.5 * make_chi2_with_positivity(pdf)
 
-        return -0.5 * make_chi2(pdf)
+    @jax.jit
+    def log_likelihood_vectorised(weights):
+        """
+        TODO
+        """
+        wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
+        pdf = jnp.einsum(
+            "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+        )
 
-    sampler = ultranest.ReactiveNestedSampler(
-        parameters, log_likelihood, weight_minimization_prior, vectorized=True
-    )
+        return -0.5 * make_chi2_with_positivity(pdf)
+
+    if vectorised:
+        sampler = ultranest.ReactiveNestedSampler(
+            parameters,
+            log_likelihood_vectorised,
+            weight_minimization_prior,
+            vectorized=True,
+        )
+
+    else:
+        sampler = ultranest.ReactiveNestedSampler(
+            parameters,
+            log_likelihood,
+            weight_minimization_prior,
+        )
 
     t0 = time.time()
     ultranest_result = sampler.run(
