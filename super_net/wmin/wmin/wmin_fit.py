@@ -171,11 +171,20 @@ def weight_minimization_ultranest(
         """
         TODO
         """
-        wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
+        # Check dimensions of weights
+        # If dim = 2, it means vectorized=True
+        if weights.ndim == 2:
+            wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
+            pdf = jnp.einsum(
+                "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+            )
 
-        pdf = jnp.einsum(
-            "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
-        )
+        elif weights.ndim == 1:
+            wmin_weights = jnp.concatenate([jnp.ones(1), weights])
+            pdf = jnp.einsum(
+                "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+            )
+
         return -0.5 * make_chi2(pdf)
 
     sampler = ultranest.ReactiveNestedSampler(
