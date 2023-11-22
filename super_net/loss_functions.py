@@ -1,6 +1,12 @@
 """
-TODO
+super_net.loss_functions.py
+
+This module provides the functions necessary for the computation of the chi2.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
@@ -12,7 +18,26 @@ from reportengine import collect
 
 def make_chi2_training_data(make_data_values, make_pred_data):
     """
-    TODO
+    Returns a jax.jit compiled function that computes the chi2
+    of a pdf grid on a training data batch.
+
+    Notes:
+        - Does not include positivity constraint.
+        - This function is designed for Monte Carlo like PDF fits.
+
+    Parameters
+    ----------
+    make_data_values: training_validation.MakeDataValues
+        dataclass containing data for training and validation.
+
+    make_pred_data: theory_predictions.make_pred_data
+        super_net provider for (fktable) theory predictions.
+
+    Returns
+    -------
+    @jax.jit Callable
+        function to compute chi2 of a pdf grid on a data batch.
+
     """
     training_data = make_data_values.training_data
     central_values = training_data.central_values
@@ -22,7 +47,19 @@ def make_chi2_training_data(make_data_values, make_pred_data):
     @jax.jit
     def chi2(pdf, batch_idx):
         """
-        TODO
+        Parameters
+        ----------
+        pdf: jnp.array
+            pdf grid.
+
+        batch_idx: jnp.array
+            array of data batch indices.
+
+        Returns
+        -------
+        float
+            loss function value
+
         """
         diff = (
             make_pred_data(pdf)[central_values_idx][batch_idx]
@@ -51,7 +88,30 @@ def make_chi2_training_data_with_positivity(
     make_data_values, make_pred_data, make_posdata_split, make_penalty_posdata
 ):
     """
-    TODO
+    Returns a jax.jit compiled function that computes the chi2
+    of a pdf grid on a training data batch including positivity penalty.
+
+    Notes:
+        - This function is designed for Monte Carlo like PDF fits.
+
+    Parameters
+    ----------
+    make_data_values: training_validation.MakeDataValues
+        dataclass containing data for training and validation.
+
+    make_pred_data: theory_predictions.make_pred_data
+        super_net provider for (fktable) theory predictions.
+
+    make_posdata_split: training_validation.PosdataTrainValidationSplit
+        dataclass inheriting from monte_carlo_utils.TrainValidationSplit
+
+    make_penalty_posdata: theory_predictions.make_penalty_posdata
+        super_net provider used to compute positivity penalty.
+
+    Returns
+    -------
+    @jax.jit Callable
+        function to compute chi2 of a pdf grid on a data batch.
     """
     training_data = make_data_values.training_data
     central_values = training_data.central_values
@@ -63,7 +123,23 @@ def make_chi2_training_data_with_positivity(
     @jax.jit
     def chi2(pdf, batch_idx, alpha, lambda_positivity):
         """
-        TODO
+        Parameters
+        ----------
+        pdf: jnp.array
+            pdf grid.
+
+        batch_idx: jnp.array
+            array of data batch indices.
+
+        alpha: float
+
+        lambda_positivity: float
+
+        Returns
+        -------
+        float
+            loss function value
+
         """
         diff = (
             make_pred_data(pdf)[central_values_idx][batch_idx]
@@ -97,7 +173,25 @@ mc_replicas_make_chi2_training_data_with_positivity = collect(
 
 def make_chi2_validation_data(make_data_values, make_pred_data):
     """
-    TODO
+    Returns a jax.jit compiled function that computes the chi2
+    of a pdf grid on validation data.
+
+    Notes:
+        - Does not include positivity constraint.
+        - This function is designed for Monte Carlo like PDF fits.
+
+    Parameters
+    ----------
+    make_data_values: training_validation.MakeDataValues
+        dataclass containing data for training and validation.
+
+    make_pred_data: theory_predictions.make_pred_data
+        super_net provider for (fktable) theory predictions.
+
+    Returns
+    -------
+    @jax.jit Callable
+        function to compute chi2 of a pdf grid on validation data.
     """
     validation_data = make_data_values.validation_data
     central_values = validation_data.central_values
@@ -106,10 +200,7 @@ def make_chi2_validation_data(make_data_values, make_pred_data):
 
     @jax.jit
     def chi2(pdf):
-        """
-        TODO
-        note: no batches training for validation data
-        """
+        """ """
         diff = make_pred_data(pdf)[central_values_idx] - central_values
 
         # decompose covmat
@@ -132,7 +223,30 @@ def make_chi2_validation_data_with_positivity(
     make_data_values, make_pred_data, make_posdata_split, make_penalty_posdata
 ):
     """
-    TODO
+    Returns a jax.jit compiled function that computes the chi2
+    of a pdf grid on validation data.
+
+    Notes:
+        - This function is designed for Monte Carlo like PDF fits.
+
+    Parameters
+    ----------
+    make_data_values: training_validation.MakeDataValues
+        dataclass containing data for training and validation.
+
+    make_pred_data: theory_predictions.make_pred_data
+        super_net provider for (fktable) theory predictions.
+
+    make_posdata_split: training_validation.PosdataTrainValidationSplit
+        dataclass inheriting from monte_carlo_utils.TrainValidationSplit
+
+    make_penalty_posdata: theory_predictions.make_penalty_posdata
+        super_net provider used to compute positivity penalty.
+
+    Returns
+    -------
+    @jax.jit Callable
+        function to compute chi2 of a pdf grid on validation data.
     """
     validation_data = make_data_values.validation_data
     central_values = validation_data.central_values
@@ -143,9 +257,7 @@ def make_chi2_validation_data_with_positivity(
 
     @jax.jit
     def chi2(pdf, alpha, lambda_positivity):
-        """
-        TODO
-        """
+        """ """
         diff = make_pred_data(pdf)[central_values_idx] - central_values
 
         # decompose covmat
@@ -173,27 +285,44 @@ mc_replicas_make_chi2_validation_data_with_positivity = collect(
 
 def make_chi2(make_data_values, make_pred_data):
     """
-    TODO
-    N.B. make_chi2 function suited for a bayesian fit
+    Returns a jax.jit compiled function that computes the chi2
+    of a pdf grid on a dataset.
+
+    Notes:
+        - Does not include positivity constraint.
+        - This function is designed for Bayesian like PDF fits.
+
+    Parameters
+    ----------
+    make_data_values: training_validation.MakeDataValues
+        dataclass containing data for training and validation.
+
+    make_pred_data: theory_predictions.make_pred_data
+        super_net provider for (fktable) theory predictions.
+
+    Returns
+    -------
+    @jax.jit Callable
+        function to compute chi2 of a pdf grid.
+
     """
     training_data = make_data_values.training_data
     central_values = training_data.central_values
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
+    # Invert the covmat
+    # We use this instead of Cholesky decomposition
+    # since we do it only once and for all at the beginning
+    inv_covmat = jla.inv(covmat)
+
     @jax.jit
     def chi2(pdf):
-        """
-        TODO
-        """
+        """ """
         diff = make_pred_data(pdf)[central_values_idx] - central_values
 
-        # decompose covmat after having batched it!
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
-        # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
-        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
-        loss = jnp.sum(chi2_vec**2)
         return loss
 
     return chi2
@@ -208,27 +337,52 @@ def make_chi2_with_positivity(
     lambda_positivity=1000,
 ):
     """
-    TODO
+    Returns a jax.jit compiled function that computes the chi2
+    of a pdf grid on a dataset.
+
+    Notes:
+        - This function is designed for Bayesian like PDF fits.
+
+    Parameters
+    ----------
+    make_data_values: training_validation.MakeDataValues
+        dataclass containing data for training and validation.
+
+    make_pred_data: theory_predictions.make_pred_data
+        super_net provider for (fktable) theory predictions.
+
+    make_posdata_split: training_validation.PosdataTrainValidationSplit
+        dataclass inheriting from monte_carlo_utils.TrainValidationSplit
+
+    make_penalty_posdata: theory_predictions.make_penalty_posdata
+        super_net provider used to compute positivity penalty.
+
+    alpha: float
+
+    lambda_positivity: float
+
+    Returns
+    -------
+    @jax.jit Callable
+        function to compute chi2 of a pdf grid.
+
     """
     training_data = make_data_values.training_data
     central_values = training_data.central_values
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
+    # Invert the covmat
+    inv_covmat = jla.inv(covmat)
+
     posdata_training_idx = make_posdata_split.training
 
     @jax.jit
     def chi2(pdf):
-        """
-        TODO
-        """
+        """ """
         diff = make_pred_data(pdf)[central_values_idx] - central_values
 
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
-
-        # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
-        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
-        loss = jnp.sum(chi2_vec**2)
+        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
         # add penalty term due to positivity
         pos_penalty = make_penalty_posdata(pdf, alpha, lambda_positivity)[

@@ -1,6 +1,13 @@
 """
-TODO
+wmin.config.py
+
+Config module of wmin
+
+Author: Mark N. Costantini
+Note: several functions are taken from validphys.config
+Date: 11.11.2023
 """
+
 from super_net.config import SuperNetConfig, Environment
 
 

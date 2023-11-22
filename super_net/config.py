@@ -1,3 +1,13 @@
+"""
+super_net.config.py
+
+Config module of super_net
+
+Author: Mark N. Costantini
+Note: several functions are taken from validphys.config
+Date: 11.11.2023
+"""
+
 from validphys.config import Config, Environment
 from validphys import covmats
 
@@ -34,7 +44,6 @@ class SuperNetConfig(Config):
         return SuperNetDataGroupSpec(
             name=group_name, datasets=datasets, dsinputs=data_input
         )
-
 
     @explicit_node
     def produce_commondata_tuple(self, pseudodata=False, fakedata=False):
@@ -74,16 +83,21 @@ class SuperNetConfig(Config):
         """
         Produce replica indexes over which to collect.
         """
-        return [{"replica_index":i} for i in range(n_replicas)]
+        return [{"replica_index": i} for i in range(n_replicas)]
 
-    def produce_trval_replica_indices(self, n_replicas, use_same_trval_split_per_replica=False, trval_index_default=1):
+    def produce_trval_replica_indices(
+        self, n_replicas, use_same_trval_split_per_replica=False, trval_index_default=1
+    ):
         """
         Produce replica and training validation split indexes over which to collect.
         """
         if use_same_trval_split_per_replica:
-            return [{"replica_index":i, "trval_index":trval_index_default} for i in range(n_replicas)]
+            return [
+                {"replica_index": i, "trval_index": trval_index_default}
+                for i in range(n_replicas)
+            ]
         else:
-            return [{"replica_index":i, "trval_index":i} for i in range(n_replicas)]
+            return [{"replica_index": i, "trval_index": i} for i in range(n_replicas)]
 
     def produce_dataset_inputs_t0_predictions(self, data, t0set, use_t0):
         """

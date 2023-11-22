@@ -1,6 +1,12 @@
 """
-TODO
+wmin.wmin_fit.py
+
+Module containing functions used to perform a weight minimisation PDF fit.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 from collections.abc import Mapping
 
 import logging
@@ -13,6 +19,7 @@ import jax.numpy as jnp
 import optax
 
 import ultranest
+import time
 
 from reportengine import collect
 
@@ -183,11 +190,14 @@ def weight_minimization_ultranest(
     min_num_live_points,
     min_ess,
     n_wmin_posterior_samples=1000,
-    wmin_posterior_resampling_seed=123456
+    wmin_posterior_resampling_seed=123456,
 ):
     """
     TODO
     note: not including positivity for the time being
+    The function being used for the chi2 is not the optimised one
+    in wmin.wmin_loss_functions. Performances are similar with
+    the generic one.
     """
 
     parameters = [f"w{i+1}" for i in range(n_replicas_wmin - 1)]
@@ -209,10 +219,13 @@ def weight_minimization_ultranest(
         weight_minimization_prior,
     )
 
+    t0 = time.time()
     ultranest_result = sampler.run(
         min_num_live_points=min_num_live_points,
         min_ess=min_ess,
     )
+    t1 = time.time()
+    log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
     if n_wmin_posterior_samples > ultranest_result["samples"].shape[0]:
         n_wmin_posterior_samples = ultranest_result["samples"].shape[0] - int(
@@ -229,7 +242,7 @@ def weight_minimization_ultranest(
         n_wmin_posterior_samples,
         wmin_posterior_resampling_seed,
     )
-    
+
     return UltranestWeightMinimizationFit(
         **weight_minimization_grid.to_dict(),
         optimised_wmin_weights=resampled_posterior,
@@ -238,6 +251,5 @@ def weight_minimization_ultranest(
 
 
 def run_wmin_nested_sampling(lhapdf_wmin_and_ultranest_result):
-    """
-    """
+    """ """
     log.info("Nested Sampling weight minimization fit completed!")

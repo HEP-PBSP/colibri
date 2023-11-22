@@ -1,6 +1,12 @@
 """
-TODO
+wmin.wmin_utils.py
+
+Module containing util functions for weight minimisation PDF fits.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 import logging
 
 import jax

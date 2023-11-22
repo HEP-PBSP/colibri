@@ -1,6 +1,13 @@
 """
-TODO
+super_net.theory_predictions.py
+
+This module contains the functions necessary for the computation of
+theory predictions by means of fast-kernel (FK) tables.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 import itertools
 
 import jax
@@ -133,7 +140,7 @@ def make_pred_data(data):
 def make_penalty_posdataset(posdataset):
     """
     Given a PositivitySetSpec compute the positivity penalty
-    as a lagrange multiplier times elu of minus the theory prediction 
+    as a lagrange multiplier times elu of minus the theory prediction
 
     Parameters
     ----------
@@ -143,17 +150,17 @@ def make_penalty_posdataset(posdataset):
     -------
     @jax.jit CompiledFunction
         Compiled function taking pdf grid and alpha parameter
-        of jax.nn.elu function in input and returning 
+        of jax.nn.elu function in input and returning
         elu function evaluated on minus the theory prediction
 
         Note: this is needed in order to compute the positivity
-        loss function. Elu function is used to avoid a big discontinuity 
+        loss function. Elu function is used to avoid a big discontinuity
         in the derivative at 0 when the lagrange multiplier is very big.
 
         In practice this function can produce results in the range (-alpha, inf)
 
         see also nnpdf.n3fit.src.layers.losses.LossPositivity
-        
+
     """
 
     pred_funcs = []
@@ -168,7 +175,9 @@ def make_penalty_posdataset(posdataset):
 
     @jax.jit
     def pos_penalty(pdf, alpha, lambda_positivity):
-        return lambda_positivity * jax.nn.elu(-OP[posdataset.op](*[f(pdf) for f in pred_funcs]), alpha)
+        return lambda_positivity * jax.nn.elu(
+            -OP[posdataset.op](*[f(pdf) for f in pred_funcs]), alpha
+        )
 
     return pos_penalty
 
@@ -185,7 +194,7 @@ def make_penalty_posdata(posdatasets):
     Returns
     -------
     @jax.jit CompiledFunction
-        
+
     """
 
     predictions = []
@@ -195,6 +204,12 @@ def make_penalty_posdata(posdatasets):
 
     @jax.jit
     def pos_penalties(pdf, alpha, lambda_positivity):
-        return jnp.array(list(itertools.chain(*[f(pdf, alpha, lambda_positivity) for f in predictions])))
+        return jnp.array(
+            list(
+                itertools.chain(
+                    *[f(pdf, alpha, lambda_positivity) for f in predictions]
+                )
+            )
+        )
 
     return pos_penalties

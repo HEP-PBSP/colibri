@@ -1,6 +1,12 @@
 """
-TODO
+super_net.training_validation.py
+
+Module containing training validation dataclasses.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 import jax.numpy as jnp
 from dataclasses import dataclass
 
@@ -113,8 +119,30 @@ def make_posdata_split(
     posdatasets, trval_seed, test_size=0.2, shuffle_indices=True, bayesian_fit=False
 ):
     """
-    TODO
-    note: same seed as for data tr/val split.
+    Function for positivity training validation split.
+
+    Note: the random split is done using the same seed as
+          for data tr/val split is used.
+
+    Parameters
+    ----------
+    posdatasets: list
+        list of positivity datasets, see also validphys.config.parse_posdataset.
+
+    trval_seed: jax.random.PRNGKey
+        monte_carlo_utils.trval_seed, super_net provider.
+
+    test_size: float, default is 0.2
+
+    shuffle_indices: bool, default is True
+
+    bayesian_fit: bool, default is False
+
+    Returns
+    -------
+    PosdataTrainValidationSplit
+        dataclass
+
     """
 
     ndata_pos = jnp.sum(

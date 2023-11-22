@@ -1,6 +1,12 @@
 """
-TODO
+wmin.wmin_lhapdf.py
+
+Module containing functions used to write a weight minimisation fit to lhapdf grid.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 import os
 import pathlib
 import json

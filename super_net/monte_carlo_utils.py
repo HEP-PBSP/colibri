@@ -1,6 +1,12 @@
 """
-TODO
+super_net.monte_carlo_utils.py
+
+Module containing several utils for Monte Carlo like fits.
+
+Author: Mark N. Costantini
+Date: 11.11.2023
 """
+
 import jax
 import jax.numpy as jnp
 
@@ -15,6 +21,7 @@ def replica_seed(replica_index):
     key = jax.random.PRNGKey(replica_index)
     randint = jax.random.randint(key, shape=(1,), minval=0, maxval=1e10)
     return int(randint)
+
 
 def trval_seed(trval_index):
     """
@@ -66,7 +73,4 @@ def training_validation_split(indices, test_size, random_seed, shuffle_indices=T
     indices_train = permuted_indices[:split_point]
     indices_validation = permuted_indices[split_point:]
 
-    return TrainValidationSplit(
-        training=indices_train, 
-        validation=indices_validation
-    )
+    return TrainValidationSplit(training=indices_train, validation=indices_validation)
