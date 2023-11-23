@@ -156,6 +156,7 @@ def weight_minimization_ultranest(
     n_wmin_posterior_samples=1000,
     wmin_posterior_resampling_seed=123456,
     vectorised=False,
+    ndraw_max=1000,
 ):
     """
     TODO
@@ -197,6 +198,7 @@ def weight_minimization_ultranest(
             log_likelihood_vectorised,
             weight_minimization_prior,
             vectorized=True,
+            ndraw_max=ndraw_max,
         )
 
     else:
