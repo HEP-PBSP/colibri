@@ -1,52 +1,13 @@
-from grid_pdf.grid_pdf_model import interpolate_grid, FLAVOUR_MAPPING, REDUCED_XGRIDS
+from grid_pdf.grid_pdf_model import FLAVOUR_MAPPING
 from validphys.convolution import FK_FLAVOURS
 
 import ultranest
 
-def make_fast_convolution_bayesian_pdf_grid_fit(
-    make_chi2_grid_opt,
-    grid_pdf_model_prior,
-    flavour_mapping=FLAVOUR_MAPPING,
-    min_num_live_points=400,
-    min_ess=40,
-    log_dir="ultranest_logs",
-    resume=True,
-    vectorized=False,
-    slice_sampler=False,
-    slice_steps=100
-):
-
-    def log_likelihood(stacked_pdf_grid):
-        return -0.5 * make_chi2_grid_opt(stacked_pdf_grid)
-
-    parameters = [
-        f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in REDUCED_XGRIDS[i]
-    ]
-
-    sampler = ultranest.ReactiveNestedSampler(
-        parameters,
-        log_likelihood,
-        grid_pdf_model_prior,
-        log_dir=log_dir,
-        resume=resume,
-        vectorized=vectorized,
-    )
-
-    if slice_sampler:
-        import ultranest.stepsampler as ustepsampler
-        sampler.stepsampler = ustepsampler.SliceSampler(
-            nsteps=slice_steps,
-            generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
-        )
-
-    sampler.run(
-        min_num_live_points=min_num_live_points,
-        min_ess=min_ess,
-    )
-
 def make_bayesian_pdf_grid_fit(
     make_chi2_with_positivity,
     grid_pdf_model_prior,
+    interpolate_grid,
+    reduced_xgrids,
     flavour_mapping=FLAVOUR_MAPPING,
     min_num_live_points=400,
     min_ess=40,
@@ -80,11 +41,11 @@ def make_bayesian_pdf_grid_fit(
 
         """
 
-        pdf = interpolate_grid(stacked_pdf_grid, flavour_mapping=flavour_mapping).T
+        pdf = interpolate_grid(stacked_pdf_grid).T
         return -0.5 * make_chi2_with_positivity(pdf)
 
     parameters = [
-        f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in REDUCED_XGRIDS[i]
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in reduced_xgrids[i]
     ]
 
     sampler = ultranest.ReactiveNestedSampler(

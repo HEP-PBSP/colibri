@@ -39,69 +39,46 @@ FLAVOURS_ID_MAPPINGS = {
     13: "T35",
 }
 
-"""
-Dict, key = flavour id (see FLAVOURS_ID_MAPPINGS), val = reduced x grid.
-"""
-REDUCED_XGRIDS = {
-    "length": 50,
-    0: [],
-    1: XGRID,
-    2: XGRID,
-    3: XGRID,
-    4: [],
-    5: [],
-    6: [],
-    7: [],
-    8: [],
-    9: [],
-    10: [],
-    11: [],
-    12: [],
-    13: [],
-}
+FLAVOUR_TO_ID_MAPPING = {val: key for (key, val) in FLAVOURS_ID_MAPPINGS.items()}
 
 """
 Specifies which flavours to include in a fit.
 """
 FLAVOUR_MAPPING = [1, 2, 3]
 
-
-def interpolate_grid(stacked_pdf_grid, flavour_mapping=FLAVOUR_MAPPING):
+def interpolate_grid(
+    reduced_xgrids,
+    length_reduced_xgrids,
+    flavour_mapping=FLAVOUR_MAPPING,
+):
     """
-    TODO
-
-    Parameters
-    ----------
-    stacked_pdf_grid: jnp.array
-
-    flavour_mapping: list, default is grid_pdf.grid_pdf_model.FLAVOUR_MAPPING
-        specifies the ids of the flavours to include in a fit.
-
+    Produces the function which produces the grid interpolation.
     """
 
-    # all reduced x grids should have the same length
-    length_grid = REDUCED_XGRIDS["length"]
-
-    # reshape stacked_pdf_grid to (len(REDUCED_XGRID), len(flavour_mapping))
-    reshaped_stacked_pdf_grid = stacked_pdf_grid.reshape(
-        (length_grid, len(flavour_mapping)), order="F"
-    )
-
-    # generate an empty matrix of shape (len(super_net.constants.XGRID),valipdhys.convolution.NFK)
-    input_grid = jnp.zeros((len(XGRID), convolution.NFK))
-
-    # interpolate columns of reshaped_stacked_pdf_grid
-    for i, fl in enumerate(flavour_mapping):
-        input_grid = input_grid.at[:, fl].set(
-            jnp.interp(
-                jnp.array(XGRID),
-                jnp.array(REDUCED_XGRIDS[fl]),
-                reshaped_stacked_pdf_grid[:, i],
-            )
+    def interp_func(
+        stacked_pdf_grid
+    ):
+        # reshape stacked_pdf_grid to (len(REDUCED_XGRID), len(flavour_mapping))
+        reshaped_stacked_pdf_grid = stacked_pdf_grid.reshape(
+            (length_reduced_xgrids, len(flavour_mapping)), order="F"
         )
 
-    return input_grid
+        # generate an empty matrix of shape (len(super_net.constants.XGRID),valipdhys.convolution.NFK)
+        input_grid = jnp.zeros((len(XGRID), convolution.NFK))
 
+        # interpolate columns of reshaped_stacked_pdf_grid
+        for i, fl in enumerate(flavour_mapping):
+            input_grid = input_grid.at[:, fl].set(
+                jnp.interp(
+                    jnp.array(XGRID),
+                    jnp.array(reduced_xgrids[fl]),
+                    reshaped_stacked_pdf_grid[:, i],
+                )
+            )
+
+        return input_grid
+
+    return interp_func
 
 @dataclass(frozen=True)
 class PdfPriorGrid:
@@ -115,7 +92,7 @@ class PdfPriorGrid:
     error68_down: jnp.array
 
 
-def pdf_prior_grid(pdf_prior, flavour_mapping=FLAVOUR_MAPPING, Q0=1.65):
+def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping=FLAVOUR_MAPPING, Q0=1.65):
     """
     Get PDF grid prior values (x*f(x)) from a PDF set.
 
@@ -148,7 +125,7 @@ def pdf_prior_grid(pdf_prior, flavour_mapping=FLAVOUR_MAPPING, Q0=1.65):
             stacked_pdf_grid_prior,
             jnp.array(
                 convolution.evolution.grid_values(
-                    pdf_prior, [convolution.FK_FLAVOURS[fl]], REDUCED_XGRIDS[fl], [Q0]
+                    pdf_prior, [convolution.FK_FLAVOURS[fl]], reduced_xgrids[fl], [Q0]
                 )
             ).squeeze(-1)[0],
         )
@@ -157,7 +134,7 @@ def pdf_prior_grid(pdf_prior, flavour_mapping=FLAVOUR_MAPPING, Q0=1.65):
     replicas_grid = convolution.evolution.grid_values(
         pdf_prior,
         [convolution.FK_FLAVOURS[fl] for fl in flavour_mapping],
-        REDUCED_XGRIDS[fl],
+        reduced_xgrids[fl],
         [Q0],
     )
 

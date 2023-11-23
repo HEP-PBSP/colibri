@@ -16,7 +16,7 @@ from super_net.theory_predictions import make_pred_dataset
 
 from reportengine import collect
 
-from grid_pdf.grid_pdf_model import interpolate_grid, FLAVOUR_MAPPING, REDUCED_XGRIDS
+from grid_pdf.grid_pdf_model import interpolate_grid, FLAVOUR_MAPPING
 from validphys.convolution import FK_FLAVOURS
 
 def make_chi2_training_data(make_data_values, make_pred_data):
@@ -314,84 +314,16 @@ def make_chi2(make_data_values, make_pred_data):
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
+    sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+
     @jax.jit
     def chi2(pdf):
         """ """
         diff = make_pred_data(pdf)[central_values_idx] - central_values
 
-        # decompose covmat after having batched it!
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
-
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
         loss = jnp.sum(chi2_vec**2)
-        return loss
-
-    return chi2
-
-def make_chi2_grid_opt(
-    data,
-    make_data_values,
-    flavour_mapping=FLAVOUR_MAPPING,
-):
-    """
-    Returns a jax.jit compiled function that computes the chi2
-    of a pdf grid optimised for the grid parametrisation.
-
-    The theory predictions are optimised to interact with the 
-    grid via linear combinations.
-
-    Notes:
-        - Does not include positivity constraint.
-        - This function is designed for Bayesian like PDF fits.
-
-    Parameters
-    ----------
-    make_data_values: training_validation.MakeDataValues
-        dataclass containing data for training and validation.
-    make_pred_dataset: theory_predictions.make_pred_data
-        super_net provider for (fktable) theory predictions.
-
-    Returns
-    -------
-    @jax.jit Callable
-        function to compute chi2 of a pdf grid.
-    """    
-
-    parameters = [
-        f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in REDUCED_XGRIDS[i]
-    ]
-
-    basis_grids = jnp.identity(len(parameters))
-
-    interpolated_grids = [interpolate_grid(basis_grids[i,:], flavour_mapping=flavour_mapping).T for i in range(len(parameters))]
-
-    training_data = make_data_values.training_data
-    central_values = training_data.central_values
-    covmat = training_data.covmat
-    central_values_idx = training_data.central_values_idx
-
-    dis_predictions = []
-
-    for ds in data.datasets:
-        pred_func = make_pred_dataset(ds)
-        pred_array = jnp.array([pred_func(grid) for grid in interpolated_grids]).T
-        dis_predictions.append(pred_array)
-
-    dis_predictions = jnp.concatenate(dis_predictions)
-
-    # Invert the covmat
-    inv_covmat = jla.inv(covmat)
-
-#    @jax.jit
-    def chi2(stacked_pdf_grid):
-        """ """
-        theory = jnp.einsum("ij,j", dis_predictions, stacked_pdf_grid)
-
-        diff = theory[central_values_idx] - central_values
-
-        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
-
         return loss
 
     return chi2
@@ -442,12 +374,12 @@ def make_chi2_with_positivity(
 
     posdata_training_idx = make_posdata_split.training
 
+    sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+
     @jax.jit
     def chi2(pdf):
         """ """
         diff = make_pred_data(pdf)[central_values_idx] - central_values
-
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
