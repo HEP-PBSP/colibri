@@ -123,7 +123,7 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 @check_wminpdfset_is_montecarlo
-def lhapdf_wmin_and_ultranest_result(
+def lhapdf_from_collected_ns_weights(
     wminpdfset,
     weight_minimization_ultranest,
     n_wmin_posterior_samples,

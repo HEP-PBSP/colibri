@@ -27,7 +27,7 @@ from super_net.data_batch import data_batches
 from wmin.wmin_model import WeightMinimizationGrid
 from wmin.wmin_utils import resample_from_wmin_posterior
 
-from wmin.wmin_lhapdf import lhapdf_from_collected_weights
+from wmin.wmin_lhapdf import lhapdf_from_collected_weights, lhapdf_from_collected_ns_weights
 
 from validphys.loader import Loader
 from validphys.lhio import generate_replica0
@@ -148,6 +148,33 @@ def wmin_fit_name(wminpdfset, set_name=None):
         return set_name
     return str(wminpdfset)
 
+def perform_nested_sampling_wmin_fit(
+    wminpdfset,
+    weight_minimization_ultranest,
+    n_wmin_posterior_samples,
+    wmin_fit_name,
+    lhapdf_path,
+):
+    """
+    Performs a Nested Sampling fit using the weight-minimisation parametrisation.
+    """
+
+    # Produce the LHAPDF grid
+    lhapdf_from_collected_ns_weights(
+        wminpdfset,
+        weight_minimization_ultranest,
+        n_wmin_posterior_samples,
+        folder=lhapdf_path,
+        set_name=wmin_fit_name,
+    )
+
+    # Produce the central replica
+    l = Loader()
+    pdf = l.check_pdf(wmin_fit_name)
+    generate_replica0(pdf)
+
+    log.info("Nested Sampling weight minimization fit completed!")
+
 def perform_monte_carlo_wmin_fit(
     wminpdfset,
     mc_replicas_weight_minimization_fit,
@@ -248,8 +275,3 @@ def weight_minimization_ultranest(
         optimised_wmin_weights=resampled_posterior,
         ultranest_result=ultranest_result,
     )
-
-
-def run_wmin_nested_sampling(lhapdf_wmin_and_ultranest_result):
-    """ """
-    log.info("Nested Sampling weight minimization fit completed!")
