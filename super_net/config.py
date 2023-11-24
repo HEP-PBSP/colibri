@@ -16,12 +16,13 @@ from reportengine.configparser import explicit_node, ConfigError
 from super_net import commondata_utils
 from super_net.core import SuperNetDataGroupSpec
 
+from wmin.config import WminConfig
 
 class Environment(Environment):
     pass
 
 
-class SuperNetConfig(Config):
+class SuperNetConfig(Config, WminConfig):
     """
     Config class inherits from validphys
     Config class

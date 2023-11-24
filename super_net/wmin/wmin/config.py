@@ -8,17 +8,7 @@ Note: several functions are taken from validphys.config
 Date: 11.11.2023
 """
 
-from super_net.config import SuperNetConfig, Environment
-
-
-class Environment(Environment):
-    pass
-
-
-class WminConfig(SuperNetConfig):
-    """
-    WminConfig class Inherits from super_net.config.SuperNetConfig
-    """
+class WminConfig():
 
     def parse_wminpdfset(self, name):
         """PDF set used to generate the weight minimization grid"""
