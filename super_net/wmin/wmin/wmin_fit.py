@@ -141,11 +141,6 @@ mc_replicas_weight_minimization_fit = collect(
     "weight_minimization_fit", ("all_wmin_collect_indices",)
 )
 
-def wmin_fit_name(wminpdfset, set_name=None):
-    if set_name:
-        return set_name
-    return 'wmin_fit_' + str(wminpdfset)
-
 def perform_monte_carlo_wmin_fit(
     wminpdfset,
     mc_replicas_weight_minimization_fit,

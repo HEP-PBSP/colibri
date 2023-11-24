@@ -14,6 +14,10 @@ import jax.numpy as jnp
 
 log = logging.getLogger(__name__)
 
+def wmin_fit_name(wminpdfset, set_name=None):
+    if set_name:
+        return set_name
+    return 'wmin_fit_' + str(wminpdfset)
 
 def wmin_grid_seed(wmin_grid_index):
     """
