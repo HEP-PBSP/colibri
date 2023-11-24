@@ -12,8 +12,6 @@ from collections.abc import Mapping
 import logging
 from dataclasses import dataclass
 
-import lhapdf
-
 import jax
 import jax.numpy as jnp
 import optax
