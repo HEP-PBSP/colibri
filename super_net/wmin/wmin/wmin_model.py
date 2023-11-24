@@ -54,7 +54,6 @@ class WeightMinimizationGrid:
         return asdict(self)
 
 
-@check_wminpdfset_is_montecarlo
 def weight_minimization_grid(
     wminpdfset,
     wmin_grid_seed,
@@ -109,24 +108,17 @@ def weight_minimization_grid(
         ).squeeze(-1)
     )
 
-    if n_replicas_wmin > INPUT_GRID.shape[0]:
+    if n_replicas_wmin + 1 > INPUT_GRID.shape[0]:
         raise (
             f"n_replicas_wmin should be <= than the number of replicas contained in the PDF set {wminpdfset}"
         )
 
     # reduce INPUT_GRID to only keep n_replicas_wmin PDF replicas
-    wmin_basis_idx = jax.random.choice(
-        wmin_grid_seed, INPUT_GRID.shape[0], shape=(n_replicas_wmin,), replace=False
-    )
+    wmin_basis_idx = jnp.arange(1, n_replicas_wmin + 1)
 
     # == generate weight minimization grid so that sum rules are automatically fulfilled == #
-    # pick central wmin replica at random
-    wmin_central_replica = jax.random.permutation(
-        wmin_grid_seed, wmin_basis_idx, independent=True
-    )[0]
-
-    # discard central wmin replica from wmin basis
-    wmin_basis_idx = wmin_basis_idx[jnp.where(wmin_basis_idx != wmin_central_replica)]
+    # pick central wmin replica as central replica from PDF set
+    wmin_central_replica = 0
 
     wmin_INPUT_GRID = (
         INPUT_GRID[wmin_basis_idx, :, :] - INPUT_GRID[jnp.newaxis, wmin_central_replica]
