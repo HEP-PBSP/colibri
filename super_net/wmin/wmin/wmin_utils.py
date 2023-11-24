@@ -74,7 +74,6 @@ def weights_initializer_provider(
 
 
 def weight_minimization_prior(
-    n_replicas_wmin,
     prior_type="uniform",
     unif_prior_min_val=-0.7,
     unif_prior_max_val=0.7,

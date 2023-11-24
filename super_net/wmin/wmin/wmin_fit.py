@@ -166,7 +166,7 @@ def weight_minimization_ultranest(
     the generic one.
     """
 
-    parameters = [f"w{i+1}" for i in range(n_replicas_wmin - 1)]
+    parameters = [f"w{i+1}" for i in range(n_replicas_wmin)]
 
     @jax.jit
     def log_likelihood(weights):
