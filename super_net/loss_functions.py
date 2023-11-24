@@ -314,6 +314,9 @@ def make_chi2(make_data_values, make_pred_data, vectorized=False):
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
+    # Invert the covmat
+    # We use this instead of Cholesky decomposition
+    # since we do it only once and for all at the beginning
     inv_covmat = jla.inv(covmat)
 
     if vectorized:
@@ -383,6 +386,7 @@ def make_chi2_with_positivity(
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
+    # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
     posdata_training_idx = make_posdata_split.training
