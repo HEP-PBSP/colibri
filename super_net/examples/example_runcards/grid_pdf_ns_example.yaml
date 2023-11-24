@@ -1,6 +1,6 @@
 dataset_inputs:
-  - {'dataset':'NMC'}
-  - {'dataset': 'SLACP_dwsh'}
+#  - {'dataset':'NMC'}
+#  - {'dataset': 'SLACP_dwsh'}
 #  - {'dataset': 'SLACD_dw_ite'}
 #  - {'dataset': 'BCDMSP_dwsh'}
 #  - {'dataset': 'BCDMSD_dw_ite'}
@@ -8,13 +8,13 @@ dataset_inputs:
 #  - {'dataset': 'CHORUSNBPb_dw_ite'}
 #  - {'dataset': 'NTVNUDMNFe_dw_ite', 'cfac': ['MAS']}
 #  - {'dataset': 'NTVNBDMNFe_dw_ite', 'cfac': ['MAS']}
-#  - {'dataset': 'HERACOMBNCEM'} 
-#  - {'dataset': 'HERACOMBNCEP575'}
-#  - {'dataset': 'HERACOMBNCEP820'}
-#  - {'dataset': 'HERACOMBNCEP920'}
-#  - {'dataset': 'HERACOMBNCEP460'}
-#  - {'dataset': 'HERACOMBCCEP'}
-#  - {'dataset': 'HERACOMBCCEM'} 
+  - {'dataset': 'HERACOMBNCEM'} 
+  - {'dataset': 'HERACOMBNCEP575'}
+  - {'dataset': 'HERACOMBNCEP820'}
+  - {'dataset': 'HERACOMBNCEP920'}
+  - {'dataset': 'HERACOMBNCEP460'}
+  - {'dataset': 'HERACOMBCCEP'}
+  - {'dataset': 'HERACOMBCCEM'} 
 #  - {'dataset': 'HERACOMB_SIGMARED_B'}
 #  - {'dataset': 'HERACOMB_SIGMARED_C'}
 
@@ -55,6 +55,8 @@ sigma: 1
 min_num_live_points: 1000
 min_ess: 50
 trval_index: 1
+vectorised: True
+ndraw_max: 500
 
 # grid specs
 xgrids:
