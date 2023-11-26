@@ -17,6 +17,7 @@ import jax.numpy as jnp
 import optax
 
 import ultranest
+import ultranest.stepsampler as ustepsampler
 import time
 
 from reportengine import collect
@@ -157,6 +158,8 @@ def weight_minimization_ultranest(
     wmin_posterior_resampling_seed=123456,
     vectorised=False,
     ndraw_max=1000,
+    slice_sampler=False,
+    slice_steps=100,
 ):
     """
     TODO
@@ -206,6 +209,12 @@ def weight_minimization_ultranest(
             parameters,
             log_likelihood,
             weight_minimization_prior,
+        )
+
+    if slice_sampler:
+        sampler.stepsampler = ustepsampler.SliceSampler(
+            nsteps=slice_steps,
+            generate_direction=ustepsampler.generate_mixture_random_direction,
         )
 
     t0 = time.time()
