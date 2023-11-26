@@ -21,34 +21,34 @@ dataset_inputs:
 positivity:
   posdatasets:
   - {dataset: POSF2U, maxlambda: 1e6}        # Positivity Lagrange Multiplier
-  - {dataset: POSF2DW, maxlambda: 1e6}
-  - {dataset: POSF2S, maxlambda: 1e6}
-  - {dataset: POSFLL, maxlambda: 1e6}
-  - {dataset: POSF2C, maxlambda: 1e6}
-  - {dataset: POSXUQ, maxlambda: 1e6}        # Positivity of MSbar PDFs
-  - {dataset: POSXUB, maxlambda: 1e6}
-  - {dataset: POSXDQ, maxlambda: 1e6}
-  - {dataset: POSXDB, maxlambda: 1e6}
-  - {dataset: POSXSQ, maxlambda: 1e6}
-  - {dataset: POSXSB, maxlambda: 1e6}
-  - {dataset: POSXGL, maxlambda: 1e6}
-  - {dataset: POSDYU, maxlambda: 1e10}      
-  - {dataset: POSDYD, maxlambda: 1e10}
-  - {dataset: POSDYS, maxlambda: 1e10}
+  # - {dataset: POSF2DW, maxlambda: 1e6}
+  # - {dataset: POSF2S, maxlambda: 1e6}
+  # - {dataset: POSFLL, maxlambda: 1e6}
+  # - {dataset: POSF2C, maxlambda: 1e6}
+  # - {dataset: POSXUQ, maxlambda: 1e6}        # Positivity of MSbar PDFs
+  # - {dataset: POSXUB, maxlambda: 1e6}
+  # - {dataset: POSXDQ, maxlambda: 1e6}
+  # - {dataset: POSXDB, maxlambda: 1e6}
+  # - {dataset: POSXSQ, maxlambda: 1e6}
+  # - {dataset: POSXSB, maxlambda: 1e6}
+  # - {dataset: POSXGL, maxlambda: 1e6}
+  # - {dataset: POSDYU, maxlambda: 1e10}      
+  # - {dataset: POSDYD, maxlambda: 1e10}
+  # - {dataset: POSDYS, maxlambda: 1e10}
 
 
 theoryid: 400
 use_cuts: internal
 
 # wmin basis specs
-wminpdfset: 210623_mnc_disonly_linear_1000 
-n_replicas_wmin: 21
+wminpdfset: wmin_super_basis
+n_replicas_wmin: 20
 wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
 
 # Level 0 closure test
 fakedata: True
 pseudodata: False
-closure_test_pdf: 210623_mnc_disonly_linear_1000
+closure_test_pdf: wmin_super_basis
 
 # fit specs
 use_t0: True
@@ -61,18 +61,20 @@ lambda_positivity: 1000
 # nested sampling specs
 bayesian_fit: True
 prior_type: uniform
+vectorised: True
+ndraw_max: 500
 unif_prior_min_val: -2.0
 unif_prior_max_val: 2.0
-min_num_live_points: 1000
+min_num_live_points: 500
 min_ess: 50
 
 
 trval_index: 1
 
 # details for lhapdf output
-n_wmin_posterior_samples: 1000
+n_wmin_posterior_samples: 100
 
-set_name: 311023_mnc_nswmin_disonly_ct
+set_name: test_ns_fit
 
 actions_:
 - run_wmin_nested_sampling
