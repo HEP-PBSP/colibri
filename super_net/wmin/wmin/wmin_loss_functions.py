@@ -43,14 +43,6 @@ def make_chi2_wmin_opt(
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
-    # # Precompute predictions for the basis of wmin
-    # predictions = jnp.array(
-    #     [
-    #         make_pred_data(weight_minimization_grid.wmin_INPUT_GRID[i])
-    #         for i in range(len(weight_minimization_grid.wmin_INPUT_GRID))
-    #     ]
-    # )
-
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
