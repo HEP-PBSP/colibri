@@ -162,8 +162,8 @@ def perform_monte_carlo_wmin_fit(
         wminpdfset,
         mc_replicas_weight_minimization_fit,
         n_replicas,
+        wmin_fit_name,
         folder=lhapdf_path,
-        set_name=wmin_fit_name,
         output_path=output_path,
     )
 
@@ -254,6 +254,7 @@ def perform_nested_sampling_wmin_fit(
     n_wmin_posterior_samples,
     wmin_fit_name,
     lhapdf_path,
+    output_path,
 ):
     """
     Performs a Nested Sampling fit using the weight-minimisation parametrisation.
@@ -264,8 +265,9 @@ def perform_nested_sampling_wmin_fit(
         wminpdfset,
         weight_minimization_ultranest,
         n_wmin_posterior_samples,
+        wmin_fit_name,
         folder=lhapdf_path,
-        set_name=wmin_fit_name,
+        output_path=output_path,
     )
 
     # Produce the central replica
