@@ -25,26 +25,29 @@ class WminApp(SuperNetApp):
 
     @property
     def argparser(self):
+        """Parser arguments for wmin app can be added here"""
         parser = super().argparser
 
         parser.add_argument(
-            '-o',
-            '--output',
-            nargs='?',
+            "-o",
+            "--output",
+            nargs="?",
             default=None,
-            help='Name of the output directory.',
+            help="Name of the output directory.",
         )
 
         return parser
 
     def get_commandline_arguments(self, cmdline=None):
+        """Get commandline arguments"""
         args = super().get_commandline_arguments(cmdline)
-        if args['output'] is None:
-            args['output'] = pathlib.Path(args['config_yml']).stem
+        if args["output"] is None:
+            args["output"] = pathlib.Path(args["config_yml"]).stem
         return args
 
+
 def main():
-    a = WminApp(name='wmin', providers=wmin_providers)
+    a = WminApp(name="wmin", providers=wmin_providers)
     a.main()
 
 
