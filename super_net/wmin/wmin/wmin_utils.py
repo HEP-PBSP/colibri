@@ -8,11 +8,19 @@ Date: 11.11.2023
 """
 
 import logging
+from datetime import datetime
 
 import jax
 import jax.numpy as jnp
 
 log = logging.getLogger(__name__)
+
+
+def wmin_fit_name(wminpdfset, set_name=None):
+    if set_name:
+        return set_name
+    current_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    return f"{current_time}_wmin_fit_" + str(wminpdfset)
 
 
 def wmin_grid_seed(wmin_grid_index):
@@ -74,7 +82,10 @@ def weights_initializer_provider(
 
 
 def weight_minimization_prior(
-    n_replicas_wmin, prior_type="uniform", unif_prior_min_val=-0.7, unif_prior_max_val=0.7
+    n_replicas_wmin,
+    prior_type="uniform",
+    unif_prior_min_val=-0.7,
+    unif_prior_max_val=0.7,
 ):
     """
     TODO
@@ -88,22 +99,28 @@ def weight_minimization_prior(
             """
             params = cube.copy()
             for i in range(n_replicas_wmin - 1):
-                params[i] = cube[i] * (unif_prior_max_val - unif_prior_min_val) + unif_prior_min_val
+                params[i] = (
+                    cube[i] * (unif_prior_max_val - unif_prior_min_val)
+                    + unif_prior_min_val
+                )
             return params
 
         return prior_transform
 
 
-def resample_from_wmin_posterior(samples, n_wmin_posterior_samples=1000, wmin_posterior_resampling_seed=123456):
+def resample_from_wmin_posterior(
+    samples, n_wmin_posterior_samples=1000, wmin_posterior_resampling_seed=123456
+):
     """
     TODO
     """
-    
-    current_samples = samples.copy()    
+
+    current_samples = samples.copy()
 
     rng = jax.random.PRNGKey(wmin_posterior_resampling_seed)
 
-    resampled_samples = jax.random.choice(rng, len(samples), (n_wmin_posterior_samples,), replace=False)
+    resampled_samples = jax.random.choice(
+        rng, len(samples), (n_wmin_posterior_samples,), replace=False
+    )
 
     return jnp.array(current_samples[resampled_samples])
-

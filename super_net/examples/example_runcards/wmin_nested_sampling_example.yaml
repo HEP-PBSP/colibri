@@ -75,4 +75,4 @@ n_wmin_posterior_samples: 1000
 set_name: 311023_mnc_nswmin_disonly_ct
 
 actions_:
-- run_wmin_nested_sampling
+- perform_nested_sampling_wmin_fit
