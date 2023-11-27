@@ -234,3 +234,7 @@ def make_penalty_posdata(posdatasets, vectorised=False):
         )
 
     return pos_penalties
+
+
+def make_penalty_posdata_vectorised(posdatasets):
+    return make_penalty_posdata(posdatasets, vectorised=True)

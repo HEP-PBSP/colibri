@@ -123,3 +123,30 @@ def precomputed_predictions(make_pred_data_non_vectorised, weight_minimization_g
     )
 
     return predictions
+
+
+def postfit_positivity_check(
+    make_posdata_split,
+    make_penalty_posdata_vectorised,
+    alpha=1e-7,
+    lambda_positivity=1000,
+):
+    """
+    TODO
+    """
+
+    posdata_training_idx = make_posdata_split.training
+
+    @jax.jit
+    def pos_check(pdf):
+        pos_penalty = make_penalty_posdata_vectorised(pdf, alpha, lambda_positivity)[
+            :, posdata_training_idx
+        ]
+
+        loss = jnp.sum(pos_penalty, axis=-1)
+
+        passed = loss < 0.0
+
+        return passed
+
+    return pos_check

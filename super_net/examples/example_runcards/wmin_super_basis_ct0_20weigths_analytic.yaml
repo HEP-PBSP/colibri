@@ -56,7 +56,7 @@ t0pdfset: NNPDF40_nnlo_as_01180
 
 # positivity specs
 alpha: 1e-7
-lambda_positivity: 0.0
+lambda_positivity: 1000.0
 
 trval_index: 1
 

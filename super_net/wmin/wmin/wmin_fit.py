@@ -25,6 +25,7 @@ from reportengine import collect
 from super_net.data_batch import data_batches
 from wmin.wmin_model import WeightMinimizationGrid
 from wmin.wmin_utils import resample_from_wmin_posterior
+from reportengine.checks import CheckError
 
 log = logging.getLogger(__name__)
 
@@ -250,6 +251,7 @@ def weight_minimization_analytic(
     make_data_values,
     make_pred_data,
     precomputed_predictions,
+    postfit_positivity_check,
     n_wmin_posterior_samples=100,
     wmin_grid_index=1,
 ):
@@ -277,13 +279,54 @@ def weight_minimization_analytic(
     weights_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     weights_covmat = jla.inv(X.T @ Sigma @ X)
 
+    weights_out = jnp.array([]).reshape(0, weights_mean.shape[0])
+
+    # CHECK
+    # wmin_weights = jnp.concatenate(
+    #     [jnp.array([[1.0]]), jnp.zeros(shape=(1, weights_mean.shape[0]))], axis=-1
+    # )
+
+    # pdf = jnp.einsum(
+    #     "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+    # )
+    # test = postfit_positivity_check(pdf)
+
+    # print(test)
+
+    # ENDCHECK
+
     key = jax.random.PRNGKey(wmin_grid_index)
-    weights = jax.random.multivariate_normal(
-        key,
-        weights_mean,
-        weights_covmat,
-        shape=(n_wmin_posterior_samples,),
-    )
+
+    for i in range(500):
+        weights = jax.random.multivariate_normal(
+            key + i,
+            weights_mean,
+            weights_covmat,
+            shape=(100000,),
+        )
+
+        wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
+        pdf = jnp.einsum(
+            "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+        )
+
+        pos_check = postfit_positivity_check(pdf)
+
+        weights_out = jnp.concatenate([weights_out, weights[pos_check]], axis=0)
+
+        log.info("Found %i valid replicas." % weights_out.shape[0])
+
+        if weights_out.shape[0] >= n_wmin_posterior_samples:
+            weights_out = weights_out[:n_wmin_posterior_samples]
+            log.info(
+                "After %i iterations, found %i replicas that satisfy positivity."
+                % (i + 1, n_wmin_posterior_samples)
+            )
+            break
+
+    if weights_out.shape[0] < n_wmin_posterior_samples:
+        raise CheckError(f"Not able to find enough replicas to pass positivity.")
+
     t1 = time.time()
     log.info("ANALYTIC SAMPLING RUNNING TIME: %f s" % (t1 - t0))
 
@@ -291,7 +334,7 @@ def weight_minimization_analytic(
 
     return AnalyticWeightMinimizationFit(
         **weight_minimization_grid.to_dict(),
-        optimised_wmin_weights=weights,
+        optimised_wmin_weights=weights_out,
         analytic_result=analytic_result,
     )
 
