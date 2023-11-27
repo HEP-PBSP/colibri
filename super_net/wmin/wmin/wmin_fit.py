@@ -285,7 +285,7 @@ def weight_minimization_analytic(
         shape=(n_wmin_posterior_samples,),
     )
     t1 = time.time()
-    log.info("ANALYTIC SAMPLINGg RUNNING TIME: %f s" % (t1 - t0))
+    log.info("ANALYTIC SAMPLING RUNNING TIME: %f s" % (t1 - t0))
 
     analytic_result = (weights_mean, weights_covmat)
 
