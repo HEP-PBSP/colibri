@@ -77,7 +77,7 @@ def weight_minimization_grid(
         - the central replica of the wminpdfset is always included in the
           wmin parametrization
         - the replicas to be used in the parametrization are chosen at random
-          within this function
+          within this function if random_wmin_parametrisation is True
 
     Parameters
     ----------
