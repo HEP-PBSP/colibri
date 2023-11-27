@@ -61,10 +61,6 @@ lambda_positivity: 1000
 # nested sampling specs
 bayesian_fit: True
 prior_type: uniform
-vectorised: True
-ndraw_max: 500
-slice_sampler: True
-slice_steps: 100
 unif_prior_min_val: -2.0
 unif_prior_max_val: 2.0
 min_num_live_points: 500
@@ -80,3 +76,4 @@ set_name: 311023_mnc_nswmin_disonly_ct
 
 actions_:
 - perform_nested_sampling_wmin_fit
+
