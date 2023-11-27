@@ -8,6 +8,7 @@ Date: 11.11.2023
 """
 
 import logging
+from datetime import datetime
 
 import jax
 import jax.numpy as jnp
@@ -18,7 +19,8 @@ log = logging.getLogger(__name__)
 def wmin_fit_name(wminpdfset, set_name=None):
     if set_name:
         return set_name
-    return "wmin_fit_" + str(wminpdfset)
+    current_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    return f"{current_time}_wmin_fit_" + str(wminpdfset)
 
 
 def wmin_grid_seed(wmin_grid_index):
