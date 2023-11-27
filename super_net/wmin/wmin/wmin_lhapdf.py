@@ -44,7 +44,7 @@ def lhapdf_from_collected_weights(
     """
 
     original_pdf = pathlib.Path(lhapdf.paths()[-1]) / str(wminpdfset)
-    
+
     # Output path for the MC wmin weights to be saved
     if output_path is None:
         output_path = ""
