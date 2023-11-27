@@ -273,6 +273,7 @@ def weight_minimization_analytic(
     Sigma = inv_covmat
     X = (weight_pred[:, central_values_idx]).T
 
+    t0 = time.time()
     weights_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     weights_covmat = jla.inv(X.T @ Sigma @ X)
 
@@ -283,6 +284,8 @@ def weight_minimization_analytic(
         weights_covmat,
         shape=(n_wmin_posterior_samples,),
     )
+    t1 = time.time()
+    log.info("ANALYTIC SAMPLINGg RUNNING TIME: %f s" % (t1 - t0))
 
     analytic_result = (weights_mean, weights_covmat)
 
