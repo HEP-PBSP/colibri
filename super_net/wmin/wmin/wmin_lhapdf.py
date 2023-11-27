@@ -23,8 +23,11 @@ from validphys.lhio import (
 
 from wmin.checks import check_wminpdfset_is_montecarlo
 
+
 def lhapdf_path():
+    """Returns the path to the share/LHAPDF directory"""
     return lhapdf.paths()[0]
+
 
 @check_wminpdfset_is_montecarlo
 def lhapdf_from_collected_weights(
@@ -77,7 +80,7 @@ def lhapdf_from_collected_weights(
         wmin_basis_idx = wmin_fit.wmin_basis_idx + 1
         wmin_central_replica = wmin_fit.wmin_central_replica + 1
         optimised_wmin_weights = wmin_fit.optimised_wmin_weights
-        
+
         replica_weights.append(optimised_wmin_weights.tolist())
 
         wmin_centr_rep, replica = (
@@ -102,17 +105,19 @@ def lhapdf_from_collected_weights(
     # save ultranest results to json file
     json_dump = json.dumps(replica_weights)
 
-    with open(monte_carlo_res/"monte_carlo_results.json", "w") as json_file:
+    with open(monte_carlo_res / "monte_carlo_results.json", "w") as json_file:
         json.dump(json_dump, json_file)
 
+
 class NumpyEncoder(json.JSONEncoder):
-    """ 
-    Special json encoder for numpy types 
+    """
+    Special json encoder for numpy types
     see: https://stackoverflow.com/questions/26646362/numpy-array-is-not-json-serializable
     """
-    
+
     def default(self, obj):
         import numpy as np
+
         if isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):
@@ -162,7 +167,7 @@ def lhapdf_from_collected_ns_weights(
 
     headers, grids = load_all_replicas(wminpdfset)
     replicas_df = rep_matrix(grids)
-        
+
     # take care of different indexing. Central replica is at index 1
     wmin_basis_idx = weight_minimization_ultranest.wmin_basis_idx + 1
     wmin_central_replica = weight_minimization_ultranest.wmin_central_replica + 1
@@ -173,15 +178,14 @@ def lhapdf_from_collected_ns_weights(
             replicas_df.loc[:, [int(wmin_central_replica)]],
             replicas_df.loc[:, wmin_basis_idx],
         )
-        
-        wm_replica = wmin_centr_rep.dot(
-            [1.0 - jnp.sum(wmin_weight)]
-        ) + replica.dot(wmin_weight)
+
+        wm_replica = wmin_centr_rep.dot([1.0 - jnp.sum(wmin_weight)]) + replica.dot(
+            wmin_weight
+        )
 
         # for i, replica in tqdm(enumerate(result), total=len(weights)):
         wm_headers = f"PdfType: replica\nFormat: lhagrid1\nFromMCReplica: {i}\n"
         write_replica(i + 1, wm_pdf, wm_headers.encode("UTF-8"), wm_replica)
-
 
     # write ultranest result to json file
     ultranest_result_set_name = str(wm_pdf) + "_ultranest_results"
@@ -190,13 +194,13 @@ def lhapdf_from_collected_ns_weights(
         os.makedirs(ultranest_res)
 
     # save ultranest results to json file
-    json_dump = json.dumps(weight_minimization_ultranest.ultranest_result, cls=NumpyEncoder)
+    json_dump = json.dumps(
+        weight_minimization_ultranest.ultranest_result, cls=NumpyEncoder
+    )
 
-    with open(ultranest_res/"ultranest_results.json", "w") as json_file:
+    with open(ultranest_res / "ultranest_results.json", "w") as json_file:
         json.dump(json_dump, json_file)
 
     # note: to read json file:
     # with open("ultranest_results.json", "r") as file:
     #   data = json.loads(json.load(file))
-    
-        
