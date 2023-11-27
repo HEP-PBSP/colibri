@@ -250,6 +250,8 @@ def weight_minimization_analytic(
     make_data_values,
     make_pred_data,
     precomputed_predictions,
+    n_wmin_posterior_samples=100,
+    wmin_grid_index=1,
 ):
     """
     Valid only for DIS datasets.
@@ -272,10 +274,17 @@ def weight_minimization_analytic(
     X = (weight_pred[:, central_values_idx]).T
 
     weights_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
+    weights_covmat = jla.inv(X.T @ Sigma @ X)
 
-    weights = jnp.array([weights_mean])
+    key = jax.random.PRNGKey(wmin_grid_index)
+    weights = jax.random.multivariate_normal(
+        key,
+        weights_mean,
+        weights_covmat,
+        shape=(n_wmin_posterior_samples,),
+    )
 
-    analytic_result = weights_mean
+    analytic_result = (weights_mean, weights_covmat)
 
     return AnalyticWeightMinimizationFit(
         **weight_minimization_grid.to_dict(),

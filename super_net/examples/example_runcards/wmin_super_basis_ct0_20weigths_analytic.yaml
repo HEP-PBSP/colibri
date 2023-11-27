@@ -61,7 +61,7 @@ lambda_positivity: 0.0
 trval_index: 1
 
 # details for lhapdf output
-n_wmin_posterior_samples: 1
+n_wmin_posterior_samples: 100
 
 set_name: 231126_lm_wmin_super_basis_ct0_20weigths_analytic
 
