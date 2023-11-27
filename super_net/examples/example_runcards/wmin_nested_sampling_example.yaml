@@ -41,14 +41,14 @@ theoryid: 400
 use_cuts: internal
 
 # wmin basis specs
-wminpdfset: 210623_mnc_disonly_linear_1000 
-n_replicas_wmin: 21
+wminpdfset: wmin_super_basis
+n_replicas_wmin: 20
 wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
 
 # Level 0 closure test
 fakedata: True
 pseudodata: False
-closure_test_pdf: 210623_mnc_disonly_linear_1000
+closure_test_pdf: wmin_super_basis
 
 # fit specs
 use_t0: True
@@ -76,7 +76,7 @@ trval_index: 1
 # details for lhapdf output
 n_wmin_posterior_samples: 1
 
-set_name: 311023_mnc_nswmin_disonly_ct
+set_name: test_ns_fit
 
 actions_:
 - perform_nested_sampling_wmin_fit
