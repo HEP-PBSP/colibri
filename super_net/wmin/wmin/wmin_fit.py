@@ -17,6 +17,7 @@ import jax.numpy as jnp
 import optax
 
 import ultranest
+import ultranest.stepsampler as ustepsampler
 import time
 
 from reportengine import collect
@@ -181,7 +182,7 @@ class UltranestWeightMinimizationFit(WeightMinimizationFit):
 
 
 def weight_minimization_ultranest(
-    make_chi2,
+    make_chi2_with_positivity,
     weight_minimization_grid,
     weight_minimization_prior,
     n_replicas_wmin,
@@ -189,6 +190,10 @@ def weight_minimization_ultranest(
     min_ess,
     n_wmin_posterior_samples=1000,
     wmin_posterior_resampling_seed=123456,
+    vectorised=False,
+    ndraw_max=1000,
+    slice_sampler=False,
+    slice_steps=100,
 ):
     """
     TODO
@@ -205,17 +210,46 @@ def weight_minimization_ultranest(
         """
         TODO
         """
-        wmin_weights = jnp.concatenate((jnp.array([1.0]), weights))
+        wmin_weights = jnp.concatenate([jnp.array([1.0]), weights])
         pdf = jnp.einsum(
             "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
-        return -0.5 * make_chi2(pdf)
 
-    sampler = ultranest.ReactiveNestedSampler(
-        parameters,
-        log_likelihood,
-        weight_minimization_prior,
-    )
+        return -0.5 * make_chi2_with_positivity(pdf)
+
+    @jax.jit
+    def log_likelihood_vectorised(weights):
+        """
+        TODO
+        """
+        wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
+        pdf = jnp.einsum(
+            "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+        )
+
+        return -0.5 * make_chi2_with_positivity(pdf)
+
+    if vectorised:
+        sampler = ultranest.ReactiveNestedSampler(
+            parameters,
+            log_likelihood_vectorised,
+            weight_minimization_prior,
+            vectorized=True,
+            ndraw_max=ndraw_max,
+        )
+
+    else:
+        sampler = ultranest.ReactiveNestedSampler(
+            parameters,
+            log_likelihood,
+            weight_minimization_prior,
+        )
+
+    if slice_sampler:
+        sampler.stepsampler = ustepsampler.SliceSampler(
+            nsteps=slice_steps,
+            generate_direction=ustepsampler.generate_mixture_random_direction,
+        )
 
     t0 = time.time()
     ultranest_result = sampler.run(

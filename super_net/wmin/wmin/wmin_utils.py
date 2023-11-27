@@ -97,13 +97,7 @@ def weight_minimization_prior(
             """
             TODO
             """
-            params = cube.copy()
-            for i in range(n_replicas_wmin - 1):
-                params[i] = (
-                    cube[i] * (unif_prior_max_val - unif_prior_min_val)
-                    + unif_prior_min_val
-                )
-            return params
+            return cube * (unif_prior_max_val - unif_prior_min_val) + unif_prior_min_val
 
         return prior_transform
 
@@ -124,3 +118,19 @@ def resample_from_wmin_posterior(
     )
 
     return jnp.array(current_samples[resampled_samples])
+
+
+def precomputed_predictions(make_pred_data_non_vectorised, weight_minimization_grid):
+    """
+    Precompute predictions for the basis of wmin using make_pred_data_non_vectorised.
+    """
+
+    # Precompute predictions for the basis of wmin
+    predictions = jnp.array(
+        [
+            make_pred_data_non_vectorised(weight_minimization_grid.wmin_INPUT_GRID[i])
+            for i in range(len(weight_minimization_grid.wmin_INPUT_GRID))
+        ]
+    )
+
+    return predictions
