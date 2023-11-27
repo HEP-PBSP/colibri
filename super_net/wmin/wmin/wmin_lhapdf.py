@@ -60,10 +60,11 @@ def lhapdf_from_collected_weights(
                 out_stream.write(f'SetDesc: "Weight-minimized {wminpdfset}"\n')
             elif l.find("NumMembers:") >= 0:
                 out_stream.write(f"NumMembers: {n_replicas + 1}\n")
-            elif l.find("ErrorType: replicas") >= 0:
+            elif "ErrorType:" in l:
                 out_stream.write(f"ErrorType: replicas\n")
             else:
                 out_stream.write(l)
+
 
     headers, grids = load_all_replicas(wminpdfset)
     replicas_df = rep_matrix(grids)
@@ -153,7 +154,7 @@ def lhapdf_from_collected_ns_weights(
                 out_stream.write(f'SetDesc: "Weight-minimized {wminpdfset}"\n')
             elif l.find("NumMembers:") >= 0:
                 out_stream.write(f"NumMembers: {n_wmin_posterior_samples + 1}\n")
-            elif l.find("ErrorType: replicas") >= 0:
+            elif "ErrorType:" in l:
                 out_stream.write(f"ErrorType: replicas\n")
             else:
                 out_stream.write(l)
