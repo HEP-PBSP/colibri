@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 import jax
 import jax.numpy as jnp
+import jax.scipy.linalg as jla
 import optax
 
 import ultranest
@@ -146,6 +147,11 @@ class UltranestWeightMinimizationFit(WeightMinimizationFit):
     ultranest_result: Mapping = None
 
 
+@dataclass(frozen=True)
+class AnalyticWeightMinimizationFit(WeightMinimizationFit):
+    analytic_result: Mapping = None
+
+
 def weight_minimization_ultranest(
     make_chi2_with_positivity,
     weight_minimization_grid,
@@ -239,6 +245,50 @@ def weight_minimization_ultranest(
     )
 
 
+def weight_minimization_analytic(
+    weight_minimization_grid,
+    make_data_values,
+    make_pred_data,
+    precomputed_predictions,
+):
+    """
+    Valid only for DIS datasets.
+    """
+
+    training_data = make_data_values.training_data
+    central_values = training_data.central_values
+    covmat = training_data.covmat
+    central_values_idx = training_data.central_values_idx
+
+    # Invert the covmat
+    inv_covmat = jla.inv(covmat)
+
+    central_pred = precomputed_predictions[0, :]
+    weight_pred = precomputed_predictions[1:, :]
+
+    # Solve chi2 analytically for the mean
+    Y = central_values - central_pred[central_values_idx]
+    Sigma = inv_covmat
+    X = (weight_pred[:, central_values_idx]).T
+
+    weights_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
+
+    weights = jnp.array([weights_mean])
+
+    analytic_result = weights_mean
+
+    return AnalyticWeightMinimizationFit(
+        **weight_minimization_grid.to_dict(),
+        optimised_wmin_weights=weights,
+        analytic_result=analytic_result,
+    )
+
+
 def run_wmin_nested_sampling(lhapdf_wmin_and_ultranest_result):
     """ """
     log.info("Nested Sampling weight minimization fit completed!")
+
+
+def run_wmin_analytic(lhapdf_wmin_analytic_result):
+    """ """
+    log.info("Analytic weight minimization fit completed!")

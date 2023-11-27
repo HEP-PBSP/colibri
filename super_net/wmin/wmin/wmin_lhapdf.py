@@ -202,3 +202,62 @@ def lhapdf_wmin_and_ultranest_result(
     # note: to read json file:
     # with open("ultranest_results.json", "r") as file:
     #   data = json.loads(json.load(file))
+
+
+def lhapdf_wmin_analytic_result(
+    wminpdfset,
+    weight_minimization_analytic,
+    n_wmin_posterior_samples,
+    folder=None,
+    set_name=None,
+    errortype: str = "replicas",
+):
+    """
+    TODO
+    """
+    original_pdf = pathlib.Path(lhapdf.paths()[-1]) / str(wminpdfset)
+    if folder is None:
+        # requested folder for the new LHAPDF to reside
+        folder = ""
+
+    if set_name is None:
+        set_name = str(wminpdfset) + "_wmin"
+
+    wm_pdf = pathlib.Path(folder) / set_name
+    if not wm_pdf.exists():
+        os.makedirs(wm_pdf)
+
+    with open(original_pdf / f"{wminpdfset}.info", "r") as in_stream, open(
+        wm_pdf / f"{set_name}.info", "w"
+    ) as out_stream:
+        for l in in_stream.readlines():
+            if l.find("SetDesc:") >= 0:
+                out_stream.write(f'SetDesc: "Weight-minimized {wminpdfset}"\n')
+            elif l.find("NumMembers:") >= 0:
+                out_stream.write(f"NumMembers: {n_wmin_posterior_samples + 1}\n")
+            elif l.find("ErrorType: replicas") >= 0:
+                out_stream.write(f"ErrorType: {errortype}\n")
+            else:
+                out_stream.write(l)
+
+    headers, grids = load_all_replicas(wminpdfset)
+    replicas_df = rep_matrix(grids)
+
+    # take care of different indexing. Central replica is at index 1
+    wmin_basis_idx = weight_minimization_analytic.wmin_basis_idx + 1
+    wmin_central_replica = weight_minimization_analytic.wmin_central_replica + 1
+    optimised_wmin_weights = weight_minimization_analytic.optimised_wmin_weights
+
+    for i, wmin_weight in enumerate(optimised_wmin_weights):
+        wmin_centr_rep, replica = (
+            replicas_df.loc[:, [int(wmin_central_replica)]],
+            replicas_df.loc[:, wmin_basis_idx],
+        )
+
+        wm_replica = wmin_centr_rep.dot([1.0 - jnp.sum(wmin_weight)]) + replica.dot(
+            wmin_weight
+        )
+
+        # for i, replica in tqdm(enumerate(result), total=len(weights)):
+        wm_headers = f"PdfType: replica\nFormat: lhagrid1\nFromMCReplica: {i}\n"
+        write_replica(i + 1, wm_pdf, wm_headers.encode("UTF-8"), wm_replica)
