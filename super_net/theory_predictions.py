@@ -8,8 +8,6 @@ Author: Mark N. Costantini
 Date: 11.11.2023
 """
 
-import itertools
-
 import jax
 import jax.numpy as jnp
 
@@ -31,6 +29,11 @@ def make_dis_prediction(fktable, vectorised=False):
     Parameters
     ----------
     fktable : validphys.coredata.FKTableData
+
+    vectorised: bool, default is False
+        if True, the function will be compiled in a way
+        that allows to compute the prediction for multiple
+        prior samples at once.
 
     Returns
     -------
@@ -64,6 +67,11 @@ def make_had_prediction(fktable, vectorised=False):
     Parameters
     ----------
     fktable : validphys.coredata.FKTableData
+
+    vectorised: bool, default is False
+        if True, the function will be compiled in a way
+        that allows to compute the prediction for multiple
+        prior samples at once.
 
     Returns
     -------
@@ -105,6 +113,8 @@ def make_pred_dataset(dataset, vectorised=False):
     ----------
     dataset : validphys.core.DataSetSpec
 
+    vectorised: bool, default is False
+
     Returns
     -------
     @jax.jit CompiledFunction
@@ -138,6 +148,8 @@ def make_pred_data(data, vectorised=False):
     ----------
     data: DataGroupSpec instance
 
+    vectorised: bool, default is False
+
     Returns
     -------
     @jax.jit CompiledFunction
@@ -159,6 +171,9 @@ def make_pred_data(data, vectorised=False):
 
 
 def make_pred_data_non_vectorised(data):
+    """
+    Same as make_pred_data but with vectorised=False
+    """
     return make_pred_data(data, vectorised=False)
 
 
@@ -170,6 +185,8 @@ def make_penalty_posdataset(posdataset, vectorised=False):
     Parameters
     ----------
     posdataset : validphys.core.PositivitySetSpec
+
+    vectorised: bool, default is False
 
     Returns
     -------
@@ -215,6 +232,8 @@ def make_penalty_posdata(posdatasets, vectorised=False):
     ----------
     posdatasets: list
             list of PositivitySetSpec
+
+    vectorised: bool, default is False
 
     Returns
     -------
