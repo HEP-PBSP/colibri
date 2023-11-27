@@ -25,7 +25,10 @@ from super_net.data_batch import data_batches
 from wmin.wmin_model import WeightMinimizationGrid
 from wmin.wmin_utils import resample_from_wmin_posterior
 
-from wmin.wmin_lhapdf import lhapdf_from_collected_weights, lhapdf_from_collected_ns_weights
+from wmin.wmin_lhapdf import (
+    lhapdf_from_collected_weights,
+    lhapdf_from_collected_ns_weights,
+)
 
 from validphys.loader import Loader
 from validphys.lhio import generate_replica0
@@ -141,6 +144,7 @@ mc_replicas_weight_minimization_fit = collect(
     "weight_minimization_fit", ("all_wmin_collect_indices",)
 )
 
+
 def perform_monte_carlo_wmin_fit(
     wminpdfset,
     mc_replicas_weight_minimization_fit,
@@ -159,7 +163,7 @@ def perform_monte_carlo_wmin_fit(
         mc_replicas_weight_minimization_fit,
         n_replicas,
         folder=lhapdf_path,
-        set_name=wmin_fit_name, 
+        set_name=wmin_fit_name,
         output_path=output_path,
     )
 
@@ -169,6 +173,7 @@ def perform_monte_carlo_wmin_fit(
     generate_replica0(pdf)
 
     log.info("Monte Carlo weight minimization fit completed!")
+
 
 @dataclass(frozen=True)
 class UltranestWeightMinimizationFit(WeightMinimizationFit):
@@ -241,6 +246,7 @@ def weight_minimization_ultranest(
         optimised_wmin_weights=resampled_posterior,
         ultranest_result=ultranest_result,
     )
+
 
 def perform_nested_sampling_wmin_fit(
     wminpdfset,
