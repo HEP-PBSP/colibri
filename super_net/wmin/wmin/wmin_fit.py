@@ -210,7 +210,7 @@ def weight_minimization_ultranest(
         """
         TODO
         """
-        wmin_weights = jnp.concatenate([jnp.ones(1), weights])
+        wmin_weights = jnp.concatenate([jnp.array([1.0]), weights])
         pdf = jnp.einsum(
             "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
