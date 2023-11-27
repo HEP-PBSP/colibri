@@ -13,7 +13,7 @@ import jax.scipy.linalg as jla
 
 
 def make_chi2_wmin_opt(
-    make_data_values, make_pred_data, precomputed_predictions, vectorised=False
+    make_data_values, precomputed_predictions, vectorised=False
 ):
     """
     Returns a jax.jit compiled function that computes the chi2
