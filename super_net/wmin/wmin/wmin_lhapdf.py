@@ -36,7 +36,6 @@ def lhapdf_from_collected_weights(
     n_replicas,
     wmin_fit_name,
     folder=lhapdf_path,
-    errortype: str = "replicas",
     output_path=None,
 ):
     """
@@ -62,7 +61,7 @@ def lhapdf_from_collected_weights(
             elif l.find("NumMembers:") >= 0:
                 out_stream.write(f"NumMembers: {n_replicas + 1}\n")
             elif l.find("ErrorType: replicas") >= 0:
-                out_stream.write(f"ErrorType: {errortype}\n")
+                out_stream.write(f"ErrorType: replicas\n")
             else:
                 out_stream.write(l)
 
@@ -130,7 +129,6 @@ def lhapdf_from_collected_ns_weights(
     n_wmin_posterior_samples,
     wmin_fit_name,
     folder=lhapdf_path,
-    errortype: str = "replicas",
     output_path=None,
 ):
     """
@@ -156,7 +154,7 @@ def lhapdf_from_collected_ns_weights(
             elif l.find("NumMembers:") >= 0:
                 out_stream.write(f"NumMembers: {n_wmin_posterior_samples + 1}\n")
             elif l.find("ErrorType: replicas") >= 0:
-                out_stream.write(f"ErrorType: {errortype}\n")
+                out_stream.write(f"ErrorType: replicas\n")
             else:
                 out_stream.write(l)
 
