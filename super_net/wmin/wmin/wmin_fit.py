@@ -28,7 +28,7 @@ from wmin.wmin_utils import resample_from_wmin_posterior
 
 from wmin.wmin_lhapdf import (
     lhapdf_from_collected_weights,
-    lhapdf_from_collected_ns_weights,
+    lhapdf_wmin_and_ultranest_result,
 )
 
 from validphys.loader import Loader
@@ -203,7 +203,7 @@ def weight_minimization_ultranest(
     the generic one.
     """
 
-    parameters = [f"w{i+1}" for i in range(n_replicas_wmin - 1)]
+    parameters = [f"w{i+1}" for i in range(n_replicas_wmin)]
 
     @jax.jit
     def log_likelihood(weights):
@@ -295,7 +295,7 @@ def perform_nested_sampling_wmin_fit(
     """
 
     # Produce the LHAPDF grid
-    lhapdf_from_collected_ns_weights(
+    lhapdf_wmin_and_ultranest_result(
         wminpdfset,
         weight_minimization_ultranest,
         n_wmin_posterior_samples,

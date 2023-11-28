@@ -6,17 +6,17 @@ dataset_inputs:
   - {'dataset': 'BCDMSD_dw_ite'}
   - {'dataset': 'CHORUSNUPb_dw_ite'}
   - {'dataset': 'CHORUSNBPb_dw_ite'}
-  # - {'dataset': 'NTVNUDMNFe_dw_ite', 'cfac': ['MAS']}
-  # - {'dataset': 'NTVNBDMNFe_dw_ite', 'cfac': ['MAS']}
-  # - {'dataset': 'HERACOMBNCEM'} 
-  # - {'dataset': 'HERACOMBNCEP575'}
-  # - {'dataset': 'HERACOMBNCEP820'}
-  # - {'dataset': 'HERACOMBNCEP920'}
-  # - {'dataset': 'HERACOMBNCEP460'}
-  # - {'dataset': 'HERACOMBCCEP'}
-  # - {'dataset': 'HERACOMBCCEM'} 
-  # - {'dataset':'HERACOMB_SIGMARED_B'}
-  # - {'dataset': 'HERACOMB_SIGMARED_C'}
+  - {'dataset': 'NTVNUDMNFe_dw_ite', 'cfac': ['MAS']}
+  - {'dataset': 'NTVNBDMNFe_dw_ite', 'cfac': ['MAS']}
+  - {'dataset': 'HERACOMBNCEM'} 
+  - {'dataset': 'HERACOMBNCEP575'}
+  - {'dataset': 'HERACOMBNCEP820'}
+  - {'dataset': 'HERACOMBNCEP920'}
+  - {'dataset': 'HERACOMBNCEP460'}
+  - {'dataset': 'HERACOMBCCEP'}
+  - {'dataset': 'HERACOMBCCEM'} 
+  - {'dataset':'HERACOMB_SIGMARED_B'}
+  - {'dataset': 'HERACOMB_SIGMARED_C'}
 
 positivity:
   posdatasets:
@@ -48,21 +48,23 @@ wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
 # Level 0 closure test
 fakedata: True
 pseudodata: False
-closure_test_pdf: wmin_super_basis
+closure_test_pdf: NNPDF40_nnlo_as_01180
 
 # fit specs
 use_t0: True
-t0pdfset: 210623_mnc_disonly_linear_1000
+t0pdfset: NNPDF40_nnlo_as_01180
 
 # positivity specs
 alpha: 1e-7
-lambda_positivity: 1000
+lambda_positivity: 0.0
 
 # nested sampling specs
 bayesian_fit: True
 prior_type: uniform
-unif_prior_min_val: -2.0
-unif_prior_max_val: 2.0
+vectorised: True
+ndraw_max: 500
+unif_prior_min_val: -10.0
+unif_prior_max_val: 10.0
 min_num_live_points: 500
 min_ess: 50
 
@@ -72,8 +74,7 @@ trval_index: 1
 # details for lhapdf output
 n_wmin_posterior_samples: 100
 
-set_name: test_ns_fit
+set_name: 231126_lm_wmin_super_basis_ct0_20weigths
 
 actions_:
-- perform_nested_sampling_wmin_fit
-
+- run_wmin_nested_sampling
