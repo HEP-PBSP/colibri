@@ -186,6 +186,7 @@ def weight_minimization_ultranest(
     weight_minimization_grid,
     weight_minimization_prior,
     n_replicas_wmin,
+    output_path,
     min_num_live_points,
     min_ess,
     n_wmin_posterior_samples=1000,
@@ -194,6 +195,7 @@ def weight_minimization_ultranest(
     ndraw_max=1000,
     slice_sampler=False,
     slice_steps=100,
+    resume=True
 ):
     """
     TODO
@@ -204,6 +206,7 @@ def weight_minimization_ultranest(
     """
 
     parameters = [f"w{i+1}" for i in range(n_replicas_wmin)]
+    log_dir = output_path / "ultranest"
 
     @jax.jit
     def log_likelihood(weights):
@@ -236,6 +239,8 @@ def weight_minimization_ultranest(
             weight_minimization_prior,
             vectorized=True,
             ndraw_max=ndraw_max,
+            log_dir=log_dir,
+            resume=resume,
         )
 
     else:
@@ -243,6 +248,8 @@ def weight_minimization_ultranest(
             parameters,
             log_likelihood,
             weight_minimization_prior,
+            log_dir=log_dir,
+            resume=resume,
         )
 
     if slice_sampler:
@@ -274,6 +281,9 @@ def weight_minimization_ultranest(
         n_wmin_posterior_samples,
         wmin_posterior_resampling_seed,
     )
+
+    # Store run plots to ultranest output folder
+    sampler.plot()
 
     return UltranestWeightMinimizationFit(
         **weight_minimization_grid.to_dict(),
