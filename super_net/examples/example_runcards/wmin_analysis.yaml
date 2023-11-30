@@ -8,8 +8,10 @@ super_net_fits:
   - wmin_fit_example_two_sets 
 
 template_text: |
-  # Monte-Carlo weights plot
+  # Monte-Carlo weights plots
   {@plot_mc_weights_histograms@}
+  # Monte-Carlo corner plot
+  {@plot_mc_weights_corner_plot@}
 
 actions_:
   - report(main=True)
