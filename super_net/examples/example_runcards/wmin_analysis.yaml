@@ -8,10 +8,16 @@ super_net_fits:
   - wmin_fit_example_two_sets 
 
 template_text: |
-  # Monte-Carlo weights plots
+  # Parametrisation summary
+  {@print_parametrisations@}
+  # Weight histograms
+  ## Individual histograms
   {@plot_mc_weights_histograms@}
-  # Monte-Carlo corner plot
+  ## Corner plot
   {@plot_mc_weights_corner_plot@}
+  # PDF pulls by weight
+  {@plot_pdf_pulls@}
+  # Run summary
 
 actions_:
   - report(main=True)
