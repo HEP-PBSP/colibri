@@ -69,7 +69,7 @@ uniform_minval: -0.3
 uniform_maxval: 0.3
 
 # lhapdf output
-n_replicas: 2
+n_replicas: 50
 set_name: 161023_wmin_monte_carlo_heracomb_nc_02
 
 actions_:

@@ -3,7 +3,9 @@ meta:
   author: James Moore
   keywords: [simunet]
 
-super_net_fit: wmin_fit_example 
+super_net_fits: 
+  - wmin_fit_example
+  - wmin_fit_example_two_sets 
 
 template_text: |
   # Monte-Carlo weights plot
