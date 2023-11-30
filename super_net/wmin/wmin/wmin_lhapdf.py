@@ -98,11 +98,8 @@ def lhapdf_from_collected_weights(
     if not monte_carlo_res.exists():
         os.makedirs(monte_carlo_res)
 
-    # save ultranest results to json file
-    json_dump = json.dumps(replica_weights)
-
     with open(monte_carlo_res / "monte_carlo_results.json", "w") as json_file:
-        json.dump(json_dump, json_file)
+        json.dump(replica_weights, json_file)
 
 
 class NumpyEncoder(json.JSONEncoder):

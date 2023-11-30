@@ -1,0 +1,13 @@
+meta:
+  title: Example weight minimisation analysis
+  author: James Moore
+  keywords: [simunet]
+
+super_net_fit: wmin_fit_example 
+
+template_text: |
+  # Monte-Carlo weights plot
+  {@plot_mc_weights_histograms@}
+
+actions_:
+  - report(main=True)
