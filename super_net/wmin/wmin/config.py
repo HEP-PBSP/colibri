@@ -9,7 +9,8 @@ Date: 11.11.2023
 """
 
 from super_net.config import SuperNetConfig, Environment
-
+from wmin.wmin_plots import get_fit_runcard
+from validphys.core import PDF
 
 class Environment(Environment):
     pass

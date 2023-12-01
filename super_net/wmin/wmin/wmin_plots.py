@@ -8,9 +8,15 @@ import os
 import json
 import corner
 import yaml
+import copy
 
+from reportengine import collect
 from reportengine.figure import figuregen, figure
+
 from validphys.core import PDF
+
+from validphys.pdfplots import ReplicaPDFPlotter
+from validphys.pdfgrids import xplotting_grid
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -150,17 +156,54 @@ def plot_mc_weights_histograms(mc_weights):
 
        yield fig
 
-def plot_pdf_pulls(super_net_fits):
+@figuregen
+def plot_pdf_pulls(super_net_fit, Q=1.65):
     """
     Plots the directions in which the PDFs pull for each of a collection of super_net_fits.
     """
 
-    for fit in super_net_fits:
-        fit_data = get_fit_runcard(fit)
+    fit_data = get_fit_runcard(super_net_fit)
 
-        wminpdfset = fit_data['wminpdfset']
-        nweights = fit_data['n_replicas_wmin'] 
+    wminpdfset = fit_data['wminpdfset']
+    nweights = fit_data['n_replicas_wmin'] 
 
-        pdf = PDF(wminpdfset)
-#        print(pdf)
-#        print(dir(pdf))
+    if 'random_wmin_parametrisation' in fit_data.keys():
+        random_wmin_parametrisation = fit_data[random_wmin_parametrisation]
+    else:
+        random_wmin_parametrisation = False
+
+    pdf = PDF(wminpdfset)
+    old_grid = xplotting_grid(pdf, Q)
+
+    old_grid_data = old_grid.grid_values.data
+
+    if not random_wmin_parametrisation:
+        # We can be sure that we are expanding around the central replica.
+        nflavs = old_grid_data.shape[1]
+        nxgrid = old_grid_data.shape[2]
+        for j in range(nweights):
+            new_grid = np.zeros((1, nflavs, nxgrid))
+            new_grid[0,:,:] = old_grid_data[j+1, :, :] - old_grid_data[0, :, :]
+
+            grid = old_grid                
+            grid.grid_values.data = new_grid
+
+            labels = grid.basis.element_representations
+
+            # Fix up the labels
+            new_labels = {}
+            for key in labels:
+                new_labels[key] = rf"({labels[key]}_{j+1} - {labels[key]}_0)"
+
+            grid.basis.element_representations = new_labels
+
+            yield from ReplicaPDFPlotter(
+                pdfs=[pdf],
+                xplotting_grids=[grid],
+                xscale=None,
+                normalize_to=None,
+                ymin=None,
+                ymax=None, 
+            )
+
+            grid.basis.element_representations = labels
