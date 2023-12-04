@@ -326,6 +326,12 @@ def weight_minimization_analytic(
     weights_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     weights_covmat = jla.inv(X.T @ Sigma @ X)
 
+    # * Check that cov mat is semi-positive definite
+    if jnp.any(jla.eigh(weights_covmat, eigvals_only=True) < 0.0):
+        raise ValueError(
+            "The obtained covariance matrix for the weights is not semi-postive definite."
+        )
+
     weights_out = jnp.array([]).reshape(0, weights_mean.shape[0])
 
     key = jax.random.PRNGKey(wmin_grid_index)
