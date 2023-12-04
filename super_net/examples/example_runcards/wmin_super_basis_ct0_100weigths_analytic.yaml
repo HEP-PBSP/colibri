@@ -21,10 +21,10 @@ dataset_inputs:
 positivity:
   posdatasets:
   - {dataset: POSF2U, maxlambda: 1e6}        # Positivity Lagrange Multiplier
-  - {dataset: POSF2DW, maxlambda: 1e6}
-  - {dataset: POSF2S, maxlambda: 1e6}
-  - {dataset: POSFLL, maxlambda: 1e6}
-  - {dataset: POSF2C, maxlambda: 1e6}
+  # - {dataset: POSF2DW, maxlambda: 1e6}
+  # - {dataset: POSF2S, maxlambda: 1e6}
+  # - {dataset: POSFLL, maxlambda: 1e6}
+  # - {dataset: POSF2C, maxlambda: 1e6}
   # - {dataset: POSXUQ, maxlambda: 1e6}        # Positivity of MSbar PDFs
   # - {dataset: POSXUB, maxlambda: 1e6}
   # - {dataset: POSXDQ, maxlambda: 1e6}
@@ -56,14 +56,14 @@ t0pdfset: NNPDF40_nnlo_as_01180
 
 # positivity specs
 alpha: 1e-7
-lambda_positivity: 1000.0
+lambda_positivity: 0.0
 
 trval_index: 1
 
 # details for lhapdf output
 n_wmin_posterior_samples: 100
 
-set_name: 231127_lm_wmin_super_basis_ct0_100weigths_analytic
+set_name: 231204_lm_ct0_100weigths_analytic
 
 actions_:
-- run_wmin_analytic
+- perform_analytic_wmin_fit
