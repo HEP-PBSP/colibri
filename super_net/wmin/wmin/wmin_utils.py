@@ -155,7 +155,7 @@ def postfit_positivity_check(
 
         loss = jnp.sum(pos_penalty, axis=-1)
 
-        passed = loss < 0.0
+        passed = loss <= 0.0
 
         return passed
 

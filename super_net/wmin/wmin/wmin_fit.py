@@ -31,6 +31,7 @@ from reportengine.checks import CheckError
 from wmin.wmin_lhapdf import (
     lhapdf_from_collected_weights,
     lhapdf_wmin_and_ultranest_result,
+    lhapdf_wmin_analytic_result,
 )
 
 from validphys.loader import Loader
@@ -186,6 +187,7 @@ class UltranestWeightMinimizationFit(WeightMinimizationFit):
 @dataclass(frozen=True)
 class AnalyticWeightMinimizationFit(WeightMinimizationFit):
     analytic_result: Mapping = None
+    weights_dict: Mapping = None
 
 
 def weight_minimization_ultranest(
@@ -292,7 +294,7 @@ def weight_minimization_ultranest(
 def weight_minimization_analytic(
     weight_minimization_grid,
     make_data_values,
-    make_pred_data,
+    n_replicas_wmin,
     precomputed_predictions,
     postfit_positivity_check,
     n_wmin_posterior_samples=100,
@@ -301,6 +303,8 @@ def weight_minimization_analytic(
     """
     Valid only for DIS datasets.
     """
+
+    parameters = [f"w{i+1}" for i in range(n_replicas_wmin)]
 
     training_data = make_data_values.training_data
     central_values = training_data.central_values
@@ -323,20 +327,6 @@ def weight_minimization_analytic(
     weights_covmat = jla.inv(X.T @ Sigma @ X)
 
     weights_out = jnp.array([]).reshape(0, weights_mean.shape[0])
-
-    # CHECK
-    # wmin_weights = jnp.concatenate(
-    #     [jnp.array([[1.0]]), jnp.zeros(shape=(1, weights_mean.shape[0]))], axis=-1
-    # )
-
-    # pdf = jnp.einsum(
-    #     "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
-    # )
-    # test = postfit_positivity_check(pdf)
-
-    # print(test)
-
-    # ENDCHECK
 
     key = jax.random.PRNGKey(wmin_grid_index)
 
@@ -375,10 +365,13 @@ def weight_minimization_analytic(
 
     analytic_result = (weights_mean, weights_covmat)
 
+    weights_dict = dict(zip(parameters, weights_out.T.tolist()))
+
     return AnalyticWeightMinimizationFit(
         **weight_minimization_grid.to_dict(),
         optimised_wmin_weights=weights_out,
         analytic_result=analytic_result,
+        weights_dict=weights_dict,
     )
 
 
@@ -412,6 +405,31 @@ def perform_nested_sampling_wmin_fit(
     log.info("Nested Sampling weight minimization fit completed!")
 
 
-def run_wmin_analytic(lhapdf_wmin_analytic_result):
-    """ """
+def perform_analytic_wmin_fit(
+    wminpdfset,
+    weight_minimization_analytic,
+    n_wmin_posterior_samples,
+    wmin_fit_name,
+    lhapdf_path,
+    output_path,
+):
+    """
+    Performs an analytic fit using the weight-minimisation parametrisation.
+    """
+
+    # Produce the LHAPDF grid
+    lhapdf_wmin_analytic_result(
+        wminpdfset,
+        weight_minimization_analytic,
+        n_wmin_posterior_samples,
+        wmin_fit_name,
+        folder=lhapdf_path,
+        output_path=output_path,
+    )
+
+    # Produce the central replica
+    l = Loader()
+    pdf = l.check_pdf(wmin_fit_name)
+    generate_replica0(pdf)
+
     log.info("Analytic weight minimization fit completed!")

@@ -203,35 +203,32 @@ def lhapdf_wmin_analytic_result(
     wminpdfset,
     weight_minimization_analytic,
     n_wmin_posterior_samples,
-    folder=None,
-    set_name=None,
-    errortype: str = "replicas",
+    wmin_fit_name,
+    folder=lhapdf_path,
+    output_path=None,
 ):
     """
     TODO
     """
     original_pdf = pathlib.Path(lhapdf.paths()[-1]) / str(wminpdfset)
-    if folder is None:
-        # requested folder for the new LHAPDF to reside
-        folder = ""
+    # Output path for the analytic wmin weights to be saved
+    if output_path is None:
+        output_path = ""
 
-    if set_name is None:
-        set_name = str(wminpdfset) + "_wmin"
-
-    wm_pdf = pathlib.Path(folder) / set_name
+    wm_pdf = pathlib.Path(folder) / wmin_fit_name
     if not wm_pdf.exists():
         os.makedirs(wm_pdf)
 
     with open(original_pdf / f"{wminpdfset}.info", "r") as in_stream, open(
-        wm_pdf / f"{set_name}.info", "w"
+        wm_pdf / f"{wmin_fit_name}.info", "w"
     ) as out_stream:
         for l in in_stream.readlines():
             if l.find("SetDesc:") >= 0:
                 out_stream.write(f'SetDesc: "Weight-minimized {wminpdfset}"\n')
             elif l.find("NumMembers:") >= 0:
                 out_stream.write(f"NumMembers: {n_wmin_posterior_samples + 1}\n")
-            elif l.find("ErrorType: replicas") >= 0:
-                out_stream.write(f"ErrorType: {errortype}\n")
+            elif "ErrorType:" in l:
+                out_stream.write(f"ErrorType: replicas\n")
             else:
                 out_stream.write(l)
 
@@ -256,3 +253,19 @@ def lhapdf_wmin_analytic_result(
         # for i, replica in tqdm(enumerate(result), total=len(weights)):
         wm_headers = f"PdfType: replica\nFormat: lhagrid1\nFromMCReplica: {i}\n"
         write_replica(i + 1, wm_pdf, wm_headers.encode("UTF-8"), wm_replica)
+
+    # write result to json file
+    result_set_name = "analytic_results"
+    analytic_res = pathlib.Path(output_path) / result_set_name
+
+    if not analytic_res.exists():
+        os.makedirs(analytic_res)
+
+    # save analytic results to json file
+    json_dump = json.dumps(weight_minimization_analytic.weights_dict)
+
+    with open(analytic_res / "analytic_results.json", "w") as json_file:
+        json.dump(
+            json_dump,
+            json_file,
+        )
