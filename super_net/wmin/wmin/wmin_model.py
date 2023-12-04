@@ -57,6 +57,7 @@ class WeightMinimizationGrid:
 def weight_minimization_grid(
     wminpdfset,
     wmin_grid_seed,
+    random_wmin_parametrisation=False,
     n_replicas_wmin=50,
     Q0=1.65,
     weights_initializer="zeros",
@@ -76,7 +77,7 @@ def weight_minimization_grid(
         - the central replica of the wminpdfset is always included in the
           wmin parametrization
         - the replicas to be used in the parametrization are chosen at random
-          within this function
+          within this function if random_wmin_parametrisation is True
 
     Parameters
     ----------
@@ -113,12 +114,29 @@ def weight_minimization_grid(
             f"n_replicas_wmin should be <= than the number of replicas contained in the PDF set {wminpdfset}"
         )
 
-    # reduce INPUT_GRID to only keep n_replicas_wmin PDF replicas
-    wmin_basis_idx = jnp.arange(1, n_replicas_wmin + 1)
+    if random_wmin_parametrisation:
+        # reduce INPUT_GRID to only keep n_replicas_wmin PDF replicas
+        wmin_basis_idx = jax.random.choice(
+            wmin_grid_seed, INPUT_GRID.shape[0], shape=(n_replicas_wmin,), replace=False
+        )
+        # == generate weight minimization grid so that sum rules are automatically fulfilled == #
+        # pick central wmin replica at random
+        wmin_central_replica = jax.random.permutation(
+            wmin_grid_seed, wmin_basis_idx, independent=True
+        )[0]
 
-    # == generate weight minimization grid so that sum rules are automatically fulfilled == #
-    # pick central wmin replica as central replica from PDF set
-    wmin_central_replica = 0
+        # discard central wmin replica from wmin basis
+        wmin_basis_idx = wmin_basis_idx[
+            jnp.where(wmin_basis_idx != wmin_central_replica)
+        ]
+
+    else:
+        # reduce INPUT_GRID to only keep n_replicas_wmin PDF replicas
+        wmin_basis_idx = jnp.arange(1, n_replicas_wmin + 1)
+
+        # == generate weight minimization grid so that sum rules are automatically fulfilled == #
+        # pick central wmin replica as central replica from PDF set
+        wmin_central_replica = 0
 
     wmin_INPUT_GRID = (
         INPUT_GRID[wmin_basis_idx, :, :] - INPUT_GRID[jnp.newaxis, wmin_central_replica]

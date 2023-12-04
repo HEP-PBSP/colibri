@@ -291,6 +291,7 @@ def make_chi2(make_data_values, make_pred_data, vectorised=False):
     Notes:
         - Does not include positivity constraint.
         - This function is designed for Bayesian like PDF fits.
+        - allows for vectorised evaluation of the chi2.
 
     Parameters
     ----------
@@ -299,6 +300,8 @@ def make_chi2(make_data_values, make_pred_data, vectorised=False):
 
     make_pred_data: theory_predictions.make_pred_data
         super_net provider for (fktable) theory predictions.
+
+    vectorised: bool, default is False
 
     Returns
     -------
@@ -374,6 +377,8 @@ def make_chi2_with_positivity(
     alpha: float
 
     lambda_positivity: float
+
+    vectorised: bool, default is False
 
     Returns
     -------

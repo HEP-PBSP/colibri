@@ -8,11 +8,19 @@ Date: 11.11.2023
 """
 
 import logging
+from datetime import datetime
 
 import jax
 import jax.numpy as jnp
 
 log = logging.getLogger(__name__)
+
+
+def wmin_fit_name(wminpdfset, set_name=None):
+    if set_name:
+        return set_name
+    current_time = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    return f"{current_time}_wmin_fit_" + str(wminpdfset)
 
 
 def wmin_grid_seed(wmin_grid_index):
@@ -112,7 +120,9 @@ def resample_from_wmin_posterior(
 
 
 def precomputed_predictions(make_pred_data_non_vectorised, weight_minimization_grid):
-    """ """
+    """
+    Precompute predictions for the basis of wmin using make_pred_data_non_vectorised.
+    """
 
     # Precompute predictions for the basis of wmin
     predictions = jnp.array(

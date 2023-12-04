@@ -18,6 +18,7 @@ import jax.scipy.linalg as jla
 import optax
 
 import ultranest
+import ultranest.stepsampler as ustepsampler
 import time
 
 from reportengine import collect
@@ -26,6 +27,14 @@ from super_net.data_batch import data_batches
 from wmin.wmin_model import WeightMinimizationGrid
 from wmin.wmin_utils import resample_from_wmin_posterior
 from reportengine.checks import CheckError
+
+from wmin.wmin_lhapdf import (
+    lhapdf_from_collected_weights,
+    lhapdf_wmin_and_ultranest_result,
+)
+
+from validphys.loader import Loader
+from validphys.lhio import generate_replica0
 
 log = logging.getLogger(__name__)
 
@@ -139,7 +148,33 @@ mc_replicas_weight_minimization_fit = collect(
 )
 
 
-def monte_carlo_wmin_fit(lhapdf_from_collected_weights):
+def perform_monte_carlo_wmin_fit(
+    wminpdfset,
+    mc_replicas_weight_minimization_fit,
+    n_replicas,
+    wmin_fit_name,
+    output_path,
+    lhapdf_path,
+):
+    """
+    Performs a Monte Carlo fit using the weight-minimisation parametrisation.
+    """
+
+    # Produce the LHAPDF grid
+    lhapdf_from_collected_weights(
+        wminpdfset,
+        mc_replicas_weight_minimization_fit,
+        n_replicas,
+        wmin_fit_name,
+        folder=lhapdf_path,
+        output_path=output_path,
+    )
+
+    # Produce the central replica
+    l = Loader()
+    pdf = l.check_pdf(wmin_fit_name)
+    generate_replica0(pdf)
+
     log.info("Monte Carlo weight minimization fit completed!")
 
 
@@ -164,6 +199,8 @@ def weight_minimization_ultranest(
     wmin_posterior_resampling_seed=123456,
     vectorised=False,
     ndraw_max=1000,
+    slice_sampler=False,
+    slice_steps=100,
 ):
     """
     TODO
@@ -180,7 +217,7 @@ def weight_minimization_ultranest(
         """
         TODO
         """
-        wmin_weights = jnp.concatenate([jnp.ones(1), weights])
+        wmin_weights = jnp.concatenate([jnp.array([1.0]), weights])
         pdf = jnp.einsum(
             "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
@@ -213,6 +250,12 @@ def weight_minimization_ultranest(
             parameters,
             log_likelihood,
             weight_minimization_prior,
+        )
+
+    if slice_sampler:
+        sampler.stepsampler = ustepsampler.SliceSampler(
+            nsteps=slice_steps,
+            generate_direction=ustepsampler.generate_mixture_random_direction,
         )
 
     t0 = time.time()
@@ -339,8 +382,33 @@ def weight_minimization_analytic(
     )
 
 
-def run_wmin_nested_sampling(lhapdf_wmin_and_ultranest_result):
-    """ """
+def perform_nested_sampling_wmin_fit(
+    wminpdfset,
+    weight_minimization_ultranest,
+    n_wmin_posterior_samples,
+    wmin_fit_name,
+    lhapdf_path,
+    output_path,
+):
+    """
+    Performs a Nested Sampling fit using the weight-minimisation parametrisation.
+    """
+
+    # Produce the LHAPDF grid
+    lhapdf_wmin_and_ultranest_result(
+        wminpdfset,
+        weight_minimization_ultranest,
+        n_wmin_posterior_samples,
+        wmin_fit_name,
+        folder=lhapdf_path,
+        output_path=output_path,
+    )
+
+    # Produce the central replica
+    l = Loader()
+    pdf = l.check_pdf(wmin_fit_name)
+    generate_replica0(pdf)
+
     log.info("Nested Sampling weight minimization fit completed!")
 
 

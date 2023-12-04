@@ -1,5 +1,5 @@
 dataset_inputs:
-  # - {'dataset':'NMC'}
+   - {'dataset':'NMC'}
   # - {'dataset': 'SLACP_dwsh'}
   # - {'dataset': 'SLACD_dw_ite'}
   # - {'dataset': 'BCDMSP_dwsh'}
@@ -8,11 +8,11 @@ dataset_inputs:
   # - {'dataset': 'CHORUSNBPb_dw_ite'}
   # - {'dataset': 'NTVNUDMNFe_dw_ite', 'cfac': ['MAS']}
   # - {'dataset': 'NTVNBDMNFe_dw_ite', 'cfac': ['MAS']}
-  - {'dataset': 'HERACOMBNCEM'} 
-  - {'dataset': 'HERACOMBNCEP575'}
-  - {'dataset': 'HERACOMBNCEP820'}
-  - {'dataset': 'HERACOMBNCEP920'}
-  - {'dataset': 'HERACOMBNCEP460'}
+#  - {'dataset': 'HERACOMBNCEM'} 
+#  - {'dataset': 'HERACOMBNCEP575'}
+#  - {'dataset': 'HERACOMBNCEP820'}
+#  - {'dataset': 'HERACOMBNCEP920'}
+#  - {'dataset': 'HERACOMBNCEP460'}
   # - {'dataset': 'HERACOMBCCEP'}
   # - {'dataset': 'HERACOMBCCEM'} 
   # - {'dataset':'HERACOMB_SIGMARED_B'}
@@ -69,8 +69,8 @@ uniform_minval: -0.3
 uniform_maxval: 0.3
 
 # lhapdf output
-n_replicas: 100
+n_replicas: 2
 set_name: 161023_wmin_monte_carlo_heracomb_nc_02
 
 actions_:
-- monte_carlo_wmin_fit
+- perform_monte_carlo_wmin_fit

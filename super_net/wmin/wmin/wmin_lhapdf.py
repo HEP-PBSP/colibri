@@ -24,40 +24,44 @@ from validphys.lhio import (
 from wmin.checks import check_wminpdfset_is_montecarlo
 
 
+def lhapdf_path():
+    """Returns the path to the share/LHAPDF directory"""
+    return lhapdf.paths()[0]
+
+
+@check_wminpdfset_is_montecarlo
 def lhapdf_from_collected_weights(
     wminpdfset,
     mc_replicas_weight_minimization_fit,
     n_replicas,
-    folder=None,
-    set_name=None,
-    errortype: str = "replicas",
+    wmin_fit_name,
+    folder=lhapdf_path,
+    output_path=None,
 ):
     """
     TODO
     """
 
     original_pdf = pathlib.Path(lhapdf.paths()[-1]) / str(wminpdfset)
-    if folder is None:
-        # requested folder for the new LHAPDF to reside
-        folder = ""
 
-    if set_name is None:
-        set_name = str(wminpdfset) + "_wmin"
+    # Output path for the MC wmin weights to be saved
+    if output_path is None:
+        output_path = ""
 
-    wm_pdf = pathlib.Path(folder) / set_name
+    wm_pdf = pathlib.Path(folder) / wmin_fit_name
     if not wm_pdf.exists():
         os.makedirs(wm_pdf)
 
     with open(original_pdf / f"{wminpdfset}.info", "r") as in_stream, open(
-        wm_pdf / f"{set_name}.info", "w"
+        wm_pdf / f"{wmin_fit_name}.info", "w"
     ) as out_stream:
         for l in in_stream.readlines():
             if l.find("SetDesc:") >= 0:
                 out_stream.write(f'SetDesc: "Weight-minimized {wminpdfset}"\n')
             elif l.find("NumMembers:") >= 0:
                 out_stream.write(f"NumMembers: {n_replicas + 1}\n")
-            elif l.find("ErrorType: replicas") >= 0:
-                out_stream.write(f"ErrorType: {errortype}\n")
+            elif "ErrorType:" in l:
+                out_stream.write(f"ErrorType: replicas\n")
             else:
                 out_stream.write(l)
 
@@ -88,8 +92,8 @@ def lhapdf_from_collected_weights(
         write_replica(i + 1, wm_pdf, wm_headers.encode("UTF-8"), wm_replica)
 
     # write optimized wmin weights to json file
-    monte_carlo_result_set_name = str(wm_pdf) + "_monte_carlo_results"
-    monte_carlo_res = pathlib.Path(folder) / monte_carlo_result_set_name
+    monte_carlo_result_set_name = "monte_carlo_results"
+    monte_carlo_res = pathlib.Path(output_path) / monte_carlo_result_set_name
     if not monte_carlo_res.exists():
         os.makedirs(monte_carlo_res)
 
@@ -98,14 +102,6 @@ def lhapdf_from_collected_weights(
 
     with open(monte_carlo_res / "monte_carlo_results.json", "w") as json_file:
         json.dump(json_dump, json_file)
-
-    # TODO
-    # read pdf into validphys.core.PDF and generate central replica
-
-    # pdf_obj = core.PDF(wm_pdf)
-    # import IPython
-    # IPython.embed()
-    # generate_replica0(pdf_obj)
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -130,36 +126,34 @@ def lhapdf_wmin_and_ultranest_result(
     wminpdfset,
     weight_minimization_ultranest,
     n_wmin_posterior_samples,
-    folder=None,
-    set_name=None,
-    errortype: str = "replicas",
+    wmin_fit_name,
+    folder=lhapdf_path,
+    output_path=None,
 ):
     """
     TODO
     """
 
     original_pdf = pathlib.Path(lhapdf.paths()[-1]) / str(wminpdfset)
-    if folder is None:
-        # requested folder for the new LHAPDF to reside
-        folder = ""
 
-    if set_name is None:
-        set_name = str(wminpdfset) + "_wmin"
+    # Output path for the NS wmin weights to be saved
+    if output_path is None:
+        output_path = ""
 
-    wm_pdf = pathlib.Path(folder) / set_name
+    wm_pdf = pathlib.Path(folder) / wmin_fit_name
     if not wm_pdf.exists():
         os.makedirs(wm_pdf)
 
     with open(original_pdf / f"{wminpdfset}.info", "r") as in_stream, open(
-        wm_pdf / f"{set_name}.info", "w"
+        wm_pdf / f"{wmin_fit_name}.info", "w"
     ) as out_stream:
         for l in in_stream.readlines():
             if l.find("SetDesc:") >= 0:
                 out_stream.write(f'SetDesc: "Weight-minimized {wminpdfset}"\n')
             elif l.find("NumMembers:") >= 0:
                 out_stream.write(f"NumMembers: {n_wmin_posterior_samples + 1}\n")
-            elif l.find("ErrorType: replicas") >= 0:
-                out_stream.write(f"ErrorType: {errortype}\n")
+            elif "ErrorType:" in l:
+                out_stream.write(f"ErrorType: replicas\n")
             else:
                 out_stream.write(l)
 
@@ -186,8 +180,9 @@ def lhapdf_wmin_and_ultranest_result(
         write_replica(i + 1, wm_pdf, wm_headers.encode("UTF-8"), wm_replica)
 
     # write ultranest result to json file
-    ultranest_result_set_name = str(wm_pdf) + "_ultranest_results"
-    ultranest_res = pathlib.Path(folder) / ultranest_result_set_name
+    ultranest_result_set_name = "ultranest_results"
+    ultranest_res = pathlib.Path(output_path) / ultranest_result_set_name
+
     if not ultranest_res.exists():
         os.makedirs(ultranest_res)
 
