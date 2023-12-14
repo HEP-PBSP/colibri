@@ -1,9 +1,9 @@
 meta:
- title: Results of 2-parameter nested sampling fit
- author: James Moore
+ title: Results of 20-parameter nested sampling fit
+ author: Luca Mantani
  keywords: ['nested sampling']
 
-ultranest_results_path: 161023_wmin_nested_sampling_heracomb_nc_02_ultranest_results
+ultranest_results_path: wmin_super_basis_ct0_20weigths
 
 template_text: |
  # Ultranest corner plot

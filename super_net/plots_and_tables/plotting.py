@@ -6,6 +6,7 @@ import json
 import corner
 import numpy as np
 
+
 @figure
 def plot_ultranest_results(ultranest_results_path):
     """
@@ -20,16 +21,19 @@ def plot_ultranest_results(ultranest_results_path):
 
     fig, ax = plt.subplots()
 
-    with open(ultranest_results_path + '/ultranest_results.json') as f:
+    with open(
+        ultranest_results_path + "/ultranest_results/ultranest_results.json"
+    ) as f:
         results = json.loads(json.load(f))
 
-    paramnames = results['paramnames']
-    data = np.array(results['weighted_samples']['points'])
-    weights = np.array(results['weighted_samples']['weights'])
-    cumsumweights = np.cumsum(weights)
+    paramnames = results["paramnames"]
+    data = np.array(results["samples"])
 
-    mask = cumsumweights > 1e-4
+    fig = corner.corner(
+        data,
+        labels=paramnames,
+        show_titles=True,
+        quiet=True,
+    )
 
-    fig = corner.corner(data[mask,:], weights=weights[mask], labels=paramnames, show_titles=True, quiet=True)
-
-    return fig 
+    return fig
