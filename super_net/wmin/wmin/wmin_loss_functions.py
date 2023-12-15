@@ -12,8 +12,7 @@ import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
 
-
-def make_chi2_wmin_opt(make_data_values, make_pred_data, weight_minimization_grid):
+def make_chi2_wmin_opt(make_data_values, precomputed_predictions, vectorised=False):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid optimised for weight minimisation.
@@ -28,8 +27,9 @@ def make_chi2_wmin_opt(make_data_values, make_pred_data, weight_minimization_gri
     make_data_values: training_validation.MakeDataValues
         dataclass containing data for training and validation.
 
-    make_pred_data: theory_predictions.make_pred_data
-        super_net provider for (fktable) theory predictions.
+    precomputed_predictions: matrix (n_weights, n_data), row i is the array
+        of predictions for the basis vector i.
+
 
     Returns
     -------
@@ -42,26 +42,33 @@ def make_chi2_wmin_opt(make_data_values, make_pred_data, weight_minimization_gri
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
-    # Precompute predictions for the basis of wmin
-    predictions = jnp.array(
-        [
-            make_pred_data(weight_minimization_grid.wmin_INPUT_GRID[i])
-            for i in range(len(weight_minimization_grid.wmin_INPUT_GRID))
-        ]
-    )
-
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
-    @jax.jit
-    def chi2(wmin_weights):
-        """ """
-        theory = jnp.einsum("i,ij", wmin_weights, predictions)
+    if vectorised:
 
-        diff = theory[central_values_idx] - central_values
+        @jax.jit
+        def chi2(wmin_weights):
+            """ """
+            theory = jnp.einsum("ri,ij -> rj", wmin_weights, precomputed_predictions)
 
-        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
+            diff = theory[:, central_values_idx] - central_values
 
-        return loss
+            loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
+
+            return loss
+
+    else:
+
+        @jax.jit
+        def chi2(wmin_weights):
+            """ """
+            theory = jnp.einsum("i,ij", wmin_weights, precomputed_predictions)
+
+            diff = theory[central_values_idx] - central_values
+
+            loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
+
+            return loss
 
     return chi2
