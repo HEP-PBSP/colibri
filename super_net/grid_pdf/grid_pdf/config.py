@@ -16,7 +16,7 @@ class Environment(Environment):
 
 class GridPdfConfig(SuperNetConfig):
     """
-    WminConfig class Inherits from super_net.config.SuperNetConfig
+    GridConfig class Inherits from super_net.config.SuperNetConfig
     """
 
     def parse_pdf_prior(self, name):
