@@ -57,7 +57,6 @@ def interpolate_grid(
     Produces the function which produces the grid interpolation.
     """
 
-    @jax.jit
     def interp_func(stacked_pdf_grid):
         # reshape stacked_pdf_grid to (len(flavour_mapping), len(REDUCED_XGRID))
         if vectorised:
