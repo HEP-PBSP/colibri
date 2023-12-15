@@ -286,7 +286,7 @@ mc_replicas_make_chi2_validation_data_with_positivity = collect(
 )
 
 
-def make_chi2(make_data_values, make_pred_data, vectorized=False):
+def make_chi2(make_data_values, make_pred_data, vectorised=False):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on a dataset.
@@ -294,6 +294,7 @@ def make_chi2(make_data_values, make_pred_data, vectorized=False):
     Notes:
         - Does not include positivity constraint.
         - This function is designed for Bayesian like PDF fits.
+        - allows for vectorised evaluation of the chi2.
 
     Parameters
     ----------
@@ -302,6 +303,8 @@ def make_chi2(make_data_values, make_pred_data, vectorized=False):
 
     make_pred_data: theory_predictions.make_pred_data
         super_net provider for (fktable) theory predictions.
+
+    vectorised: bool, default is False
 
     Returns
     -------
@@ -319,16 +322,27 @@ def make_chi2(make_data_values, make_pred_data, vectorized=False):
     # since we do it only once and for all at the beginning
     inv_covmat = jla.inv(covmat)
 
-    if vectorized:
+    if vectorised:
+
         @jax.jit
         def chi2(pdf):
             """ """
             diff = make_pred_data(pdf)[:, central_values_idx] - central_values
+
             loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
 
             return loss
 
     else:
+
+        @jax.jit
+        def chi2(pdf):
+            """ """
+            diff = make_pred_data(pdf)[central_values_idx] - central_values
+
+            loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
+
+            return loss
 
         @jax.jit
         def chi2(pdf):
@@ -348,7 +362,7 @@ def make_chi2_with_positivity(
     make_penalty_posdata,
     alpha=1e-7,
     lambda_positivity=1000,
-    vectorized=False,
+    vectorised=False,
 ):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -375,6 +389,8 @@ def make_chi2_with_positivity(
 
     lambda_positivity: float
 
+    vectorised: bool, default is False
+
     Returns
     -------
     @jax.jit Callable
@@ -391,12 +407,15 @@ def make_chi2_with_positivity(
 
     posdata_training_idx = make_posdata_split.training
 
-    if vectorized:
+    if vectorised:
+
         @jax.jit
         def chi2(pdf):
             """ """
             diff = make_pred_data(pdf)[:, central_values_idx] - central_values
+
             loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
+
             # add penalty term due to positivity
             pos_penalty = make_penalty_posdata(pdf, alpha, lambda_positivity)[
                 :, posdata_training_idx
