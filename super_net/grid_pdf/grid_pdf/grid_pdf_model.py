@@ -72,7 +72,6 @@ def interpolate_grid(
                     len(flavour_mapping),
                     length_reduced_xgrids,
                 ),
-                order="F",
             )
 
             # generate an empty matrix of shape (:, valipdhys.convolution.NFK, len(super_net.constants.XGRID),)
@@ -101,7 +100,6 @@ def interpolate_grid(
                     len(flavour_mapping),
                     length_reduced_xgrids,
                 ),
-                order="F",
             )
 
             # generate an empty matrix of shape (valipdhys.convolution.NFK, len(super_net.constants.XGRID),)
