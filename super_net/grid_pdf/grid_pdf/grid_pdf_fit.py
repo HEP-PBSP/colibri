@@ -3,6 +3,10 @@ from validphys.convolution import FK_FLAVOURS
 
 import ultranest
 import jax
+import time
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def make_bayesian_pdf_grid_fit(
@@ -70,7 +74,13 @@ def make_bayesian_pdf_grid_fit(
             generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
         )
 
+    t0 = time.time()
     sampler.run(
         min_num_live_points=min_num_live_points,
         min_ess=min_ess,
     )
+    t1 = time.time()
+    log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
+
+    # Store run plots to ultranest output folder
+    sampler.plot()
