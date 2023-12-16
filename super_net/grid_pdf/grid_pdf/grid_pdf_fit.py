@@ -2,6 +2,7 @@ from grid_pdf.grid_pdf_model import FLAVOUR_MAPPING
 from validphys.convolution import FK_FLAVOURS
 
 import ultranest
+import jax
 
 
 def make_bayesian_pdf_grid_fit(
@@ -30,6 +31,7 @@ def make_bayesian_pdf_grid_fit(
 
     """
 
+    @jax.jit
     def log_likelihood(stacked_pdf_grid):
         """
         TODO
