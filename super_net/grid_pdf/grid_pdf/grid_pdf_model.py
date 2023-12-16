@@ -57,23 +57,28 @@ def interpolate_grid(
     Produces the function which produces the grid interpolation.
     """
 
-    # Function to perform interpolation for a single row
-    @jax.jit
-    def interpolate_1D(y):
-        return jnp.interp(jnp.array(XGRID), jnp.array(reduced_xgrids[1]), y)
+    fit_xgrids = []
+    for fl in flavour_mapping:
+        fit_xgrids.append(jnp.array(reduced_xgrids[fl]))
+    fit_xgrids = jnp.array(fit_xgrids)
 
     if vectorised:
+        # Function to perform interpolation for a single grid
+        @jax.jit
+        def interpolate_flavors(y):
+            reshaped_y = y.reshape(
+                (
+                    len(flavour_mapping),
+                    length_reduced_xgrids,
+                )
+            )
+            out = []
+            for i, xgrid in enumerate(fit_xgrids):
+                out.append(jnp.interp(jnp.array(XGRID), xgrid, reshaped_y[i, :]))
+            return jnp.array(out)
 
         @jax.jit
         def interp_func(stacked_pdf_grid):
-            reshaped_stacked_pdf_grid = stacked_pdf_grid.reshape(
-                (
-                    stacked_pdf_grid.shape[0],
-                    len(flavour_mapping),
-                    length_reduced_xgrids,
-                ),
-            )
-
             # generate an empty matrix of shape (:, valipdhys.convolution.NFK, len(super_net.constants.XGRID),)
             input_grid = jnp.zeros(
                 (
@@ -83,11 +88,13 @@ def interpolate_grid(
                 )
             )
 
-            input_grid = input_grid.at[:, flavour_mapping, :].set(
-                jnp.apply_along_axis(
-                    interpolate_1D, axis=-1, arr=reshaped_stacked_pdf_grid
-                )
+            pdf_interp = jnp.apply_along_axis(
+                interpolate_flavors,
+                axis=-1,
+                arr=stacked_pdf_grid,
             )
+
+            input_grid = input_grid.at[:, flavour_mapping, :].set(pdf_interp)
 
             return input_grid
 
@@ -110,11 +117,17 @@ def interpolate_grid(
                 )
             )
 
-            input_grid = input_grid.at[flavour_mapping, :].set(
-                jnp.apply_along_axis(
-                    interpolate_1D, axis=-1, arr=reshaped_stacked_pdf_grid
+            # Loop to perform interpolation of the 2D arrays
+            # The JIT compilation flattens the loop, good efficiency
+            pdf_interp = []
+            for i, xgrid in enumerate(fit_xgrids):
+                pdf_interp.append(
+                    jnp.interp(jnp.array(XGRID), xgrid, reshaped_stacked_pdf_grid[i, :])
                 )
-            )
+
+            pdf_interp = jnp.array(pdf_interp)
+
+            input_grid = input_grid.at[flavour_mapping, :].set(pdf_interp)
 
             return input_grid
 
