@@ -254,7 +254,7 @@ def grid_pdf_model_prior(
         @jax.jit
         def prior_transform(cube):
             """
-            TODO
+            This currently does not support vectorisation.
             """
             # generate independent gaussian with mean 0 and std 1
             independent_gaussian = jax.scipy.stats.norm.ppf(cube)[:, jnp.newaxis]
