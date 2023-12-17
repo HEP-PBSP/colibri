@@ -206,7 +206,10 @@ def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping=FLAVOUR_MAPPING, Q
 
 
 def grid_pdf_model_prior(
-    pdf_prior_grid, uniform_pdf_prior=True, gaussian_pdf_prior=False, sigma_pdf_prior=1
+    pdf_prior_grid,
+    uniform_pdf_prior=True,
+    gaussian_pdf_prior=False,
+    sigma_pdf_prior=1,
 ):
     """
     This function returns a prior transform for the ultranest sampler.
@@ -248,6 +251,7 @@ def grid_pdf_model_prior(
         )
         cholesky_pdf_covmat = jnp.diag(jnp.sqrt(pdf_diag_covmat_prior))
 
+        @jax.jit
         def prior_transform(cube):
             """
             TODO
@@ -266,11 +270,11 @@ def grid_pdf_model_prior(
         error68_up = pdf_prior_grid.error68_up
         error68_down = pdf_prior_grid.error68_down
 
+        @jax.jit
         def prior_transform(cube):
             """
             TODO
             """
-            params = cube.copy()
             params = error68_down + (error68_up - error68_down) * cube
             return params
 
