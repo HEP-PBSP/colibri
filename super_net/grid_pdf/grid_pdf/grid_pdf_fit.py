@@ -105,6 +105,7 @@ def grid_pdf_mc_fit(
     make_data_values,
     interpolate_grid,
     reduced_xgrids,
+    init_stacked_pdf_grid,
     optimizer_provider,
     early_stopper,
     max_epochs,
@@ -145,8 +146,6 @@ def grid_pdf_mc_fit(
     parameters = [
         f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in reduced_xgrids[i]
     ]
-
-    init_stacked_pdf_grid = jnp.zeros(len(parameters))
 
     opt_state = optimizer_provider.init(init_stacked_pdf_grid)
     stacked_pdf_grid = init_stacked_pdf_grid.copy()

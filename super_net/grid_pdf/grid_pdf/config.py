@@ -35,6 +35,14 @@ class GridPdfConfig(SuperNetConfig):
             )
         return lengths[0]
 
+    def produce_length_stackedpdf(self, xgrids):
+        """The lenght of the stacked PDF."""
+        stack = []
+        for _, val in xgrids.items():
+            stack.append(val)
+
+        return len(stack)
+
     def produce_reduced_xgrids(self, xgrids):
         """The reduced x-grids used in the fit, organised by flavour."""
         return {FLAVOUR_TO_ID_MAPPING[flav]: val for (flav, val) in xgrids.items()}
