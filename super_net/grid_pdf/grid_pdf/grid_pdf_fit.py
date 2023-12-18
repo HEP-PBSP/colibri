@@ -95,6 +95,7 @@ def make_bayesian_pdf_grid_fit(
 @dataclass(frozen=True)
 class GridPdfFit:
     stacked_pdf_grid: jnp.array = None
+    pdf_grid: jnp.array = None
     training_loss: jnp.array = None
     validation_loss: jnp.array = None
     xgrids: dict = None
@@ -188,6 +189,7 @@ def grid_pdf_mc_fit(
 
     return GridPdfFit(
         stacked_pdf_grid=stacked_pdf_grid,
+        pdf_grid=interpolate_grid(stacked_pdf_grid),
         training_loss=loss,
         validation_loss=val_loss,
         xgrids=xgrids,
