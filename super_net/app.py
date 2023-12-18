@@ -19,6 +19,7 @@ providers = [
     "super_net.closure_test.closure_test_estimators",
     "super_net.training_validation",
     "super_net.plots_and_tables.plotting",
+    "super_net.ns_utils",
 ]
 
 

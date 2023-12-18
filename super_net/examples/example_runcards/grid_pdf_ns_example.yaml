@@ -63,6 +63,8 @@ trval_index: 1
 vectorised: False
 ndraw_max: 500
 
+grid_pdf_fit_name: 'test_fit'
+
 # grid specs
 xgrids:
   photon: []
@@ -81,7 +83,7 @@ xgrids:
   T35: []
 
 # details for lhapdf output
-n_grid_pdf_posterior_samples: 100
+n_posterior_samples: 100
 
 actions_:
-- make_bayesian_pdf_grid_fit
+- perform_nested_sampling_grid_pdf_fit
