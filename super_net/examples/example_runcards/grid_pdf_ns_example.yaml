@@ -60,7 +60,7 @@ sigma: 1
 min_num_live_points: 500
 min_ess: 50
 trval_index: 1
-vectorised: False
+vectorized: False
 ndraw_max: 500
 
 # grid specs

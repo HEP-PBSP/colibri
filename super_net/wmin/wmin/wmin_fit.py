@@ -191,7 +191,7 @@ def weight_minimization_ultranest(
     min_ess,
     n_wmin_posterior_samples=1000,
     wmin_posterior_resampling_seed=123456,
-    vectorised=False,
+    vectorized=False,
     ndraw_max=1000,
     slice_sampler=False,
     slice_steps=100,
@@ -221,7 +221,7 @@ def weight_minimization_ultranest(
         return -0.5 * make_chi2_with_positivity(pdf)
 
     @jax.jit
-    def log_likelihood_vectorised(weights):
+    def log_likelihood_vectorized(weights):
         """
         TODO
         """
@@ -232,10 +232,10 @@ def weight_minimization_ultranest(
 
         return -0.5 * make_chi2_with_positivity(pdf)
 
-    if vectorised:
+    if vectorized:
         sampler = ultranest.ReactiveNestedSampler(
             parameters,
-            log_likelihood_vectorised,
+            log_likelihood_vectorized,
             weight_minimization_prior,
             vectorized=True,
             ndraw_max=ndraw_max,
