@@ -201,10 +201,7 @@ mc_replicas_gridpdf_fit = collect("grid_pdf_mc_fit", ("all_gridpdf_collect_indic
 
 
 def perform_mc_gridpdf_fit(
-    xgrids,
     mc_replicas_gridpdf_fit,
-    n_replicas,
-    gridpdf_fit_name,
 ):
     """
     Performs a Monte Carlo fit using the grid_pdf parametrisation.
