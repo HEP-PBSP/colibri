@@ -104,7 +104,7 @@ def t0_pdf_grid(t0pdfset, Q0=1.65):
 
 
 def dataset_inputs_t0_covmat_from_systematics(
-    data, commondata_tuple, make_pred_t0data, t0pdfset, t0_pdf_grid
+    data, commondata_tuple, make_pred_t0data, t0_pdf_grid
 ):
     """
     Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
