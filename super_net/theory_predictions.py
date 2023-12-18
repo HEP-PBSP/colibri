@@ -19,7 +19,7 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def make_dis_prediction(fktable, vectorised=False):
+def make_dis_prediction(fktable, vectorized=False):
     """
     given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -30,7 +30,7 @@ def make_dis_prediction(fktable, vectorised=False):
     ----------
     fktable : validphys.coredata.FKTableData
 
-    vectorised: bool, default is False
+    vectorized: bool, default is False
         if True, the function will be compiled in a way
         that allows to compute the prediction for multiple
         prior samples at once.
@@ -42,7 +42,7 @@ def make_dis_prediction(fktable, vectorised=False):
     indices = fktable.luminosity_mapping
     fk_arr = jnp.array(fktable.get_np_fktable())
 
-    if vectorised:
+    if vectorized:
 
         @jax.jit
         def dis_prediction(pdf):
@@ -57,7 +57,7 @@ def make_dis_prediction(fktable, vectorised=False):
     return dis_prediction
 
 
-def make_had_prediction(fktable, vectorised=False):
+def make_had_prediction(fktable, vectorized=False):
     """
     given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -68,7 +68,7 @@ def make_had_prediction(fktable, vectorised=False):
     ----------
     fktable : validphys.coredata.FKTableData
 
-    vectorised: bool, default is False
+    vectorized: bool, default is False
         if True, the function will be compiled in a way
         that allows to compute the prediction for multiple
         prior samples at once.
@@ -83,7 +83,7 @@ def make_had_prediction(fktable, vectorised=False):
     second_indices = indices[1::2]
     fk_arr = jnp.array(fktable.get_np_fktable())
 
-    if vectorised:
+    if vectorized:
 
         @jax.jit
         def had_prediction(pdf):
@@ -105,7 +105,7 @@ def make_had_prediction(fktable, vectorised=False):
     return had_prediction
 
 
-def make_pred_dataset(dataset, vectorised=False):
+def make_pred_dataset(dataset, vectorized=False):
     """
     Compute theory prediction for a DataSetSpec
 
@@ -113,7 +113,7 @@ def make_pred_dataset(dataset, vectorised=False):
     ----------
     dataset : validphys.core.DataSetSpec
 
-    vectorised: bool, default is False
+    vectorized: bool, default is False
 
     Returns
     -------
@@ -128,9 +128,9 @@ def make_pred_dataset(dataset, vectorised=False):
     for fkspec in dataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, vectorised)
+            pred = make_had_prediction(fk, vectorized)
         else:
-            pred = make_dis_prediction(fk, vectorised)
+            pred = make_dis_prediction(fk, vectorized)
         pred_funcs.append(pred)
 
     @jax.jit
@@ -140,7 +140,7 @@ def make_pred_dataset(dataset, vectorised=False):
     return prediction
 
 
-def make_pred_data(data, vectorised=False):
+def make_pred_data(data, vectorized=False):
     """
     Compute theory prediction for entire DataGroupSpec
 
@@ -148,7 +148,7 @@ def make_pred_data(data, vectorised=False):
     ----------
     data: DataGroupSpec instance
 
-    vectorised: bool, default is False
+    vectorized: bool, default is False
 
     Returns
     -------
@@ -161,7 +161,7 @@ def make_pred_data(data, vectorised=False):
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(make_pred_dataset(ds, vectorised))
+        predictions.append(make_pred_dataset(ds, vectorized))
 
     @jax.jit
     def eval_preds(pdf):
@@ -170,14 +170,14 @@ def make_pred_data(data, vectorised=False):
     return eval_preds
 
 
-def make_pred_data_non_vectorised(data):
+def make_pred_data_non_vectorized(data):
     """
-    Same as make_pred_data but with vectorised=False
+    Same as make_pred_data but with vectorized=False
     """
-    return make_pred_data(data, vectorised=False)
+    return make_pred_data(data, vectorized=False)
 
 
-def make_penalty_posdataset(posdataset, vectorised=False):
+def make_penalty_posdataset(posdataset, vectorized=False):
     """
     Given a PositivitySetSpec compute the positivity penalty
     as a lagrange multiplier times elu of minus the theory prediction
@@ -186,7 +186,7 @@ def make_penalty_posdataset(posdataset, vectorised=False):
     ----------
     posdataset : validphys.core.PositivitySetSpec
 
-    vectorised: bool, default is False
+    vectorized: bool, default is False
 
     Returns
     -------
@@ -210,9 +210,9 @@ def make_penalty_posdataset(posdataset, vectorised=False):
     for fkspec in posdataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, vectorised)
+            pred = make_had_prediction(fk, vectorized)
         else:
-            pred = make_dis_prediction(fk, vectorised)
+            pred = make_dis_prediction(fk, vectorized)
         pred_funcs.append(pred)
 
     @jax.jit
@@ -224,7 +224,7 @@ def make_penalty_posdataset(posdataset, vectorised=False):
     return pos_penalty
 
 
-def make_penalty_posdata(posdatasets, vectorised=False):
+def make_penalty_posdata(posdatasets, vectorized=False):
     """
     Compute positivity penalty for list of PositivitySetSpec
 
@@ -233,7 +233,7 @@ def make_penalty_posdata(posdatasets, vectorised=False):
     posdatasets: list
             list of PositivitySetSpec
 
-    vectorised: bool, default is False
+    vectorized: bool, default is False
 
     Returns
     -------
@@ -244,7 +244,7 @@ def make_penalty_posdata(posdatasets, vectorised=False):
     predictions = []
 
     for posdataset in posdatasets:
-        predictions.append(make_penalty_posdataset(posdataset, vectorised))
+        predictions.append(make_penalty_posdataset(posdataset, vectorized))
 
     @jax.jit
     def pos_penalties(pdf, alpha, lambda_positivity):
