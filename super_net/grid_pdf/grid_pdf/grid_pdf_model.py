@@ -51,7 +51,7 @@ def interpolate_grid(
     reduced_xgrids,
     length_reduced_xgrids,
     flavour_mapping=FLAVOUR_MAPPING,
-    vectorised=False,
+    vectorized=False,
 ):
     """
     Produces the function which produces the grid interpolation.
@@ -59,7 +59,7 @@ def interpolate_grid(
 
     fit_xgrids = jnp.array([jnp.array(reduced_xgrids[fl]) for fl in flavour_mapping])
 
-    if vectorised:
+    if vectorized:
         # Function to perform interpolation for a single grid
         @jax.jit
         def interpolate_flavors(y):
