@@ -1,4 +1,3 @@
-from grid_pdf.grid_pdf_model import FLAVOUR_MAPPING
 from validphys.convolution import FK_FLAVOURS
 
 import ultranest
@@ -20,7 +19,7 @@ def make_bayesian_pdf_grid_fit(
     grid_pdf_model_prior,
     interpolate_grid,
     reduced_xgrids,
-    flavour_mapping=FLAVOUR_MAPPING,
+    flavour_mapping,
     min_num_live_points=400,
     min_ess=40,
     log_dir="ultranest_logs",

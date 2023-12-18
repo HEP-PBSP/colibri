@@ -41,16 +41,11 @@ FLAVOURS_ID_MAPPINGS = {
 
 FLAVOUR_TO_ID_MAPPING = {val: key for (key, val) in FLAVOURS_ID_MAPPINGS.items()}
 
-"""
-Specifies which flavours to include in a fit.
-"""
-FLAVOUR_MAPPING = [1, 2, 3]
-
 
 def interpolate_grid(
     reduced_xgrids,
     length_reduced_xgrids,
-    flavour_mapping=FLAVOUR_MAPPING,
+    flavour_mapping,
     vectorised=False,
 ):
     """
@@ -145,7 +140,7 @@ class PdfPriorGrid:
     error68_down: jnp.array
 
 
-def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping=FLAVOUR_MAPPING, Q0=1.65):
+def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping, Q0=1.65):
     """
     Get PDF grid prior values (x*f(x)) from a PDF set.
 
