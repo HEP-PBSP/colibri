@@ -39,7 +39,7 @@ class GridPdfConfig(SuperNetConfig):
         """The lenght of the stacked PDF."""
         stack = []
         for _, val in xgrids.items():
-            stack.append(val)
+            stack += val
 
         return len(stack)
 
