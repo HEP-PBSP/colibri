@@ -79,7 +79,8 @@ def dataset_inputs_covmat_from_systematics(
 def dataset_inputs_t0_covmat_from_systematics(
     data,
     commondata_tuple,
-    dataset_inputs_t0_predictions,
+    make_pred_data,
+    t0pdfset
 ):
     """
     Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
@@ -93,7 +94,7 @@ def dataset_inputs_t0_covmat_from_systematics(
             data_input=data.dsinputs,
             use_weights_in_covmat=False,
             norm_threshold=None,
-            dataset_inputs_t0_predictions=dataset_inputs_t0_predictions,
+            dataset_inputs_t0_predictions=make_pred_data(t0pdfset),
         )
     )
     return covmat
