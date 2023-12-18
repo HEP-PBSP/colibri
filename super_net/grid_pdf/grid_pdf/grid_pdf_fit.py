@@ -2,6 +2,12 @@ from grid_pdf.grid_pdf_model import FLAVOUR_MAPPING
 from validphys.convolution import FK_FLAVOURS
 
 import ultranest
+import jax
+import time
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def make_bayesian_pdf_grid_fit(
     make_chi2_with_positivity,
@@ -13,9 +19,10 @@ def make_bayesian_pdf_grid_fit(
     min_ess=40,
     log_dir="ultranest_logs",
     resume=True,
-    vectorized=False,
+    vectorised=False,
     slice_sampler=False,
     slice_steps=100,
+    ndraw_max=500,
 ):
     """
     TODO
@@ -28,6 +35,7 @@ def make_bayesian_pdf_grid_fit(
 
     """
 
+    @jax.jit
     def log_likelihood(stacked_pdf_grid):
         """
         TODO
@@ -41,7 +49,7 @@ def make_bayesian_pdf_grid_fit(
 
         """
 
-        pdf = interpolate_grid(stacked_pdf_grid).T
+        pdf = interpolate_grid(stacked_pdf_grid)
         return -0.5 * make_chi2_with_positivity(pdf)
 
     parameters = [
@@ -54,18 +62,25 @@ def make_bayesian_pdf_grid_fit(
         grid_pdf_model_prior,
         log_dir=log_dir,
         resume=resume,
-        vectorized=vectorized,
+        vectorized=vectorised,
+        ndraw_max=ndraw_max,
     )
 
     if slice_sampler:
         import ultranest.stepsampler as ustepsampler
+
         sampler.stepsampler = ustepsampler.SliceSampler(
             nsteps=slice_steps,
             generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
         )
 
+    t0 = time.time()
     sampler.run(
         min_num_live_points=min_num_live_points,
         min_ess=min_ess,
     )
+    t1 = time.time()
+    log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
+    # Store run plots to ultranest output folder
+    sampler.plot()

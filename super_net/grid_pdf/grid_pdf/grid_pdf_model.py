@@ -46,39 +46,92 @@ Specifies which flavours to include in a fit.
 """
 FLAVOUR_MAPPING = [1, 2, 3]
 
+
 def interpolate_grid(
     reduced_xgrids,
     length_reduced_xgrids,
     flavour_mapping=FLAVOUR_MAPPING,
+    vectorised=False,
 ):
     """
     Produces the function which produces the grid interpolation.
     """
 
-    def interp_func(
-        stacked_pdf_grid
-    ):
-        # reshape stacked_pdf_grid to (len(REDUCED_XGRID), len(flavour_mapping))
-        reshaped_stacked_pdf_grid = stacked_pdf_grid.reshape(
-            (length_reduced_xgrids, len(flavour_mapping)), order="F"
-        )
+    fit_xgrids = jnp.array([jnp.array(reduced_xgrids[fl]) for fl in flavour_mapping])
 
-        # generate an empty matrix of shape (len(super_net.constants.XGRID),valipdhys.convolution.NFK)
-        input_grid = jnp.zeros((len(XGRID), convolution.NFK))
+    if vectorised:
+        # Function to perform interpolation for a single grid
+        @jax.jit
+        def interpolate_flavors(y):
+            reshaped_y = y.reshape(
+                (
+                    len(flavour_mapping),
+                    length_reduced_xgrids,
+                )
+            )
+            out = jnp.array(
+                [
+                    jnp.interp(jnp.array(XGRID), xgrid, reshaped_y[i, :])
+                    for i, xgrid in enumerate(fit_xgrids)
+                ]
+            )
+            return out
 
-        # interpolate columns of reshaped_stacked_pdf_grid
-        for i, fl in enumerate(flavour_mapping):
-            input_grid = input_grid.at[:, fl].set(
-                jnp.interp(
-                    jnp.array(XGRID),
-                    jnp.array(reduced_xgrids[fl]),
-                    reshaped_stacked_pdf_grid[:, i],
+        @jax.jit
+        def interp_func(stacked_pdf_grid):
+            # generate an empty matrix of shape (:, valipdhys.convolution.NFK, len(super_net.constants.XGRID),)
+            input_grid = jnp.zeros(
+                (
+                    stacked_pdf_grid.shape[0],
+                    convolution.NFK,
+                    len(XGRID),
                 )
             )
 
-        return input_grid
+            pdf_interp = jnp.apply_along_axis(
+                interpolate_flavors,
+                axis=-1,
+                arr=stacked_pdf_grid,
+            )
+
+            input_grid = input_grid.at[:, flavour_mapping, :].set(pdf_interp)
+
+            return input_grid
+
+    else:
+
+        @jax.jit
+        def interp_func(stacked_pdf_grid):
+            reshaped_stacked_pdf_grid = stacked_pdf_grid.reshape(
+                (
+                    len(flavour_mapping),
+                    length_reduced_xgrids,
+                ),
+            )
+
+            # generate an empty matrix of shape (valipdhys.convolution.NFK, len(super_net.constants.XGRID),)
+            input_grid = jnp.zeros(
+                (
+                    convolution.NFK,
+                    len(XGRID),
+                )
+            )
+
+            # Loop to perform interpolation of the 2D arrays
+            # The JIT compilation flattens the loop, good efficiency
+            pdf_interp = jnp.array(
+                [
+                    jnp.interp(jnp.array(XGRID), xgrid, reshaped_stacked_pdf_grid[i, :])
+                    for i, xgrid in enumerate(fit_xgrids)
+                ]
+            )
+
+            input_grid = input_grid.at[flavour_mapping, :].set(pdf_interp)
+
+            return input_grid
 
     return interp_func
+
 
 @dataclass(frozen=True)
 class PdfPriorGrid:
@@ -152,16 +205,19 @@ def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping=FLAVOUR_MAPPING, Q
 
 
 def grid_pdf_model_prior(
-    pdf_prior_grid, uniform_pdf_prior=True, gaussian_pdf_prior=False, sigma_pdf_prior=1
+    pdf_prior_grid,
+    uniform_pdf_prior=True,
+    gaussian_pdf_prior=False,
+    sigma_pdf_prior=1,
 ):
     """
     This function returns a prior transform for the ultranest sampler.
 
-    1. if uniform_pdf_prior is True, return a grid whose values are uniformly distribued 
+    1. if uniform_pdf_prior is True, return a grid whose values are uniformly distribued
        in the 68% confidence interval of the central value of pdf_prior.
-    
-    2. if gaussian_pdf_prior is True, return a grid centered at the central value of the 
-       pdf_prior and with a covariance matrix given by the diagonal entries of covariance matrix 
+
+    2. if gaussian_pdf_prior is True, return a grid centered at the central value of the
+       pdf_prior and with a covariance matrix given by the diagonal entries of covariance matrix
        of the pdf_prior
 
 
@@ -194,29 +250,30 @@ def grid_pdf_model_prior(
         )
         cholesky_pdf_covmat = jnp.diag(jnp.sqrt(pdf_diag_covmat_prior))
 
+        @jax.jit
         def prior_transform(cube):
             """
-            TODO
+            This currently does not support vectorisation.
             """
             # generate independent gaussian with mean 0 and std 1
             independent_gaussian = jax.scipy.stats.norm.ppf(cube)[:, jnp.newaxis]
-            
+
             # generate random samples from a multivariate normal distribution
             prior = stacked_pdf_grid_prior + jnp.einsum(
                 "ij,kj->ki", independent_gaussian.T, cholesky_pdf_covmat
             ).squeeze(-1)
-            
+
             return prior
 
     elif uniform_pdf_prior:
         error68_up = pdf_prior_grid.error68_up
         error68_down = pdf_prior_grid.error68_down
 
+        @jax.jit
         def prior_transform(cube):
             """
             TODO
             """
-            params = cube.copy()
             params = error68_down + (error68_up - error68_down) * cube
             return params
 
