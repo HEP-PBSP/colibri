@@ -92,7 +92,7 @@ def t0_pdf_grid(t0pdfset, Q0=1.65):
     Returns
     -------
     t0grid: jnp.array
-        t0 grid, is N_fl x N_x
+        central member of t0 grid, is N_fl x N_x
     """
 
     t0grid = jnp.array(
