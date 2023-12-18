@@ -12,7 +12,7 @@ import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
 
-def make_chi2_wmin_opt(make_data_values, precomputed_predictions, vectorised=False):
+def make_chi2_wmin_opt(make_data_values, precomputed_predictions, vectorized=False):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid optimised for weight minimisation.
@@ -45,7 +45,7 @@ def make_chi2_wmin_opt(make_data_values, precomputed_predictions, vectorised=Fal
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
-    if vectorised:
+    if vectorized:
 
         @jax.jit
         def chi2(wmin_weights):
