@@ -57,10 +57,7 @@ def interpolate_grid(
     Produces the function which produces the grid interpolation.
     """
 
-    fit_xgrids = []
-    for fl in flavour_mapping:
-        fit_xgrids.append(jnp.array(reduced_xgrids[fl]))
-    fit_xgrids = jnp.array(fit_xgrids)
+    fit_xgrids = jnp.array([jnp.array(reduced_xgrids[fl]) for fl in flavour_mapping])
 
     if vectorised:
         # Function to perform interpolation for a single grid
