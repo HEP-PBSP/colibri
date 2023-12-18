@@ -70,11 +70,11 @@ def interpolate_grid(
                 )
             )
             out = jnp.array(
-                            [
-                                jnp.interp(jnp.array(XGRID), xgrid, reshaped_y[i, :])
-                                for i, xgrid in enumerate(fit_xgrids)
-                            ]
-                        )
+                [
+                    jnp.interp(jnp.array(XGRID), xgrid, reshaped_y[i, :])
+                    for i, xgrid in enumerate(fit_xgrids)
+                ]
+            )
             return out
 
         @jax.jit
@@ -120,11 +120,11 @@ def interpolate_grid(
             # Loop to perform interpolation of the 2D arrays
             # The JIT compilation flattens the loop, good efficiency
             pdf_interp = jnp.array(
-                            [
-                                jnp.interp(jnp.array(XGRID), xgrid, reshaped_stacked_pdf_grid[i, :])
-                                for i, xgrid in enumerate(fit_xgrids)
-                            ]
-                        )
+                [
+                    jnp.interp(jnp.array(XGRID), xgrid, reshaped_stacked_pdf_grid[i, :])
+                    for i, xgrid in enumerate(fit_xgrids)
+                ]
+            )
 
             input_grid = input_grid.at[flavour_mapping, :].set(pdf_interp)
 
