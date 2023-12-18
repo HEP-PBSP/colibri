@@ -97,19 +97,19 @@ class GridPdfFit:
     stacked_pdf_grid: jnp.array = None
     training_loss: jnp.array = None
     validation_loss: jnp.array = None
+    xgrids: dict = None
 
 
 def grid_pdf_mc_fit(
     make_chi2_training_data_with_positivity,
     make_chi2_validation_data_with_positivity,
     make_data_values,
+    xgrids,
     interpolate_grid,
-    reduced_xgrids,
     init_stacked_pdf_grid,
     optimizer_provider,
     early_stopper,
     max_epochs,
-    flavour_mapping=FLAVOUR_MAPPING,
     batch_size=128,
     batch_seed=1,
     alpha=1e-7,
@@ -142,10 +142,6 @@ def grid_pdf_mc_fit(
 
     loss = []
     val_loss = []
-
-    parameters = [
-        f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in reduced_xgrids[i]
-    ]
 
     opt_state = optimizer_provider.init(init_stacked_pdf_grid)
     stacked_pdf_grid = init_stacked_pdf_grid.copy()
@@ -194,6 +190,7 @@ def grid_pdf_mc_fit(
         stacked_pdf_grid=stacked_pdf_grid,
         training_loss=loss,
         validation_loss=val_loss,
+        xgrids=xgrids,
     )
 
 
