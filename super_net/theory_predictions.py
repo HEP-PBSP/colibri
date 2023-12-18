@@ -170,6 +170,35 @@ def make_pred_data(data, vectorized=False):
     return eval_preds
 
 
+def make_pred_t0data(data):
+    """
+    Compute theory prediction for entire DataGroupSpec.
+    It is specifically meant for t0 predictions, i.e. it 
+    is similar to dataset_t0_predictions in validphys.covmats.
+
+    Parameters
+    ----------
+    data: DataGroupSpec instance
+
+    Returns
+    -------
+    @jax.jit CompiledFunction
+        Compiled function taking pdf grid in input
+        and returning theory prediction for one
+        data group
+    """
+
+    predictions = []
+
+    for ds in data.datasets:
+        predictions.append(make_pred_dataset(ds, vectorized=False))
+
+    @jax.jit
+    def eval_preds(pdf):
+        return [f(pdf) for f in predictions]
+
+    return eval_preds
+
 def make_pred_data_non_vectorized(data):
     """
     Same as make_pred_data but with vectorized=False
