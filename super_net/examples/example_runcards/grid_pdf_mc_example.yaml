@@ -71,13 +71,13 @@ xgrids:
   T35: []
 
 # training specs
-max_epochs: 100
+max_epochs: 1000
 patience: 10
 trval_index: 1
 use_same_trval_split_per_replica: True
-weights_initializer: uniform
-uniform_minval: -0.3
-uniform_maxval: 0.3
+# grid_initializer: uniform
+# uniform_minval: -0.3
+# uniform_maxval: 0.3
 
 # lhapdf output
 n_replicas: 1

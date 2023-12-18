@@ -3,6 +3,11 @@ from validphys.convolution import FK_FLAVOURS
 
 import ultranest
 import jax
+import jax.numpy as jnp
+import optax
+from super_net.data_batch import data_batches
+
+from dataclasses import dataclass
 import time
 import logging
 from reportengine import collect
@@ -87,20 +92,110 @@ def make_bayesian_pdf_grid_fit(
     sampler.plot()
 
 
+@dataclass(frozen=True)
+class GridPdfFit:
+    stacked_pdf_grid: jnp.array = None
+    training_loss: jnp.array = None
+    validation_loss: jnp.array = None
+
+
 def grid_pdf_mc_fit(
     make_chi2_training_data_with_positivity,
     make_chi2_validation_data_with_positivity,
     make_data_values,
-    xgrids,
+    interpolate_grid,
+    reduced_xgrids,
     optimizer_provider,
     early_stopper,
     max_epochs,
+    flavour_mapping=FLAVOUR_MAPPING,
     batch_size=128,
     batch_seed=1,
     alpha=1e-7,
     lambda_positivity=1000,
 ):
-    pass
+    """
+    To fill.
+    """
+
+    @jax.jit
+    def loss_training(stacked_pdf_grid, batch_idx):
+        pdf = interpolate_grid(stacked_pdf_grid)
+
+        return make_chi2_training_data_with_positivity(
+            pdf, batch_idx, alpha, lambda_positivity
+        )
+
+    @jax.jit
+    def loss_validation(stacked_pdf_grid):
+        pdf = interpolate_grid(stacked_pdf_grid)
+
+        return make_chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
+
+    @jax.jit
+    def step(params, opt_state, batch_idx):
+        loss_value, grads = jax.value_and_grad(loss_training)(params, batch_idx)
+        updates, opt_state = optimizer_provider.update(grads, opt_state, params)
+        params = optax.apply_updates(params, updates)
+        return params, opt_state, loss_value
+
+    loss = []
+    val_loss = []
+
+    parameters = [
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in reduced_xgrids[i]
+    ]
+
+    init_stacked_pdf_grid = jnp.zeros(len(parameters))
+
+    opt_state = optimizer_provider.init(init_stacked_pdf_grid)
+    stacked_pdf_grid = init_stacked_pdf_grid.copy()
+
+    data_batch = data_batches(
+        make_data_values.training_data.n_training_points, batch_size, batch_seed
+    )
+    batches = data_batch.data_batch_stream_index()
+    num_batches = data_batch.num_batches
+    batch_size = data_batch.batch_size
+
+    for i in range(max_epochs):
+        epoch_loss = 0
+        epoch_val_loss = 0
+
+        for _ in range(num_batches):
+            batch = next(batches)
+
+            stacked_pdf_grid, opt_state, loss_value = step(
+                stacked_pdf_grid, opt_state, batch
+            )
+
+            epoch_loss += loss_training(stacked_pdf_grid, batch) / batch_size
+
+        epoch_val_loss += (
+            loss_validation(stacked_pdf_grid)
+            / make_data_values.validation_data.n_validation_points
+        )
+        epoch_loss /= num_batches
+
+        loss.append(epoch_loss)
+        val_loss.append(epoch_val_loss)
+
+        _, early_stopper = early_stopper.update(epoch_val_loss)
+        if early_stopper.should_stop:
+            log.info("Met early stopping criteria, breaking...")
+            break
+
+        if i % 50 == 0:
+            log.info(
+                f"step {i}, loss: {epoch_loss:.3f}, validation_loss: {epoch_val_loss:.3f}"
+            )
+            log.info(f"epoch:{i}, early_stopper: {early_stopper}")
+
+    return GridPdfFit(
+        stacked_pdf_grid=stacked_pdf_grid,
+        training_loss=loss,
+        validation_loss=val_loss,
+    )
 
 
 """
