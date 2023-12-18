@@ -5,6 +5,7 @@ import ultranest
 import jax
 import time
 import logging
+from reportengine import collect
 
 log = logging.getLogger(__name__)
 
@@ -84,3 +85,38 @@ def make_bayesian_pdf_grid_fit(
 
     # Store run plots to ultranest output folder
     sampler.plot()
+
+
+def grid_pdf_mc_fit(
+    make_chi2_training_data_with_positivity,
+    make_chi2_validation_data_with_positivity,
+    make_data_values,
+    xgrids,
+    optimizer_provider,
+    early_stopper,
+    max_epochs,
+    batch_size=128,
+    batch_seed=1,
+    alpha=1e-7,
+    lambda_positivity=1000,
+):
+    pass
+
+
+"""
+Collect over multiple replica fits.
+"""
+mc_replicas_gridpdf_fit = collect("grid_pdf_mc_fit", ("all_gridpdf_collect_indices",))
+
+
+def perform_mc_gridpdf_fit(
+    xgrids,
+    mc_replicas_gridpdf_fit,
+    n_replicas,
+    gridpdf_fit_name,
+):
+    """
+    Performs a Monte Carlo fit using the grid_pdf parametrisation.
+    """
+
+    log.info("Monte Carlo fit completed!")

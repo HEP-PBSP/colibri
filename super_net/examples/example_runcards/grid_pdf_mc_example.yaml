@@ -1,0 +1,87 @@
+dataset_inputs:
+ - {'dataset':'NMC'}
+#  - {'dataset': 'SLACP_dwsh'}
+#  - {'dataset': 'SLACD_dw_ite'}
+#  - {'dataset': 'BCDMSP_dwsh'}
+#  - {'dataset': 'BCDMSD_dw_ite'}
+#  - {'dataset': 'CHORUSNUPb_dw_ite'}
+#  - {'dataset': 'CHORUSNBPb_dw_ite'}
+#  - {'dataset': 'NTVNUDMNFe_dw_ite', 'cfac': ['MAS']}
+#  - {'dataset': 'NTVNBDMNFe_dw_ite', 'cfac': ['MAS']}
+  # - {'dataset': 'HERACOMBNCEM'} 
+  # - {'dataset': 'HERACOMBNCEP575'}
+  # - {'dataset': 'HERACOMBNCEP820'}
+  # - {'dataset': 'HERACOMBNCEP920'}
+  # - {'dataset': 'HERACOMBNCEP460'}
+  # - {'dataset': 'HERACOMBCCEP'}
+  # - {'dataset': 'HERACOMBCCEM'} 
+#  - {'dataset': 'HERACOMB_SIGMARED_B'}
+#  - {'dataset': 'HERACOMB_SIGMARED_C'}
+
+positivity:
+  posdatasets:
+  - {dataset: POSF2U, maxlambda: 1e6}        # Positivity Lagrange Multiplier
+  # - {dataset: POSF2DW, maxlambda: 1e6}
+  # - {dataset: POSF2S, maxlambda: 1e6}
+  # - {dataset: POSFLL, maxlambda: 1e6}
+  # - {dataset: POSF2C, maxlambda: 1e6}
+  # - {dataset: POSXUQ, maxlambda: 1e6}        # Positivity of MSbar PDFs
+  # - {dataset: POSXUB, maxlambda: 1e6}
+  # - {dataset: POSXDQ, maxlambda: 1e6}
+  # - {dataset: POSXDB, maxlambda: 1e6}
+  # - {dataset: POSXSQ, maxlambda: 1e6}
+  # - {dataset: POSXSB, maxlambda: 1e6}
+  # - {dataset: POSXGL, maxlambda: 1e6}
+  # - {dataset: POSDYU, maxlambda: 1e10}      
+  # - {dataset: POSDYD, maxlambda: 1e10}
+  # - {dataset: POSDYS, maxlambda: 1e10}
+
+
+theoryid: 400
+use_cuts: internal
+
+# Level 0 closure test
+fakedata: True
+pseudodata: False
+closure_test_pdf: NNPDF31_nnlo_as_0118
+
+# fit specs
+use_t0: True
+t0pdfset: NNPDF31_nnlo_as_0118
+
+# positivity specs
+alpha: 1e-7
+lambda_positivity: 1000
+
+# grid specs
+xgrids:
+  photon: []
+  \Sigma: [0.01, 0.02, 0.1, 0.2]
+  g: [0.01, 0.02, 0.1, 0.2]
+  V: [0.01, 0.02, 0.1, 0.2]
+  V3: []
+  V8: []
+  V15: []
+  V24: []
+  V35: []
+  T3: []
+  T8: []
+  T15: []
+  T24: []
+  T35: []
+
+# training specs
+max_epochs: 100
+patience: 10
+trval_index: 1
+use_same_trval_split_per_replica: True
+weights_initializer: uniform
+uniform_minval: -0.3
+uniform_maxval: 0.3
+
+# lhapdf output
+n_replicas: 1
+set_name: test
+
+actions_:
+- perform_mc_gridpdf_fit

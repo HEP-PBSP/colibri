@@ -10,6 +10,7 @@ Date: 15.11.2023
 from super_net.config import SuperNetConfig, Environment
 from grid_pdf.grid_pdf_model import FLAVOUR_TO_ID_MAPPING
 
+
 class Environment(Environment):
     pass
 
@@ -22,16 +23,37 @@ class GridPdfConfig(SuperNetConfig):
     def parse_pdf_prior(self, name):
         """PDF set used to generate prior values in grid fit"""
         return self.parse_pdf(name)
-    
+
     def produce_length_reduced_xgrids(self, xgrids):
         """The reduced x-grids used in the fit, organised by flavour."""
-        lengths = [len(val) for (_,val) in xgrids.items()]
+        lengths = [len(val) for (_, val) in xgrids.items()]
         # Remove all zero-length lists
         lengths = list(filter((0).__ne__, lengths))
         if not all(x == lengths[0] for x in lengths):
-            raise ValueError("Cannot currently support reduced x-grids of different lengths.")
+            raise ValueError(
+                "Cannot currently support reduced x-grids of different lengths."
+            )
         return lengths[0]
 
     def produce_reduced_xgrids(self, xgrids):
         """The reduced x-grids used in the fit, organised by flavour."""
-        return {FLAVOUR_TO_ID_MAPPING[flav] : val for (flav,val) in xgrids.items()}
+        return {FLAVOUR_TO_ID_MAPPING[flav]: val for (flav, val) in xgrids.items()}
+
+    def produce_all_gridpdf_collect_indices(
+        self,
+        n_replicas,
+        use_same_trval_split_per_replica=False,
+        trval_index_default=1,
+    ):
+        """ """
+
+        if use_same_trval_split_per_replica:
+            return [
+                {
+                    "replica_index": i,
+                    "trval_index": trval_index_default,
+                }
+                for i in range(n_replicas)
+            ]
+        else:
+            return [{"replica_index": i, "trval_index": i} for i in range(n_replicas)]
