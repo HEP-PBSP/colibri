@@ -69,10 +69,13 @@ def interpolate_grid(
                     length_reduced_xgrids,
                 )
             )
-            out = []
-            for i, xgrid in enumerate(fit_xgrids):
-                out.append(jnp.interp(jnp.array(XGRID), xgrid, reshaped_y[i, :]))
-            return jnp.array(out)
+            out = jnp.array(
+                            [
+                                jnp.interp(jnp.array(XGRID), xgrid, reshaped_y[i, :])
+                                for i, xgrid in enumerate(fit_xgrids)
+                            ]
+                        )
+            return out
 
         @jax.jit
         def interp_func(stacked_pdf_grid):
