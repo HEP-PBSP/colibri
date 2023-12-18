@@ -25,6 +25,17 @@ def gridpdf_fit_name(set_name=None):
 def init_stacked_pdf_grid(
     length_stackedpdf,
     grid_initializer,
+    replica_seed,
 ):
-    if grid_initializer == "zeros":
+    if grid_initializer["type"] == "zeros":
         return jnp.zeros(shape=length_stackedpdf)
+
+    elif grid_initializer["type"] == "uniform":
+        rng = jax.random.PRNGKey(replica_seed)
+
+        return jax.random.uniform(
+            rng,
+            shape=(length_stackedpdf,),
+            minval=grid_initializer["minval"],
+            maxval=grid_initializer["maxval"],
+        )
