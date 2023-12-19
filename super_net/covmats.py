@@ -11,9 +11,9 @@ Date: 11.11.2023
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
+import numpy as np
+
 from validphys import covmats
-from validphys import convolution
-from super_net.constants import XGRID
 
 
 def sqrt_covmat_jax(covariance_matrix):
@@ -79,32 +79,32 @@ def dataset_inputs_covmat_from_systematics(
     return covmat
 
 
-def t0_pdf_grid(t0pdfset, Q0=1.65):
+def super_net_dataset_inputs_t0_predictions(make_pred_t0data, t0_pdf_grid):
     """
-    Computes the t0 pdf grid.
+    Similar to validphys.covmats.dataset_inputs_t0_predictions.
 
     Parameters
     ----------
-    t0pdfset: validphys.core.PDF
-
-    Q0: float, default is 1.65
+    make_pred_t0data: jax.jit compiled function
+        function taking a pdf grid and returning
+        theory prediction for one data group
+    
+    t0_pdf_grid: jnp.array
 
     Returns
     -------
-    t0grid: jnp.array
-        central member of t0 grid, is N_fl x N_x
-    """
+    t0predictions: list
+        list of theory predictions for each dataset
+    """    
+    # central PDF member for t0 predictions 
+    pred = make_pred_t0data(t0_pdf_grid[0])
+    t0predictions = [np.array(pred[i]) for i in range(len(pred))]
 
-    t0grid = jnp.array(
-        convolution.evolution.grid_values(
-            t0pdfset, convolution.FK_FLAVOURS, XGRID, [Q0]
-        ).squeeze(-1)
-    )[0]
-    return t0grid
+    return t0predictions
 
 
 def dataset_inputs_t0_covmat_from_systematics(
-    data, commondata_tuple, make_pred_t0data, t0_pdf_grid
+    data, commondata_tuple, super_net_dataset_inputs_t0_predictions
 ):
     """
     Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
@@ -112,11 +112,6 @@ def dataset_inputs_t0_covmat_from_systematics(
 
     Note: see production rule in `config.py` for commondata_tuple options.
     """
-    # this is ugly but it works
-    import numpy as np
-
-    pred = make_pred_t0data(t0_pdf_grid)
-    t0predictions = [np.array(pred[i]) for i in range(len(pred))]
 
     covmat = jnp.array(
         covmats.dataset_inputs_t0_covmat_from_systematics(
@@ -124,7 +119,7 @@ def dataset_inputs_t0_covmat_from_systematics(
             data_input=data.dsinputs,
             use_weights_in_covmat=False,
             norm_threshold=None,
-            dataset_inputs_t0_predictions=t0predictions,
+            dataset_inputs_t0_predictions=super_net_dataset_inputs_t0_predictions,
         )
     )
     return covmat
