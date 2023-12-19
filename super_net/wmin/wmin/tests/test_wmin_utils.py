@@ -1,5 +1,4 @@
-import pytest
-from super_net.wmin_utils import weights_initializer_provider
+from wmin.wmin_utils import weights_initializer_provider
 
 import numpy as np
 import jax
