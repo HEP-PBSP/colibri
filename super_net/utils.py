@@ -101,3 +101,27 @@ def t0_pdf_grid(t0pdfset, Q0=1.65):
         ).squeeze(-1)
     )
     return t0grid
+
+
+def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
+    """
+    Computes the closure_test_pdf grid in the evolution basis.
+
+    Parameters
+    ----------
+    closure_test_pdf: validphys.core.PDF
+
+    Q0: float, default is 1.65
+
+    Returns
+    -------
+    grid: jnp.array
+        grid, is N_rep x N_fl x N_x
+    """
+
+    grid = jnp.array(
+        convolution.evolution.grid_values(
+            closure_test_pdf, convolution.FK_FLAVOURS, XGRID, [Q0]
+        ).squeeze(-1)
+    )
+    return grid
