@@ -269,12 +269,18 @@ def grid_pdf_model_prior(
         error68_up = pdf_prior_grid.error68_up
         error68_down = pdf_prior_grid.error68_down
 
+        # Compute the band for a generic sigma_pdf_prior
+        delta = (error68_up - error68_down) / 2
+        mean = (error68_up + error68_down) / 2
+        error_up = mean + delta * sigma_pdf_prior
+        error_down = mean - delta * sigma_pdf_prior
+
         @jax.jit
         def prior_transform(cube):
             """
             TODO
             """
-            params = error68_down + (error68_up - error68_down) * cube
+            params = error_down + (error_up - error_down) * cube
             return params
 
     return prior_transform

@@ -56,7 +56,7 @@ lambda_positivity: 1000
 # nested sampling specs
 bayesian_fit: True
 pdf_prior: NNPDF31_nnlo_as_0118
-sigma: 1
+sigma_pdf_prior: 1
 min_num_live_points: 500
 min_ess: 50
 trval_index: 1
