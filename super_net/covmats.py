@@ -11,7 +11,10 @@ Date: 11.11.2023
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
+import numpy as np
+
 from validphys import covmats
+
 
 def sqrt_covmat_jax(covariance_matrix):
     """
@@ -56,7 +59,7 @@ def dataset_inputs_covmat_from_systematics(
     data,
     commondata_tuple,
 ):
-    """ 
+    """
     Similar to validphys.covmats.dataset_inputs_covmat_from_systematics
     but jax.numpy array.
 
@@ -76,10 +79,32 @@ def dataset_inputs_covmat_from_systematics(
     return covmat
 
 
+def super_net_dataset_inputs_t0_predictions(make_pred_t0data, t0_pdf_grid):
+    """
+    Similar to validphys.covmats.dataset_inputs_t0_predictions.
+
+    Parameters
+    ----------
+    make_pred_t0data: jax.jit compiled function
+        function taking a pdf grid and returning
+        theory prediction for one data group
+
+    t0_pdf_grid: jnp.array
+
+    Returns
+    -------
+    t0predictions: list
+        list of theory predictions for each dataset
+    """
+    # central PDF member for t0 predictions
+    pred = make_pred_t0data(t0_pdf_grid[0])
+    t0predictions = [np.array(pred[i]) for i in range(len(pred))]
+
+    return t0predictions
+
+
 def dataset_inputs_t0_covmat_from_systematics(
-    data,
-    commondata_tuple,
-    dataset_inputs_t0_predictions,
+    data, commondata_tuple, super_net_dataset_inputs_t0_predictions
 ):
     """
     Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
@@ -87,13 +112,14 @@ def dataset_inputs_t0_covmat_from_systematics(
 
     Note: see production rule in `config.py` for commondata_tuple options.
     """
+
     covmat = jnp.array(
         covmats.dataset_inputs_t0_covmat_from_systematics(
             commondata_tuple,
             data_input=data.dsinputs,
             use_weights_in_covmat=False,
             norm_threshold=None,
-            dataset_inputs_t0_predictions=dataset_inputs_t0_predictions,
+            dataset_inputs_t0_predictions=super_net_dataset_inputs_t0_predictions,
         )
     )
     return covmat

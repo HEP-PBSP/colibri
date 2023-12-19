@@ -12,6 +12,9 @@ import jax.numpy as jnp
 
 from dataclasses import dataclass, asdict
 
+from super_net.constants import XGRID
+from validphys import convolution
+
 
 def replica_seed(replica_index):
     """
@@ -74,3 +77,27 @@ def training_validation_split(indices, test_size, random_seed, shuffle_indices=T
     indices_validation = permuted_indices[split_point:]
 
     return TrainValidationSplit(training=indices_train, validation=indices_validation)
+
+
+def t0_pdf_grid(t0pdfset, Q0=1.65):
+    """
+    Computes the t0 pdf grid in the evolution basis.
+
+    Parameters
+    ----------
+    t0pdfset: validphys.core.PDF
+
+    Q0: float, default is 1.65
+
+    Returns
+    -------
+    t0grid: jnp.array
+        t0 grid, is N_rep x N_fl x N_x
+    """
+
+    t0grid = jnp.array(
+        convolution.evolution.grid_values(
+            t0pdfset, convolution.FK_FLAVOURS, XGRID, [Q0]
+        ).squeeze(-1)
+    )
+    return t0grid
