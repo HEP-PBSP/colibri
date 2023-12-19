@@ -1,7 +1,7 @@
 """
-super_net.monte_carlo_utils.py
+super_net.utils.py
 
-Module containing several utils for Monte Carlo like fits.
+Module containing several utils for PDF fits.
 
 Author: Mark N. Costantini
 Date: 11.11.2023
