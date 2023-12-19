@@ -14,7 +14,7 @@ from reportengine import collect
 from reportengine.configparser import ConfigError
 
 from super_net.commondata_utils import CentralCovmatIndex
-from super_net.monte_carlo_utils import training_validation_split, TrainValidationSplit
+from super_net.utils import training_validation_split, TrainValidationSplit
 
 
 @dataclass(frozen=True)
@@ -130,7 +130,7 @@ def make_posdata_split(
         list of positivity datasets, see also validphys.config.parse_posdataset.
 
     trval_seed: jax.random.PRNGKey
-        monte_carlo_utils.trval_seed, super_net provider.
+        utils.trval_seed, super_net provider.
 
     test_size: float, default is 0.2
 

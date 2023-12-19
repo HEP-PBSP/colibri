@@ -103,7 +103,7 @@ def make_chi2_training_data_with_positivity(
         super_net provider for (fktable) theory predictions.
 
     make_posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from monte_carlo_utils.TrainValidationSplit
+        dataclass inheriting from utils.TrainValidationSplit
 
     make_penalty_posdata: theory_predictions.make_penalty_posdata
         super_net provider used to compute positivity penalty.
@@ -238,7 +238,7 @@ def make_chi2_validation_data_with_positivity(
         super_net provider for (fktable) theory predictions.
 
     make_posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from monte_carlo_utils.TrainValidationSplit
+        dataclass inheriting from utils.TrainValidationSplit
 
     make_penalty_posdata: theory_predictions.make_penalty_posdata
         super_net provider used to compute positivity penalty.
@@ -369,7 +369,7 @@ def make_chi2_with_positivity(
         super_net provider for (fktable) theory predictions.
 
     make_posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from monte_carlo_utils.TrainValidationSplit
+        dataclass inheriting from utils.TrainValidationSplit
 
     make_penalty_posdata: theory_predictions.make_penalty_posdata
         super_net provider used to compute positivity penalty.
