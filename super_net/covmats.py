@@ -88,15 +88,15 @@ def super_net_dataset_inputs_t0_predictions(make_pred_t0data, t0_pdf_grid):
     make_pred_t0data: jax.jit compiled function
         function taking a pdf grid and returning
         theory prediction for one data group
-    
+
     t0_pdf_grid: jnp.array
 
     Returns
     -------
     t0predictions: list
         list of theory predictions for each dataset
-    """    
-    # central PDF member for t0 predictions 
+    """
+    # central PDF member for t0 predictions
     pred = make_pred_t0data(t0_pdf_grid[0])
     t0predictions = [np.array(pred[i]) for i in range(len(pred))]
 

@@ -173,7 +173,7 @@ def make_pred_data(data, vectorized=False):
 def make_pred_t0data(data):
     """
     Compute theory prediction for entire DataGroupSpec.
-    It is specifically meant for t0 predictions, i.e. it 
+    It is specifically meant for t0 predictions, i.e. it
     is similar to dataset_t0_predictions in validphys.covmats.
 
     Parameters
@@ -198,6 +198,7 @@ def make_pred_t0data(data):
         return [f(pdf) for f in predictions]
 
     return eval_preds
+
 
 def make_pred_data_non_vectorized(data):
     """
