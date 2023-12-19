@@ -7,14 +7,57 @@ Author: James Moore
 Date: 18.12.2023
 """
 
+from grid_pdf.grid_pdf_model import interpolate_grid, FLAVOURS_ID_MAPPINGS
+
 import lhapdf
+import numpy as np
+import os
+import yaml
+import shutil
 
 def lhapdf_path():
     """Returns the path to the share/LHAPDF directory"""
     return lhapdf.paths()[0]
 
-EXPORT_DICT = {'TBAR': 'tbar', 'BBAR': 'bbar', 'CBAR': 'cbar', 'SBAR': 'sbar', 'UBAR': 'ubar', 'DBAR': 'dbar', 'GLUON': 'g', 'D': 'd', 'U': 'u', 'S': 's', 'C': 'c', 'B': 'b', 'T': 't', 'PHT': 'photon'}
 EXPORT_LABELS = ['TBAR', 'BBAR', 'CBAR', 'SBAR', 'UBAR', 'DBAR', 'GLUON', 'D', 'U', 'S', 'C', 'B', 'T', 'PHT']
+
+export_to_evolution = {
+    '\Sigma'  : {'U': 1, 'UBAR': 1, 'D': 1, 'DBAR': 1, 'S': 1, 'SBAR': 1, 'C': 1, 'CBAR': 1 ,'B':1, 'BBAR': 1, 'T': 1, 'TBAR': 1},
+    'V'        : {'U': 1, 'UBAR':-1, 'D': 1, 'DBAR':-1, 'S': 1, 'SBAR':-1, 'C': 1, 'CBAR':-1 ,'B':1, 'BBAR':-1, 'T': 1, 'TBAR':-1},
+
+    'T3'       : {'U': 1, 'UBAR': 1, 'D':-1, 'DBAR':-1},
+    'V3'       : {'U': 1, 'UBAR':-1, 'd':-1, 'DBAR': 1},
+
+    'T8'       : {'U': 1, 'UBAR': 1, 'D': 1, 'DBAR': 1, 'S':-2, 'SBAR':-2},
+    'V8'       : {'U': 1, 'UBAR':-1, 'D': 1, 'DBAR':-1, 'S':-2, 'SBAR':+2},
+
+    'T15'      : {'U': 1, 'UBAR': 1, 'D': 1, 'DBAR': 1, 'S': 1, 'SBAR': 1, 'c':-3, 'CBAR':-3},
+    'V15'      : {'U': 1, 'UBAR':-1, 'D': 1, 'DBAR':-1, 'S': 1, 'SBAR':-1, 'c':-3, 'CBAR':+3},
+
+
+    'T24'      : {'U': 1, 'UBAR': 1, 'D': 1, 'DBAR': 1, 'S': 1, 'SBAR': 1, 'C': 1, 'CBAR': 1, 'B':-4, 'BBAR':-4},
+    'V24'      : {'U': 1, 'UBAR':-1, 'D': 1, 'DBAR':-1, 'S': 1, 'SBAR':-1, 'C': 1, 'CBAR':-1, 'B':-4, 'BBAR':+4},
+
+    'T35'      : {'U': 1, 'UBAR': 1, 'D': 1, 'DBAR': 1, 'S': 1, 'SBAR': 1, 'C': 1, 'CBAR': 1, 'B': 1, 'BBAR': 1, 'T':-5, 'TBAR':-5},
+    'V35'      : {'U': 1, 'UBAR':-1, 'D': 1, 'DBAR':-1, 'S': 1, 'SBAR':-1, 'C': 1, 'CBAR':-1, 'B': 1, 'BBAR':-1, 'T':-5, 'TBAR':+5},
+
+    'g'        : {'GLUON':1},
+    'photon'   : {'PHT':1},
+    }
+
+# Construct the inverse transformation from evolution to export
+num_flav = len(FLAVOURS_ID_MAPPINGS)
+export_to_evolution_matrix = np.zeros((num_flav, num_flav))
+for i in range(num_flav):
+    j = 0
+    for flav in EXPORT_LABELS:
+        if flav in export_to_evolution[FLAVOURS_ID_MAPPINGS[i]].keys():
+            export_to_evolution_matrix[i,j] = export_to_evolution[FLAVOURS_ID_MAPPINGS[i]][flav]
+        else:
+            export_to_evolution_matrix[i,j] = 0
+        j += 1
+
+evolution_to_export_matrix = np.linalg.inv(export_to_evolution_matrix)    
 
 STANDARD_XGRID = [1e-09, 1.29708482343957e-09, 1.68242903474257e-09, 2.18225315420583e-09, 2.83056741739819e-09,
   3.67148597892941e-09, 4.76222862935315e-09, 6.1770142737618e-09, 8.01211109898438e-09,
@@ -62,7 +105,10 @@ STANDARD_XGRID = [1e-09, 1.29708482343957e-09, 1.68242903474257e-09, 2.182253154
 
 def lhapdf_grid_pdf_ultranest_result(
         ultranest_grid_fit,
+        reduced_xgrids,
+        length_reduced_xgrids,
         n_posterior_samples,
+        theoryid,
         grid_pdf_fit_name,
         folder=lhapdf_path,
         output_path=None, 
@@ -70,21 +116,30 @@ def lhapdf_grid_pdf_ultranest_result(
     """
     TODO
     """
-    print("Output path is")
-    print(output_path)
-    print("LHAPDF path is")
-    print(lhapdf_path)
-    print("Ultranest grid fit is")
-    print(ultranest_grid_fit)
-    print("The number of posterior samples is:")
-    print(n_posterior_samples)
-    print("The grid fit name is:")
-    print(grid_pdf_fit_name)
 
-    ### DO SOMETHING HERE TO WRITE THE EXPORT GRID ###
-    write_exportgrid()
+    # Write an export grid at the initial scale for each of the replicas in the posterior
+    # sample.
+    nnfit_path = str(output_path) + '/nnfit'
+    if not os.path.exists(nnfit_path):
+        os.mkdir(nnfit_path)
 
-def write_exportgrid(grid_df, replica, Q0=1.65, xgrid=STANDARD_XGRID):
+    # Copy the runcard to create a fake filter file
+    shutil.copy(str(output_path) + "/input/runcard.yaml", str(output_path) + "/filter.yml")
+
+    fit_name = str(output_path).split("/")[-1]
+
+    for i in range(n_posterior_samples):
+        rep_path = nnfit_path + '/replica_' + str(i+1)
+        if not os.path.exists(rep_path):
+            os.mkdir(rep_path)
+        exportgrid = write_exportgrid(ultranest_grid_fit, reduced_xgrids, length_reduced_xgrids, i)
+        with open(rep_path+'/'+fit_name+'.exportgrid', 'w') as outfile:
+            yaml.dump(exportgrid, outfile)
+
+    # Run evolven3fit_new to complete the PDF evolution
+    os.system('evolven3fit ' + fit_name + ' ' + str(n_posterior_samples) + ' --theory_id ' + str(theoryid.id))
+
+def write_exportgrid(df, reduced_xgrids, length_reduced_xgrids, replica, Q0=1.65, xgrid=STANDARD_XGRID):
     """
 
     Parameters
@@ -99,28 +154,24 @@ def write_exportgrid(grid_df, replica, Q0=1.65, xgrid=STANDARD_XGRID):
       An integer which indexes the replica.
     """
 
+    # Interpolate on the xgrid
+    interpolate = interpolate_grid(reduced_xgrids, length_reduced_xgrids, interpolation_grid=xgrid)
+    grid_for_writing = interpolate(df[replica])
+
+    # Rotate the grid from the evolution basis into the export grid basis
+    grid_for_writing = np.array(grid_for_writing)
+    grid_for_writing = evolution_to_export_matrix @ grid_for_writing
+    grid_for_writing = grid_for_writing.T.tolist()
+
     # Prepare a dictionary for the exportgrid
     export_grid = {}
 
     # Set the initial Q2 value, which will always be the same.
     export_grid['q20'] = Q0**2
     export_grid['xgrid'] = xgrid
-    export_grid['replica'] = replica
+    export_grid['replica'] = int(replica)
     export_grid['labels'] = EXPORT_LABELS
 
-    # Load the correct theory
-    vmat = []
-    for flavour in EXPORT_LABELS:
-        vmat += [EXPORT_DICT[flavour]]
-
-    gv = th.flavour_pdf_grid_values(parameters, vmat, xgrid, [1.65])
-
-    # Construct the PDF grid
-    pdfgrid = []
-    for i in range(len(xgrid)):
-        pdfgrid += [[float(gv[0][j][i][0]) for j in range(len(vmat))]]
-
-    export_grid['pdfgrid'] = pdfgrid
+    export_grid['pdfgrid'] = grid_for_writing
 
     return export_grid 
-

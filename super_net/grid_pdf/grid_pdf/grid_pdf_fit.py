@@ -112,10 +112,13 @@ def ultranest_grid_fit(
 
 def perform_nested_sampling_grid_pdf_fit(
     ultranest_grid_fit,
+    reduced_xgrids,
+    length_reduced_xgrids,
     n_posterior_samples,
     grid_pdf_fit_name,
     lhapdf_path,
     output_path,
+    theoryid,
 ):
     """
     Performs a Nested Sampling fit using the grid.
@@ -124,7 +127,10 @@ def perform_nested_sampling_grid_pdf_fit(
     # Produce the LHAPDF grid
     lhapdf_grid_pdf_ultranest_result(
         ultranest_grid_fit,
+        reduced_xgrids,
+        length_reduced_xgrids,
         n_posterior_samples,
+        theoryid,
         grid_pdf_fit_name,
         folder=lhapdf_path,
         output_path=output_path,

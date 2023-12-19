@@ -51,6 +51,7 @@ def interpolate_grid(
     reduced_xgrids,
     length_reduced_xgrids,
     flavour_mapping=FLAVOUR_MAPPING,
+    interpolation_grid=XGRID,
     vectorised=False,
 ):
     """
@@ -71,7 +72,7 @@ def interpolate_grid(
             )
             out = jnp.array(
                 [
-                    jnp.interp(jnp.array(XGRID), xgrid, reshaped_y[i, :])
+                    jnp.interp(jnp.array(interpolation_grid), xgrid, reshaped_y[i, :])
                     for i, xgrid in enumerate(fit_xgrids)
                 ]
             )
@@ -113,7 +114,7 @@ def interpolate_grid(
             input_grid = jnp.zeros(
                 (
                     convolution.NFK,
-                    len(XGRID),
+                    len(interpolation_grid),
                 )
             )
 
@@ -121,7 +122,7 @@ def interpolate_grid(
             # The JIT compilation flattens the loop, good efficiency
             pdf_interp = jnp.array(
                 [
-                    jnp.interp(jnp.array(XGRID), xgrid, reshaped_stacked_pdf_grid[i, :])
+                    jnp.interp(jnp.array(interpolation_grid), xgrid, reshaped_stacked_pdf_grid[i, :])
                     for i, xgrid in enumerate(fit_xgrids)
                 ]
             )
