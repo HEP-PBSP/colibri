@@ -34,14 +34,14 @@ def make_dis_prediction(fktable, vectorized=False, flavour_mapping=None):
         if True, the function will be compiled in a way
         that allows to compute the prediction for multiple
         prior samples at once.
-    
+
     flavour_mapping: list, default is None
         if not None, the function will be compiled in a way
         that allows to compute the prediction for a subset
         of flavours. The list must contain the flavour indices.
         The indices correspond to the flavours in convolution.FK_FLAVOURS
         e.g.: [1,2] -> ['\\Sigma', 'g']
-        
+
 
     Returns
     -------
@@ -105,7 +105,7 @@ def make_had_prediction(fktable, vectorized=False, flavour_mapping=None):
         mask_even = jnp.isin(indices[0::2], jnp.array(flavour_mapping))
         mask_odd = jnp.isin(indices[1::2], jnp.array(flavour_mapping))
 
-        # for hadronic predictions pdfs enter in pair, hence product of two 
+        # for hadronic predictions pdfs enter in pair, hence product of two
         # boolean arrays and repeat by 2
         mask = jnp.repeat(mask_even * mask_odd, repeats=2)
         indices = indices[mask]
@@ -231,7 +231,9 @@ def make_pred_t0data(data, flavour_mapping=None):
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(make_pred_dataset(ds, vectorized=False, flavour_mapping=flavour_mapping))
+        predictions.append(
+            make_pred_dataset(ds, vectorized=False, flavour_mapping=flavour_mapping)
+        )
 
     @jax.jit
     def eval_preds(pdf):

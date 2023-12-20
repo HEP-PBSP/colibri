@@ -67,7 +67,11 @@ def closuretest_commondata_tuple(
             raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
         # replace central values with theory prediction from `closure_test_pdf`
         fake_data.append(
-            cd.with_central_value(make_pred_dataset(ds, flavour_mapping=flavour_mapping)(closure_test_pdf_grid[0]))
+            cd.with_central_value(
+                make_pred_dataset(ds, flavour_mapping=flavour_mapping)(
+                    closure_test_pdf_grid[0]
+                )
+            )
         )
     return tuple(fake_data)
 
