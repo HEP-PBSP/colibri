@@ -19,9 +19,9 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def make_dis_prediction(fktable, vectorized=False):
+def make_dis_prediction(fktable, vectorized=False, flavour_mapping=None):
     """
-    given an FKTableData instance returns a jax.jit
+    Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
     and returning a theory prediction for a DIS
     observable.
@@ -34,13 +34,28 @@ def make_dis_prediction(fktable, vectorized=False):
         if True, the function will be compiled in a way
         that allows to compute the prediction for multiple
         prior samples at once.
+    
+    flavour_mapping: list, default is None
+        if not None, the function will be compiled in a way
+        that allows to compute the prediction for a subset
+        of flavours. The list must contain the flavour indices.
+        The indices correspond to the flavours in convolution.FK_FLAVOURS
+        e.g.: [1,2] -> ['\\Sigma', 'g']
+        
 
     Returns
     -------
     @jax.jit CompiledFunction
     """
-    indices = fktable.luminosity_mapping
-    fk_arr = jnp.array(fktable.get_np_fktable())
+
+    if flavour_mapping is not None:
+        indices = fktable.luminosity_mapping
+        mask = jnp.isin(indices, jnp.array(flavour_mapping))
+        indices = indices[mask]
+    else:
+        indices = fktable.luminosity_mapping
+
+    fk_arr = jnp.array(fktable.get_np_fktable())[:, indices, :]
 
     if vectorized:
 
@@ -57,9 +72,9 @@ def make_dis_prediction(fktable, vectorized=False):
     return dis_prediction
 
 
-def make_had_prediction(fktable, vectorized=False):
+def make_had_prediction(fktable, vectorized=False, flavour_mapping=None):
     """
-    given an FKTableData instance returns a jax.jit
+    Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
     and returning a theory prediction for a hadronic
     observable.
@@ -73,15 +88,40 @@ def make_had_prediction(fktable, vectorized=False):
         that allows to compute the prediction for multiple
         prior samples at once.
 
+    flavour_mapping: list, default is None
+        if not None, the function will be compiled in a way
+        that allows to compute the prediction for a subset
+        of flavours. The list must contain the flavour indices.
+        The indices correspond to the flavours in convolution.FK_FLAVOURS
+        e.g.: [1,2] -> ['\\Sigma', 'g']
+
     Returns
     -------
     @jax.jit CompiledFunction
     """
 
-    indices = fktable.luminosity_mapping
-    first_indices = indices[0::2]
-    second_indices = indices[1::2]
-    fk_arr = jnp.array(fktable.get_np_fktable())
+    if flavour_mapping is not None:
+        indices = fktable.luminosity_mapping
+        mask_even = jnp.isin(indices[0::2], jnp.array(flavour_mapping))
+        mask_odd = jnp.isin(indices[1::2], jnp.array(flavour_mapping))
+
+        # for hadronic predictions pdfs enter in pair, hence product of two 
+        # boolean arrays and repeat by 2
+        mask = jnp.repeat(mask_even * mask_odd, repeats=2)
+        indices = indices[mask]
+
+        first_indices = indices[0::2]
+        second_indices = indices[1::2]
+
+        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask_even * mask_odd, :, :]
+
+    else:
+        indices = fktable.luminosity_mapping
+
+        first_indices = indices[0::2]
+        second_indices = indices[1::2]
+
+        fk_arr = jnp.array(fktable.get_np_fktable())
 
     if vectorized:
 
