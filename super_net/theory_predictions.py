@@ -145,7 +145,7 @@ def make_had_prediction(fktable, vectorized=False, flavour_mapping=None):
     return had_prediction
 
 
-def make_pred_dataset(dataset, vectorized=False):
+def make_pred_dataset(dataset, vectorized=False, flavour_mapping=None):
     """
     Compute theory prediction for a DataSetSpec
 
@@ -168,9 +168,9 @@ def make_pred_dataset(dataset, vectorized=False):
     for fkspec in dataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, vectorized)
+            pred = make_had_prediction(fk, vectorized, flavour_mapping)
         else:
-            pred = make_dis_prediction(fk, vectorized)
+            pred = make_dis_prediction(fk, vectorized, flavour_mapping)
         pred_funcs.append(pred)
 
     @jax.jit
@@ -180,7 +180,7 @@ def make_pred_dataset(dataset, vectorized=False):
     return prediction
 
 
-def make_pred_data(data, vectorized=False):
+def make_pred_data(data, vectorized=False, flavour_mapping=None):
     """
     Compute theory prediction for entire DataGroupSpec
 
@@ -201,7 +201,7 @@ def make_pred_data(data, vectorized=False):
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(make_pred_dataset(ds, vectorized))
+        predictions.append(make_pred_dataset(ds, vectorized, flavour_mapping))
 
     @jax.jit
     def eval_preds(pdf):
@@ -210,7 +210,7 @@ def make_pred_data(data, vectorized=False):
     return eval_preds
 
 
-def make_pred_t0data(data):
+def make_pred_t0data(data, flavour_mapping=None):
     """
     Compute theory prediction for entire DataGroupSpec.
     It is specifically meant for t0 predictions, i.e. it
@@ -231,7 +231,7 @@ def make_pred_t0data(data):
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(make_pred_dataset(ds, vectorized=False))
+        predictions.append(make_pred_dataset(ds, vectorized=False, flavour_mapping=flavour_mapping))
 
     @jax.jit
     def eval_preds(pdf):
@@ -247,7 +247,7 @@ def make_pred_data_non_vectorized(data):
     return make_pred_data(data, vectorized=False)
 
 
-def make_penalty_posdataset(posdataset, vectorized=False):
+def make_penalty_posdataset(posdataset, vectorized=False, flavour_mapping=None):
     """
     Given a PositivitySetSpec compute the positivity penalty
     as a lagrange multiplier times elu of minus the theory prediction
@@ -280,9 +280,9 @@ def make_penalty_posdataset(posdataset, vectorized=False):
     for fkspec in posdataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, vectorized)
+            pred = make_had_prediction(fk, vectorized, flavour_mapping)
         else:
-            pred = make_dis_prediction(fk, vectorized)
+            pred = make_dis_prediction(fk, vectorized, flavour_mapping)
         pred_funcs.append(pred)
 
     @jax.jit
