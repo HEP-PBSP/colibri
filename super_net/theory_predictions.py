@@ -19,6 +19,13 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
+def _dis_prediction(make_dis_prediction):
+    """
+    Internal alias function for make_dis_prediction.
+    """
+    return make_dis_prediction
+
+
 def make_dis_prediction(fktable, vectorized=False):
     """
     given an FKTableData instance returns a jax.jit
@@ -55,6 +62,13 @@ def make_dis_prediction(fktable, vectorized=False):
             return jnp.einsum("ijk, jk ->i", fk_arr, pdf[indices, :])
 
     return dis_prediction
+
+
+def _had_prediction(make_had_prediction):
+    """
+    Internal alias function for make_had_prediction.
+    """
+    return make_had_prediction
 
 
 def make_had_prediction(fktable, vectorized=False):
@@ -105,6 +119,13 @@ def make_had_prediction(fktable, vectorized=False):
     return had_prediction
 
 
+def _pred_dataset(make_pred_dataset):
+    """
+    Internal alias function for make_pred_dataset.
+    """
+    return make_pred_dataset
+
+
 def make_pred_dataset(dataset, vectorized=False):
     """
     Compute theory prediction for a DataSetSpec
@@ -140,6 +161,13 @@ def make_pred_dataset(dataset, vectorized=False):
     return prediction
 
 
+def _pred_data(make_pred_data):
+    """
+    Internal alias function for make_pred_data.
+    """
+    return make_pred_data
+
+
 def make_pred_data(data, vectorized=False):
     """
     Compute theory prediction for entire DataGroupSpec
@@ -168,6 +196,13 @@ def make_pred_data(data, vectorized=False):
         return jnp.concatenate([f(pdf) for f in predictions], axis=-1)
 
     return eval_preds
+
+
+def _pred_t0data(make_pred_t0data):
+    """
+    Internal alias function for make_pred_t0data.
+    """
+    return make_pred_t0data
 
 
 def make_pred_t0data(data):
@@ -200,11 +235,25 @@ def make_pred_t0data(data):
     return eval_preds
 
 
+def _pred_data_non_vectorized(make_pred_data_non_vectorized):
+    """
+    Internal alias function for make_pred_data_non_vectorized.
+    """
+    return make_pred_data_non_vectorized
+
+
 def make_pred_data_non_vectorized(data):
     """
     Same as make_pred_data but with vectorized=False
     """
     return make_pred_data(data, vectorized=False)
+
+
+def _penalty_posdataset(make_penalty_posdataset):
+    """
+    Internal alias function for make_penalty_posdataset.
+    """
+    return make_penalty_posdataset
 
 
 def make_penalty_posdataset(posdataset, vectorized=False):
@@ -252,6 +301,13 @@ def make_penalty_posdataset(posdataset, vectorized=False):
         )
 
     return pos_penalty
+
+
+def _penalty_posdata(make_penalty_posdata):
+    """
+    Internal alias function for make_penalty_posdata.
+    """
+    return make_penalty_posdata
 
 
 def make_penalty_posdata(posdatasets, vectorized=False):

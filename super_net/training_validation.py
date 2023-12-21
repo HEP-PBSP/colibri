@@ -33,6 +33,13 @@ class MakeDataValues:
     validation_data: ValidationCentralCovmatIndex = None
 
 
+def _data_values(make_data_values):
+    """
+    Internal alias function for make_data_values.
+    """
+    return make_data_values
+
+
 def make_data_values(
     central_covmat_index: dataclass,
     trval_seed: jnp.array,
@@ -113,6 +120,13 @@ mc_replicas_make_data_values = collect("make_data_values", ("trval_replica_indic
 class PosdataTrainValidationSplit(TrainValidationSplit):
     n_training: int
     n_validation: int
+
+
+def _posdata_split(make_posdata_split):
+    """
+    Internal alias function for make_posdata_split.
+    """
+    return make_posdata_split
 
 
 def make_posdata_split(
