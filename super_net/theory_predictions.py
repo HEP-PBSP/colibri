@@ -52,10 +52,10 @@ def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
         indices = fktable.luminosity_mapping
         mask = jnp.isin(indices, jnp.array(flavour_indices))
         indices = indices[mask]
+        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask, :]
     else:
         indices = fktable.luminosity_mapping
-
-    fk_arr = jnp.array(fktable.get_np_fktable())[:, indices, :]
+        fk_arr = jnp.array(fktable.get_np_fktable())
 
     if vectorized:
 
