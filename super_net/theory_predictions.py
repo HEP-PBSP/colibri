@@ -19,7 +19,7 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def make_dis_prediction(fktable, vectorized=False, flavour_mapping=None):
+def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -35,7 +35,7 @@ def make_dis_prediction(fktable, vectorized=False, flavour_mapping=None):
         that allows to compute the prediction for multiple
         prior samples at once.
 
-    flavour_mapping: list, default is None
+    flavour_indices: list, default is None
         if not None, the function will be compiled in a way
         that allows to compute the prediction for a subset
         of flavours. The list must contain the flavour indices.
@@ -48,9 +48,9 @@ def make_dis_prediction(fktable, vectorized=False, flavour_mapping=None):
     @jax.jit CompiledFunction
     """
 
-    if flavour_mapping is not None:
+    if flavour_indices is not None:
         indices = fktable.luminosity_mapping
-        mask = jnp.isin(indices, jnp.array(flavour_mapping))
+        mask = jnp.isin(indices, jnp.array(flavour_indices))
         indices = indices[mask]
     else:
         indices = fktable.luminosity_mapping
@@ -72,7 +72,7 @@ def make_dis_prediction(fktable, vectorized=False, flavour_mapping=None):
     return dis_prediction
 
 
-def make_had_prediction(fktable, vectorized=False, flavour_mapping=None):
+def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -88,7 +88,7 @@ def make_had_prediction(fktable, vectorized=False, flavour_mapping=None):
         that allows to compute the prediction for multiple
         prior samples at once.
 
-    flavour_mapping: list, default is None
+    flavour_indices: list, default is None
         if not None, the function will be compiled in a way
         that allows to compute the prediction for a subset
         of flavours. The list must contain the flavour indices.
@@ -100,10 +100,10 @@ def make_had_prediction(fktable, vectorized=False, flavour_mapping=None):
     @jax.jit CompiledFunction
     """
 
-    if flavour_mapping is not None:
+    if flavour_indices is not None:
         indices = fktable.luminosity_mapping
-        mask_even = jnp.isin(indices[0::2], jnp.array(flavour_mapping))
-        mask_odd = jnp.isin(indices[1::2], jnp.array(flavour_mapping))
+        mask_even = jnp.isin(indices[0::2], jnp.array(flavour_indices))
+        mask_odd = jnp.isin(indices[1::2], jnp.array(flavour_indices))
 
         # for hadronic predictions pdfs enter in pair, hence product of two
         # boolean arrays and repeat by 2
@@ -145,7 +145,7 @@ def make_had_prediction(fktable, vectorized=False, flavour_mapping=None):
     return had_prediction
 
 
-def make_pred_dataset(dataset, vectorized=False, flavour_mapping=None):
+def make_pred_dataset(dataset, vectorized=False, flavour_indices=None):
     """
     Compute theory prediction for a DataSetSpec
 
@@ -168,9 +168,9 @@ def make_pred_dataset(dataset, vectorized=False, flavour_mapping=None):
     for fkspec in dataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, vectorized, flavour_mapping)
+            pred = make_had_prediction(fk, vectorized, flavour_indices)
         else:
-            pred = make_dis_prediction(fk, vectorized, flavour_mapping)
+            pred = make_dis_prediction(fk, vectorized, flavour_indices)
         pred_funcs.append(pred)
 
     @jax.jit
@@ -180,7 +180,7 @@ def make_pred_dataset(dataset, vectorized=False, flavour_mapping=None):
     return prediction
 
 
-def make_pred_data(data, vectorized=False, flavour_mapping=None):
+def make_pred_data(data, vectorized=False, flavour_indices=None):
     """
     Compute theory prediction for entire DataGroupSpec
 
@@ -201,7 +201,7 @@ def make_pred_data(data, vectorized=False, flavour_mapping=None):
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(make_pred_dataset(ds, vectorized, flavour_mapping))
+        predictions.append(make_pred_dataset(ds, vectorized, flavour_indices))
 
     @jax.jit
     def eval_preds(pdf):
@@ -210,7 +210,7 @@ def make_pred_data(data, vectorized=False, flavour_mapping=None):
     return eval_preds
 
 
-def make_pred_t0data(data, flavour_mapping=None):
+def make_pred_t0data(data, flavour_indices=None):
     """
     Compute theory prediction for entire DataGroupSpec.
     It is specifically meant for t0 predictions, i.e. it
@@ -232,7 +232,7 @@ def make_pred_t0data(data, flavour_mapping=None):
 
     for ds in data.datasets:
         predictions.append(
-            make_pred_dataset(ds, vectorized=False, flavour_mapping=flavour_mapping)
+            make_pred_dataset(ds, vectorized=False, flavour_indices=flavour_indices)
         )
 
     @jax.jit
@@ -249,7 +249,7 @@ def make_pred_data_non_vectorized(data):
     return make_pred_data(data, vectorized=False)
 
 
-def make_penalty_posdataset(posdataset, vectorized=False, flavour_mapping=None):
+def make_penalty_posdataset(posdataset, vectorized=False, flavour_indices=None):
     """
     Given a PositivitySetSpec compute the positivity penalty
     as a lagrange multiplier times elu of minus the theory prediction
@@ -282,9 +282,9 @@ def make_penalty_posdataset(posdataset, vectorized=False, flavour_mapping=None):
     for fkspec in posdataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, vectorized, flavour_mapping)
+            pred = make_had_prediction(fk, vectorized, flavour_indices)
         else:
-            pred = make_dis_prediction(fk, vectorized, flavour_mapping)
+            pred = make_dis_prediction(fk, vectorized, flavour_indices)
         pred_funcs.append(pred)
 
     @jax.jit

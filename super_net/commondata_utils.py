@@ -37,7 +37,7 @@ def experimental_commondata_tuple(data):
 
 
 def closuretest_commondata_tuple(
-    data, experimental_commondata_tuple, closure_test_pdf_grid, flavour_mapping=None
+    data, experimental_commondata_tuple, closure_test_pdf_grid, flavour_indices=None
 ):
     """
     returns a tuple (validphys nodes should be immutable)
@@ -68,7 +68,7 @@ def closuretest_commondata_tuple(
         # replace central values with theory prediction from `closure_test_pdf`
         fake_data.append(
             cd.with_central_value(
-                make_pred_dataset(ds, flavour_mapping=flavour_mapping)(
+                make_pred_dataset(ds, flavour_indices=flavour_indices)(
                     closure_test_pdf_grid[0]
                 )
             )
