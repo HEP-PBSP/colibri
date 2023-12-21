@@ -2,9 +2,23 @@
 Module
 """
 
-TEST_DATASET = {"dataset_input": {"dataset": "NMC"}, "theoryid": 400, "use_cuts": "internal"}
+TEST_DATASET = {
+    "dataset_input": {"dataset": "NMC"},
+    "theoryid": 400,
+    "use_cuts": "internal",
+}
 
-TEST_DATASETS = {"dataset_inputs": [{"dataset": "NMC"}], "theoryid": 400, "use_cuts": "internal"}
+TEST_DATASET_HAD = {
+    "dataset_input": {"dataset": "ATLASWZRAP11CC"},
+    "theoryid": 400,
+    "use_cuts": "internal",
+}
+
+TEST_DATASETS = {
+    "dataset_inputs": [{"dataset": "NMC"}],
+    "theoryid": 400,
+    "use_cuts": "internal",
+}
 
 T0_PDFSET = {"t0pdfset": "NNPDF40_nnlo_as_01180"}
 
