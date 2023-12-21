@@ -22,25 +22,6 @@ from validphys import convolution
 from super_net.constants import XGRID
 
 
-FLAVOURS_ID_MAPPINGS = {
-    0: "photon",
-    1: "\Sigma",
-    2: "g",
-    3: "V",
-    4: "V3",
-    5: "V8",
-    6: "V15",
-    7: "V24",
-    8: "V35",
-    9: "T3",
-    10: "T8",
-    11: "T15",
-    12: "T24",
-    13: "T35",
-}
-
-FLAVOUR_TO_ID_MAPPING = {val: key for (key, val) in FLAVOURS_ID_MAPPINGS.items()}
-
 """
 Specifies which flavours to include in a fit.
 """
