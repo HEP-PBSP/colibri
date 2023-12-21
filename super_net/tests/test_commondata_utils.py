@@ -21,6 +21,6 @@ def test_closuretest_commondata_tuple():
     
     ct_cd_tuple = SuperNetAPI.closuretest_commondata_tuple(**{**TEST_DATASETS, **CLOSURE_TEST_PDFSET})
 
-    return assert_allclose(ct_cd_tuple[0].central_values, t0_pred, rtol=1e-6)
+    assert_allclose(ct_cd_tuple[0].central_values, t0_pred, rtol=1e-6)
 
-    
+
