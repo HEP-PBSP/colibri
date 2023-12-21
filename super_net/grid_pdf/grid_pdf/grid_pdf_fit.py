@@ -9,7 +9,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def __bayesian_pdf_grid_fit(make__bayesian_pdf_grid_fit):
+def _bayesian_pdf_grid_fit(make__bayesian_pdf_grid_fit):
     """
     Internal alias function for make__bayesian_pdf_grid_fit.
     """
