@@ -130,7 +130,13 @@ class SuperNetConfig(Config):
             (see e.g. validphys.convolution.FK_FLAVOURS).
             Specified by the user in the runcard.
         """
-        
+
         if flavour_mapping is not None:
-            return [FLAVOUR_TO_ID_MAPPING[fl] for fl in flavour_mapping]
+            return [
+                FLAVOUR_TO_ID_MAPPING[fl]
+                if fl in FLAVOUR_TO_ID_MAPPING.keys()
+                else KeyError(f"flavour {fl} not found in FLAVOUR_TO_ID_MAPPING")
+                for fl in flavour_mapping
+            ]
+
         return None
