@@ -9,13 +9,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def _bayesian_pdf_grid_fit(make_bayesian_pdf_grid_fit):
-    """
-    Internal alias function for make_bayesian_pdf_grid_fit.
-    """
-    return make_bayesian_pdf_grid_fit
-
-
 def make_bayesian_pdf_grid_fit(
     _chi2_with_positivity,
     grid_pdf_model_prior,

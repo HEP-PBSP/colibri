@@ -16,13 +16,6 @@ from super_net.covmats import sqrt_covmat_jax
 from reportengine import collect
 
 
-def _chi2_training_data(make_chi2_training_data):
-    """
-    Internal alias function for make_chi2_training_data.
-    """
-    return make_chi2_training_data
-
-
 def make_chi2_training_data(_data_values, _pred_data):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -88,13 +81,6 @@ def make_chi2_training_data(_data_values, _pred_data):
 mc_replicas_make_chi2_training_data = collect(
     "make_chi2_training_data", ("trval_replica_indices",)
 )
-
-
-def _chi2_training_data_with_positivity(make_chi2_training_data_with_positivity):
-    """
-    Internal alias function for make_chi2_training_data_with_positivity.
-    """
-    return make_chi2_training_data_with_positivity
 
 
 def make_chi2_training_data_with_positivity(
@@ -183,13 +169,6 @@ mc_replicas_make_chi2_training_data_with_positivity = collect(
 )
 
 
-def _chi2_validation_data(make_chi2_validation_data):
-    """
-    Internal alias function for make_chi2_validation_data.
-    """
-    return make_chi2_validation_data
-
-
 def make_chi2_validation_data(_data_values, _pred_data):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -236,13 +215,6 @@ def make_chi2_validation_data(_data_values, _pred_data):
 mc_replicas_make_chi2_validation_data = collect(
     "make_chi2_validation_data", ("trval_replica_indices",)
 )
-
-
-def _chi2_validation_data_with_positivity(make_chi2_validation_data_with_positivity):
-    """
-    Internal alias function for make_chi2_validation_data_with_positivity.
-    """
-    return make_chi2_validation_data_with_positivity
 
 
 def make_chi2_validation_data_with_positivity(
@@ -309,13 +281,6 @@ mc_replicas_make_chi2_validation_data_with_positivity = collect(
 )
 
 
-def _chi2(make_chi2):
-    """
-    Internal alias function for make_chi2.
-    """
-    return make_chi2
-
-
 def make_chi2(_data_values, _pred_data, vectorized=False):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -375,13 +340,6 @@ def make_chi2(_data_values, _pred_data, vectorized=False):
             return loss
 
     return chi2
-
-
-def _chi2_with_positivity(make_chi2_with_positivity):
-    """
-    Internal alias function for make_chi2_with_positivity.
-    """
-    return make_chi2_with_positivity
 
 
 def make_chi2_with_positivity(
