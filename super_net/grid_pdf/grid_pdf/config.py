@@ -9,6 +9,7 @@ Date: 15.11.2023
 
 from super_net.config import SuperNetConfig, Environment
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
+from grid_pdf import grid_pdf_commondata_utils
 
 class Environment(Environment):
     pass
@@ -35,3 +36,24 @@ class GridPdfConfig(SuperNetConfig):
     def produce_reduced_xgrids(self, xgrids):
         """The reduced x-grids used in the fit, organised by flavour."""
         return {FLAVOUR_TO_ID_MAPPING[flav] : val for (flav,val) in xgrids.items()}
+
+    def produce_commondata_tuple(self, pseudodata=False, fakedata=False, some_condition_to_decided=None):
+        """
+        Note: this is needed so as to construct synthetic data (closure test data) using an
+        interpolated grid.
+        Hence there must be some logic so that this is only used for closure tests.
+        """
+
+        if some_condition_to_decided is not None:
+
+            if pseudodata and fakedata:
+                # closure test pseudodata
+                return grid_pdf_commondata_utils.grid_pdf_closuretest_pseudodata_commondata_tuple
+            
+            elif fakedata:
+                # closure test fake-data
+                return grid_pdf_commondata_utils.grid_pdf_closuretest_commondata_tuple
+
+        else:
+            return super().produce_commondata_tuple(pseudodata=pseudodata, fakedata=fakedata)
+        
