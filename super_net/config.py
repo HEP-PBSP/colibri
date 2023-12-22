@@ -16,6 +16,8 @@ from reportengine.configparser import explicit_node, ConfigError
 from super_net import commondata_utils
 from super_net.core import SuperNetDataGroupSpec
 
+from grid_pdf.grid_pdf_model import FLAVOUR_TO_ID_MAPPING
+
 
 class Environment(Environment):
     pass
@@ -116,3 +118,25 @@ class SuperNetConfig(Config):
     def parse_closure_test_pdf(self, name):
         """PDF set used to generate fakedata"""
         return self.parse_pdf(name)
+
+    def produce_flavour_indices(self, flavour_mapping=None):
+        """
+        Produce flavour indices according to flavour_mapping.
+
+        Parameters
+        ----------
+        flavour_mapping: list, default is None
+            list of flavours names in the evolution basis
+            (see e.g. validphys.convolution.FK_FLAVOURS).
+            Specified by the user in the runcard.
+        """
+
+        if flavour_mapping is not None:
+            return [
+                FLAVOUR_TO_ID_MAPPING[fl]
+                if fl in FLAVOUR_TO_ID_MAPPING.keys()
+                else KeyError(f"flavour {fl} not found in FLAVOUR_TO_ID_MAPPING")
+                for fl in flavour_mapping
+            ]
+
+        return None
