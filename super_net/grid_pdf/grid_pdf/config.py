@@ -6,6 +6,7 @@ Config module of grid_pdf
 Author: Mark N. Costantini
 Date: 15.11.2023
 """
+from reportengine.configparser import explicit_node
 
 from super_net.config import SuperNetConfig, Environment
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
@@ -37,6 +38,7 @@ class GridPdfConfig(SuperNetConfig):
         """The reduced x-grids used in the fit, organised by flavour."""
         return {FLAVOUR_TO_ID_MAPPING[flav] : val for (flav,val) in xgrids.items()}
 
+    @explicit_node
     def produce_commondata_tuple(self, pseudodata=False, fakedata=False, some_condition_to_decided=None):
         """
         Note: this is needed so as to construct synthetic data (closure test data) using an
