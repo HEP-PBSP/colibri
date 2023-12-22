@@ -135,7 +135,8 @@ def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_indices, Q0=1.65):
     pdf_prior: validphys.core.PDF
         pdf set from which to get prior values.
 
-    flavour_indices: list, specifies the ids of the flavours to include in a fit.
+    flavour_indices: list,
+        specifies the ids of the flavours to include in a fit.
 
     Q0: float, default is 1.65
         specifies the scale at which PDFs are parameterised.
