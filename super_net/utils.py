@@ -1,7 +1,7 @@
 """
-super_net.monte_carlo_utils.py
+super_net.utils.py
 
-Module containing several utils for Monte Carlo like fits.
+Module containing several utils for PDF fits.
 
 Author: Mark N. Costantini
 Date: 11.11.2023
@@ -11,6 +11,29 @@ import jax
 import jax.numpy as jnp
 
 from dataclasses import dataclass, asdict
+
+from super_net.constants import XGRID
+from validphys import convolution
+
+
+FLAVOURS_ID_MAPPINGS = {
+    0: "photon",
+    1: "\Sigma",
+    2: "g",
+    3: "V",
+    4: "V3",
+    5: "V8",
+    6: "V15",
+    7: "V24",
+    8: "V35",
+    9: "T3",
+    10: "T8",
+    11: "T15",
+    12: "T24",
+    13: "T35",
+}
+
+FLAVOUR_TO_ID_MAPPING = {val: key for (key, val) in FLAVOURS_ID_MAPPINGS.items()}
 
 
 def replica_seed(replica_index):
@@ -74,3 +97,51 @@ def training_validation_split(indices, test_size, random_seed, shuffle_indices=T
     indices_validation = permuted_indices[split_point:]
 
     return TrainValidationSplit(training=indices_train, validation=indices_validation)
+
+
+def t0_pdf_grid(t0pdfset, Q0=1.65):
+    """
+    Computes the t0 pdf grid in the evolution basis.
+
+    Parameters
+    ----------
+    t0pdfset: validphys.core.PDF
+
+    Q0: float, default is 1.65
+
+    Returns
+    -------
+    t0grid: jnp.array
+        t0 grid, is N_rep x N_fl x N_x
+    """
+
+    t0grid = jnp.array(
+        convolution.evolution.grid_values(
+            t0pdfset, convolution.FK_FLAVOURS, XGRID, [Q0]
+        ).squeeze(-1)
+    )
+    return t0grid
+
+
+def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
+    """
+    Computes the closure_test_pdf grid in the evolution basis.
+
+    Parameters
+    ----------
+    closure_test_pdf: validphys.core.PDF
+
+    Q0: float, default is 1.65
+
+    Returns
+    -------
+    grid: jnp.array
+        grid, is N_rep x N_fl x N_x
+    """
+
+    grid = jnp.array(
+        convolution.evolution.grid_values(
+            closure_test_pdf, convolution.FK_FLAVOURS, XGRID, [Q0]
+        ).squeeze(-1)
+    )
+    return grid

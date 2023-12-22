@@ -22,24 +22,10 @@ from validphys import convolution
 from super_net.constants import XGRID
 
 
-FLAVOURS_ID_MAPPINGS = {
-    0: "photon",
-    1: "\Sigma",
-    2: "g",
-    3: "V",
-    4: "V3",
-    5: "V8",
-    6: "V15",
-    7: "V24",
-    8: "V35",
-    9: "T3",
-    10: "T8",
-    11: "T15",
-    12: "T24",
-    13: "T35",
-}
-
-FLAVOUR_TO_ID_MAPPING = {val: key for (key, val) in FLAVOURS_ID_MAPPINGS.items()}
+"""
+Specifies which flavours to include in a fit.
+"""
+FLAVOUR_MAPPING = [1, 2, 3]
 
 
 def interpolate_grid(
@@ -264,12 +250,18 @@ def grid_pdf_model_prior(
         error68_up = pdf_prior_grid.error68_up
         error68_down = pdf_prior_grid.error68_down
 
+        # Compute the band for a generic sigma_pdf_prior
+        delta = (error68_up - error68_down) / 2
+        mean = (error68_up + error68_down) / 2
+        error_up = mean + delta * sigma_pdf_prior
+        error_down = mean - delta * sigma_pdf_prior
+
         @jax.jit
         def prior_transform(cube):
             """
             TODO
             """
-            params = error68_down + (error68_up - error68_down) * cube
+            params = error_down + (error_up - error_down) * cube
             return params
 
     return prior_transform

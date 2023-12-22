@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 def make_bayesian_pdf_grid_fit(
-    make_chi2_with_positivity,
+    _chi2_with_positivity,
     grid_pdf_model_prior,
     interpolate_grid,
     reduced_xgrids,
@@ -55,7 +55,7 @@ def make_bayesian_pdf_grid_fit(
         """
 
         pdf = interpolate_grid(stacked_pdf_grid)
-        return -0.5 * make_chi2_with_positivity(pdf)
+        return -0.5 * _chi2_with_positivity(pdf)
 
     parameters = [
         f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in reduced_xgrids[i]

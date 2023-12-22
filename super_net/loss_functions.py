@@ -16,7 +16,7 @@ from super_net.covmats import sqrt_covmat_jax
 from reportengine import collect
 
 
-def make_chi2_training_data(make_data_values, make_pred_data):
+def make_chi2_training_data(_data_values, _pred_data):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on a training data batch.
@@ -27,10 +27,10 @@ def make_chi2_training_data(make_data_values, make_pred_data):
 
     Parameters
     ----------
-    make_data_values: training_validation.MakeDataValues
+    _data_values: training_validation.MakeDataValues
         dataclass containing data for training and validation.
 
-    make_pred_data: theory_predictions.make_pred_data
+    _pred_data: theory_predictions._pred_data
         super_net provider for (fktable) theory predictions.
 
     Returns
@@ -39,7 +39,7 @@ def make_chi2_training_data(make_data_values, make_pred_data):
         function to compute chi2 of a pdf grid on a data batch.
 
     """
-    training_data = make_data_values.training_data
+    training_data = _data_values.training_data
     central_values = training_data.central_values
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
@@ -62,8 +62,7 @@ def make_chi2_training_data(make_data_values, make_pred_data):
 
         """
         diff = (
-            make_pred_data(pdf)[central_values_idx][batch_idx]
-            - central_values[batch_idx]
+            _pred_data(pdf)[central_values_idx][batch_idx] - central_values[batch_idx]
         )
 
         # batch covariance matrix before decomposing it
@@ -85,7 +84,7 @@ mc_replicas_make_chi2_training_data = collect(
 
 
 def make_chi2_training_data_with_positivity(
-    make_data_values, make_pred_data, make_posdata_split, make_penalty_posdata
+    _data_values, _pred_data, _posdata_split, _penalty_posdata
 ):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -96,16 +95,16 @@ def make_chi2_training_data_with_positivity(
 
     Parameters
     ----------
-    make_data_values: training_validation.MakeDataValues
+    _data_values: training_validation.MakeDataValues
         dataclass containing data for training and validation.
 
-    make_pred_data: theory_predictions.make_pred_data
+    _pred_data: theory_predictions._pred_data
         super_net provider for (fktable) theory predictions.
 
-    make_posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from monte_carlo_utils.TrainValidationSplit
+    _posdata_split: training_validation.PosdataTrainValidationSplit
+        dataclass inheriting from utils.TrainValidationSplit
 
-    make_penalty_posdata: theory_predictions.make_penalty_posdata
+    _penalty_posdata: theory_predictions._penalty_posdata
         super_net provider used to compute positivity penalty.
 
     Returns
@@ -113,12 +112,12 @@ def make_chi2_training_data_with_positivity(
     @jax.jit Callable
         function to compute chi2 of a pdf grid on a data batch.
     """
-    training_data = make_data_values.training_data
+    training_data = _data_values.training_data
     central_values = training_data.central_values
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
 
-    posdata_training_idx = make_posdata_split.training
+    posdata_training_idx = _posdata_split.training
 
     @jax.jit
     def chi2(pdf, batch_idx, alpha, lambda_positivity):
@@ -142,8 +141,7 @@ def make_chi2_training_data_with_positivity(
 
         """
         diff = (
-            make_pred_data(pdf)[central_values_idx][batch_idx]
-            - central_values[batch_idx]
+            _pred_data(pdf)[central_values_idx][batch_idx] - central_values[batch_idx]
         )
 
         # batch covariance matrix before decomposing it
@@ -156,7 +154,7 @@ def make_chi2_training_data_with_positivity(
         loss = jnp.sum(chi2_vec**2)
 
         # add penalty term due to positivity
-        pos_penalty = make_penalty_posdata(pdf, alpha, lambda_positivity)[
+        pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
             posdata_training_idx
         ]
         loss += jnp.sum(pos_penalty)
@@ -171,7 +169,7 @@ mc_replicas_make_chi2_training_data_with_positivity = collect(
 )
 
 
-def make_chi2_validation_data(make_data_values, make_pred_data):
+def make_chi2_validation_data(_data_values, _pred_data):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on validation data.
@@ -182,10 +180,10 @@ def make_chi2_validation_data(make_data_values, make_pred_data):
 
     Parameters
     ----------
-    make_data_values: training_validation.MakeDataValues
+    _data_values: training_validation.MakeDataValues
         dataclass containing data for training and validation.
 
-    make_pred_data: theory_predictions.make_pred_data
+    _pred_data: theory_predictions._pred_data
         super_net provider for (fktable) theory predictions.
 
     Returns
@@ -193,7 +191,7 @@ def make_chi2_validation_data(make_data_values, make_pred_data):
     @jax.jit Callable
         function to compute chi2 of a pdf grid on validation data.
     """
-    validation_data = make_data_values.validation_data
+    validation_data = _data_values.validation_data
     central_values = validation_data.central_values
     covmat = validation_data.covmat
     central_values_idx = validation_data.central_values_idx
@@ -201,7 +199,7 @@ def make_chi2_validation_data(make_data_values, make_pred_data):
     @jax.jit
     def chi2(pdf):
         """ """
-        diff = make_pred_data(pdf)[central_values_idx] - central_values
+        diff = _pred_data(pdf)[central_values_idx] - central_values
 
         # decompose covmat
         sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
@@ -220,7 +218,7 @@ mc_replicas_make_chi2_validation_data = collect(
 
 
 def make_chi2_validation_data_with_positivity(
-    make_data_values, make_pred_data, make_posdata_split, make_penalty_posdata
+    _data_values, _pred_data, _posdata_split, _penalty_posdata
 ):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -231,16 +229,16 @@ def make_chi2_validation_data_with_positivity(
 
     Parameters
     ----------
-    make_data_values: training_validation.MakeDataValues
+    _data_values: training_validation.MakeDataValues
         dataclass containing data for training and validation.
 
-    make_pred_data: theory_predictions.make_pred_data
+    _pred_data: theory_predictions._pred_data
         super_net provider for (fktable) theory predictions.
 
-    make_posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from monte_carlo_utils.TrainValidationSplit
+    _posdata_split: training_validation.PosdataTrainValidationSplit
+        dataclass inheriting from utils.TrainValidationSplit
 
-    make_penalty_posdata: theory_predictions.make_penalty_posdata
+    _penalty_posdata: theory_predictions._penalty_posdata
         super_net provider used to compute positivity penalty.
 
     Returns
@@ -248,17 +246,17 @@ def make_chi2_validation_data_with_positivity(
     @jax.jit Callable
         function to compute chi2 of a pdf grid on validation data.
     """
-    validation_data = make_data_values.validation_data
+    validation_data = _data_values.validation_data
     central_values = validation_data.central_values
     covmat = validation_data.covmat
     central_values_idx = validation_data.central_values_idx
 
-    posdata_validation_idx = make_posdata_split.validation
+    posdata_validation_idx = _posdata_split.validation
 
     @jax.jit
     def chi2(pdf, alpha, lambda_positivity):
         """ """
-        diff = make_pred_data(pdf)[central_values_idx] - central_values
+        diff = _pred_data(pdf)[central_values_idx] - central_values
 
         # decompose covmat
         sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
@@ -268,7 +266,7 @@ def make_chi2_validation_data_with_positivity(
         loss = jnp.sum(chi2_vec**2)
 
         # add penalty term due to positivity
-        pos_penalty = make_penalty_posdata(pdf, alpha, lambda_positivity)[
+        pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
             posdata_validation_idx
         ]
         loss += jnp.sum(pos_penalty)
@@ -283,7 +281,7 @@ mc_replicas_make_chi2_validation_data_with_positivity = collect(
 )
 
 
-def make_chi2(make_data_values, make_pred_data, vectorized=False):
+def make_chi2(_data_values, _pred_data, vectorized=False):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on a dataset.
@@ -295,10 +293,10 @@ def make_chi2(make_data_values, make_pred_data, vectorized=False):
 
     Parameters
     ----------
-    make_data_values: training_validation.MakeDataValues
+    _data_values: training_validation.MakeDataValues
         dataclass containing data for training and validation.
 
-    make_pred_data: theory_predictions.make_pred_data
+    _pred_data: theory_predictions._pred_data
         super_net provider for (fktable) theory predictions.
 
     vectorized: bool, default is False
@@ -309,7 +307,7 @@ def make_chi2(make_data_values, make_pred_data, vectorized=False):
         function to compute chi2 of a pdf grid.
 
     """
-    training_data = make_data_values.training_data
+    training_data = _data_values.training_data
     central_values = training_data.central_values
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
@@ -324,7 +322,7 @@ def make_chi2(make_data_values, make_pred_data, vectorized=False):
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = make_pred_data(pdf)[:, central_values_idx] - central_values
+            diff = _pred_data(pdf)[:, central_values_idx] - central_values
 
             loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
 
@@ -335,7 +333,7 @@ def make_chi2(make_data_values, make_pred_data, vectorized=False):
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = make_pred_data(pdf)[central_values_idx] - central_values
+            diff = _pred_data(pdf)[central_values_idx] - central_values
 
             loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
@@ -345,10 +343,10 @@ def make_chi2(make_data_values, make_pred_data, vectorized=False):
 
 
 def make_chi2_with_positivity(
-    make_data_values,
-    make_pred_data,
-    make_posdata_split,
-    make_penalty_posdata,
+    _data_values,
+    _pred_data,
+    _posdata_split,
+    _penalty_posdata,
     alpha=1e-7,
     lambda_positivity=1000,
     vectorized=False,
@@ -362,16 +360,16 @@ def make_chi2_with_positivity(
 
     Parameters
     ----------
-    make_data_values: training_validation.MakeDataValues
+    _data_values: training_validation.MakeDataValues
         dataclass containing data for training and validation.
 
-    make_pred_data: theory_predictions.make_pred_data
+    _pred_data: theory_predictions._pred_data
         super_net provider for (fktable) theory predictions.
 
-    make_posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from monte_carlo_utils.TrainValidationSplit
+    _posdata_split: training_validation.PosdataTrainValidationSplit
+        dataclass inheriting from utils.TrainValidationSplit
 
-    make_penalty_posdata: theory_predictions.make_penalty_posdata
+    _penalty_posdata: theory_predictions._penalty_posdata
         super_net provider used to compute positivity penalty.
 
     alpha: float
@@ -386,7 +384,7 @@ def make_chi2_with_positivity(
         function to compute chi2 of a pdf grid.
 
     """
-    training_data = make_data_values.training_data
+    training_data = _data_values.training_data
     central_values = training_data.central_values
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx
@@ -394,19 +392,19 @@ def make_chi2_with_positivity(
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
-    posdata_training_idx = make_posdata_split.training
+    posdata_training_idx = _posdata_split.training
 
     if vectorized:
 
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = make_pred_data(pdf)[:, central_values_idx] - central_values
+            diff = _pred_data(pdf)[:, central_values_idx] - central_values
 
             loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
 
             # add penalty term due to positivity
-            pos_penalty = make_penalty_posdata(pdf, alpha, lambda_positivity)[
+            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
                 :, posdata_training_idx
             ]
 
@@ -419,12 +417,12 @@ def make_chi2_with_positivity(
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = make_pred_data(pdf)[central_values_idx] - central_values
+            diff = _pred_data(pdf)[central_values_idx] - central_values
 
             loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
             # add penalty term due to positivity
-            pos_penalty = make_penalty_posdata(pdf, alpha, lambda_positivity)[
+            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
                 posdata_training_idx
             ]
 
