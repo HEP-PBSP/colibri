@@ -12,7 +12,14 @@ import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
 
-def make_chi2_wmin_opt(make_data_values, precomputed_predictions, vectorized=False):
+def _chi2_wmin_opt(make_chi2_wmin_opt):
+    """
+    Internal alias function for make_chi2_wmin_opt.
+    """
+    return make_chi2_wmin_opt
+
+
+def make_chi2_wmin_opt(_data_values, precomputed_predictions, vectorized=False):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid optimised for weight minimisation.
@@ -24,7 +31,7 @@ def make_chi2_wmin_opt(make_data_values, precomputed_predictions, vectorized=Fal
 
     Parameters
     ----------
-    make_data_values: training_validation.MakeDataValues
+    _data_values: training_validation.MakeDataValues
         dataclass containing data for training and validation.
 
     precomputed_predictions: matrix (n_weights, n_data), row i is the array
@@ -37,7 +44,7 @@ def make_chi2_wmin_opt(make_data_values, precomputed_predictions, vectorized=Fal
         function to compute chi2 of a pdf grid.
 
     """
-    training_data = make_data_values.training_data
+    training_data = _data_values.training_data
     central_values = training_data.central_values
     covmat = training_data.covmat
     central_values_idx = training_data.central_values_idx

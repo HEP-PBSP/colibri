@@ -45,9 +45,9 @@ class WeightMinimizationFit(WeightMinimizationGrid):
 
 
 def weight_minimization_fit(
-    make_chi2_training_data_with_positivity,
-    make_chi2_validation_data_with_positivity,
-    make_data_values,
+    _chi2_training_data_with_positivity,
+    _chi2_validation_data_with_positivity,
+    _data_values,
     weight_minimization_grid,
     optimizer_provider,
     early_stopper,
@@ -67,7 +67,7 @@ def weight_minimization_fit(
         pdf = jnp.einsum(
             "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
-        return make_chi2_training_data_with_positivity(
+        return _chi2_training_data_with_positivity(
             pdf, batch_idx, alpha, lambda_positivity
         )
 
@@ -77,7 +77,7 @@ def weight_minimization_fit(
         pdf = jnp.einsum(
             "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
-        return make_chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
+        return _chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
 
     @jax.jit
     def step(params, opt_state, batch_idx):
@@ -93,7 +93,7 @@ def weight_minimization_fit(
     weights = weight_minimization_grid.init_wmin_weights
 
     data_batch = data_batches(
-        make_data_values.training_data.n_training_points, batch_size, batch_seed
+        _data_values.training_data.n_training_points, batch_size, batch_seed
     )
     batches = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
@@ -111,8 +111,7 @@ def weight_minimization_fit(
             epoch_loss += loss_training(weights, batch) / batch_size
 
         epoch_val_loss += (
-            loss_validation(weights)
-            / make_data_values.validation_data.n_validation_points
+            loss_validation(weights) / _data_values.validation_data.n_validation_points
         )
         epoch_loss /= num_batches
 
@@ -182,7 +181,7 @@ class UltranestWeightMinimizationFit(WeightMinimizationFit):
 
 
 def weight_minimization_ultranest(
-    make_chi2_with_positivity,
+    _chi2_with_positivity,
     weight_minimization_grid,
     weight_minimization_prior,
     n_replicas_wmin,
@@ -195,7 +194,7 @@ def weight_minimization_ultranest(
     ndraw_max=1000,
     slice_sampler=False,
     slice_steps=100,
-    resume=True
+    resume=True,
 ):
     """
     TODO
@@ -218,7 +217,7 @@ def weight_minimization_ultranest(
             "i,ijk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
 
-        return -0.5 * make_chi2_with_positivity(pdf)
+        return -0.5 * _chi2_with_positivity(pdf)
 
     @jax.jit
     def log_likelihood_vectorized(weights):
@@ -230,7 +229,7 @@ def weight_minimization_ultranest(
             "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
         )
 
-        return -0.5 * make_chi2_with_positivity(pdf)
+        return -0.5 * _chi2_with_positivity(pdf)
 
     if vectorized:
         sampler = ultranest.ReactiveNestedSampler(
