@@ -47,12 +47,6 @@ class GridPdfConfig(SuperNetConfig):
         """The reduced x-grids used in the fit, organised by flavour."""
         return {FLAVOUR_TO_ID_MAPPING[flav]: val for (flav, val) in xgrids.items()}
 
-    def produce_flavour_mapping(self, xgrids):
-        """Produces the list with chosen flavours."""
-        return [
-            FLAVOUR_TO_ID_MAPPING[flav] for flav, val in xgrids.items() if len(val) > 0
-        ]
-
     def produce_all_gridpdf_collect_indices(
         self,
         n_replicas,

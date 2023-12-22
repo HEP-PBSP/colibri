@@ -31,14 +31,14 @@ FLAVOUR_MAPPING = [1, 2, 3]
 def interpolate_grid(
     reduced_xgrids,
     length_reduced_xgrids,
-    flavour_mapping,
+    flavour_indices,
     vectorized=False,
 ):
     """
     Produces the function which produces the grid interpolation.
     """
 
-    fit_xgrids = jnp.array([jnp.array(reduced_xgrids[fl]) for fl in flavour_mapping])
+    fit_xgrids = jnp.array([jnp.array(reduced_xgrids[fl]) for fl in flavour_indices])
 
     if vectorized:
         # Function to perform interpolation for a single grid
@@ -46,7 +46,7 @@ def interpolate_grid(
         def interpolate_flavors(y):
             reshaped_y = y.reshape(
                 (
-                    len(flavour_mapping),
+                    len(flavour_indices),
                     length_reduced_xgrids,
                 )
             )
@@ -75,7 +75,7 @@ def interpolate_grid(
                 arr=stacked_pdf_grid,
             )
 
-            input_grid = input_grid.at[:, flavour_mapping, :].set(pdf_interp)
+            input_grid = input_grid.at[:, flavour_indices, :].set(pdf_interp)
 
             return input_grid
 
@@ -85,7 +85,7 @@ def interpolate_grid(
         def interp_func(stacked_pdf_grid):
             reshaped_stacked_pdf_grid = stacked_pdf_grid.reshape(
                 (
-                    len(flavour_mapping),
+                    len(flavour_indices),
                     length_reduced_xgrids,
                 ),
             )
@@ -107,7 +107,7 @@ def interpolate_grid(
                 ]
             )
 
-            input_grid = input_grid.at[flavour_mapping, :].set(pdf_interp)
+            input_grid = input_grid.at[flavour_indices, :].set(pdf_interp)
 
             return input_grid
 
@@ -126,7 +126,7 @@ class PdfPriorGrid:
     error68_down: jnp.array
 
 
-def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping, Q0=1.65):
+def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_indices, Q0=1.65):
     """
     Get PDF grid prior values (x*f(x)) from a PDF set.
 
@@ -135,8 +135,7 @@ def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping, Q0=1.65):
     pdf_prior: validphys.core.PDF
         pdf set from which to get prior values.
 
-    flavour_mapping: list, default is FLAVOUR_MAPPING
-        specifies the ids of the flavours to include in a fit.
+    flavour_indices: list, specifies the ids of the flavours to include in a fit.
 
     Q0: float, default is 1.65
         specifies the scale at which PDFs are parameterised.
@@ -153,7 +152,7 @@ def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping, Q0=1.65):
     stacked_pdf_grid_prior = jnp.array([])
 
     # note: different flavours might have different REDUCED_XGRID
-    for fl in flavour_mapping:
+    for fl in flavour_indices:
         # Save central value of pdf_prior at Q0
         stacked_pdf_grid_prior = jnp.append(
             stacked_pdf_grid_prior,
@@ -167,7 +166,7 @@ def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping, Q0=1.65):
     # generate PDF covariance matrix of size Nx * Nfl x Nx * Nfl
     replicas_grid = convolution.evolution.grid_values(
         pdf_prior,
-        [convolution.FK_FLAVOURS[fl] for fl in flavour_mapping],
+        [convolution.FK_FLAVOURS[fl] for fl in flavour_indices],
         reduced_xgrids[fl],
         [Q0],
     )

@@ -53,6 +53,8 @@ t0pdfset: NNPDF31_nnlo_as_0118
 alpha: 1e-7
 lambda_positivity: 1000
 
+flavour_mapping: ["\\Sigma", "g", "V"]
+
 # grid specs
 xgrids:
   photon: []
