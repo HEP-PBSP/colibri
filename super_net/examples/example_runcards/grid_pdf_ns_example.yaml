@@ -64,6 +64,7 @@ vectorized: False
 ndraw_max: 500
 
 # grid specs
+flavour_mapping: ["\\Sigma", "g", V]
 xgrids:
   photon: []
   \Sigma: [0.01, 0.02, 0.1, 0.2]
