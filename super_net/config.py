@@ -132,11 +132,12 @@ class SuperNetConfig(Config):
         """
 
         if flavour_mapping is not None:
-            return [
-                FLAVOUR_TO_ID_MAPPING[fl]
-                if fl in FLAVOUR_TO_ID_MAPPING.keys()
-                else KeyError(f"flavour {fl} not found in FLAVOUR_TO_ID_MAPPING")
-                for fl in flavour_mapping
-            ]
+            indices = []
+            for fl in flavour_mapping:
+                if fl in FLAVOUR_TO_ID_MAPPING.keys():
+                    indices.append(FLAVOUR_TO_ID_MAPPING[fl])
+                else:
+                    raise KeyError(f"flavour {fl} not found in FLAVOUR_TO_ID_MAPPING")
+            return indices
 
         return None
