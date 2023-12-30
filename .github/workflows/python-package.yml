@@ -28,8 +28,6 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
     - name: Config Conda
       run: |
-        conda install -n base conda-libmamba-solver
-        conda config --set solver libmamba
         conda config --append channels conda-forge
         conda config --prepend channels https://packages.nnpdf.science/public
         conda config --set show_channel_urls true
