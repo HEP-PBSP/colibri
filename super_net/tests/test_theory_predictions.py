@@ -3,7 +3,7 @@ from numpy.testing import assert_allclose
 from super_net.api import API as SuperNetAPI
 from super_net.theory_predictions import make_dis_prediction, make_had_prediction
 
-from conftest import TEST_DATASET, CLOSURE_TEST_PDFSET, TEST_DATASET_HAD
+from super_net.tests.conftest import TEST_DATASET, CLOSURE_TEST_PDFSET, TEST_DATASET_HAD
 
 from validphys.fkparser import load_fktable
 

@@ -4,7 +4,7 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 
-from super_net.tests.conftest import (
+from wmin.tests.conftest import (
     RNG_SEED_WEIGHTS,
     WEIGHTS_INIT_SHAPE,
     WEIGHTS_INITI_UNIF_MINVAL,
