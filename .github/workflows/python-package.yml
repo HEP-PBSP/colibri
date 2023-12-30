@@ -24,11 +24,23 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v2
     - name: Install dependencies
       run: |
+        conda install nnpdf=4.0.6 -y
+        conda install -c conda-forge jax optax flax flit -y
         python -m pip install --upgrade pip
+        python -m pip install ultranest
         python -m pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Install super_net and models
+      run: |
+        flit install --symlink
+        cd super_net/wmin
+        flit install --symlink
+        cd ../grid_pdf
+        flit install --symlink
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
