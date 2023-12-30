@@ -26,20 +26,23 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Set up Conda
       uses: conda-incubator/setup-miniconda@v2
-    - name: Config Conda
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Setup conda and install conda-build
+      shell: bash -l {0}
       run: |
+        echo "$NETRC_FILE" | base64 --decode > ~/.netrc
+        conda install -n base conda-libmamba-solver
+        conda config --set solver libmamba
         conda config --append channels conda-forge
         conda config --prepend channels https://packages.nnpdf.science/public
         conda config --set show_channel_urls true
-    - name: Create Conda environment
-      run: |
-        conda create -n test python=${{ matrix.python-version }} -y
         conda activate test
-        conda install -c conda-forge mamba
+        conda install boa --yes
     - name: Install dependencies
       run: |
-        mamba install nnpdf=4.0.6 -y
-        mamba install -c conda-forge jax=0.4.13 optax=0.1.7 flax flit -y
+        conda install nnpdf=4.0.6 -y
+        conda install -c conda-forge jax=0.4.13 optax=0.1.7 flax flit -y
         python -m pip install --upgrade pip
         python -m pip install ultranest
         python -m pip install flake8 pytest
