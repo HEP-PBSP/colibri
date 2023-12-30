@@ -31,11 +31,12 @@ jobs:
         conda config --append channels conda-forge
         conda config --prepend channels https://packages.nnpdf.science/public
         conda config --set show_channel_urls true
-        conda install -c conda-forge mamba
+        conda install -n base -c conda-forge mamba
+        conda config --set solver mamba
     - name: Install dependencies
       run: |
-        mamba install nnpdf=4.0.6 -y
-        mamba install -c conda-forge jax optax flax flit -y
+        conda install nnpdf=4.0.6 -y
+        conda install -c conda-forge jax optax flax flit -y
         python -m pip install --upgrade pip
         python -m pip install ultranest
         python -m pip install flake8 pytest
