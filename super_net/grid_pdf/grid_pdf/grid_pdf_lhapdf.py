@@ -7,7 +7,8 @@ Author: James Moore
 Date: 18.12.2023
 """
 
-from grid_pdf.grid_pdf_model import interpolate_grid, FLAVOURS_ID_MAPPINGS
+from grid_pdf.grid_pdf_model import interpolate_grid
+from super_net.utils import FLAVOURS_ID_MAPPINGS
 
 import lhapdf
 import numpy as np
