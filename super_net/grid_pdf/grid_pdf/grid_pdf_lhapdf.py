@@ -9,12 +9,26 @@ Date: 18.12.2023
 
 from grid_pdf.grid_pdf_model import interpolate_grid
 from super_net.utils import FLAVOURS_ID_MAPPINGS
+from validphys.loader import Loader
+
+from pathlib import Path
 
 import lhapdf
 import numpy as np
 import os
 import yaml
 import shutil
+import logging
+from scipy.interpolate import interp1d
+
+import eko
+from ekobox import info_file, genpdf, apply
+from eko import basis_rotation
+from validphys.pdfbases import PIDS_DICT
+
+from collections import defaultdict
+
+log = logging.getLogger(__name__)
 
 def lhapdf_path():
     """Returns the path to the share/LHAPDF directory"""
@@ -111,7 +125,6 @@ def lhapdf_grid_pdf_ultranest_result(
         length_reduced_xgrids,
         n_posterior_samples,
         theoryid,
-        grid_pdf_fit_name,
         folder=lhapdf_path,
         output_path=None, 
     ):
@@ -121,25 +134,160 @@ def lhapdf_grid_pdf_ultranest_result(
 
     # Write an export grid at the initial scale for each of the replicas in the posterior
     # sample.
-    nnfit_path = str(output_path) + '/nnfit'
-    if not os.path.exists(nnfit_path):
-        os.mkdir(nnfit_path)
-
-    # Copy the runcard to create a fake filter file
-    shutil.copy(str(output_path) + "/input/runcard.yaml", str(output_path) + "/filter.yml")
+    ns_replicas_path = str(output_path) + '/ns_replicas'
+    if not os.path.exists(ns_replicas_path):
+        os.mkdir(ns_replicas_path)
 
     fit_name = str(output_path).split("/")[-1]
 
     for i in range(n_posterior_samples):
-        rep_path = nnfit_path + '/replica_' + str(i+1)
+        rep_path = ns_replicas_path + '/replica_' + str(i+1)
         if not os.path.exists(rep_path):
             os.mkdir(rep_path)
         exportgrid = write_exportgrid(ultranest_grid_fit, reduced_xgrids, length_reduced_xgrids, flavour_indices, i)
         with open(rep_path+'/'+fit_name+'.exportgrid', 'w') as outfile:
             yaml.dump(exportgrid, outfile)
 
-    # Run evolven3fit_new to complete the PDF evolution
-    os.system('evolven3fit ' + fit_name + ' ' + str(n_posterior_samples) + ' --theory_id ' + str(theoryid.id))
+    # Now run EKO on the exportgrids to complete the PDF evolution
+    log.info(f"Loading eko from theory {theoryid.id}")
+    eko_path = (Loader().check_theoryID(theoryid.id).path) / "eko.tar"
+
+    with eko.EKO.edit(eko_path) as eko_op:
+        x_grid_obj = eko.interpolation.XGrid(STANDARD_XGRID)
+        eko.io.manipulate.xgrid_reshape(eko_op, targetgrid=x_grid_obj, inputgrid=x_grid_obj)
+
+    # Load the export grids into a dictionary
+    initial_PDFs_dict = {}
+    for yaml_file in Path(ns_replicas_path).glob(f"replica_*/{output_path.name}.exportgrid"):
+        data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
+        initial_PDFs_dict[yaml_file.parent.stem] = data
+
+    with eko.EKO.read(eko_path) as eko_op:
+        # Read the cards directly from the eko to make sure they are consistent
+        theory = eko_op.theory_card
+        op = eko_op.operator_card
+
+        # Modify the info file with the fit-specific info
+        info = info_file.build(theory, op, 1, info_update={})
+        info["NumMembers"] = n_posterior_samples
+        info["ErrorType"] = "replicas"
+        info["XMin"] = float(STANDARD_XGRID[0])
+        info["XMax"] = float(STANDARD_XGRID[-1])
+        # Save the PIDs in the info file in the same order as in the evolution
+        info["Flavors"] = basis_rotation.flavor_basis_pids
+        # info["NumFlavors"] = theory.heavy.num_flavs_max_pdf
+
+        # If no LHAPDF folder exists, create one
+        lhapdf_destination = folder + "/" + fit_name
+        if not os.path.exists(lhapdf_destination):
+            os.mkdir(lhapdf_destination)
+
+        genpdf.export.dump_info(lhapdf_destination, info)
+
+        progress = 1 
+        for replica, pdf_data in initial_PDFs_dict.items():
+            log.info("Evolving replica " + str(progress) + " of " + str(n_posterior_samples))
+            evolved_blocks = evolve_exportgrid(pdf_data, eko_op, STANDARD_XGRID)
+            replica_num = replica.removeprefix("replica_")
+            genpdf.export.dump_blocks(
+                Path(lhapdf_destination),
+                int(replica_num),
+                evolved_blocks,
+                pdf_type=f"PdfType: replica\nFromMCReplica: {replica_num}\n"
+            )
+
+            progress += 1
+
+# This class is copied directly from evolven3fit_new
+class LhapdfLike:
+    """
+    Class which emulates lhapdf but only for an initial condition PDF (i.e. with only one q2 value).
+
+    Q20 is the fitting scale fo the pdf and it is the only available scale for the objects of this class.
+
+    X_GRID is the grid of x values on top of which the pdf is interpolated.
+
+    PDF_GRID is a dictionary containing the pdf grids at fitting scale for each pid.
+    """
+
+    def __init__(self, pdf_grid, q20, x_grid):
+        self.pdf_grid = pdf_grid
+        self.q20 = q20
+        self.x_grid = x_grid
+        self.funcs = [
+            interp1d(self.x_grid, self.pdf_grid[pid], kind="cubic") for pid in range(len(PIDS_DICT))
+        ]
+
+    def xfxQ2(self, pid, x, q2):
+        """Return the value of the PDF for the requested pid, x value and, whatever the requested
+        q2 value, for the fitting q2.
+
+        Parameters
+        ----------
+
+            pid: int
+                pid index of particle
+            x: float
+                x-value
+            q2: float
+                Q square value
+
+        Returns
+        -------
+            : float
+            x * PDF value
+        """
+        return self.funcs[list(PIDS_DICT.values()).index(PIDS_DICT[pid])](x)
+
+    def hasFlavor(self, pid):
+        """Check if the requested pid is in the PDF."""
+        return pid in PIDS_DICT
+
+# This function is copied directly from evolven3fit_new
+def evolve_exportgrid(exportgrid, eko, x_grid):
+    """
+    Evolves the provided exportgrid for the desired replica with the eko and returns the evolved block
+
+    Parameters
+    ----------
+        exportgrid: dict
+            exportgrid of pdf at fitting scale
+        eko: eko object
+            eko operator for evolution
+        xgrid: list
+            xgrid to be used as the targetgrid
+    Returns
+    -------
+        : list(np.array)
+        list of evolved blocks
+    """
+    # construct LhapdfLike object
+    pdf_grid = np.array(exportgrid["pdfgrid"]).transpose()
+    pdf_to_evolve = LhapdfLike(pdf_grid, exportgrid["q20"], x_grid)
+    # evolve pdf
+    evolved_pdf = apply.apply_pdf(eko, pdf_to_evolve)
+    # generate block to dump
+    targetgrid = eko.bases.targetgrid.tolist()
+
+    # Finally separate by nf block (and order per nf/q)
+    by_nf = defaultdict(list)
+    for q, nf in sorted(eko.evolgrid, key=lambda ep: ep[1]):
+        by_nf[nf].append(q)
+    q2block_per_nf = {nf: sorted(qs) for nf, qs in by_nf.items()}
+
+    blocks = []
+    for nf, q2grid in q2block_per_nf.items():
+
+        def pdf_xq2(pid, x, Q2):
+            x_idx = targetgrid.index(x)
+            return x * evolved_pdf[(Q2, nf)]["pdfs"][pid][x_idx]
+
+        block = genpdf.generate_block(
+            pdf_xq2, xgrid=targetgrid, sorted_q2grid=q2grid, pids=basis_rotation.flavor_basis_pids
+        )
+        blocks.append(block)
+
+    return blocks
 
 def write_exportgrid(df, reduced_xgrids, length_reduced_xgrids, flavour_indices, replica, Q0=1.65, xgrid=STANDARD_XGRID):
     """

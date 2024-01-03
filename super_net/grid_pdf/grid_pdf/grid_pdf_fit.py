@@ -116,7 +116,6 @@ def perform_nested_sampling_grid_pdf_fit(
     flavour_indices,
     length_reduced_xgrids,
     n_posterior_samples,
-    grid_pdf_fit_name,
     lhapdf_path,
     output_path,
     theoryid,
@@ -133,14 +132,13 @@ def perform_nested_sampling_grid_pdf_fit(
         length_reduced_xgrids,
         n_posterior_samples,
         theoryid,
-        grid_pdf_fit_name,
         folder=lhapdf_path,
         output_path=output_path,
     )
 
     # Produce the central replica
     l = Loader()
-    pdf = l.check_pdf(grid_pdf_fit_name)
+    pdf = l.check_pdf(str(output_path).split("/")[-1])
     generate_replica0(pdf)
 
     log.info("Nested Sampling grid PDF fit completed!")
