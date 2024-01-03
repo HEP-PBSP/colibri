@@ -14,7 +14,7 @@ def make_bayesian_pdf_grid_fit(
     grid_pdf_model_prior,
     interpolate_grid,
     reduced_xgrids,
-    flavour_mapping=FLAVOUR_MAPPING,
+    flavour_indices,
     min_num_live_points=400,
     min_ess=40,
     log_dir="ultranest_logs",
@@ -53,7 +53,7 @@ def make_bayesian_pdf_grid_fit(
         return -0.5 * _chi2_with_positivity(pdf)
 
     parameters = [
-        f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in reduced_xgrids[i]
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
     ]
 
     sampler = ultranest.ReactiveNestedSampler(
