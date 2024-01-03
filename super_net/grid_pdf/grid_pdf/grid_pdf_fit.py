@@ -20,6 +20,8 @@ def ultranest_grid_fit(
     interpolate_grid,
     reduced_xgrids,
     flavour_indices,
+    n_posterior_samples=1000,
+    posterior_resampling_seed=123456,
     min_num_live_points=400,
     min_ess=40,
     log_dir="ultranest_logs",
@@ -111,6 +113,7 @@ def ultranest_grid_fit(
 def perform_nested_sampling_grid_pdf_fit(
     ultranest_grid_fit,
     reduced_xgrids,
+    flavour_indices,
     length_reduced_xgrids,
     n_posterior_samples,
     grid_pdf_fit_name,
@@ -126,6 +129,7 @@ def perform_nested_sampling_grid_pdf_fit(
     lhapdf_grid_pdf_ultranest_result(
         ultranest_grid_fit,
         reduced_xgrids,
+        flavour_indices,
         length_reduced_xgrids,
         n_posterior_samples,
         theoryid,

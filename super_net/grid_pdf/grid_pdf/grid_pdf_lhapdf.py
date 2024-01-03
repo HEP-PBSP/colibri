@@ -107,6 +107,7 @@ STANDARD_XGRID = [1e-09, 1.29708482343957e-09, 1.68242903474257e-09, 2.182253154
 def lhapdf_grid_pdf_ultranest_result(
         ultranest_grid_fit,
         reduced_xgrids,
+        flavour_indices,
         length_reduced_xgrids,
         n_posterior_samples,
         theoryid,
@@ -133,14 +134,14 @@ def lhapdf_grid_pdf_ultranest_result(
         rep_path = nnfit_path + '/replica_' + str(i+1)
         if not os.path.exists(rep_path):
             os.mkdir(rep_path)
-        exportgrid = write_exportgrid(ultranest_grid_fit, reduced_xgrids, length_reduced_xgrids, i)
+        exportgrid = write_exportgrid(ultranest_grid_fit, reduced_xgrids, length_reduced_xgrids, flavour_indices, i)
         with open(rep_path+'/'+fit_name+'.exportgrid', 'w') as outfile:
             yaml.dump(exportgrid, outfile)
 
     # Run evolven3fit_new to complete the PDF evolution
     os.system('evolven3fit ' + fit_name + ' ' + str(n_posterior_samples) + ' --theory_id ' + str(theoryid.id))
 
-def write_exportgrid(df, reduced_xgrids, length_reduced_xgrids, replica, Q0=1.65, xgrid=STANDARD_XGRID):
+def write_exportgrid(df, reduced_xgrids, length_reduced_xgrids, flavour_indices, replica, Q0=1.65, xgrid=STANDARD_XGRID):
     """
 
     Parameters
@@ -156,7 +157,7 @@ def write_exportgrid(df, reduced_xgrids, length_reduced_xgrids, replica, Q0=1.65
     """
 
     # Interpolate on the xgrid
-    interpolate = interpolate_grid(reduced_xgrids, length_reduced_xgrids, interpolation_grid=xgrid)
+    interpolate = interpolate_grid(reduced_xgrids, length_reduced_xgrids, flavour_indices, interpolation_grid=xgrid)
     grid_for_writing = interpolate(df[replica])
 
     # Rotate the grid from the evolution basis into the export grid basis
