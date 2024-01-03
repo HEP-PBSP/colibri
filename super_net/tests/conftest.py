@@ -1,10 +1,25 @@
+"""
+Module
+"""
 
-""""""
-RNG_SEED_WEIGHTS = 0xABCDEF
+TEST_DATASET = {
+    "dataset_input": {"dataset": "NMC"},
+    "theoryid": 400,
+    "use_cuts": "internal",
+}
 
-""""""
-WEIGHTS_INIT_SHAPE = 10
+TEST_DATASET_HAD = {
+    "dataset_input": {"dataset": "ATLASWZRAP11CC"},
+    "theoryid": 400,
+    "use_cuts": "internal",
+}
 
-WEIGHTS_INITI_UNIF_MINVAL = -0.1
+TEST_DATASETS = {
+    "dataset_inputs": [{"dataset": "NMC"}],
+    "theoryid": 400,
+    "use_cuts": "internal",
+}
 
-WEIGHTS_INITI_UNIF_MAXVAL = 0.1
+T0_PDFSET = {"t0pdfset": "NNPDF40_nnlo_as_01180"}
+
+CLOSURE_TEST_PDFSET = {"closure_test_pdf": "NNPDF40_nnlo_as_01180"}

@@ -15,18 +15,16 @@ import logging
 log = logging.getLogger(__name__)
 
 def ultranest_grid_fit(
-    make_chi2_with_positivity,
+    _chi2_with_positivity,
     grid_pdf_model_prior,
     interpolate_grid,
     reduced_xgrids,
-    n_posterior_samples=1000,
-    posterior_resampling_seed=123456,
-    flavour_mapping=FLAVOUR_MAPPING,
+    flavour_indices,
     min_num_live_points=400,
     min_ess=40,
     log_dir="ultranest_logs",
     resume=True,
-    vectorised=False,
+    vectorized=False,
     slice_sampler=False,
     slice_steps=100,
     ndraw_max=500,
@@ -57,10 +55,10 @@ def ultranest_grid_fit(
         """
 
         pdf = interpolate_grid(stacked_pdf_grid)
-        return -0.5 * make_chi2_with_positivity(pdf)
+        return -0.5 * _chi2_with_positivity(pdf)
 
     parameters = [
-        f"{FK_FLAVOURS[i]}({j})" for i in flavour_mapping for j in reduced_xgrids[i]
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
     ]
 
     sampler = ultranest.ReactiveNestedSampler(
@@ -69,7 +67,7 @@ def ultranest_grid_fit(
         grid_pdf_model_prior,
         log_dir=log_dir,
         resume=resume,
-        vectorized=vectorised,
+        vectorized=vectorized,
         ndraw_max=ndraw_max,
     )
 

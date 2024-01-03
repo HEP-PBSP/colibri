@@ -8,7 +8,7 @@ Date: 15.11.2023
 """
 
 from super_net.config import SuperNetConfig, Environment
-from grid_pdf.grid_pdf_model import FLAVOUR_TO_ID_MAPPING
+from super_net.utils import FLAVOUR_TO_ID_MAPPING
 
 class Environment(Environment):
     pass

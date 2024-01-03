@@ -22,25 +22,6 @@ from validphys import convolution
 from super_net.constants import XGRID
 
 
-FLAVOURS_ID_MAPPINGS = {
-    0: "photon",
-    1: "\Sigma",
-    2: "g",
-    3: "V",
-    4: "V3",
-    5: "V8",
-    6: "V15",
-    7: "V24",
-    8: "V35",
-    9: "T3",
-    10: "T8",
-    11: "T15",
-    12: "T24",
-    13: "T35",
-}
-
-FLAVOUR_TO_ID_MAPPING = {val: key for (key, val) in FLAVOURS_ID_MAPPINGS.items()}
-
 """
 Specifies which flavours to include in a fit.
 """
@@ -50,23 +31,23 @@ FLAVOUR_MAPPING = [1, 2, 3]
 def interpolate_grid(
     reduced_xgrids,
     length_reduced_xgrids,
-    flavour_mapping=FLAVOUR_MAPPING,
+    flavour_indices,
     interpolation_grid=XGRID,
-    vectorised=False,
+    vectorized=False,
 ):
     """
     Produces the function which produces the grid interpolation.
     """
 
-    fit_xgrids = jnp.array([jnp.array(reduced_xgrids[fl]) for fl in flavour_mapping])
+    fit_xgrids = jnp.array([jnp.array(reduced_xgrids[fl]) for fl in flavour_indices])
 
-    if vectorised:
+    if vectorized:
         # Function to perform interpolation for a single grid
         @jax.jit
         def interpolate_flavors(y):
             reshaped_y = y.reshape(
                 (
-                    len(flavour_mapping),
+                    len(flavour_indices),
                     length_reduced_xgrids,
                 )
             )
@@ -95,7 +76,7 @@ def interpolate_grid(
                 arr=stacked_pdf_grid,
             )
 
-            input_grid = input_grid.at[:, flavour_mapping, :].set(pdf_interp)
+            input_grid = input_grid.at[:, flavour_indices, :].set(pdf_interp)
 
             return input_grid
 
@@ -105,7 +86,7 @@ def interpolate_grid(
         def interp_func(stacked_pdf_grid):
             reshaped_stacked_pdf_grid = stacked_pdf_grid.reshape(
                 (
-                    len(flavour_mapping),
+                    len(flavour_indices),
                     length_reduced_xgrids,
                 ),
             )
@@ -127,7 +108,7 @@ def interpolate_grid(
                 ]
             )
 
-            input_grid = input_grid.at[flavour_mapping, :].set(pdf_interp)
+            input_grid = input_grid.at[flavour_indices, :].set(pdf_interp)
 
             return input_grid
 
@@ -146,7 +127,7 @@ class PdfPriorGrid:
     error68_down: jnp.array
 
 
-def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping=FLAVOUR_MAPPING, Q0=1.65):
+def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_indices, Q0=1.65):
     """
     Get PDF grid prior values (x*f(x)) from a PDF set.
 
@@ -155,7 +136,7 @@ def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping=FLAVOUR_MAPPING, Q
     pdf_prior: validphys.core.PDF
         pdf set from which to get prior values.
 
-    flavour_mapping: list, default is FLAVOUR_MAPPING
+    flavour_indices: list,
         specifies the ids of the flavours to include in a fit.
 
     Q0: float, default is 1.65
@@ -173,7 +154,7 @@ def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping=FLAVOUR_MAPPING, Q
     stacked_pdf_grid_prior = jnp.array([])
 
     # note: different flavours might have different REDUCED_XGRID
-    for fl in flavour_mapping:
+    for fl in flavour_indices:
         # Save central value of pdf_prior at Q0
         stacked_pdf_grid_prior = jnp.append(
             stacked_pdf_grid_prior,
@@ -187,7 +168,7 @@ def pdf_prior_grid(pdf_prior, reduced_xgrids, flavour_mapping=FLAVOUR_MAPPING, Q
     # generate PDF covariance matrix of size Nx * Nfl x Nx * Nfl
     replicas_grid = convolution.evolution.grid_values(
         pdf_prior,
-        [convolution.FK_FLAVOURS[fl] for fl in flavour_mapping],
+        [convolution.FK_FLAVOURS[fl] for fl in flavour_indices],
         reduced_xgrids[fl],
         [Q0],
     )
@@ -270,12 +251,18 @@ def grid_pdf_model_prior(
         error68_up = pdf_prior_grid.error68_up
         error68_down = pdf_prior_grid.error68_down
 
+        # Compute the band for a generic sigma_pdf_prior
+        delta = (error68_up - error68_down) / 2
+        mean = (error68_up + error68_down) / 2
+        error_up = mean + delta * sigma_pdf_prior
+        error_down = mean - delta * sigma_pdf_prior
+
         @jax.jit
         def prior_transform(cube):
             """
             TODO
             """
-            params = error68_down + (error68_up - error68_down) * cube
+            params = error_down + (error_up - error_down) * cube
             return params
 
     return prior_transform

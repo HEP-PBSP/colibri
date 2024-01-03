@@ -12,8 +12,9 @@ from dataclasses import dataclass, asdict
 
 import jax.numpy as jnp
 
+from super_net.theory_predictions import make_pred_dataset
+
 from validphys.pseudodata import make_level1_data
-from validphys.covmats import dataset_t0_predictions
 
 from reportengine import collect
 
@@ -35,7 +36,9 @@ def experimental_commondata_tuple(data):
     return tuple(data.load_commondata_instance())
 
 
-def closuretest_commondata_tuple(data, experimental_commondata_tuple, closure_test_pdf):
+def closuretest_commondata_tuple(
+    data, experimental_commondata_tuple, closure_test_pdf_grid, flavour_indices=None
+):
     """
     returns a tuple (validphys nodes should be immutable)
     of commondata instances with experimental central values
@@ -49,8 +52,8 @@ def closuretest_commondata_tuple(data, experimental_commondata_tuple, closure_te
     experimental_commondata_tuple: tuple
         tuple of commondata with experimental central values
 
-    closure_test_pdf: validphys.core.PDF
-        PDF used to generate fake data
+    closure_test_pdf_grid: jnp.array
+        grid is of shape N_rep x N_fl x N_x
 
     Returns
     -------
@@ -64,7 +67,11 @@ def closuretest_commondata_tuple(data, experimental_commondata_tuple, closure_te
             raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
         # replace central values with theory prediction from `closure_test_pdf`
         fake_data.append(
-            cd.with_central_value(dataset_t0_predictions(ds, closure_test_pdf))
+            cd.with_central_value(
+                make_pred_dataset(ds, flavour_indices=flavour_indices)(
+                    closure_test_pdf_grid[0]
+                )
+            )
         )
     return tuple(fake_data)
 

@@ -14,12 +14,14 @@ providers = [
     "super_net.loss_functions",
     "super_net.optax_optimizer",
     "super_net.data_batch",
-    "super_net.monte_carlo_utils",
+    "super_net.utils",
     "super_net.commondata_utils",
     "super_net.closure_test.closure_test_estimators",
     "super_net.training_validation",
+    "super_net.covmats",
     "super_net.plots_and_tables.plotting",
     "super_net.ns_utils",
+    "super_net.provider_aliases",
 ]
 
 

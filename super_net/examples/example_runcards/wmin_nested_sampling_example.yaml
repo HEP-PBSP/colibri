@@ -61,7 +61,7 @@ lambda_positivity: 1000
 # nested sampling specs
 bayesian_fit: True
 prior_type: uniform
-vectorised: True
+vectorized: True
 ndraw_max: 500
 slice_sampler: True
 slice_steps: 100
