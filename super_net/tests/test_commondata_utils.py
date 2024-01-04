@@ -1,4 +1,5 @@
 import pandas as pd
+import pathlib
 
 from super_net.api import API as SuperNetAPI
 
@@ -16,6 +17,7 @@ from validphys.covmats import dataset_t0_predictions
 
 from numpy.testing import assert_allclose
 
+TEST_COMMONDATA_FOLDER = pathlib.Path(__file__).with_name('test_commondata')
 
 def test_closuretest_commondata_tuple():
     """
@@ -54,7 +56,7 @@ def test_experimental_commondata_tuple():
 
     # Test that the correct values have been loaded
     for i in range(len(result)):
-        path = 'test_commondata/' + data.datasets[i].name + '_commondata.csv'
+        path = TEST_COMMONDATA_FOLDER/(data.datasets[i].name + '_commondata.csv')
         assert_allclose(
             result[i].commondata_table.iloc[:,1:].to_numpy(dtype=float), 
             pd.read_csv(path).iloc[:,1:].to_numpy(dtype=float),
@@ -78,7 +80,7 @@ def test_pseudodata_commondata_tuple():
 
     # Test that the correct values have been loaded
     for i in range(len(result)):
-        path = 'test_commondata/' + data.datasets[i].name + '_pseudodata.csv'
+        path = TEST_COMMONDATA_FOLDER/(data.datasets[i].name + '_pseudodata.csv')
         assert_allclose(
             result[i].commondata_table.iloc[:,1:].to_numpy(dtype=float),
             pd.read_csv(path).iloc[:,1:].to_numpy(dtype=float),
