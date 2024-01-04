@@ -1,0 +1,9 @@
+/* To apply full justification to the entire body text */
+body {
+    text-align: justify;
+}
+
+/* To apply center alignment to headings */
+/*h1, h2, h3, h4, h5, h6 {
+    text-align: center;
+}
