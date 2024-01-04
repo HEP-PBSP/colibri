@@ -1,3 +1,5 @@
+import pandas as pd
+
 from super_net.api import API as SuperNetAPI
 
 from super_net.commondata_utils import experimental_commondata_tuple, pseudodata_commondata_tuple
@@ -44,6 +46,14 @@ def test_experimental_commondata_tuple():
     # Check that experimental_commondata_tuple produces a tuple of CommonData objects
     for commondata_instance in result:
         assert isinstance(commondata_instance, CommonData)
+
+    # Test that the correct values have been loaded
+    for i in range(len(result)):
+        path = 'test_commondata/' + data.datasets[i].name + '_commondata.csv'
+        assert_allclose(
+            result[i].commondata_table.iloc[:,1:].to_numpy(dtype=float), 
+            pd.read_csv(path).iloc[:,1:].to_numpy(dtype=float),
+        )
 
 def test_pseudodata_commondata_tuple():
     """
