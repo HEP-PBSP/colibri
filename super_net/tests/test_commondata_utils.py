@@ -1,5 +1,9 @@
 from super_net.api import API as SuperNetAPI
 
+from super_net.commondata_utils import experimental_commondata_tuple, pseudodata_commondata_tuple
+
+from validphys.coredata import CommonData
+
 from super_net.tests.conftest import TEST_DATASETS, CLOSURE_TEST_PDFSET
 from validphys.covmats import dataset_t0_predictions
 
@@ -24,3 +28,35 @@ def test_closuretest_commondata_tuple():
     )
 
     assert_allclose(ct_cd_tuple[0].central_values, t0_pred, rtol=1e-6)
+
+
+def test_experimental_commondata_tuple():
+    """
+    Test that experimental_commondata_tuple returns a tuple of CommonData objects. 
+    """
+
+    data = SuperNetAPI.data(**TEST_DATASETS)
+    result = experimental_commondata_tuple(data)
+
+    # Check that experimental_commondata_tuple produces a tuple
+    assert isinstance(result, tuple)
+
+    # Check that experimental_commondata_tuple produces a tuple of CommonData objects
+    for commondata_instance in result:
+        assert isinstance(commondata_instance, CommonData)
+
+def test_pseudodata_commondata_tuple():
+    """
+    Test that pseudodata_commondata_tuple returns a tuple of CommonData objects.
+    """
+
+    data = SuperNetAPI.data(**TEST_DATASETS)
+    exp_tuple = experimental_commondata_tuple(data)
+    result = pseudodata_commondata_tuple(data, exp_tuple, 123456)
+
+    # Check that pseudodata_commondata_tuple produces a tuple
+    assert isinstance(result, tuple)
+
+    # Check that pseudodata_commondata_tuple produces a tuple of CommonData objects
+    for commondata_instance in result:
+        assert isinstance(commondata_instance, CommonData) 
