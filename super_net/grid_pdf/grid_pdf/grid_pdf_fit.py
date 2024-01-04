@@ -90,9 +90,7 @@ def ultranest_grid_fit(
     log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
     if n_posterior_samples > ultranest_result["samples"].shape[0]:
-        n_posterior_samples = ultranest_result["samples"].shape[0] - int(
-            0.1 * ultranest_result["samples"].shape[0]
-        )
+        n_posterior_samples = ultranest_result["samples"].shape[0]
         log.warning(
             f"The chosen number of posterior samples exceeds the number of posterior"
             "samples computed by ultranest. Setting the number of resampled posterior"
