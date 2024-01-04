@@ -2,11 +2,16 @@ import pandas as pd
 
 from super_net.api import API as SuperNetAPI
 
-from super_net.commondata_utils import experimental_commondata_tuple, pseudodata_commondata_tuple
+from super_net.commondata_utils import (
+        experimental_commondata_tuple, 
+        pseudodata_commondata_tuple,
+        central_covmat_index,
+        CentralCovmatIndex,
+    )
 
 from validphys.coredata import CommonData
 
-from super_net.tests.conftest import TEST_DATASETS, CLOSURE_TEST_PDFSET
+from super_net.tests.conftest import TEST_DATASETS, CLOSURE_TEST_PDFSET, T0_PDFSET
 from validphys.covmats import dataset_t0_predictions
 
 from numpy.testing import assert_allclose
@@ -78,3 +83,17 @@ def test_pseudodata_commondata_tuple():
             result[i].commondata_table.iloc[:,1:].to_numpy(dtype=float),
             pd.read_csv(path).iloc[:,1:].to_numpy(dtype=float),
         )
+
+def test_central_covmat_index():
+    """
+    Test that CentralCovmatIndex object is produced correctly.
+    """
+
+    data = SuperNetAPI.data(**TEST_DATASETS)
+    covmat = SuperNetAPI.covariance_matrix(**{**TEST_DATASETS, **T0_PDFSET})
+    exp_tuple = experimental_commondata_tuple(data)
+
+    result = central_covmat_index(exp_tuple, covmat)
+
+    # Check that central_covmat_index produces a CentralCovmatIndex object
+    assert isinstance(result, CentralCovmatIndex)
