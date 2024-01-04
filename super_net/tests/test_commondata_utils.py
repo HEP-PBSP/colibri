@@ -1,5 +1,6 @@
 import pandas as pd
 import pathlib
+import jax.numpy as jnp
 
 from super_net.api import API as SuperNetAPI
 
@@ -99,3 +100,11 @@ def test_central_covmat_index():
 
     # Check that central_covmat_index produces a CentralCovmatIndex object
     assert isinstance(result, CentralCovmatIndex)
+
+    # Check that CentralCovmatIndex has the required attributes, of the correct types
+    assert hasattr(result, 'central_values')
+    assert isinstance(result.central_values, jnp.ndarray)
+    assert hasattr(result, 'covmat')
+    assert isinstance(result.covmat, jnp.ndarray)
+    assert hasattr(result, 'central_values_idx')
+    assert isinstance(result.central_values_idx, jnp.ndarray)
