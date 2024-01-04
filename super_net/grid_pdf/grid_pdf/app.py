@@ -25,7 +25,7 @@ class GridPdfApp(SuperNetApp):
 
     @property
     def argparser(self):
-        """Parser arguments for wmin app can be added here"""
+        """Parser arguments for grid_pdf app can be added here"""
         parser = super().argparser
 
         parser.add_argument(
