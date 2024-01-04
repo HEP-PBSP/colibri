@@ -108,3 +108,7 @@ def test_central_covmat_index():
     assert isinstance(result.covmat, jnp.ndarray)
     assert hasattr(result, 'central_values_idx')
     assert isinstance(result.central_values_idx, jnp.ndarray)
+
+    # Check that dimensions of attributes are correct
+    assert result.central_values.shape[0] == result.covmat.shape[0]
+    assert result.central_values_idx.shape[0] == result.central_values.shape[0]
