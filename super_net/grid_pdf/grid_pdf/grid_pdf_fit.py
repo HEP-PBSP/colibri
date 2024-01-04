@@ -1,7 +1,7 @@
 from grid_pdf.grid_pdf_model import FLAVOUR_MAPPING
 from validphys.convolution import FK_FLAVOURS
 
-from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_ultranest_result
+from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples
 from super_net.ns_utils import resample_from_ns_posterior
 
 from validphys.loader import Loader
@@ -123,7 +123,7 @@ def perform_nested_sampling_grid_pdf_fit(
     """
 
     # Produce the LHAPDF grid
-    lhapdf_grid_pdf_ultranest_result(
+    lhapdf_grid_pdf_from_samples(
         ultranest_grid_fit,
         reduced_xgrids,
         flavour_indices,

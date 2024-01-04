@@ -75,8 +75,8 @@ for i in range(num_flav):
 
 evolution_to_export_matrix = np.linalg.inv(export_to_evolution_matrix)    
 
-def lhapdf_grid_pdf_ultranest_result(
-        ultranest_grid_fit,
+def lhapdf_grid_pdf_from_samples(
+        samples,
         reduced_xgrids,
         flavour_indices,
         length_reduced_xgrids,
@@ -101,7 +101,7 @@ def lhapdf_grid_pdf_ultranest_result(
         rep_path = ns_replicas_path + '/replica_' + str(i+1)
         if not os.path.exists(rep_path):
             os.mkdir(rep_path)
-        exportgrid = write_exportgrid(ultranest_grid_fit, reduced_xgrids, length_reduced_xgrids, flavour_indices, i)
+        exportgrid = write_exportgrid(samples, reduced_xgrids, length_reduced_xgrids, flavour_indices, i)
         with open(rep_path+'/'+fit_name+'.exportgrid', 'w') as outfile:
             yaml.dump(exportgrid, outfile)
 
