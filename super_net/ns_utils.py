@@ -22,7 +22,7 @@ def resample_from_ns_posterior(
     rng = jax.random.PRNGKey(posterior_resampling_seed)
 
     resampled_samples = jax.random.choice(
-        rng, len(samples), (n_posterior_samples,), replace=False
+        rng, samples, (n_posterior_samples,), replace=False
     )
 
-    return jnp.array(current_samples[resampled_samples])
+    return jnp.array(current_samples)
