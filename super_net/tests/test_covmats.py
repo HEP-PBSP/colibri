@@ -1,12 +1,21 @@
 import pathlib
 import pandas as pd
+import numpy as np
 
-from super_net.covmats import sqrt_covmat_jax, dataset_inputs_covmat_from_systematics
+from super_net.covmats import (
+        sqrt_covmat_jax, 
+        dataset_inputs_covmat_from_systematics,
+        super_net_dataset_inputs_t0_predictions,
+    )
 
 from super_net.api import API as SuperNetAPI
-from super_net.tests.conftest import TEST_DATASETS
+from super_net.tests.conftest import TEST_DATASETS, T0_PDFSET
 
 from super_net.commondata_utils import experimental_commondata_tuple
+from super_net.constants import XGRID
+
+from validphys.core import PDF
+from validphys import convolution
 
 import jax
 import jax.numpy as jnp
@@ -55,3 +64,28 @@ def test_dataset_inputs_covmat_from_systematics():
         result,
         pd.read_csv(path).to_numpy(dtype=float),
     )    
+
+def test_super_net_dataset_inputs_t0_predictions():
+    """
+    Test the t0_predictions.
+    """
+
+    _pred_func = SuperNetAPI._pred_t0data(**TEST_DATASETS)
+    t0_pdf_grid = jnp.array(
+        convolution.evolution.grid_values(
+            PDF(T0_PDFSET["t0pdfset"]), convolution.FK_FLAVOURS, XGRID, [1.65]
+        ).squeeze(-1)
+    )
+    t0predictions = super_net_dataset_inputs_t0_predictions(_pred_func, t0_pdf_grid)
+
+    # Check that the result is a list of numpy arrays
+    assert isinstance(t0predictions, list)
+    for pred in t0predictions:
+        assert isinstance(pred, np.ndarray)
+
+    # Check that the result is correct for the given datasets
+    path = TEST_COVMATS_FOLDER/'NMC_t0_predictions.csv'
+    assert_allclose(
+        t0predictions,
+        pd.read_csv(path).to_numpy(dtype=float),
+    )
