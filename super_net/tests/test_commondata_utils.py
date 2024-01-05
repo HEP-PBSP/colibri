@@ -92,11 +92,7 @@ def test_central_covmat_index():
     Test that CentralCovmatIndex object is produced correctly.
     """
 
-    data = SuperNetAPI.data(**TEST_DATASETS)
-    covmat = SuperNetAPI.covariance_matrix(**{**TEST_DATASETS, **T0_PDFSET})
-    exp_tuple = experimental_commondata_tuple(data)
-
-    result = central_covmat_index(exp_tuple, covmat)
+    result = SuperNetAPI.central_covmat_index(**{**TEST_DATASETS, **T0_PDFSET})
 
     # Check that central_covmat_index produces a CentralCovmatIndex object
     assert isinstance(result, CentralCovmatIndex)
