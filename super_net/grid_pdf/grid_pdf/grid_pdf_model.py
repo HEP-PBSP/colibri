@@ -23,6 +23,8 @@ from super_net.constants import XGRID
 
 from super_net.pdf_model import PDFModel
 
+from validphys.convolution import FK_FLAVOURS
+
 """
 Specifies which flavours to include in a fit.
 """
@@ -30,10 +32,22 @@ FLAVOUR_MAPPING = [1, 2, 3]
 
 class GridPDF(PDFModel):
 
-    def __init__(self, interpolate_grid, length_reduced_xgrids, flavour_indices):
+    def __init__(self, interpolate_grid, reduced_xgrids, length_reduced_xgrids, flavour_indices, grid_pdf_model_prior):
         self.interpolate_grid = interpolate_grid
         self.length_reduced_xgrids = length_reduced_xgrids
         self.flavour_indices = flavour_indices
+        self.grid_pdf_model_prior = grid_pdf_model_prior
+        self.reduced_xgrids = reduced_xgrids
+
+    @property
+    def param_names(self):
+        return [
+            f"{FK_FLAVOURS[i]}({j})" for i in self.flavour_indices for j in self.reduced_xgrids[i]
+        ]
+
+    @property
+    def bayesian_prior(self):
+        return self.grid_pdf_model_prior
 
     @property
     def init_params(self):
@@ -44,10 +58,12 @@ class GridPDF(PDFModel):
 
 def grid_pdf_model(
     interpolate_grid,
+    reduced_xgrids,
     length_reduced_xgrids,
     flavour_indices,
+    grid_pdf_model_prior,
     ):
-    return GridPDF(interpolate_grid, length_reduced_xgrids, flavour_indices)
+    return GridPDF(interpolate_grid, reduced_xgrids, length_reduced_xgrids, flavour_indices, grid_pdf_model_prior)
 
 def interpolate_grid(
     reduced_xgrids,

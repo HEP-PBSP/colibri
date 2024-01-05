@@ -38,7 +38,7 @@ set_name: 161023_wmin_monte_carlo_heracomb_nc_02
 ############################
 replica_index: 1
 
-model: weight_minimisation
+model: grid_pdf
 
 #####################
 # Wmin PDF parameters
@@ -76,7 +76,6 @@ pdf_prior: NNPDF31_nnlo_as_0118
 sigma_pdf_prior: 1
 min_num_live_points: 500
 min_ess: 50
-trval_index: 1
 vectorized: False
 ndraw_max: 500
 
