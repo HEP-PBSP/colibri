@@ -8,16 +8,9 @@ Note: several functions are taken from validphys.config
 Date: 11.11.2023
 """
 
-from super_net.config import SuperNetConfig, Environment
-
-
-class Environment(Environment):
-    pass
-
-
-class WminConfig(SuperNetConfig):
+class WminConfig():
     """
-    WminConfig class Inherits from super_net.config.SuperNetConfig
+    WminConfig class
     """
 
     def parse_wminpdfset(self, name):

@@ -1,0 +1,66 @@
+dataset_inputs:
+   - {'dataset':'NMC'}
+  
+positivity:
+  posdatasets:
+  - {dataset: POSF2U, maxlambda: 1e6}        # Positivity Lagrange Multiplier
+
+theoryid: 400
+use_cuts: internal
+
+# wmin basis specs
+wminpdfset: NNPDF40_nnlo_as_01180
+n_replicas_wmin: 2
+wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
+use_same_wmin_param_per_replica: True
+
+# closure test
+fakedata: True
+pseudodata: True
+closure_test_pdf: NNPDF40_nnlo_as_01180
+
+# positivity
+lambda_positivity: 0 # do not include positivity
+
+# monte carlo fit specs
+use_t0: True
+t0pdfset: NNPDF40_nnlo_as_01180
+
+# training specs
+max_epochs: 1000
+patience: 10
+trval_index: 1
+use_same_trval_split_per_replica: True
+weights_initializer: uniform
+uniform_minval: -0.3
+uniform_maxval: 0.3
+
+# lhapdf output
+n_replicas: 2
+set_name: 161023_wmin_monte_carlo_heracomb_nc_02
+
+replica_index: 1
+model: grid_pdf
+
+#####################
+# Grid PDF parameters
+#####################
+flavour_mapping: ["\\Sigma", "g", V]
+xgrids:
+  photon: []
+  \Sigma: [0.01, 0.02, 0.1, 0.2]
+  g: [0.01, 0.02, 0.1, 0.2]
+  V: [0.01, 0.02, 0.1, 0.2]
+  V3: []
+  V8: []
+  V15: []
+  V24: []
+  V35: []
+  T3: []
+  T8: []
+  T15: []
+  T24: []
+  T35: []
+
+actions_:
+- mc_fit

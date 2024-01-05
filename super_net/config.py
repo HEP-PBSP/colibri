@@ -18,16 +18,33 @@ from super_net.core import SuperNetDataGroupSpec
 
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
 
+from wmin.config import WminConfig
+from wmin import wmin_model
+
+from grid_pdf.config import GridPdfConfig
+from grid_pdf import grid_pdf_model
 
 class Environment(Environment):
     pass
 
-
-class SuperNetConfig(Config):
+class SuperNetConfig(Config, WminConfig, GridPdfConfig):
     """
     Config class inherits from validphys
     Config class
     """
+
+    @explicit_node
+    def produce_pdf_model(
+        self,
+        model,
+    ):
+        """Produces the PDF model based on the runcard, and its parameters.
+        """
+        if model == "weight_minimisation":
+            return wmin_model.wmin_model
+
+        elif model == "grid_pdf":
+            return grid_pdf_model.grid_pdf_model
 
     def produce_data(
         self,

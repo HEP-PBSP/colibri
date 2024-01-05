@@ -7,16 +7,11 @@ Author: Mark N. Costantini
 Date: 15.11.2023
 """
 
-from super_net.config import SuperNetConfig, Environment
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
 
-class Environment(Environment):
-    pass
-
-
-class GridPdfConfig(SuperNetConfig):
+class GridPdfConfig():
     """
-    GridConfig class Inherits from super_net.config.SuperNetConfig
+    GridConfig class
     """
 
     def parse_pdf_prior(self, name):

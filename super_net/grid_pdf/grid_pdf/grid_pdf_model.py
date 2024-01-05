@@ -21,12 +21,33 @@ from validphys import convolution
 
 from super_net.constants import XGRID
 
+from super_net.pdf_model import PDFModel
 
 """
 Specifies which flavours to include in a fit.
 """
 FLAVOUR_MAPPING = [1, 2, 3]
 
+class GridPDF(PDFModel):
+
+    def __init__(self, interpolate_grid, length_reduced_xgrids, flavour_indices):
+        self.interpolate_grid = interpolate_grid
+        self.length_reduced_xgrids = length_reduced_xgrids
+        self.flavour_indices = flavour_indices
+
+    @property
+    def init_params(self):
+        return jnp.array([0.0]*(self.length_reduced_xgrids*len(self.flavour_indices)))
+
+    def grid_values(self, params):
+        return self.interpolate_grid(params)
+
+def grid_pdf_model(
+    interpolate_grid,
+    length_reduced_xgrids,
+    flavour_indices,
+    ):
+    return GridPDF(interpolate_grid, length_reduced_xgrids, flavour_indices)
 
 def interpolate_grid(
     reduced_xgrids,
