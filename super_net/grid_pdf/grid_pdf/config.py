@@ -39,22 +39,20 @@ class GridPdfConfig(SuperNetConfig):
         return {FLAVOUR_TO_ID_MAPPING[flav] : val for (flav,val) in xgrids.items()}
 
     @explicit_node
-    def produce_commondata_tuple(self, pseudodata=False, fakedata=False, some_condition_to_decided=None):
+    def produce_commondata_tuple(self, pseudodata=False, fakedata=False):
         """
         Note: this is needed so as to construct synthetic data (closure test data) using an
         interpolated grid.
         Hence there must be some logic so that this is only used for closure tests.
         """
 
-        if some_condition_to_decided is not None:
+        if fakedata:
 
-            if pseudodata and fakedata:
+            if pseudodata:
                 # closure test pseudodata
                 return grid_pdf_commondata_utils.grid_pdf_closuretest_pseudodata_commondata_tuple
             
-            elif fakedata:
-                # closure test fake-data
-                return grid_pdf_commondata_utils.grid_pdf_closuretest_commondata_tuple
+            return grid_pdf_commondata_utils.grid_pdf_closuretest_commondata_tuple
 
         else:
             return super().produce_commondata_tuple(pseudodata=pseudodata, fakedata=fakedata)
