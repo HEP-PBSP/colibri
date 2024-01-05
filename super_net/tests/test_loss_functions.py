@@ -20,9 +20,7 @@ def test_make_chi2_training_data():
     -  
     """
 
-    data = SuperNetAPI._data_values(**{**TEST_DATASETS, **T0_PDFSET, **TRVAL_INDEX})
-    pred_data = SuperNetAPI._pred_data(**TEST_DATASETS)
-    result = make_chi2_training_data(data, pred_data)
+    result = SuperNetAPI.make_chi2_training_data(**{**TEST_DATASETS, **T0_PDFSET, **TRVAL_INDEX})
 
     # Check that make_chi2_training_data is a jit-compiled function
     assert isinstance(result, jaxlib.xla_extension.PjitFunction)
