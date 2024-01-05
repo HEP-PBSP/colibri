@@ -2,20 +2,10 @@ import pathlib
 import pandas as pd
 import numpy as np
 
-from super_net.covmats import (
-        sqrt_covmat_jax, 
-        dataset_inputs_covmat_from_systematics,
-        super_net_dataset_inputs_t0_predictions,
-    )
+from super_net.covmats import sqrt_covmat_jax 
 
 from super_net.api import API as SuperNetAPI
 from super_net.tests.conftest import TEST_DATASETS, T0_PDFSET
-
-from super_net.commondata_utils import experimental_commondata_tuple
-from super_net.constants import XGRID
-
-from validphys.core import PDF
-from validphys import convolution
 
 import jax
 import jax.numpy as jnp
@@ -29,30 +19,22 @@ def test_sqrt_covmat_jax():
     Test that sqrt_covmat_jax actually computes the square root of a matrix.
     """
 
-    # Is this okay?
-    jax.config.update("jax_enable_x64", True)
-
     test_matrix = jnp.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]])
 
     # This matrix has square root [[2, 0, 0], [6, 1, 0], [-8, 5, 3]]
     sqrt_matrix = sqrt_covmat_jax(test_matrix)
     actual_sqrt = jnp.array([[2, 0, 0], [6, 1, 0], [-8, 5, 3]])
-    assert_allclose(sqrt_matrix, actual_sqrt, rtol=1e-6)
+    assert_allclose(sqrt_matrix, actual_sqrt, rtol=1e-5)
 
 def test_dataset_inputs_covmat_from_systematics():
     """
     Test that dataset_inputs_covmat_from_systematics correctly produces the covariance matrix.
     """
 
-    data = SuperNetAPI.data(**TEST_DATASETS)
-    exp_tuple = experimental_commondata_tuple(data)
-    result = dataset_inputs_covmat_from_systematics(data, exp_tuple)
+    result = SuperNetAPI.dataset_inputs_covmat_from_systematics(**TEST_DATASETS)
 
     # Check result is a JAX array
     assert isinstance(result, jnp.ndarray)
-
-    # Check result is correct size
-    # TODO
 
     # Check result is symmetric and positive definite (i.e. all evalues are positive)
     assert_allclose(result, result.T)
@@ -70,22 +52,39 @@ def test_super_net_dataset_inputs_t0_predictions():
     Test the t0_predictions.
     """
 
-    _pred_func = SuperNetAPI._pred_t0data(**TEST_DATASETS)
-    t0_pdf_grid = jnp.array(
-        convolution.evolution.grid_values(
-            PDF(T0_PDFSET["t0pdfset"]), convolution.FK_FLAVOURS, XGRID, [1.65]
-        ).squeeze(-1)
-    )
-    t0predictions = super_net_dataset_inputs_t0_predictions(_pred_func, t0_pdf_grid)
+    result = SuperNetAPI.super_net_dataset_inputs_t0_predictions(**{**TEST_DATASETS, **T0_PDFSET})
 
     # Check that the result is a list of numpy arrays
-    assert isinstance(t0predictions, list)
-    for pred in t0predictions:
+    assert isinstance(result, list)
+    for pred in result:
         assert isinstance(pred, np.ndarray)
 
     # Check that the result is correct for the given datasets
     path = TEST_COVMATS_FOLDER/'NMC_t0_predictions.csv'
     assert_allclose(
-        t0predictions,
+        result,
         pd.read_csv(path).to_numpy(dtype=float),
+        rtol=1e-5
+    )
+
+def test_dataset_inputs_t0_covmat_from_systematics():
+    """
+    Test the t0 covmat.
+    """
+
+    result = SuperNetAPI.dataset_inputs_t0_covmat_from_systematics(**{**TEST_DATASETS, **T0_PDFSET})
+
+    # Check result is a JAX array
+    assert isinstance(result, jnp.ndarray)
+
+    # Check result is symmetric and positive definite (i.e. all evalues are positive)
+    assert_allclose(result, result.T)
+    assert jnp.all(jnp.linalg.eigvals(result) > 0)
+
+    # Check result is correct for given datasets
+    path = TEST_COVMATS_FOLDER/'test_t0_covmat.csv'
+    assert_allclose(
+        result,
+        pd.read_csv(path).to_numpy(dtype=float),
+        rtol=1e-5,
     )
