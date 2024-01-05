@@ -1,17 +1,28 @@
+"""
+grid_pdf.commondata_utils.py
+
+Module containing commondata and central covmat index functions.
+
+Author: Mark N. Costantini
+Date: 05.02.2024
+"""
+
 import jax.numpy as jnp
 
 from validphys import convolution
 
 from super_net.constants import XGRID
 from super_net.utils import FLAVOURS_ID_MAPPINGS
+from super_net.commondata_utils import closuretest_commondata_tuple, pseudodata_commondata_tuple
 
-from super_net.theory_predictions import make_pred_dataset
+from reportengine import collect
 
 
 def closure_test_pdf_grid_interpolated(closure_test_pdf, xgrids, Q0=1.65):
     """
-    Computes the closure_test_pdf grid in the evolution basis and
-
+    Computes the closure_test_pdf grid in the evolution basis and only on
+    x points that are specified in xgrids. The grid is then interpolated
+    to the full XGRID.
 
     Parameters
     ----------
@@ -30,7 +41,7 @@ def closure_test_pdf_grid_interpolated(closure_test_pdf, xgrids, Q0=1.65):
         grid, is N_rep x N_fl x N_x
     """
 
-    # Every flavour (even unused ones like photon) needs to have a reduced grid assigned to in xgrids
+    # Every flavour (even unused ones like photon) needs to have a reduced grid assigned to in xgrids,
     # the flavour selection/mapping is then done by flavour_mapping (flavour_indices)
 
     reduced_xgrid = jnp.concatenate(
@@ -60,7 +71,6 @@ def closure_test_pdf_grid_interpolated(closure_test_pdf, xgrids, Q0=1.65):
     return interpolated_xgrid 
     
 
-
 def grid_pdf_closuretest_commondata_tuple(
     data,
     experimental_commondata_tuple,
@@ -68,37 +78,24 @@ def grid_pdf_closuretest_commondata_tuple(
     flavour_indices=None,
 ):
     """
-    returns a tuple (validphys nodes should be immutable)
-    of commondata instances with experimental central values
-    replaced with theory predictions computed from a PDF `closure_test_pdf`
-    and fktables corresponding to datasets within data
-
-    Parameters
-    ----------
-    data: super_net.core.SuperNetDataGroupSpec
-
-    experimental_commondata_tuple: tuple
-        tuple of commondata with experimental central values
-
-    closure_test_pdf_grid: jnp.array
-        grid is of shape N_rep x N_fl x N_x
-
-    Returns
-    -------
-    tuple
-        tuple of validphys.coredata.CommonData instances
+    Like super_net.commondata_utils.closuretest_commondata_tuple but for a 
+    closure_test_pdf_grid_interpolated instead of a closure_test_pdf_grid.
     """
+    return closuretest_commondata_tuple(data, experimental_commondata_tuple, closure_test_pdf_grid_interpolated, flavour_indices)
 
-    fake_data = []
-    for cd, ds in zip(experimental_commondata_tuple, data.datasets):
-        if cd.setname != ds.name:
-            raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
-        # replace central values with theory prediction from `closure_test_pdf`
-        fake_data.append(
-            cd.with_central_value(
-                make_pred_dataset(ds, flavour_indices=flavour_indices)(
-                    closure_test_pdf_grid_interpolated[0]
-                )
-            )
-        )
-    return tuple(fake_data)
+
+def grid_pdf_closuretest_pseudodata_commondata_tuple(data, grid_pdf_closuretest_commondata_tuple, replica_seed):
+    """
+    Like super_net.commondata_utils.pseudodata_commondata_tuple but for a grid_pdf_closuretest_commondata_tuple.
+    """
+    return pseudodata_commondata_tuple(data, grid_pdf_closuretest_commondata_tuple, replica_seed)
+
+
+"""
+Collect over multiple random seeds so as to generate multiple commondata instances.
+To be used in a Monte Carlo closure test fit.
+"""
+collect_grid_pdf_closuretest_pseudodata_commondata_tuple = collect(
+    "grid_pdf_closuretest_pseudodata_commondata_tuple",
+    ("replica_indices",),
+)

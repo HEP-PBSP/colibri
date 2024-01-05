@@ -10,7 +10,7 @@ from reportengine.configparser import explicit_node
 
 from super_net.config import SuperNetConfig, Environment
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
-from grid_pdf import grid_pdf_commondata_utils
+from grid_pdf import commondata_utils as grid_pdf_commondata_utils
 
 class Environment(Environment):
     pass
@@ -43,7 +43,6 @@ class GridPdfConfig(SuperNetConfig):
         """
         Note: this is needed so as to construct synthetic data (closure test data) using an
         interpolated grid.
-        Hence there must be some logic so that this is only used for closure tests.
         """
 
         if fakedata:
