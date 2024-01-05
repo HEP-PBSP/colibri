@@ -14,6 +14,12 @@ class PDFModel(ABC):
     """
 
     @abstractproperty
+    def param_names(self):
+        """This should return a list of names for the fitted parameters of the model.
+        """
+        pass
+
+    @abstractproperty
     def init_params(self):
         """This should return a valid list of initial model parameters, for MC fits.
         """
@@ -22,5 +28,11 @@ class PDFModel(ABC):
     @abstractmethod
     def grid_values(self, params):
         """This should return a PDF grid given some model parameters. 
+        """
+        pass
+
+    @abstractproperty
+    def bayesian_prior(self):
+        """This should return the Bayesian prior for a Nested Sampling fit.
         """
         pass

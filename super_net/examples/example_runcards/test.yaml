@@ -68,5 +68,17 @@ xgrids:
   T24: []
   T35: []
 
+###################
+# NS fit parameters
+###################
+bayesian_fit: True
+pdf_prior: NNPDF31_nnlo_as_0118
+sigma_pdf_prior: 1
+min_num_live_points: 500
+min_ess: 50
+trval_index: 1
+vectorized: False
+ndraw_max: 500
+
 actions_:
-- mc_fit
+- ns_fit

@@ -22,12 +22,22 @@ from super_net.pdf_model import PDFModel
 
 class WMinPDF(PDFModel):
 
-    def __init__(self, weight_minimization_grid):
+    def __init__(self, weight_minimization_grid, weight_minimization_prior, n_replicas_wmin):
         self.weight_minimization_grid = weight_minimization_grid
+        self.weight_minimization_prior = weight_minimization_prior
+        self.n_replicas_wmin = n_replicas_wmin
+
+    @property
+    def param_names(self):
+        return [f"w_{i+1}" for i in range(self.n_replicas_wmin)]
 
     @property
     def init_params(self):
         return self.weight_minimization_grid.init_wmin_weights
+
+    @property
+    def bayesian_prior(self):
+        return self.weight_minimization_prior
 
     def grid_values(self, params):
         wmin_weights = jnp.concatenate((jnp.array([1.0]), params))
@@ -37,9 +47,11 @@ class WMinPDF(PDFModel):
         return grid
 
 def wmin_model(
-    weight_minimization_grid
+    weight_minimization_grid,
+    weight_minimization_prior,
+    n_replicas_wmin,
     ):
-    return WMinPDF(weight_minimization_grid)
+    return WMinPDF(weight_minimization_grid, weight_minimization_prior, n_replicas_wmin)
 
 @dataclass(frozen=True)
 class WeightMinimizationGrid:

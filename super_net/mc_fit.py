@@ -11,6 +11,10 @@ import jax
 import optax
 import logging
 
+import ultranest
+import ultranest.stepsampler as ustepsampler
+import time
+
 from super_net.data_batch import data_batches
 
 log = logging.getLogger(__name__)
@@ -91,4 +95,106 @@ def mc_fit(
             )
             log.info(f"epoch:{i}, early_stopper: {early_stopper}")
 
+    return 0
+
+def ns_fit(
+    _chi2_with_positivity,
+    pdf_model,
+    output_path,
+    min_num_live_points,
+    min_ess,
+    n_posterior_samples=1000,
+    posterior_resampling_seed=123456,
+    vectorized=False,
+    ndraw_max=1000,
+    slice_sampler=False,
+    slice_steps=100,
+    resume=True,
+):
+    """
+    TODO
+    """
+
+    parameters = pdf_model.param_names
+    log_dir = output_path / "ultranest"
+
+    @jax.jit
+    def log_likelihood(params):
+        """
+        TODO
+        """
+        pdf = pdf_model.grid_values(params)
+        return -0.5 * _chi2_with_positivity(pdf)
+
+    """TODO
+    @jax.jit
+    def log_likelihood_vectorized(weights):
+        wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
+        pdf = jnp.einsum(
+            "ri,ijk -> rjk", wmin_weights, weight_minimization_grid.wmin_INPUT_GRID
+        )
+
+        return -0.5 * _chi2_with_positivity(pdf)
+
+    if vectorized:
+        sampler = ultranest.ReactiveNestedSampler(
+            parameters,
+            log_likelihood_vectorized,
+            weight_minimization_prior,
+            vectorized=True,
+            ndraw_max=ndraw_max,
+            log_dir=log_dir,
+            resume=resume,
+        )
+
+    else:
+    """
+    sampler = ultranest.ReactiveNestedSampler(
+        parameters,
+        log_likelihood,
+        pdf_model.bayesian_prior,
+        log_dir=log_dir,
+        resume=resume,
+    )
+
+    if slice_sampler:
+        sampler.stepsampler = ustepsampler.SliceSampler(
+            nsteps=slice_steps,
+            generate_direction=ustepsampler.generate_mixture_random_direction,
+        )
+
+    t0 = time.time()
+    ultranest_result = sampler.run(
+        min_num_live_points=min_num_live_points,
+        min_ess=min_ess,
+    )
+    t1 = time.time()
+    log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
+
+    if n_posterior_samples > ultranest_result["samples"].shape[0]:
+        n_posterior_samples = ultranest_result["samples"].shape[0] - int(
+            0.1 * ultranest_result["samples"].shape[0]
+        )
+        log.warning(
+            f"The chosen number of posterior samples exceeds the number of posterior"
+            "samples computed by ultranest. Setting the number of resampled posterior"
+            f"samples to {n_posterior_samples}"
+        )
+
+    """
+    resampled_posterior = resample_from_wmin_posterior(
+        ultranest_result["samples"],
+        n_wmin_posterior_samples,
+        wmin_posterior_resampling_seed,
+    )
+
+    # Store run plots to ultranest output folder
+    sampler.plot()
+
+    return UltranestWeightMinimizationFit(
+        **weight_minimization_grid.to_dict(),
+        optimised_wmin_weights=resampled_posterior,
+        ultranest_result=ultranest_result,
+    )
+    """
     return 0
