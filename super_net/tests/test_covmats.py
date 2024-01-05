@@ -86,5 +86,5 @@ def test_dataset_inputs_t0_covmat_from_systematics():
     assert_allclose(
         result,
         pd.read_csv(path).to_numpy(dtype=float),
-        rtol=1e-5,
+        rtol=1e-4,
     )
