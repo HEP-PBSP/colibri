@@ -12,6 +12,7 @@ from super_net.config import SuperNetConfig, Environment
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
 from grid_pdf import commondata_utils as grid_pdf_commondata_utils
 
+
 class Environment(Environment):
     pass
 
@@ -24,19 +25,21 @@ class GridPdfConfig(SuperNetConfig):
     def parse_pdf_prior(self, name):
         """PDF set used to generate prior values in grid fit"""
         return self.parse_pdf(name)
-    
+
     def produce_length_reduced_xgrids(self, xgrids):
         """The reduced x-grids used in the fit, organised by flavour."""
-        lengths = [len(val) for (_,val) in xgrids.items()]
+        lengths = [len(val) for (_, val) in xgrids.items()]
         # Remove all zero-length lists
         lengths = list(filter((0).__ne__, lengths))
         if not all(x == lengths[0] for x in lengths):
-            raise ValueError("Cannot currently support reduced x-grids of different lengths.")
+            raise ValueError(
+                "Cannot currently support reduced x-grids of different lengths."
+            )
         return lengths[0]
 
     def produce_reduced_xgrids(self, xgrids):
         """The reduced x-grids used in the fit, organised by flavour."""
-        return {FLAVOUR_TO_ID_MAPPING[flav] : val for (flav,val) in xgrids.items()}
+        return {FLAVOUR_TO_ID_MAPPING[flav]: val for (flav, val) in xgrids.items()}
 
     @explicit_node
     def produce_commondata_tuple(self, pseudodata=False, fakedata=False):
@@ -46,13 +49,15 @@ class GridPdfConfig(SuperNetConfig):
         """
 
         if fakedata:
-
             if pseudodata:
                 # closure test pseudodata
-                return grid_pdf_commondata_utils.grid_pdf_closuretest_pseudodata_commondata_tuple
-            
+                return (
+                    grid_pdf_commondata_utils.grid_pdf_closuretest_pseudodata_commondata_tuple
+                )
+
             return grid_pdf_commondata_utils.grid_pdf_closuretest_commondata_tuple
 
         else:
-            return super().produce_commondata_tuple(pseudodata=pseudodata, fakedata=fakedata)
-        
+            return super().produce_commondata_tuple(
+                pseudodata=pseudodata, fakedata=fakedata
+            )

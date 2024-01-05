@@ -1,7 +1,7 @@
 """
 grid_pdf.commondata_utils.py
 
-Module containing commondata and central covmat index functions.
+Module containing utils for grid_pdf closure test commondata.
 
 Author: Mark N. Costantini
 Date: 05.02.2024
@@ -13,7 +13,10 @@ from validphys import convolution
 
 from super_net.constants import XGRID
 from super_net.utils import FLAVOURS_ID_MAPPINGS
-from super_net.commondata_utils import closuretest_commondata_tuple, pseudodata_commondata_tuple
+from super_net.commondata_utils import (
+    closuretest_commondata_tuple,
+    pseudodata_commondata_tuple,
+)
 
 from reportengine import collect
 
@@ -54,22 +57,22 @@ def closure_test_pdf_grid_interpolated(closure_test_pdf, xgrids, Q0=1.65):
         axis=1,
     )
 
-    interpolated_xgrid = jnp.zeros((reduced_xgrid.shape[0], reduced_xgrid.shape[1], len(XGRID)))
+    interpolated_xgrid = jnp.zeros(
+        (reduced_xgrid.shape[0], reduced_xgrid.shape[1], len(XGRID))
+    )
 
     for rep_idx in range(reduced_xgrid.shape[0]):
-
         for fl_idx in range(reduced_xgrid.shape[1]):
-
-                interpolated_xgrid = interpolated_xgrid.at[rep_idx, fl_idx, :].set(
-                    jnp.interp(
-                        jnp.array(XGRID),
-                        jnp.array(xgrids[FLAVOURS_ID_MAPPINGS[fl_idx]]),
-                        reduced_xgrid[rep_idx, fl_idx, :],
-                    )
+            interpolated_xgrid = interpolated_xgrid.at[rep_idx, fl_idx, :].set(
+                jnp.interp(
+                    jnp.array(XGRID),
+                    jnp.array(xgrids[FLAVOURS_ID_MAPPINGS[fl_idx]]),
+                    reduced_xgrid[rep_idx, fl_idx, :],
                 )
-    
-    return interpolated_xgrid 
-    
+            )
+
+    return interpolated_xgrid
+
 
 def grid_pdf_closuretest_commondata_tuple(
     data,
@@ -78,17 +81,26 @@ def grid_pdf_closuretest_commondata_tuple(
     flavour_indices=None,
 ):
     """
-    Like super_net.commondata_utils.closuretest_commondata_tuple but for a 
+    Like super_net.commondata_utils.closuretest_commondata_tuple but for a
     closure_test_pdf_grid_interpolated instead of a closure_test_pdf_grid.
     """
-    return closuretest_commondata_tuple(data, experimental_commondata_tuple, closure_test_pdf_grid_interpolated, flavour_indices)
+    return closuretest_commondata_tuple(
+        data,
+        experimental_commondata_tuple,
+        closure_test_pdf_grid_interpolated,
+        flavour_indices,
+    )
 
 
-def grid_pdf_closuretest_pseudodata_commondata_tuple(data, grid_pdf_closuretest_commondata_tuple, replica_seed):
+def grid_pdf_closuretest_pseudodata_commondata_tuple(
+    data, grid_pdf_closuretest_commondata_tuple, replica_seed
+):
     """
     Like super_net.commondata_utils.pseudodata_commondata_tuple but for a grid_pdf_closuretest_commondata_tuple.
     """
-    return pseudodata_commondata_tuple(data, grid_pdf_closuretest_commondata_tuple, replica_seed)
+    return pseudodata_commondata_tuple(
+        data, grid_pdf_closuretest_commondata_tuple, replica_seed
+    )
 
 
 """
