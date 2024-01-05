@@ -8,12 +8,6 @@ positivity:
 theoryid: 400
 use_cuts: internal
 
-# wmin basis specs
-wminpdfset: NNPDF40_nnlo_as_01180
-n_replicas_wmin: 2
-wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
-use_same_wmin_param_per_replica: True
-
 # closure test
 fakedata: True
 pseudodata: True
@@ -39,8 +33,20 @@ uniform_maxval: 0.3
 n_replicas: 2
 set_name: 161023_wmin_monte_carlo_heracomb_nc_02
 
+############################
+# Monte Carlo fit parameters
+############################
 replica_index: 1
-model: grid_pdf
+
+model: weight_minimisation
+
+#####################
+# Wmin PDF parameters
+#####################
+wminpdfset: NNPDF40_nnlo_as_01180
+n_replicas_wmin: 2
+wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
+use_same_wmin_param_per_replica: True
 
 #####################
 # Grid PDF parameters
