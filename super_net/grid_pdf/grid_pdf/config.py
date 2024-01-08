@@ -58,6 +58,5 @@ class GridPdfConfig(SuperNetConfig):
             return grid_pdf_commondata_utils.grid_pdf_closuretest_commondata_tuple
 
         else:
-            return super().produce_commondata_tuple(
-                pseudodata=pseudodata, fakedata=fakedata
-            )
+            return super(GridPdfConfig, self).produce_commondata_tuple
+    
