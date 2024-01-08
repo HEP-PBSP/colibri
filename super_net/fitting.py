@@ -1,7 +1,7 @@
 """
-super_net.mc_fit.py
+super_net.fitting.py
 
-This module provides the functions necessary for performing a MC fit with super_net.
+This module provides the functions necessary for perform fits with super_net.
 
 Author: James Moore
 Date: 5.1.2023
