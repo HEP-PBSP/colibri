@@ -12,7 +12,6 @@ grid_pdf_providers = [
     *providers,
     "reportengine.report",
     "grid_pdf.grid_pdf_model",
-    "grid_pdf.grid_pdf_fit",
     "grid_pdf.provider_aliases",
 ]
 

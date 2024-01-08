@@ -18,6 +18,40 @@ from super_net.constants import XGRID
 from wmin.checks import check_wminpdfset_is_montecarlo
 from wmin.wmin_utils import weights_initializer_provider
 
+from super_net.pdf_model import PDFModel
+
+def pdf_model(
+    weight_minimization_grid,
+    weight_minimization_prior,
+    n_replicas_wmin,
+):
+    return WMinPDF(weight_minimization_grid, weight_minimization_prior, n_replicas_wmin)
+
+class WMinPDF(PDFModel):
+
+    def __init__(self, weight_minimization_grid, weight_minimization_prior, n_replicas_wmin):
+        self.weight_minimization_grid = weight_minimization_grid
+        self.weight_minimization_prior = weight_minimization_prior
+        self.n_replicas_wmin = n_replicas_wmin
+
+    @property
+    def param_names(self):
+        return [f"w_{i+1}" for i in range(self.n_replicas_wmin)]
+
+    @property
+    def init_params(self):
+        return self.weight_minimization_grid.init_wmin_weights
+
+    @property
+    def bayesian_prior(self):
+        return self.weight_minimization_prior
+
+    def grid_values(self, params):
+        wmin_weights = jnp.concatenate((jnp.array([1.0]), params))
+        grid = jnp.einsum(
+            "i,ijk", wmin_weights, self.weight_minimization_grid.wmin_INPUT_GRID
+        )
+        return grid
 
 @dataclass(frozen=True)
 class WeightMinimizationGrid:

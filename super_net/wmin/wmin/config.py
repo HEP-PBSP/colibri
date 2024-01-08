@@ -9,7 +9,7 @@ Date: 11.11.2023
 """
 
 from super_net.config import SuperNetConfig, Environment
-
+from wmin.wmin_model import WMinPDF
 
 class Environment(Environment):
     pass

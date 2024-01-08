@@ -21,6 +21,7 @@ providers = [
     "super_net.covmats",
     "super_net.plots_and_tables.plotting",
     "super_net.provider_aliases",
+    "super_net.fitting",
 ]
 
 
