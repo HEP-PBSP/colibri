@@ -8,7 +8,7 @@ Note: several functions are taken from validphys.config
 Date: 11.11.2023
 """
 
-class WminConfig():
+class Config():
     """
     WminConfig class
     """

@@ -9,7 +9,7 @@ Date: 15.11.2023
 
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
 
-class GridPdfConfig():
+class Config():
     """
     GridConfig class
     """

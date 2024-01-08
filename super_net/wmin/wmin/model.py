@@ -46,7 +46,7 @@ class WMinPDF(PDFModel):
         )
         return grid
 
-def wmin_model(
+def model(
     weight_minimization_grid,
     weight_minimization_prior,
     n_replicas_wmin,

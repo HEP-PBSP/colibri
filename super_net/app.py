@@ -6,8 +6,10 @@ Date: 11.11.2023
 """
 from validphys.app import App
 from super_net.config import SuperNetConfig
+from super_net.model_list import model_names
 
 import pathlib
+import yaml
 
 providers = [
     "reportengine.report",
@@ -25,8 +27,9 @@ providers = [
     "super_net.fitting",
 ]
 
-from wmin.app import wmin_providers
-from grid_pdf.app import grid_pdf_providers
+model_providers = []
+for name in model_names:
+    model_providers += __import__(name + '.app').app.providers
 
 class SuperNetApp(App):
     config_class = SuperNetConfig
@@ -52,7 +55,7 @@ class SuperNetApp(App):
         return args
 
 def main():
-    a = SuperNetApp(name="super_net", providers=providers+wmin_providers+grid_pdf_providers)
+    a = SuperNetApp(name="super_net", providers=providers+model_providers)
     a.main()
 
 

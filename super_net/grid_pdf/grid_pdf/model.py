@@ -56,7 +56,7 @@ class GridPDF(PDFModel):
     def grid_values(self, params):
         return self.interpolate_grid(params)
 
-def grid_pdf_model(
+def model(
     interpolate_grid,
     reduced_xgrids,
     length_reduced_xgrids,
