@@ -145,3 +145,10 @@ def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
         ).squeeze(-1)
     )
     return grid
+
+
+def closure_test_central_pdf_grid(closure_test_pdf_grid):
+    """
+    Returns the central replica of the closure test pdf grid.
+    """
+    return closure_test_pdf_grid[0]
