@@ -101,9 +101,9 @@ class GridPdfFit:
 
 
 def grid_pdf_mc_fit(
-    make_chi2_training_data_with_positivity,
-    make_chi2_validation_data_with_positivity,
-    make_data_values,
+    _chi2_training_data_with_positivity,
+    _chi2_validation_data_with_positivity,
+    _data_values,
     xgrids,
     interpolate_grid,
     init_stacked_pdf_grid,
@@ -115,15 +115,13 @@ def grid_pdf_mc_fit(
     alpha=1e-7,
     lambda_positivity=1000,
 ):
-    """
-    To fill.
-    """
+    """ """
 
     @jax.jit
     def loss_training(stacked_pdf_grid, batch_idx):
         pdf = interpolate_grid(stacked_pdf_grid)
 
-        return make_chi2_training_data_with_positivity(
+        return _chi2_training_data_with_positivity(
             pdf, batch_idx, alpha, lambda_positivity
         )
 
@@ -131,7 +129,7 @@ def grid_pdf_mc_fit(
     def loss_validation(stacked_pdf_grid):
         pdf = interpolate_grid(stacked_pdf_grid)
 
-        return make_chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
+        return _chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
 
     @jax.jit
     def step(params, opt_state, batch_idx):
@@ -147,7 +145,7 @@ def grid_pdf_mc_fit(
     stacked_pdf_grid = init_stacked_pdf_grid.copy()
 
     data_batch = data_batches(
-        make_data_values.training_data.n_training_points, batch_size, batch_seed
+        _data_values.training_data.n_training_points, batch_size, batch_seed
     )
     batches = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
@@ -168,7 +166,7 @@ def grid_pdf_mc_fit(
 
         epoch_val_loss += (
             loss_validation(stacked_pdf_grid)
-            / make_data_values.validation_data.n_validation_points
+            / _data_values.validation_data.n_validation_points
         )
         epoch_loss /= num_batches
 
