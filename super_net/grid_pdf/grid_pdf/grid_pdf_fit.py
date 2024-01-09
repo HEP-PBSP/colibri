@@ -198,7 +198,7 @@ def grid_pdf_mc_fit(
 """
 Collect over multiple replica fits.
 """
-mc_replicas_gridpdf_fit = collect("grid_pdf_mc_fit", ("all_gridpdf_collect_indices",))
+mc_replicas_gridpdf_fit = collect("grid_pdf_mc_fit", ("trval_replica_indices",))
 
 
 def perform_mc_gridpdf_fit(
