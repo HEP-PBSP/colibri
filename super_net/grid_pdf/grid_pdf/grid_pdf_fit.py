@@ -115,7 +115,58 @@ def grid_pdf_mc_fit(
     alpha=1e-7,
     lambda_positivity=1000,
 ):
-    """ """
+    """This functions performs a Monte Carlo fit using the grid_pdf parametrisation.
+
+    Parameters
+    ----------
+    _chi2_training_data_with_positivity (PjitFunction):
+        Function that computes the chi2 of the training data.
+
+    _chi2_validation_data_with_positivity (PjitFunction):
+        Function that computes the chi2 of the validation data.
+
+    _data_values (dataclass):
+        Dataclass containing the training and validation data.
+
+    xgrids (dict):
+        Dictionary containing the xgrids for each flavour.
+
+    interpolate_grid (PjitFunction):
+        Function that performs the interpolation of the initial grid to the (14, 50) standard grid.
+
+    init_stacked_pdf_grid (jnp.array):
+        1D array containing the initial grid.
+
+    optimizer_provider (optax._src.base.GradientTransformationExtraArgs):
+        Optax optimizer.
+
+    early_stopper (flax.training.early_stopping.EarlyStopping):
+        Early stopping criteria.
+
+    max_epochs (int):
+        Number of maximum epochs.
+
+    batch_size (int, optional):
+        Size of batches during training. Defaults to 128.
+
+    batch_seed (int, optional):
+        Seed used to construct the batches. Defaults to 1.
+
+    alpha (float, optional):
+        Alpha parameter of the ELU positivity penalty term. Defaults to 1e-7.
+
+    lambda_positivity (int, optional):
+        Lagrange multiplier of the positivity penalty. Defaults to 1000.
+
+    Returns
+    -------
+    GridPdfFit: The result of the fit with following attributes:
+        stacked_pdf_grid: jnp.array
+        pdf_grid: jnp.array
+        training_loss: jnp.array
+        validation_loss: jnp.array
+        xgrids: dict
+    """
 
     @jax.jit
     def loss_training(stacked_pdf_grid, batch_idx):
