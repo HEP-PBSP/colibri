@@ -10,6 +10,8 @@ from reportengine.configparser import explicit_node
 
 from super_net.config import SuperNetConfig, Environment
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
+from super_net import commondata_utils
+
 from grid_pdf import commondata_utils as grid_pdf_commondata_utils
 
 
@@ -58,5 +60,7 @@ class GridPdfConfig(SuperNetConfig):
             return grid_pdf_commondata_utils.grid_pdf_closuretest_commondata_tuple
 
         else:
-            return super(GridPdfConfig, self).produce_commondata_tuple
-    
+            if pseudodata:
+                return commondata_utils.pseudodata_commondata_tuple
+            else:
+                return commondata_utils.experimental_commondata_tuple
