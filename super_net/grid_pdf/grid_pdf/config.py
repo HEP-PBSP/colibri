@@ -47,21 +47,3 @@ class GridPdfConfig(SuperNetConfig):
         """The reduced x-grids used in the fit, organised by flavour."""
         return {FLAVOUR_TO_ID_MAPPING[flav]: val for (flav, val) in xgrids.items()}
 
-    def produce_all_gridpdf_collect_indices(
-        self,
-        n_replicas,
-        use_same_trval_split_per_replica=False,
-        trval_index_default=1,
-    ):
-        """ """
-
-        if use_same_trval_split_per_replica:
-            return [
-                {
-                    "replica_index": i,
-                    "trval_index": trval_index_default,
-                }
-                for i in range(n_replicas)
-            ]
-        else:
-            return [{"replica_index": i, "trval_index": i} for i in range(n_replicas)]
