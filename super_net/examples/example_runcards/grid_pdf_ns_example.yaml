@@ -67,9 +67,9 @@ ndraw_max: 500
 flavour_mapping: ["\\Sigma", "g", V]
 xgrids:
   photon: []
-  \Sigma: [0.01, 0.02, 0.1, 0.2]
-  g: [0.01, 0.02, 0.1, 0.2]
-  V: [0.01, 0.02, 0.1, 0.2]
+  \Sigma: [0.01, 0.02, 0.1]
+  g: [0.01, 0.02, 0.1]
+  V: [0.01, 0.02, 0.1]
   V3: []
   V8: []
   V15: []
@@ -82,7 +82,7 @@ xgrids:
   T35: []
 
 # details for lhapdf output
-n_grid_pdf_posterior_samples: 100
+n_posterior_samples: 10
 
 actions_:
-- make_bayesian_pdf_grid_fit
+- perform_nested_sampling_grid_pdf_fit
