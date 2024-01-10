@@ -15,6 +15,7 @@ grid_pdf_providers = [
     "reportengine.report",
     "grid_pdf.grid_pdf_model",
     "grid_pdf.grid_pdf_fit",
+    "grid_pdf.grid_pdf_utils",
     "grid_pdf.grid_pdf_lhapdf",
     "grid_pdf.provider_aliases",
 ]
@@ -44,6 +45,7 @@ class GridPdfApp(SuperNetApp):
         if args["output"] is None:
             args["output"] = pathlib.Path(args["config_yml"]).stem
         return args
+
 
 def main():
     a = GridPdfApp(name="grid_pdf", providers=grid_pdf_providers)
