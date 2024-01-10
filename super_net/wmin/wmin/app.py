@@ -10,7 +10,6 @@ from wmin.config import WminConfig
 import pathlib
 
 wmin_providers = [
-    *providers,
     "reportengine.report",
     "wmin.wmin_fit",
     "wmin.wmin_model",
@@ -47,7 +46,7 @@ class WminApp(SuperNetApp):
 
 
 def main():
-    a = WminApp(name="wmin", providers=wmin_providers)
+    a = WminApp(name="wmin", providers=providers + wmin_providers)
     a.main()
 
 
