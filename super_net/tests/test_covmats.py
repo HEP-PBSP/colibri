@@ -7,7 +7,6 @@ from super_net.covmats import sqrt_covmat_jax
 from super_net.api import API as SuperNetAPI
 from super_net.tests.conftest import TEST_DATASETS, T0_PDFSET
 
-import jax
 import jax.numpy as jnp
 
 from numpy.testing import assert_allclose

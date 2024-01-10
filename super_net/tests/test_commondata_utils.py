@@ -7,13 +7,12 @@ from super_net.api import API as SuperNetAPI
 from super_net.commondata_utils import (
         experimental_commondata_tuple, 
         pseudodata_commondata_tuple,
-        central_covmat_index,
         CentralCovmatIndex,
     )
 
 from validphys.coredata import CommonData
 
-from super_net.tests.conftest import TEST_DATASETS, CLOSURE_TEST_PDFSET, T0_PDFSET
+from super_net.tests.conftest import TEST_DATASETS, CLOSURE_TEST_PDFSET, T0_PDFSET, PSEUDODATA_SEED
 from validphys.covmats import dataset_t0_predictions
 
 from numpy.testing import assert_allclose
@@ -70,7 +69,7 @@ def test_pseudodata_commondata_tuple():
 
     data = SuperNetAPI.data(**TEST_DATASETS)
     exp_tuple = experimental_commondata_tuple(data)
-    result = pseudodata_commondata_tuple(data, exp_tuple, 123456)
+    result = pseudodata_commondata_tuple(data, exp_tuple, PSEUDODATA_SEED)
 
     # Check that pseudodata_commondata_tuple produces a tuple
     assert isinstance(result, tuple)

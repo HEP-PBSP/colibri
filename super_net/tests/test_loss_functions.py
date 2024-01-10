@@ -24,15 +24,3 @@ def test_make_chi2_training_data():
 
     # Check that make_chi2_training_data is a jit-compiled function
     assert isinstance(result, jaxlib.xla_extension.PjitFunction)
-
-    # Check that make_chi2_training_data returns a single float
-    # TODO
-    #tr_idx = data.training_data.central_values_idx
-    #pdf = PDF(TEST_PDFSET)
-    #pdf_grid = jnp.array(
-    #    convolution.evolution.grid_values(
-    #        pdf, convolution.FK_FLAVOURS, XGRID, [1.65]
-    #    ).squeeze(-1)
-    #)[0,:,:].squeeze()
-    #chi2 = result(pdf_grid, tr_idx)
-    #assert isinstance(chi2, float)
