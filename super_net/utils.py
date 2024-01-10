@@ -162,3 +162,9 @@ def resample_from_ns_posterior(
     )
 
     return jnp.array(current_samples)
+
+def closure_test_central_pdf_grid(closure_test_pdf_grid):
+    """
+    Returns the central replica of the closure test pdf grid.
+    """
+    return closure_test_pdf_grid[0]

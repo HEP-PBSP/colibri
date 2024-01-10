@@ -1,4 +1,6 @@
 # super_net
+![Tests bagde](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)
+
 A reportengine app to perform PDF fits in a new parametrisation.
 
 
