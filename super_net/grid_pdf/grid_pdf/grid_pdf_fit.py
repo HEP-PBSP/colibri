@@ -310,9 +310,38 @@ mc_replicas_gridpdf_fit = collect("grid_pdf_mc_fit", ("trval_replica_indices",))
 
 def perform_mc_gridpdf_fit(
     mc_replicas_gridpdf_fit,
+    reduced_xgrids,
+    flavour_indices,
+    length_reduced_xgrids,
+    n_replicas,
+    theoryid,
+    lhapdf_path,
+    output_path,
 ):
     """
     Performs a Monte Carlo fit using the grid_pdf parametrisation.
     """
+
+    samples = [
+        mc_replicas_gridpdf_fit[i].stacked_pdf_grid
+        for i in range(len(mc_replicas_gridpdf_fit))
+    ]
+
+    # Produce the LHAPDF grid
+    lhapdf_grid_pdf_from_samples(
+        samples,
+        reduced_xgrids,
+        flavour_indices,
+        length_reduced_xgrids,
+        n_replicas,
+        theoryid,
+        folder=lhapdf_path,
+        output_path=output_path,
+    )
+
+    # Produce the central replica
+    l = Loader()
+    pdf = l.check_pdf(str(output_path).split("/")[-1])
+    generate_replica0(pdf)
 
     log.info("Monte Carlo fit completed!")
