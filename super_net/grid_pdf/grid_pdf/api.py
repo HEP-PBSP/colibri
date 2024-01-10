@@ -20,6 +20,7 @@ Date: 05.01.2024
 import logging
 
 from reportengine import api
+from super_net.app import providers
 from grid_pdf.app import grid_pdf_providers
 from grid_pdf.config import GridPdfConfig, Environment
 
@@ -27,4 +28,4 @@ log = logging.getLogger(__name__)
 
 # API needed its own module, so that it can be used with any Matplotlib backend
 # without breaking validphys.app
-API = api.API(grid_pdf_providers, GridPdfConfig, Environment)
+API = api.API(grid_pdf_providers + providers, GridPdfConfig, Environment)

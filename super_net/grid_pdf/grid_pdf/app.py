@@ -9,7 +9,6 @@ from super_net.app import SuperNetApp, providers
 from grid_pdf.config import GridPdfConfig
 
 grid_pdf_providers = [
-    *providers,
     "reportengine.report",
     "grid_pdf.grid_pdf_model",
     "grid_pdf.grid_pdf_fit",
@@ -22,7 +21,7 @@ class GridPdfApp(SuperNetApp):
 
 
 def main():
-    a = GridPdfApp(name="grid_pdf", providers=grid_pdf_providers)
+    a = GridPdfApp(name="grid_pdf", providers=providers + grid_pdf_providers)
     a.main()
 
 
