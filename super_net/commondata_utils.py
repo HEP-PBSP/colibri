@@ -37,7 +37,10 @@ def experimental_commondata_tuple(data):
 
 
 def closuretest_commondata_tuple(
-    data, experimental_commondata_tuple, closure_test_pdf_grid, flavour_indices=None
+    data,
+    experimental_commondata_tuple,
+    closure_test_central_pdf_grid,
+    flavour_indices=None,
 ):
     """
     returns a tuple (validphys nodes should be immutable)
@@ -52,8 +55,8 @@ def closuretest_commondata_tuple(
     experimental_commondata_tuple: tuple
         tuple of commondata with experimental central values
 
-    closure_test_pdf_grid: jnp.array
-        grid is of shape N_rep x N_fl x N_x
+    closure_test_central_pdf_grid: jnp.array
+        grid is of shape N_fl x N_x
 
     Returns
     -------
@@ -69,7 +72,7 @@ def closuretest_commondata_tuple(
         fake_data.append(
             cd.with_central_value(
                 make_pred_dataset(ds, flavour_indices=flavour_indices)(
-                    closure_test_pdf_grid[0]
+                    closure_test_central_pdf_grid
                 )
             )
         )
