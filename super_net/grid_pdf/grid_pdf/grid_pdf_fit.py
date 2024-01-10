@@ -2,7 +2,7 @@ from grid_pdf.grid_pdf_model import FLAVOUR_MAPPING
 from validphys.convolution import FK_FLAVOURS
 
 from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples
-from super_net.ns_utils import resample_from_ns_posterior
+from super_net.utils import resample_from_ns_posterior
 
 from validphys.loader import Loader
 from validphys.lhio import generate_replica0

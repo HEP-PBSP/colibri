@@ -20,7 +20,6 @@ providers = [
     "super_net.training_validation",
     "super_net.covmats",
     "super_net.plots_and_tables.plotting",
-    "super_net.ns_utils",
     "super_net.provider_aliases",
 ]
 
