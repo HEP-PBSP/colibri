@@ -28,7 +28,7 @@ class SuperNetApp(App):
     config_class = SuperNetConfig
 
     def __init__(self, name="super_net", providers=[]):
-        super().__init__(name, providers + super_net_providers)
+        super().__init__(name, super_net_providers)
 
 
 def main():
