@@ -47,7 +47,7 @@ class GridPdfApp(SuperNetApp):
 
 
 def main():
-    a = GridPdfApp(name="grid_pdf", providers=providers + grid_pdf_providers)
+    a = GridPdfApp(name="grid_pdf", providers=grid_pdf_providers)
     a.main()
 
 

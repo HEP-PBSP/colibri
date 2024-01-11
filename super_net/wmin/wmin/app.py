@@ -45,7 +45,7 @@ class WminApp(SuperNetApp):
 
 
 def main():
-    a = WminApp(name="wmin", providers=providers + wmin_providers)
+    a = WminApp(name="wmin", providers=wmin_providers)
     a.main()
 
 
