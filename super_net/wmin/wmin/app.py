@@ -15,7 +15,6 @@ wmin_providers = [
     "wmin.wmin_utils",
     "wmin.wmin_lhapdf",
     "wmin.wmin_loss_functions",
-    "reportengine.report",
 ]
 
 
