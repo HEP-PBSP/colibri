@@ -1,5 +1,5 @@
 """
-grid_pdf.grid_pdf_utils.py
+grid_pdf.utils.py
 
 Module containing util functions for grid PDF fits.
 
