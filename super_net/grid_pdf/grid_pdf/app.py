@@ -5,13 +5,12 @@ Author: Mark N. Costantini
 Date: 15.11.2023
 """
 
-from super_net.app import SuperNetApp, providers
+from super_net.app import SuperNetApp
 from grid_pdf.config import GridPdfConfig
 
 import pathlib
 
 grid_pdf_providers = [
-    *providers,
     "reportengine.report",
     "grid_pdf.grid_pdf_model",
     "grid_pdf.grid_pdf_fit",
