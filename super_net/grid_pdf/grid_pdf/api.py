@@ -21,7 +21,6 @@ import logging
 
 from reportengine import api
 from super_net.app import super_net_providers
-
 from grid_pdf.app import grid_pdf_providers
 from grid_pdf.config import GridPdfConfig, Environment
 

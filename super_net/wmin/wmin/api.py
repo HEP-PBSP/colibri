@@ -17,7 +17,6 @@ Simple Usage:
 import logging
 
 from reportengine import api
-
 from super_net.app import super_net_providers
 from wmin.app import wmin_providers
 from wmin.config import WminConfig, Environment
