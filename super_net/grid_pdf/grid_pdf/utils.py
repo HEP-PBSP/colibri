@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 
 def closure_test_central_pdf_grid(
-    closure_test_pdf, xgrids, length_reduced_xgrids, reduced_xgrid_data=True, Q0=1.65
+    closure_test_pdf, xgrids, length_reduced_xgrids, reduced_xgrid_data=False, Q0=1.65
 ):
     """
     Computes the central member of the closure_test_pdf grid in the
