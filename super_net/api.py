@@ -17,7 +17,7 @@ Simple Usage:
 import logging
 
 from reportengine import api
-from super_net.app import providers
+from super_net.app import super_net_providers as providers
 from super_net.config import SuperNetConfig, Environment
 
 log = logging.getLogger(__name__)
