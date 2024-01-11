@@ -146,6 +146,22 @@ def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
     )
     return grid
 
+def resample_from_ns_posterior(
+    samples, n_posterior_samples=1000, posterior_resampling_seed=123456
+):
+    """
+    TODO
+    """
+
+    current_samples = samples.copy()
+
+    rng = jax.random.PRNGKey(posterior_resampling_seed)
+
+    resampled_samples = jax.random.choice(
+        rng, samples, (n_posterior_samples,), replace=False
+    )
+
+    return jnp.array(current_samples)
 
 def closure_test_central_pdf_grid(closure_test_pdf_grid):
     """
