@@ -158,10 +158,10 @@ def resample_from_ns_posterior(
     rng = jax.random.PRNGKey(posterior_resampling_seed)
 
     resampled_samples = jax.random.choice(
-        rng, samples, (n_posterior_samples,), replace=False
+        rng, current_samples, (n_posterior_samples,), replace=False
     )
 
-    return jnp.array(current_samples)
+    return resampled_samples
 
 def closure_test_central_pdf_grid(closure_test_pdf_grid):
     """
