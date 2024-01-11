@@ -196,13 +196,13 @@ def make_chi2_validation_data(_data_values, _pred_data):
     covmat = validation_data.covmat
     central_values_idx = validation_data.central_values_idx
 
+    # decompose covmat
+    sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+
     @jax.jit
     def chi2(pdf):
         """ """
         diff = _pred_data(pdf)[central_values_idx] - central_values
-
-        # decompose covmat
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
@@ -253,13 +253,13 @@ def make_chi2_validation_data_with_positivity(
 
     posdata_validation_idx = _posdata_split.validation
 
+    # decompose covmat
+    sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+
     @jax.jit
     def chi2(pdf, alpha, lambda_positivity):
         """ """
         diff = _pred_data(pdf)[central_values_idx] - central_values
-
-        # decompose covmat
-        sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
