@@ -17,11 +17,11 @@ Simple Usage:
 import logging
 
 from reportengine import api
-from super_net.app import providers
+from super_net.app import super_net_providers
 from super_net.config import SuperNetConfig, Environment
 
 log = logging.getLogger(__name__)
 
 # API needed its own module, so that it can be used with any Matplotlib backend
 # without breaking validphys.app
-API = api.API(providers, SuperNetConfig, Environment)
+API = api.API(super_net_providers, SuperNetConfig, Environment)
