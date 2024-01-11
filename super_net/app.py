@@ -5,7 +5,6 @@ Author: Mark N. Costantini
 Date: 11.11.2023
 """
 from validphys.app import App
-from validphys.app import providers as vp_providers
 from super_net.config import SuperNetConfig
 
 
@@ -29,7 +28,7 @@ class SuperNetApp(App):
     config_class = SuperNetConfig
 
     def __init__(self, name="super_net", providers=[]):
-        super().__init__(name, providers + super_net_providers + vp_providers)
+        super().__init__(name, providers + super_net_providers)
 
 
 def main():
