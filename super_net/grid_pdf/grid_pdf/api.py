@@ -29,5 +29,4 @@ log = logging.getLogger(__name__)
 
 # API needed its own module, so that it can be used with any Matplotlib backend
 # without breaking validphys.app
-
 API = api.API(grid_pdf_providers + super_net_providers, GridPdfConfig, Environment)
