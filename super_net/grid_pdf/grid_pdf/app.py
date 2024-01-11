@@ -23,9 +23,6 @@ grid_pdf_providers = [
 class GridPdfApp(SuperNetApp):
     config_class = GridPdfConfig
 
-    def __init__(self, name="grid_pdf", providers=[]):
-        super().__init__(name, grid_pdf_providers)
-
     @property
     def argparser(self):
         """Parser arguments for grid_pdf app can be added here"""
@@ -50,7 +47,7 @@ class GridPdfApp(SuperNetApp):
 
 
 def main():
-    a = GridPdfApp(name="grid_pdf")
+    a = GridPdfApp(name="grid_pdf", providers=grid_pdf_providers)
     a.main()
 
 
