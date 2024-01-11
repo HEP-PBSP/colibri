@@ -46,4 +46,3 @@ class GridPdfConfig(SuperNetConfig):
     def produce_reduced_xgrids(self, xgrids):
         """The reduced x-grids used in the fit, organised by flavour."""
         return {FLAVOUR_TO_ID_MAPPING[flav]: val for (flav, val) in xgrids.items()}
-
