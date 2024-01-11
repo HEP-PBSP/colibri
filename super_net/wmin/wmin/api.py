@@ -17,6 +17,7 @@ Simple Usage:
 import logging
 
 from reportengine import api
+from super_net.app import super_net_providers
 from wmin.app import wmin_providers
 from wmin.config import WminConfig, Environment
 
@@ -24,4 +25,4 @@ log = logging.getLogger(__name__)
 
 # API needed its own module, so that it can be used with any Matplotlib backend
 # without breaking validphys.app
-API = api.API(wmin_providers, WminConfig, Environment)
+API = api.API(wmin_providers + super_net_providers, WminConfig, Environment)
