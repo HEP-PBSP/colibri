@@ -67,7 +67,7 @@ def closure_test_central_pdf_grid(
         return super_net.utils.closure_test_pdf_grid(closure_test_pdf, Q0=Q0)[0]
 
     # the flavour selection/mapping is then done by flavour_mapping (flavour_indices)
-    reduced_xgrid = jnp.array(
+    reduced_pdfgrid = jnp.array(
         [
             convolution.evolution.grid_values(closure_test_pdf, [fl], x_vals, [Q0])
             .squeeze(-1)[0]
@@ -78,18 +78,17 @@ def closure_test_central_pdf_grid(
         ],
     )
 
-    interpolated_xgrid = jnp.zeros((reduced_xgrid.shape[0], len(XGRID)))
+    interpolated_pdfgrid = jnp.zeros((reduced_pdfgrid.shape[0], len(XGRID)))
 
     for fl_idx in flavour_indices:
-        interpolated_xgrid = interpolated_xgrid.at[fl_idx, :].set(
+        interpolated_pdfgrid = interpolated_pdfgrid.at[fl_idx, :].set(
             jnp.interp(
                 jnp.array(XGRID),
                 jnp.array(xgrids[FLAVOURS_ID_MAPPINGS[fl_idx]]),
-                reduced_xgrid[fl_idx, :],
+                reduced_pdfgrid[fl_idx, :],
             )
         )
-
-    return interpolated_xgrid
+    return interpolated_pdfgrid
 
 
 def gridpdf_fit_name(set_name=None):
