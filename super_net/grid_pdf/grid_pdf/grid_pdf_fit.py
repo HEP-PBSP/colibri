@@ -333,6 +333,14 @@ def perform_mc_gridpdf_fit(
         for i in range(len(mc_replicas_gridpdf_fit))
     ]
 
+    # Save the samples
+    parameters = [
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
+    ]
+
+    df = pd.DataFrame(samples, columns=parameters)
+    df.to_csv(str(output_path) + '/mc_result.csv')
+
     # Produce the LHAPDF grid
     lhapdf_grid_pdf_from_samples(
         samples,
