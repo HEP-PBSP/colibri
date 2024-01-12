@@ -52,7 +52,7 @@ jobs:
       run: |
         conda activate test
         flit install --symlink
-        cd super_net/wmin
+        cd super_net/models/wmin
         flit install --symlink
         cd ../grid_pdf
         flit install --symlink
