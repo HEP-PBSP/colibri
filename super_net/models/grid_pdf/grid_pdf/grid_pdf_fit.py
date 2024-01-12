@@ -9,6 +9,7 @@ from validphys.lhio import generate_replica0
 import ultranest
 import jax
 import jax.numpy as jnp
+import pandas as pd
 import optax
 from super_net.data_batch import data_batches
 
@@ -112,7 +113,7 @@ def ultranest_grid_fit(
     # Store run plots to ultranest output folder
     sampler.plot()
 
-    return resampled_posterior
+    return (parameters, resampled_posterior)
 
 
 def perform_nested_sampling_grid_pdf_fit(
@@ -128,6 +129,11 @@ def perform_nested_sampling_grid_pdf_fit(
     """
     Performs a Nested Sampling fit using the grid.
     """
+
+    # Save the resampled posterior as a pandas df
+    parameter_names, ultranest_grid_fit = ultranest_grid_fit
+    df = pd.DataFrame(ultranest_grid_fit, columns=parameter_names)
+    df.to_csv(str(output_path) + '/ns_result.csv')
 
     # Produce the LHAPDF grid
     lhapdf_grid_pdf_from_samples(
@@ -326,6 +332,14 @@ def perform_mc_gridpdf_fit(
         mc_replicas_gridpdf_fit[i].stacked_pdf_grid
         for i in range(len(mc_replicas_gridpdf_fit))
     ]
+
+    # Save the samples
+    parameters = [
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
+    ]
+
+    df = pd.DataFrame(samples, columns=parameters)
+    df.to_csv(str(output_path) + '/mc_result.csv')
 
     # Produce the LHAPDF grid
     lhapdf_grid_pdf_from_samples(
