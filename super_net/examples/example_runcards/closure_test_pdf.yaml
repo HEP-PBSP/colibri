@@ -1,0 +1,31 @@
+theoryid: 400
+use_cuts: internal
+
+closure_test_pdf: NNPDF31_nnlo_as_0118
+
+# fit specs
+use_t0: True
+t0pdfset: NNPDF31_nnlo_as_0118
+
+# grid specs
+flavour_mapping: ["\\Sigma", "g", V]
+xgrids:
+  photon: []
+  \Sigma: [0.001, 0.01, 0.05, 0.1, 0.2]
+  g: [0.001, 0.01, 0.05, 0.1, 0.2]
+  V: [0.001, 0.01, 0.05, 0.1, 0.2]
+  V3: []
+  V8: []
+  V15: []
+  V24: []
+  V35: []
+  T3: []
+  T8: []
+  T15: []
+  T24: []
+  T35: []
+
+write_closure_test_pdf_as: test_grid_dis
+
+actions_:
+- write_closure_test_pdf

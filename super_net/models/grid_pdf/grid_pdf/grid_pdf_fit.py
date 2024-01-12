@@ -1,6 +1,6 @@
 from validphys.convolution import FK_FLAVOURS
 
-from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples
+from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples, lhapdf_path
 from super_net.utils import resample_from_ns_posterior
 
 from validphys.loader import Loader
@@ -18,11 +18,70 @@ import time
 import logging
 from reportengine import collect
 
+from validphys import convolution
+
+from pathlib import Path
+
+import os
+
 log = logging.getLogger(__name__)
 
+def write_closure_test_pdf(
+    closure_test_pdf,
+    write_closure_test_pdf_as,
+    xgrids,
+    reduced_xgrids,
+    flavour_indices,
+    length_reduced_xgrids,
+    theoryid,
+    output_path,
+):
+    """Writes the PDF being used as a closure test PDF to the specified LHAPDF
+    grid.
+    """
+
+    reduced_pdfgrid = jnp.array(
+        [
+            convolution.evolution.grid_values(closure_test_pdf, [fl], x_vals, [1.65])
+            .squeeze(-1)[0]
+            .squeeze(0)
+            if x_vals
+            else jnp.zeros(length_reduced_xgrids)
+            for fl, x_vals in xgrids.items()
+        ],
+    )
+
+    nflav, ngrid = reduced_pdfgrid[flavour_indices,:].shape
+    reduced_pdfgrid = jnp.reshape(reduced_pdfgrid[flavour_indices,:], (1, nflav*ngrid))
+
+    # The nature of writing the central replica requires we have at least 2 replicas
+    # This is a problem from validphys
+    reduced_pdfgrid = jnp.concatenate([reduced_pdfgrid, reduced_pdfgrid])
+    print(reduced_pdfgrid)
+
+    # Produce the (alsmot trivial) LHAPDF grid
+    os.mkdir(write_closure_test_pdf_as)
+    output_path = Path(os.getcwd() + "/" + write_closure_test_pdf_as)
+
+    lhapdf_grid_pdf_from_samples(
+        reduced_pdfgrid,
+        reduced_xgrids,
+        flavour_indices,
+        length_reduced_xgrids,
+        2,
+        theoryid,
+        folder=lhapdf_path(),
+        output_path=output_path,
+    )
+
+    # Produce the central replica
+    l = Loader()
+    pdf = l.check_pdf(write_closure_test_pdf_as)
+    generate_replica0(pdf)
 
 def ultranest_grid_fit(
     _chi2_with_positivity,
+    closure_test_central_pdf_grid,
     grid_pdf_model_prior,
     interpolate_grid,
     reduced_xgrids,
