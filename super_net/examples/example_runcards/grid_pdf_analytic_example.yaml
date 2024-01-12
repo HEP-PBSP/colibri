@@ -54,6 +54,7 @@ alpha: 1e-7
 lambda_positivity: 1000
 
 trval_index: 1
+bayesian_fit: True
 # grid specs
 flavour_mapping: ["\\Sigma", "g", V]
 xgrids:
