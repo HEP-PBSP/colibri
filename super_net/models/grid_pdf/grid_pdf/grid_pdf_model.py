@@ -103,7 +103,11 @@ def interpolate_grid(
             # The JIT compilation flattens the loop, good efficiency
             pdf_interp = jnp.array(
                 [
-                    jnp.interp(jnp.array(interpolation_grid), xgrid, reshaped_stacked_pdf_grid[i, :])
+                    jnp.interp(
+                        jnp.array(interpolation_grid),
+                        xgrid,
+                        reshaped_stacked_pdf_grid[i, :],
+                    )
                     for i, xgrid in enumerate(fit_xgrids)
                 ]
             )
@@ -113,6 +117,24 @@ def interpolate_grid(
             return input_grid
 
     return interp_func
+
+
+def interpolate_grid_nonvec(
+    reduced_xgrids,
+    length_reduced_xgrids,
+    flavour_indices,
+    interpolation_grid=XGRID,
+):
+    """
+    Returns interpolation function non vectorised.
+    """
+    return interpolate_grid(
+        reduced_xgrids,
+        length_reduced_xgrids,
+        flavour_indices,
+        interpolation_grid,
+        vectorized=False,
+    )
 
 
 @dataclass(frozen=True)
