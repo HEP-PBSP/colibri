@@ -236,7 +236,7 @@ def make_level1_data(data, commondata_tuple, filterseed, data_index, fakedata, u
     # ================== generation of Level1 data ======================#
     if use_jax_random:
         rng = jax.random.PRNGKey(filterseed)
-        central_values = jnp.array([cd.central_value for cd in commondata_tuple]).flatten()
+        central_values = jnp.array([cd.central_values for cd in commondata_tuple]).flatten()
         level1_data = jax.random.multivariate_normal(rng, central_values, covmat)
     else:
         level1_data = make_replica(
