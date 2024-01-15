@@ -13,8 +13,7 @@ from dataclasses import dataclass, asdict
 import jax.numpy as jnp
 
 from super_net.theory_predictions import make_pred_dataset
-
-from validphys.pseudodata import make_level1_data
+from super_net.utils import make_level1_data
 
 from reportengine import collect
 
@@ -105,7 +104,7 @@ def pseudodata_commondata_tuple(data, experimental_commondata_tuple, replica_see
     index = data.data_index()
     dataset_order = [cd.setname for cd in experimental_commondata_tuple]
     pseudodata_list = make_level1_data(
-        data, experimental_commondata_tuple, replica_seed, index, sep_mult=True
+        data, experimental_commondata_tuple, replica_seed, index, sep_mult=False
     )
     pseudodata_list = sorted(
         pseudodata_list, key=lambda obj: dataset_order.index(obj.setname)
