@@ -73,7 +73,7 @@ def dataset_inputs_covmat_from_systematics(
             use_weights_in_covmat=False,
             norm_threshold=None,
             _list_of_central_values=None,
-            _only_additive=False,
+            _only_additive=True,
         )
     )
     return covmat

@@ -226,13 +226,26 @@ def make_level1_data(data, commondata_tuple, filterseed, data_index, fakedata, u
     >>> l1_cd
     [CommonData(setname='NMC', ndata=204, commondataproc='DIS_NCE', nkin=3, nsys=16)]
     """
-    if fakedata:
-        covmat = dataset_inputs_t0_covmat_from_systematics(
-            data, commondata_tuple, super_net_dataset_inputs_t0_predictions=None
-        )
-    else:
-        covmat = dataset_inputs_covmat_from_systematics(data, commondata_tuple)
+    # if fakedata:
+    #     covmat = dataset_inputs_t0_covmat_from_systematics(
+    #         data, commondata_tuple, super_net_dataset_inputs_t0_predictions=None
+    #     )
+    # else:
+    #     covmat = dataset_inputs_covmat_from_systematics(data, commondata_tuple)
 
+    # TEST: use only additive uncertainties
+    from validphys import covmats
+
+    covmat = jnp.array(
+    covmats.dataset_inputs_covmat_from_systematics(
+        commondata_tuple,
+        data.dsinputs,
+        use_weights_in_covmat=False,
+        norm_threshold=None,
+        _list_of_central_values=None,
+        _only_additive=True,
+    )
+)
     # ================== generation of Level1 data ======================#
     if use_jax_random:
         rng = jax.random.PRNGKey(filterseed)
