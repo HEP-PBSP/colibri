@@ -13,7 +13,13 @@ import jax.numpy as jnp
 from dataclasses import dataclass, asdict
 
 from super_net.constants import XGRID
+from super_net.covmats import (
+    dataset_inputs_t0_covmat_from_systematics,
+    dataset_inputs_covmat_from_systematics,
+)
+
 from validphys import convolution
+from validphys.pseudodata import make_replica, indexed_make_replica
 
 
 FLAVOURS_ID_MAPPINGS = {
@@ -146,6 +152,7 @@ def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
     )
     return grid
 
+
 def resample_from_ns_posterior(
     samples, n_posterior_samples=1000, posterior_resampling_seed=123456
 ):
@@ -163,6 +170,7 @@ def resample_from_ns_posterior(
 
     return resampled_samples
 
+
 def closure_test_central_pdf_grid(closure_test_pdf_grid):
     """
     Returns the central replica of the closure test pdf grid.
@@ -170,29 +178,18 @@ def closure_test_central_pdf_grid(closure_test_pdf_grid):
     return closure_test_pdf_grid[0]
 
 
-def make_level1_data(data, level0_commondata_wc, filterseed, data_index, fakedata):
+def make_level1_data(data, commondata_tuple, filterseed, data_index, fakedata):
     """
-    Given a list of Level 0 commondata instances, return the
-    same list with central values replaced by Level 1 data.
+    Given a tuple of commondata instances, return the
+    same tuple with central values replaced with a sample of a multivariate
+    gaussian centred at the central value and with covariance matrix
+    constructed with the following procedure:
 
-    Level 1 data is generated using validphys.make_replica.
-    The covariance matrix, from which the stochastic Level 1
-    noise is sampled, is built from Level 0 commondata
-    instances (level0_commondata_wc). This, in particular,
-    means that the multiplicative systematics are generated
-    from the Level 0 central values.
+        - if fakedata=True, use dataset_inputs_t0_covmat_from_systematics
+        - else use the experimental covariance matrix, i.e. dataset_inputs_covmat_from_systematics
 
-    Note that the covariance matrix used to generate Level 2
-    pseudodata is consistent with the one used at Level 1
-    up to corrections of the order eta * eps, where eta and
-    eps are defined as shown below:
+    Note that the two covariance matrices above only differ in the MULT uncertainties.
 
-    Generate L1 data: L1 = L0 + eta, eta ~ N(0,CL0)
-    Generate L2 data: L2_k = L1 + eps_k, eps_k ~ N(0,CL1)
-
-    where CL0 and CL1 means that the multiplicative entries
-    have been constructed from Level 0 and Level 1 central
-    values respectively.
 
 
     Parameters
@@ -200,7 +197,7 @@ def make_level1_data(data, level0_commondata_wc, filterseed, data_index, fakedat
 
     data : validphys.core.DataGroupSpec
 
-    level0_commondata_wc : list
+    commondata_tuple : tuple or list
                         list of validphys.coredata.CommonData instances corresponding to
                         all datasets within one experiment. The central value is replaced
                         by Level 0 fake data. Cuts already applied.
@@ -209,6 +206,8 @@ def make_level1_data(data, level0_commondata_wc, filterseed, data_index, fakedat
                 random seed used for the generation of Level 1 data
 
     data_index : pandas.MultiIndex
+
+    fakedata : bool, default is False
 
     Returns
     -------
@@ -227,36 +226,31 @@ def make_level1_data(data, level0_commondata_wc, filterseed, data_index, fakedat
     >>> l1_cd
     [CommonData(setname='NMC', ndata=204, commondataproc='DIS_NCE', nkin=3, nsys=16)]
     """
-    from super_net.covmats import dataset_inputs_t0_covmat_from_systematics, dataset_inputs_covmat_from_systematics
-    
     if fakedata:
         covmat = dataset_inputs_t0_covmat_from_systematics(
-            data, level0_commondata_wc, super_net_dataset_inputs_t0_predictions=None
+            data, commondata_tuple, super_net_dataset_inputs_t0_predictions=None
         )
     else:
-        covmat = dataset_inputs_covmat_from_systematics(
-            data, level0_commondata_wc
-        )
+        covmat = dataset_inputs_covmat_from_systematics(data, commondata_tuple)
 
-    from validphys.pseudodata import make_replica, indexed_make_replica
     # ================== generation of Level1 data ======================#
     level1_data = make_replica(
-        level0_commondata_wc, filterseed, covmat, sep_mult=False, genrep=True
+        commondata_tuple, filterseed, covmat, sep_mult=False, genrep=True
     )
 
     indexed_level1_data = indexed_make_replica(data_index, level1_data)
 
-    dataset_order = {cd.setname: i for i, cd in enumerate(level0_commondata_wc)} 
+    dataset_order = {cd.setname: i for i, cd in enumerate(commondata_tuple)}
 
     # ===== create commondata instances with central values given by pseudo_data =====#
-    level1_commondata_dict = {c.setname: c for c in level0_commondata_wc}
+    level1_commondata_dict = {c.setname: c for c in commondata_tuple}
     level1_commondata_instances_wc = []
 
-    for xx, grp in indexed_level1_data.groupby('dataset'):
+    for xx, grp in indexed_level1_data.groupby("dataset"):
         level1_commondata_instances_wc.append(
             level1_commondata_dict[xx].with_central_value(grp.values)
         )
-    # sort back so as to mantain same order as in level0_commondata_wc
+    # sort back so as to mantain same order as in commondata_tuple
     level1_commondata_instances_wc.sort(key=lambda x: dataset_order[x.setname])
-    
+
     return level1_commondata_instances_wc
