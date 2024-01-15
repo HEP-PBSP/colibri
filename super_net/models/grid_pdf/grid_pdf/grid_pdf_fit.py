@@ -27,16 +27,7 @@ def ultranest_grid_fit(
     interpolate_grid,
     reduced_xgrids,
     flavour_indices,
-    n_posterior_samples=1000,
-    posterior_resampling_seed=123456,
-    min_num_live_points=400,
-    min_ess=40,
-    log_dir="ultranest_logs",
-    resume=True,
-    vectorized=False,
-    slice_sampler=False,
-    slice_steps=100,
-    ndraw_max=500,
+    ns_settings,
 ):
     """
     TODO
@@ -74,28 +65,29 @@ def ultranest_grid_fit(
         parameters,
         log_likelihood,
         grid_pdf_model_prior,
-        log_dir=log_dir,
-        resume=resume,
-        vectorized=vectorized,
-        ndraw_max=ndraw_max,
+        log_dir=ns_settings["log_dir"],
+        resume=ns_settings["resume"],
+        vectorized=ns_settings["vectorized"],
+        ndraw_max=ns_settings["ndraw_max"],
     )
 
-    if slice_sampler:
+    if ns_settings["slice_sampler"]:
         import ultranest.stepsampler as ustepsampler
 
         sampler.stepsampler = ustepsampler.SliceSampler(
-            nsteps=slice_steps,
+            nsteps=ns_settings["slice_steps"],
             generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
         )
 
     t0 = time.time()
     ultranest_result = sampler.run(
-        min_num_live_points=min_num_live_points,
-        min_ess=min_ess,
+        min_num_live_points=ns_settings["min_num_live_points"],
+        min_ess=ns_settings["min_ess"],
     )
     t1 = time.time()
     log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
+    n_posterior_samples = ns_settings["n_posterior_samples"]
     if n_posterior_samples > ultranest_result["samples"].shape[0]:
         n_posterior_samples = ultranest_result["samples"].shape[0]
         log.warning(
@@ -121,7 +113,7 @@ def perform_nested_sampling_grid_pdf_fit(
     reduced_xgrids,
     flavour_indices,
     length_reduced_xgrids,
-    n_posterior_samples,
+    ns_settings,
     lhapdf_path,
     output_path,
     theoryid,
@@ -141,7 +133,7 @@ def perform_nested_sampling_grid_pdf_fit(
         reduced_xgrids,
         flavour_indices,
         length_reduced_xgrids,
-        n_posterior_samples,
+        ns_settings["n_posterior_samples"],
         theoryid,
         folder=lhapdf_path,
         output_path=output_path,

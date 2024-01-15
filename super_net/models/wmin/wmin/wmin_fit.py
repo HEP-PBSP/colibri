@@ -186,15 +186,7 @@ def weight_minimization_ultranest(
     weight_minimization_prior,
     n_replicas_wmin,
     output_path,
-    min_num_live_points,
-    min_ess,
-    n_wmin_posterior_samples=1000,
-    wmin_posterior_resampling_seed=123456,
-    vectorized=False,
-    ndraw_max=1000,
-    slice_sampler=False,
-    slice_steps=100,
-    resume=True,
+    ns_settings,
 ):
     """
     TODO
@@ -205,7 +197,6 @@ def weight_minimization_ultranest(
     """
 
     parameters = [f"w{i+1}" for i in range(n_replicas_wmin)]
-    log_dir = output_path / "ultranest"
 
     @jax.jit
     def log_likelihood(weights):
@@ -231,15 +222,15 @@ def weight_minimization_ultranest(
 
         return -0.5 * _chi2_with_positivity(pdf)
 
-    if vectorized:
+    if ns_settings["vectorized"]:
         sampler = ultranest.ReactiveNestedSampler(
             parameters,
             log_likelihood_vectorized,
             weight_minimization_prior,
             vectorized=True,
-            ndraw_max=ndraw_max,
-            log_dir=log_dir,
-            resume=resume,
+            ndraw_max=ns_settings["ndraw_max"],
+            log_dir=ns_settings["log_dir"],
+            resume=ns_settings["resume"],
         )
 
     else:
@@ -247,24 +238,25 @@ def weight_minimization_ultranest(
             parameters,
             log_likelihood,
             weight_minimization_prior,
-            log_dir=log_dir,
-            resume=resume,
+            log_dir=ns_settings["log_dir"],
+            resume=ns_settings["resume"],
         )
 
-    if slice_sampler:
+    if ns_settings["slice_sampler"]:
         sampler.stepsampler = ustepsampler.SliceSampler(
-            nsteps=slice_steps,
+            nsteps=ns_settings["slice_steps"],
             generate_direction=ustepsampler.generate_mixture_random_direction,
         )
 
     t0 = time.time()
     ultranest_result = sampler.run(
-        min_num_live_points=min_num_live_points,
-        min_ess=min_ess,
+        min_num_live_points=ns_settings["min_num_live_points"],
+        min_ess=ns_settings["min_ess"],
     )
     t1 = time.time()
     log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
+    n_wmin_posterior_samples = ns_settings["n_posterior_samples"]
     if n_wmin_posterior_samples > ultranest_result["samples"].shape[0]:
         n_wmin_posterior_samples = ultranest_result["samples"].shape[0] - int(
             0.1 * ultranest_result["samples"].shape[0]
@@ -278,7 +270,7 @@ def weight_minimization_ultranest(
     resampled_posterior = resample_from_wmin_posterior(
         ultranest_result["samples"],
         n_wmin_posterior_samples,
-        wmin_posterior_resampling_seed,
+        ns_samples["posterior_resampling_seed"],
     )
 
     # Store run plots to ultranest output folder
@@ -294,7 +286,7 @@ def weight_minimization_ultranest(
 def perform_nested_sampling_wmin_fit(
     wminpdfset,
     weight_minimization_ultranest,
-    n_wmin_posterior_samples,
+    ns_settings,
     wmin_fit_name,
     lhapdf_path,
     output_path,
@@ -307,7 +299,7 @@ def perform_nested_sampling_wmin_fit(
     lhapdf_wmin_and_ultranest_result(
         wminpdfset,
         weight_minimization_ultranest,
-        n_wmin_posterior_samples,
+        ns_settings["n_posterior_samples"],
         wmin_fit_name,
         folder=lhapdf_path,
         output_path=output_path,

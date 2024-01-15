@@ -57,11 +57,14 @@ lambda_positivity: 1000
 bayesian_fit: True
 pdf_prior: NNPDF31_nnlo_as_0118
 sigma_pdf_prior: 1
-min_num_live_points: 500
-min_ess: 50
 trval_index: 1
-vectorized: False
-ndraw_max: 500
+
+ns_settings:
+  min_num_live_points: 500
+  min_ess: 50
+  vectorized: False
+  ndraw_max: 500
+  n_posterior_samples: 10
 
 # grid specs
 flavour_mapping: ["\\Sigma", "g", V]
@@ -80,9 +83,6 @@ xgrids:
   T15: []
   T24: []
   T35: []
-
-# details for lhapdf output
-n_posterior_samples: 10
 
 actions_:
 - perform_nested_sampling_grid_pdf_fit
