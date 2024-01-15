@@ -99,7 +99,7 @@ def ultranest_grid_fit(
     resampled_posterior = resample_from_ns_posterior(
         ultranest_result["samples"],
         n_posterior_samples,
-        posterior_resampling_seed,
+        ns_settings["posterior_resampling_seed"],
     )
 
     # Store run plots to ultranest output folder
