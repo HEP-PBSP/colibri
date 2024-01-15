@@ -270,7 +270,7 @@ def weight_minimization_ultranest(
     resampled_posterior = resample_from_wmin_posterior(
         ultranest_result["samples"],
         n_wmin_posterior_samples,
-        ns_samples["posterior_resampling_seed"],
+        ns_settings["posterior_resampling_seed"],
     )
 
     # Store run plots to ultranest output folder
