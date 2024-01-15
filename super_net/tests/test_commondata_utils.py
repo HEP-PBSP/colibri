@@ -81,15 +81,13 @@ def test_pseudodata_commondata_tuple():
     # Test that the correct values have been loaded
     for i in range(len(result)):
         path = TEST_COMMONDATA_FOLDER/(data.datasets[i].name + '_pseudodata.csv')
-        try:
-            assert_allclose(
-                result[i].commondata_table.iloc[:,1:].to_numpy(dtype=float),
-                pd.read_csv(path).iloc[:,1:].to_numpy(dtype=float), rtol=1e-5
-            )
-        except:
-            import IPython; IPython.embed()
-if __name__ == "__main__":
-    test_pseudodata_commondata_tuple()         
+        assert_allclose(
+            result[i].commondata_table.iloc[:,1:].to_numpy(dtype=float),
+            pd.read_csv(path).iloc[:,1:].to_numpy(dtype=float), rtol=1e-5
+        )
+        
+
+
 def test_central_covmat_index():
     """
     Test that CentralCovmatIndex object is produced correctly.
