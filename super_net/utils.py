@@ -178,7 +178,7 @@ def closure_test_central_pdf_grid(closure_test_pdf_grid):
     return closure_test_pdf_grid[0]
 
 
-def make_level1_data(data, commondata_tuple, filterseed, data_index, fakedata):
+def make_level1_data(data, commondata_tuple, filterseed, data_index, fakedata, use_jax_random=False):
     """
     Given a tuple of commondata instances, return the
     same tuple with central values replaced with a sample of a multivariate
@@ -234,9 +234,14 @@ def make_level1_data(data, commondata_tuple, filterseed, data_index, fakedata):
         covmat = dataset_inputs_covmat_from_systematics(data, commondata_tuple)
 
     # ================== generation of Level1 data ======================#
-    level1_data = make_replica(
-        commondata_tuple, filterseed, covmat, sep_mult=False, genrep=True
-    )
+    if use_jax_random:
+        rng = jax.random.PRNGKey(filterseed)
+        central_values = jnp.array([cd.central_value for cd in commondata_tuple]).flatten()
+        level1_data = jax.random.multivariate_normal(rng, central_values, covmat)
+    else:
+        level1_data = make_replica(
+            commondata_tuple, filterseed, covmat, sep_mult=False, genrep=True
+        )
 
     indexed_level1_data = indexed_make_replica(data_index, level1_data)
 
@@ -253,4 +258,4 @@ def make_level1_data(data, commondata_tuple, filterseed, data_index, fakedata):
     # sort back so as to mantain same order as in commondata_tuple
     level1_commondata_instances_wc.sort(key=lambda x: dataset_order[x.setname])
 
-    return level1_commondata_instances_wc
+    return level1_commondata_instances_wc, covmat

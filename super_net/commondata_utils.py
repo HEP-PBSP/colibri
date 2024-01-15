@@ -78,7 +78,7 @@ def closuretest_commondata_tuple(
     return tuple(fake_data)
 
 
-def pseudodata_commondata_tuple(data, experimental_commondata_tuple, replica_seed, fakedata=False):
+def pseudodata_commondata_tuple(data, experimental_commondata_tuple, replica_seed, fakedata=False, use_jax_random=False):
     """
     Returns a tuple (validphys nodes should be immutable)
     of commondata instances with experimental central values
@@ -104,7 +104,7 @@ def pseudodata_commondata_tuple(data, experimental_commondata_tuple, replica_see
     index = data.data_index()
     dataset_order = [cd.setname for cd in experimental_commondata_tuple]
     pseudodata_list = make_level1_data(
-        data, experimental_commondata_tuple, replica_seed, index, fakedata
+        data, experimental_commondata_tuple, replica_seed, index, fakedata, use_jax_random
     )
     pseudodata_list = sorted(
         pseudodata_list, key=lambda obj: dataset_order.index(obj.setname)
