@@ -258,4 +258,4 @@ def make_level1_data(data, commondata_tuple, filterseed, data_index, fakedata, u
     # sort back so as to mantain same order as in commondata_tuple
     level1_commondata_instances_wc.sort(key=lambda x: dataset_order[x.setname])
 
-    return level1_commondata_instances_wc, covmat
+    return level1_commondata_instances_wc
