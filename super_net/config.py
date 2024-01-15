@@ -23,6 +23,7 @@ import os
 
 log = logging.getLogger(__name__)
 
+
 class Environment(Environment):
     pass
 
@@ -39,7 +40,7 @@ class SuperNetConfig(Config):
         output_path,
     ):
         """For a Nested Sampling fit, parses the ns_settings namespace from the runcard,
-        and ensures the choice of settings is valid. 
+        and ensures the choice of settings is valid.
         """
 
         # Begin by checking that the user-supplied keys are known; warn the user otherwise.
@@ -62,8 +63,7 @@ class SuperNetConfig(Config):
                 ConfigError(f"Key '{k}' in ns_settings not known.", k, known_keys)
             )
 
-
-        # Now construct the ns_settings dictionary, checking the parameter combinations are 
+        # Now construct the ns_settings dictionary, checking the parameter combinations are
         # valid
         ns_settings = {}
 
@@ -73,7 +73,9 @@ class SuperNetConfig(Config):
 
         # Set the posterior resampling parameters
         ns_settings["n_posterior_samples"] = settings.get("n_posterior_samples", 1000)
-        ns_settings["posterior_resampling_seed"] = settings.get("posterior_resampling_seed", 123456)
+        ns_settings["posterior_resampling_seed"] = settings.get(
+            "posterior_resampling_seed", 123456
+        )
 
         # Vectorization is switched off, by default
         ns_settings["vectorized"] = settings.get("vectorized", False)
@@ -88,16 +90,16 @@ class SuperNetConfig(Config):
 
         # Set the directory where the ultranest logs will be stored; by default
         # they are stored in output_path/ultranest_logs
-        ns_settings["log_dir"] = settings.get("log_dir", output_path/"ultranest_logs")
+        ns_settings["log_dir"] = settings.get("log_dir", output_path / "ultranest_logs")
 
         # In the case that the fit is resuming from a previous ultranest fit, the logs
         # directory must exist
         if ns_settings["resume"]:
             if not os.path.exists(ns_settings["log_dir"]):
                 raise FileNotFoundError(
-                    "Could not find previous ultranest fit at " + 
-                    str(ns_settings["log_dir"]) + 
-                    "."
+                    "Could not find previous ultranest fit at "
+                    + str(ns_settings["log_dir"])
+                    + "."
                 )
 
             log.info("Resuming ultranest fit from " + str(ns_settings["log_dir"]) + ".")

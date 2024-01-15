@@ -125,7 +125,7 @@ def perform_nested_sampling_grid_pdf_fit(
     # Save the resampled posterior as a pandas df
     parameter_names, ultranest_grid_fit = ultranest_grid_fit
     df = pd.DataFrame(ultranest_grid_fit, columns=parameter_names)
-    df.to_csv(str(output_path) + '/ns_result.csv')
+    df.to_csv(str(output_path) + "/ns_result.csv")
 
     # Produce the LHAPDF grid
     lhapdf_grid_pdf_from_samples(
@@ -331,7 +331,7 @@ def perform_mc_gridpdf_fit(
     ]
 
     df = pd.DataFrame(samples, columns=parameters)
-    df.to_csv(str(output_path) + '/mc_result.csv')
+    df.to_csv(str(output_path) + "/mc_result.csv")
 
     # Produce the LHAPDF grid
     lhapdf_grid_pdf_from_samples(
