@@ -11,6 +11,8 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
+import pandas as pd
+
 from super_net.covmats import sqrt_covmat_jax
 
 from reportengine import collect
@@ -84,7 +86,14 @@ mc_replicas_make_chi2_training_data = collect(
 
 
 def make_chi2_training_data_with_positivity(
-    _data_values, _pred_data, _posdata_split, _penalty_posdata
+    _data_values, 
+    closuretest_commondata_tuple,
+    covariance_matrix, 
+    _pred_data, 
+    _posdata_split, 
+    _penalty_posdata,
+    n_replicas,
+    urgent_pseudodata_replacement=False,
 ):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -118,6 +127,33 @@ def make_chi2_training_data_with_positivity(
     central_values_idx = training_data.central_values_idx
 
     posdata_training_idx = _posdata_split.training
+
+    print("Before")
+    print(central_values)
+
+    if urgent_pseudodata_replacement:
+        new_central_values = jnp.array(
+            pd.concat([cd.central_values for cd in closuretest_commondata_tuple], axis=0)
+        )
+        key = jax.random.PRNGKey(123456)
+        new_pseudodata = jax.random.multivariate_normal(
+            key,
+            new_central_values, 
+            covariance_matrix, 
+            shape=(n_replicas,)
+        )
+
+        if hasattr(make_chi2_training_data_with_positivity, "pseudodata_num"):
+            make_chi2_training_data_with_positivity.pseudodata_num += 1
+        else:
+            make_chi2_training_data_with_positivity.pseudodata_num = 0 
+
+        central_values = new_pseudodata[make_chi2_training_data_with_positivity.pseudodata_num][central_values_idx]
+
+        covmat = covariance_matrix[central_values_idx].T[central_values_idx]
+
+    print("After")
+    print(central_values)
 
     @jax.jit
     def chi2(pdf, batch_idx, alpha, lambda_positivity):
