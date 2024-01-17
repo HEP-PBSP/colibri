@@ -15,8 +15,7 @@ from reportengine import collect
 from super_net.covmats import sqrt_covmat_jax
 
 
-
-def make_chi2_training_data(_data_values, _pred_data):
+def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on a training data batch.
@@ -27,8 +26,11 @@ def make_chi2_training_data(_data_values, _pred_data):
 
     Parameters
     ----------
-    _data_values: training_validation.MakeDataValues
-        dataclass containing data for training and validation.
+    mc_pseudodata: mc_utils.MCPseudodata
+        dataclass containing Monte Carlo pseudodata.
+
+    fit_covariance_matrix: jnp.array
+        covariance matrix of the fit (see config.produce_fit_covariance_matrix).
 
     _pred_data: theory_predictions._pred_data
         super_net provider for (fktable) theory predictions.
@@ -39,10 +41,9 @@ def make_chi2_training_data(_data_values, _pred_data):
         function to compute chi2 of a pdf grid on a data batch.
 
     """
-    training_data = _data_values.training_data
-    central_values = training_data.central_values
-    covmat = training_data.covmat
-    central_values_idx = training_data.central_values_idx
+    tr_idx = mc_pseudodata.training_indices
+    central_values = mc_pseudodata.pseudodata[tr_idx]
+    covmat = fit_covariance_matrix[tr_idx][:, tr_idx]
 
     @jax.jit
     def chi2(pdf, batch_idx):
@@ -61,9 +62,7 @@ def make_chi2_training_data(_data_values, _pred_data):
             loss function value
 
         """
-        diff = (
-            _pred_data(pdf)[central_values_idx][batch_idx] - central_values[batch_idx]
-        )
+        diff = _pred_data(pdf)[tr_idx][batch_idx] - central_values[batch_idx]
 
         # batch covariance matrix before decomposing it
         batched_covmat = covmat[batch_idx][:, batch_idx]
@@ -122,7 +121,6 @@ def make_chi2_training_data_with_positivity(
 
     posdata_training_idx = _posdata_split.training
 
-
     @jax.jit
     def chi2(pdf, batch_idx, alpha, lambda_positivity):
         """
@@ -144,9 +142,7 @@ def make_chi2_training_data_with_positivity(
             loss function value
 
         """
-        diff = (
-            _pred_data(pdf)[tr_idx][batch_idx] - central_values[batch_idx]
-        )
+        diff = _pred_data(pdf)[tr_idx][batch_idx] - central_values[batch_idx]
 
         # batch covariance matrix before decomposing it
         batched_covmat = covmat[batch_idx][:, batch_idx]
@@ -173,7 +169,7 @@ mc_replicas_make_chi2_training_data_with_positivity = collect(
 )
 
 
-def make_chi2_validation_data(_data_values, _pred_data):
+def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on validation data.
@@ -184,8 +180,11 @@ def make_chi2_validation_data(_data_values, _pred_data):
 
     Parameters
     ----------
-    _data_values: training_validation.MakeDataValues
-        dataclass containing data for training and validation.
+    mc_pseudodata: mc_utils.MCPseudodata
+        dataclass containing Monte Carlo pseudodata.
+
+    fit_covariance_matrix: jnp.array
+        covariance matrix of the fit (see config.produce_fit_covariance_matrix).
 
     _pred_data: theory_predictions._pred_data
         super_net provider for (fktable) theory predictions.
@@ -195,10 +194,9 @@ def make_chi2_validation_data(_data_values, _pred_data):
     @jax.jit Callable
         function to compute chi2 of a pdf grid on validation data.
     """
-    validation_data = _data_values.validation_data
-    central_values = validation_data.central_values
-    covmat = validation_data.covmat
-    central_values_idx = validation_data.central_values_idx
+    val_idx = mc_pseudodata.validation_indices
+    central_values = mc_pseudodata.pseudodata[val_idx]
+    covmat = fit_covariance_matrix[val_idx][:, val_idx]
 
     # decompose covmat
     sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
@@ -206,7 +204,7 @@ def make_chi2_validation_data(_data_values, _pred_data):
     @jax.jit
     def chi2(pdf):
         """ """
-        diff = _pred_data(pdf)[central_values_idx] - central_values
+        diff = _pred_data(pdf)[val_idx] - central_values
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
@@ -235,7 +233,7 @@ def make_chi2_validation_data_with_positivity(
     ----------
     mc_pseudodata: mc_utils.MCPseudodata
         dataclass containing Monte Carlo pseudodata.
-    
+
     fit_covariance_matrix: jnp.array
         covariance matrix of the fit (see config.produce_fit_covariance_matrix).
 
