@@ -138,9 +138,9 @@ class SuperNetConfig(Config):
         """
         if not closure_test_level:
             return commondata_utils.experimental_commondata_tuple
-        elif closure_test_level==0:
+        elif closure_test_level == 0:
             return commondata_utils.level_0_commondata_tuple
-        elif closure_test_level==1:
+        elif closure_test_level == 1:
             return commondata_utils.level_1_commondata_tuple
         else:
             raise ValueError("closure_test_level must be None, 0 or 1.")
@@ -185,14 +185,14 @@ class SuperNetConfig(Config):
         else:
             return [{"replica_index": i, "trval_index": i} for i in range(n_replicas)]
 
-    def produce_dataset_inputs_t0_predictions(self, data, t0set, use_t0):
+    def produce_dataset_inputs_t0_predictions(self, data, t0set, use_fit_t0):
         """
         Produce t0 predictions for all datasets in data
         """
 
-        if not use_t0:
+        if not use_fit_t0:
             raise ConfigError(
-                f"use_t0 needs to be set to True so that dataset_inputs_t0_predictions can be generated"
+                f"use_fit_t0 needs to be set to True so that dataset_inputs_t0_predictions can be generated"
             )
         t0_predictions = []
         for dataset in data.datasets:

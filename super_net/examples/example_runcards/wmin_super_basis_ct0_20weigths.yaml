@@ -50,7 +50,7 @@ closure_test_level: 0
 closure_test_pdf: NNPDF40_nnlo_as_01180
 
 # fit specs
-use_t0: True
+use_fit_t0: True
 t0pdfset: NNPDF40_nnlo_as_01180
 
 # positivity specs
