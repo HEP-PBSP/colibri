@@ -160,7 +160,6 @@ class GridPdfFit:
 
 
 def grid_pdf_mc_fit(
-    _data_values,
     mc_pseudodata,
     _pred_data,
     fit_covariance_matrix,
@@ -260,21 +259,21 @@ def grid_pdf_mc_fit(
         return loss
 
     val_idx = mc_pseudodata.validation_indices
-    central_values = mc_pseudodata.pseudodata[val_idx]
-    covmat = fit_covariance_matrix[val_idx].T[val_idx]
+    central_values_val = mc_pseudodata.pseudodata[val_idx]
+    covmat_val = fit_covariance_matrix[val_idx][:, val_idx]
 
     posdata_validation_idx = _posdata_split.validation
 
     # decompose covmat
-    sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+    sqrt_covmat_val = jnp.array(sqrt_covmat_jax(covmat_val))
 
     @jax.jit
     def _chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity):
         """ """
-        diff = _pred_data(pdf)[val_idx] - central_values
+        diff = _pred_data(pdf)[val_idx] - central_values_val
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
-        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
+        chi2_vec = jla.solve_triangular(sqrt_covmat_val, diff, lower=True)
         loss = jnp.sum(chi2_vec**2)
 
         # add penalty term due to positivity
@@ -325,11 +324,6 @@ def grid_pdf_mc_fit(
 
         for _ in range(num_batches):
             batch = next(batches)
-
-            print(batch)
-            print("Loss")
-            print(loss_training(stacked_pdf_grid, batch))
-            raise
 
             stacked_pdf_grid, opt_state, loss_value = step(
                 stacked_pdf_grid, opt_state, batch
