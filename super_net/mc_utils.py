@@ -23,7 +23,7 @@ class MCPseudodata:
         return asdict(self)
 
 def mc_pseudodata(
-    central_covmat_index,
+    pseudodata_central_covmat_index,
     replica_index,
     trval_seed,
     shuffle_indices=True,
@@ -34,9 +34,9 @@ def mc_pseudodata(
     a fraction mc_validation_fraction of the data.
     """
 
-    central_values = central_covmat_index.central_values
-    covmat = central_covmat_index.covmat
-    all_indices = central_covmat_index.central_values_idx
+    central_values = pseudodata_central_covmat_index.central_values
+    covmat = pseudodata_central_covmat_index.covmat
+    all_indices = pseudodata_central_covmat_index.central_values_idx
 
     # Generate pseudodata according to a multivariate Gaussian centred on
     # central_values and with covariance matrix covmat.

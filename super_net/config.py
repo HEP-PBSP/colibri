@@ -11,6 +11,8 @@ Date: 11.11.2023
 from validphys.config import Config, Environment
 from validphys import covmats
 
+from super_net import covmats as super_net_covmats
+
 from reportengine.configparser import explicit_node, ConfigError
 
 from super_net import commondata_utils
@@ -129,38 +131,39 @@ class SuperNetConfig(Config):
         )
 
     @explicit_node
-    def produce_commondata_tuple(self, pseudodata=False, fakedata=False):
+    def produce_commondata_tuple(self, closure_test_level=None):
         """
         Produces a commondata tuple node in the reportengine dag
         according to some options
         """
-
-        if pseudodata and fakedata:
-            # closure test pseudodata
-            return commondata_utils.closuretest_pseudodata_commondata_tuple
-
-        elif fakedata:
-            # closure test fake-data
-            return commondata_utils.closuretest_commondata_tuple
-
-        elif pseudodata:
-            # experimental central values + random noise from covmat
-            return commondata_utils.pseudodata_commondata_tuple
-
-        else:
+        if not closure_test_level:
             return commondata_utils.experimental_commondata_tuple
+        elif closure_test_level==0:
+            return commondata_utils.level_0_commondata_tuple
+        elif closure_test_level==1:
+            return commondata_utils.level_1_commondata_tuple
+        else:
+            raise ValueError("closure_test_level must be None, 0 or 1.")
 
     @explicit_node
-    def produce_covariance_matrix(self, use_t0: bool = True):
+    def produce_fit_covariance_matrix(self, use_fit_t0: bool = True):
         """Modifies which action is used as covariance matrix
-        depending on the flag `use_t0`
+        depending on the flag `use_fit_t0`
         """
-        from super_net import covmats
-
-        if use_t0:
-            return covmats.dataset_inputs_t0_covmat_from_systematics
+        if use_fit_t0:
+            return super_net_covmats.dataset_inputs_t0_covmat_from_systematics
         else:
-            return covmats.dataset_inputs_covmat_from_systematics
+            return super_net_covmats.dataset_inputs_covmat_from_systematics
+
+    @explicit_node
+    def produce_data_generation_covariance_matrix(self):
+        """Produces the covariance matrix used in:
+        - level 1 closure test data construction (fluctuating around the level
+        0 data)
+        - Monte Carlo pseudodata (fluctuating either around the level 0 data or
+        level 1 data)
+        """
+        return super_net_covmats.dataset_inputs_covmat_from_systematics
 
     def produce_replica_indices(self, n_replicas):
         """
