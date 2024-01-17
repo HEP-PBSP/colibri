@@ -63,7 +63,7 @@ class TrainValidationSplit:
         return asdict(self)
 
 
-def training_validation_split(indices, test_size, random_seed, shuffle_indices=True):
+def training_validation_split(indices, mc_validation_fraction, random_seed, shuffle_indices=True):
     """
     Performs training validation split on an array.
 
@@ -71,7 +71,7 @@ def training_validation_split(indices, test_size, random_seed, shuffle_indices=T
     ----------
     indices: jaxlib.xla_extension.Array
 
-    test_size: float
+    mc_validation_fraction: float
 
     random_seed: jaxlib.xla_extension.Array
         PRNGKey, obtained as jax.random.PRNGKey(random_number)
@@ -90,7 +90,7 @@ def training_validation_split(indices, test_size, random_seed, shuffle_indices=T
         permuted_indices = indices
 
     # determine split point
-    split_point = int(indices.shape[0] * (1 - test_size))
+    split_point = int(indices.shape[0] * (1 - mc_validation_fraction))
 
     # split indices
     indices_train = permuted_indices[:split_point]
