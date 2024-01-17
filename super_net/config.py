@@ -136,7 +136,7 @@ class SuperNetConfig(Config):
         Produces a commondata tuple node in the reportengine dag
         according to some options
         """
-        if not closure_test_level:
+        if closure_test_level is None:
             return commondata_utils.experimental_commondata_tuple
         elif closure_test_level == 0:
             return commondata_utils.level_0_commondata_tuple
