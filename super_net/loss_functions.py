@@ -11,8 +11,6 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
-import pandas as pd
-
 from super_net.covmats import sqrt_covmat_jax
 
 from reportengine import collect
