@@ -48,8 +48,7 @@ wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
 use_same_wmin_param_per_replica: True
 
 # closure test
-fakedata: True
-pseudodata: True
+closure_test_level: 0
 closure_test_pdf: NNPDF40_nnlo_as_01180
 
 # positivity
