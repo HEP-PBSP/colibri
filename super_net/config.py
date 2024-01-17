@@ -156,14 +156,17 @@ class SuperNetConfig(Config):
             return super_net_covmats.dataset_inputs_covmat_from_systematics
 
     @explicit_node
-    def produce_data_generation_covariance_matrix(self):
+    def produce_data_generation_covariance_matrix(self, use_gen_t0: bool = False):
         """Produces the covariance matrix used in:
         - level 1 closure test data construction (fluctuating around the level
         0 data)
         - Monte Carlo pseudodata (fluctuating either around the level 0 data or
         level 1 data)
         """
-        return super_net_covmats.dataset_inputs_covmat_from_systematics
+        if use_gen_t0:
+            return super_net_covmats.dataset_inputs_t0_covmat_from_systematics
+        else:
+            return super_net_covmats.dataset_inputs_covmat_from_systematics
 
     def produce_replica_indices(self, n_replicas):
         """
