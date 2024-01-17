@@ -256,9 +256,7 @@ def grid_pdf_mc_fit(
     opt_state = optimizer_provider.init(init_stacked_pdf_grid)
     stacked_pdf_grid = init_stacked_pdf_grid.copy()
 
-    data_batch = data_batches(
-        len_tr_idx, batch_size, batch_seed
-    )
+    data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
     batches = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
     batch_size = data_batch.batch_size
@@ -276,10 +274,7 @@ def grid_pdf_mc_fit(
 
             epoch_loss += loss_training(stacked_pdf_grid, batch) / batch_size
 
-        epoch_val_loss += (
-            loss_validation(stacked_pdf_grid)
-            / len_val_idx
-        )
+        epoch_val_loss += loss_validation(stacked_pdf_grid) / len_val_idx
         epoch_loss /= num_batches
 
         loss.append(epoch_loss)
