@@ -16,7 +16,6 @@ import jax.numpy as jnp
 from super_net.theory_predictions import make_pred_dataset
 
 
-
 from reportengine import collect
 
 
@@ -112,20 +111,24 @@ def level_1_commondata_tuple(
     """
 
     # First, construct a jax array from the level_0_commondata_tuple
-    central_values = jnp.array(pd.concat([cd.central_values for cd in level_0_commondata_tuple], axis=0))
+    central_values = jnp.array(
+        pd.concat([cd.central_values for cd in level_0_commondata_tuple], axis=0)
+    )
 
     # Now, sample from the multivariate Gaussian with central values central_values
     # and covariance matrix data_generation_covariance_matrix. This produces the
     # level_1 data.
     rng = jax.random.PRNGKey(level_1_seed)
-    sample = jax.random.multivariate_normal(rng, central_values, data_generation_covariance_matrix)
+    sample = jax.random.multivariate_normal(
+        rng, central_values, data_generation_covariance_matrix
+    )
 
     # Now, reconstruct the commondata tuple, by modifying the original commondata
     # tuple's central values.
     sample_list = []
     for cd in level_0_commondata_tuple:
-        sample_list.append(cd.with_central_value(sample[:cd.ndata]))
-        sample = sample[cd.ndata:]
+        sample_list.append(cd.with_central_value(sample[: cd.ndata]))
+        sample = sample[cd.ndata :]
 
     return tuple(sample_list)
 
@@ -139,6 +142,7 @@ class CentralCovmatIndex:
     def to_dict(self):
         return asdict(self)
 
+
 def central_covmat_index(commondata_tuple, fit_covariance_matrix):
     """
     Given a commondata_tuple and a covariance_matrix, generated
@@ -150,7 +154,7 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
     commondata_tuple: tuple
         tuple of commondata instances, is generated as explicit node
         (see config.produce_commondata_tuple) and accordingly to the
-        specified options (pseudodata, fakedata).
+        specified options.
 
     fit_covariance_matrix: jnp.array
         covariance matrix, is generated as explicit node
@@ -175,7 +179,10 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
         covmat=fit_covariance_matrix,
     )
 
-def pseudodata_central_covmat_index(commondata_tuple, data_generation_covariance_matrix):
+
+def pseudodata_central_covmat_index(
+    commondata_tuple, data_generation_covariance_matrix
+):
     """Same as central_covmat_index, but with the pseudodata generation
     covariance matrix for a Monte Carlo fit.
     """
