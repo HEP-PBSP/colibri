@@ -71,3 +71,7 @@ def mc_pseudodata(
         training_indices=training_indices,
         validation_indices=validation_indices,
     )
+
+def len_trval_data(mc_pseudodata):
+    """Returns the number of training data points."""
+    return len(mc_pseudodata.training_indices), len(mc_pseudodata.validation_indices)
