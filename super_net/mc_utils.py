@@ -9,7 +9,7 @@ Date: 17.1.2023
 import jax
 import jax.numpy as jnp
 
-import dataclass
+from dataclasses import dataclass
 
 from super_net.utils import training_validation_split
 

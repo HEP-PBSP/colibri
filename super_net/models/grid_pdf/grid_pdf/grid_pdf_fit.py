@@ -9,6 +9,7 @@ from validphys.lhio import generate_replica0
 import ultranest
 import jax
 import jax.numpy as jnp
+import jax.scipy.linalg as jla
 import pandas as pd
 import optax
 from super_net.data_batch import data_batches
@@ -17,6 +18,8 @@ from dataclasses import dataclass
 import time
 import logging
 from reportengine import collect
+
+from super_net.covmats import sqrt_covmat_jax
 
 log = logging.getLogger(__name__)
 
@@ -157,9 +160,12 @@ class GridPdfFit:
 
 
 def grid_pdf_mc_fit(
-    _chi2_training_data_with_positivity,
-    _chi2_validation_data_with_positivity,
     _data_values,
+    mc_pseudodata,
+    _pred_data,
+    fit_covariance_matrix,
+    _posdata_split,
+    _penalty_posdata,
     xgrids,
     interpolate_grid,
     init_stacked_pdf_grid,
@@ -224,6 +230,61 @@ def grid_pdf_mc_fit(
         xgrids: dict
     """
 
+    tr_idx = mc_pseudodata.training_indices
+    central_values = mc_pseudodata.pseudodata[tr_idx]
+    covmat = fit_covariance_matrix[tr_idx][:, tr_idx]
+
+    posdata_training_idx = _posdata_split.training
+
+    @jax.jit
+    def _chi2_training_data_with_positivity(pdf, batch_idx, alpha, lambda_positivity):
+        diff = (
+            _pred_data(pdf)[tr_idx][batch_idx] - central_values[batch_idx]
+        )
+
+        # batch covariance matrix before decomposing it
+        batched_covmat = covmat[batch_idx][:, batch_idx]
+        # decompose covmat after having batched it!
+        sqrt_covmat = jnp.array(sqrt_covmat_jax(batched_covmat))
+
+        # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
+        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
+        loss = jnp.sum(chi2_vec**2)
+
+        # add penalty term due to positivity
+        pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
+            posdata_training_idx
+        ]
+        loss += jnp.sum(pos_penalty)
+
+        return loss
+
+    val_idx = mc_pseudodata.validation_indices
+    central_values = mc_pseudodata.pseudodata[val_idx]
+    covmat = fit_covariance_matrix[val_idx].T[val_idx]
+
+    posdata_validation_idx = _posdata_split.validation
+
+    # decompose covmat
+    sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
+
+    @jax.jit
+    def _chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity):
+        """ """
+        diff = _pred_data(pdf)[val_idx] - central_values
+
+        # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
+        chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
+        loss = jnp.sum(chi2_vec**2)
+
+        # add penalty term due to positivity
+        pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
+            posdata_validation_idx
+        ]
+        loss += jnp.sum(pos_penalty)
+
+        return loss
+
     @jax.jit
     def loss_training(stacked_pdf_grid, batch_idx):
         pdf = interpolate_grid(stacked_pdf_grid)
@@ -252,7 +313,7 @@ def grid_pdf_mc_fit(
     stacked_pdf_grid = init_stacked_pdf_grid.copy()
 
     data_batch = data_batches(
-        _data_values.training_data.n_training_points, batch_size, batch_seed
+        len(tr_idx), batch_size, batch_seed
     )
     batches = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
@@ -265,6 +326,11 @@ def grid_pdf_mc_fit(
         for _ in range(num_batches):
             batch = next(batches)
 
+            print(batch)
+            print("Loss")
+            print(loss_training(stacked_pdf_grid, batch))
+            raise
+
             stacked_pdf_grid, opt_state, loss_value = step(
                 stacked_pdf_grid, opt_state, batch
             )
@@ -273,7 +339,7 @@ def grid_pdf_mc_fit(
 
         epoch_val_loss += (
             loss_validation(stacked_pdf_grid)
-            / _data_values.validation_data.n_validation_points
+            / len(val_idx)
         )
         epoch_loss /= num_batches
 
