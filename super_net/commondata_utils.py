@@ -10,11 +10,12 @@ Date: 11.11.2023
 import pandas as pd
 from dataclasses import dataclass, asdict
 
+import jax
 import jax.numpy as jnp
 
 from super_net.theory_predictions import make_pred_dataset
 
-from validphys.pseudodata import make_level1_data
+
 
 from reportengine import collect
 
@@ -126,7 +127,7 @@ def level_1_commondata_tuple(
         sample_list.append(cd.with_central_value(sample[:cd.ndata]))
         sample = sample[cd.ndata:]
 
-    return tuple(pseudodata)
+    return tuple(sample_list)
 
 
 @dataclass(frozen=True)
