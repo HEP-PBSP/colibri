@@ -19,8 +19,6 @@ import time
 import logging
 from reportengine import collect
 
-from super_net.covmats import sqrt_covmat_jax
-
 log = logging.getLogger(__name__)
 
 
