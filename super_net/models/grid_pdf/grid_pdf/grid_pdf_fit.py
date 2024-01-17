@@ -9,7 +9,6 @@ from validphys.lhio import generate_replica0
 import ultranest
 import jax
 import jax.numpy as jnp
-import jax.scipy.linalg as jla
 import pandas as pd
 import optax
 from super_net.data_batch import data_batches
