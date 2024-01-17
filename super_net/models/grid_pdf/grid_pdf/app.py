@@ -16,6 +16,7 @@ grid_pdf_providers = [
     "grid_pdf.grid_pdf_lhapdf",
     "grid_pdf.provider_aliases",
     "grid_pdf.utils",
+    "grid_pdf.analytic_fit",
 ]
 
 
