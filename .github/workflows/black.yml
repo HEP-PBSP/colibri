@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ "main" ]
 
+  workflow_run:
+    workflows: ["Black Formatter"]
+    types:
+      - completed
+
 jobs:
   format:
     runs-on: ubuntu-latest
