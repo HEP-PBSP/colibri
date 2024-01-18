@@ -112,24 +112,6 @@ class SuperNetConfig(Config):
 
         return ns_settings
 
-    def produce_data(
-        self,
-        data_input,
-        *,
-        group_name="data",
-    ):
-        """A set of datasets where correlated systematics are taken
-        into account
-        """
-        datasets = []
-        for dsinp in data_input:
-            with self.set_context(ns=self._curr_ns.new_child({"dataset_input": dsinp})):
-                datasets.append(self.parse_from_(None, "dataset", write=False)[1])
-
-        return SuperNetDataGroupSpec(
-            name=group_name, datasets=datasets, dsinputs=data_input
-        )
-
     @explicit_node
     def produce_commondata_tuple(self, closure_test_level=False):
         """
