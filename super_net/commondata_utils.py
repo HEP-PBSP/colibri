@@ -16,8 +16,6 @@ import jax.numpy as jnp
 from super_net.theory_predictions import make_pred_dataset
 
 
-from reportengine import collect
-
 
 def experimental_commondata_tuple(data):
     """
