@@ -53,7 +53,9 @@ class SuperNetDataGroupSpec(DataGroupSpec):
             fake_data = []
             for cd, ds in zip(experimental_data, self.datasets):
                 if cd.setname != ds.name:
-                    raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
+                    raise RuntimeError(
+                        f"commondata {cd} does not correspond to dataset {ds}"
+                    )
                 # replace central values with theory prediction from `closure_test_pdf`
                 fake_data.append(
                     cd.with_central_value(dataset_t0_predictions(ds, closure_test_pdf))

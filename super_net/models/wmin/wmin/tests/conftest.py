@@ -1,4 +1,3 @@
-
 """"""
 RNG_SEED_WEIGHTS = 0xABCDEF
 
