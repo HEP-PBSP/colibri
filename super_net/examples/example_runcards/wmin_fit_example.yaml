@@ -57,6 +57,7 @@ lambda_positivity: 0 # do not include positivity
 # monte carlo fit specs
 use_fit_t0: True
 t0pdfset: NNPDF40_nnlo_as_01180
+use_gen_t0: True
 
 # training specs
 max_epochs: 1000
