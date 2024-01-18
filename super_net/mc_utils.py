@@ -13,6 +13,7 @@ from dataclasses import dataclass, asdict
 
 from super_net.utils import training_validation_split
 
+
 @dataclass(frozen=True)
 class MCPseudodata:
     pseudodata: jnp.array
@@ -22,6 +23,7 @@ class MCPseudodata:
 
     def to_dict(self):
         return asdict(self)
+
 
 def mc_pseudodata(
     pseudodata_central_covmat_index,
@@ -74,6 +76,7 @@ def mc_pseudodata(
         validation_indices=validation_indices,
         trval_split=True,
     )
+
 
 def len_trval_data(mc_pseudodata):
     """Returns the number of training data points."""
