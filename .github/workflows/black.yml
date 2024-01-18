@@ -1,0 +1,57 @@
+name: Black Formatter
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black
+
+      - name: Set git config
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Get branch name from pull request
+        id: pr_branch
+        run: echo "PR_BRANCH=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+
+      - name: Fetch changes from the remote repository
+        run: git fetch origin ${{ env.PR_BRANCH }}:${{ env.PR_BRANCH }}
+
+      - name: Checkout pull request branch
+        run: git checkout ${{ env.PR_BRANCH }}
+
+      - name: Pull changes into the local branch
+        run: git pull origin ${{ env.PR_BRANCH }}
+
+      - name: Run Black formatter
+        run: black .
+
+      - name: Commit changes
+        run: |
+          git add .
+          git commit -m "Format code with black" || echo "No changes to commit"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.PR_BRANCH }}
