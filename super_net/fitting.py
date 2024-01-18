@@ -176,18 +176,12 @@ def ns_fit(
             f"samples to {n_posterior_samples}"
         )
 
-    """
     resampled_posterior = resample_from_wmin_posterior(
         ultranest_result["samples"],
-        n_wmin_posterior_samples,
-        wmin_posterior_resampling_seed,
+        n_posterior_samples,
+        posterior_resampling_seed,
     )
     # Store run plots to ultranest output folder
     sampler.plot()
-    return UltranestWeightMinimizationFit(
-        **weight_minimization_grid.to_dict(),
-        optimised_wmin_weights=resampled_posterior,
-        ultranest_result=ultranest_result,
-    )
-    """
+
     return 0
