@@ -16,11 +16,10 @@ import jax.numpy as jnp
 from super_net.theory_predictions import make_pred_dataset
 
 
-
 def experimental_commondata_tuple(data):
     """
-    returns a tuple (validphys nodes should be immutable)
-    of commondata instances with experimental central values
+    Returns a tuple (validphys nodes should be immutable)
+    of commondata instances with experimental central values.
 
     Parameters
     ----------
@@ -41,10 +40,10 @@ def level_0_commondata_tuple(
     flavour_indices=None,
 ):
     """
-    returns a tuple (validphys nodes should be immutable)
+    Returns a tuple (validphys nodes should be immutable)
     of commondata instances with experimental central values
     replaced with theory predictions computed from a PDF `closure_test_pdf`
-    and fktables corresponding to datasets within data
+    and fktables corresponding to datasets within data.
 
     Parameters
     ----------
@@ -55,6 +54,9 @@ def level_0_commondata_tuple(
 
     closure_test_central_pdf_grid: jnp.array
         grid is of shape N_fl x N_x
+
+    flavour_indices: list, default is None
+        Subset of flavour (evolution basis) indices to be used.
 
     Returns
     -------
@@ -83,13 +85,10 @@ def level_1_commondata_tuple(
     level_1_seed=123456,
 ):
     """
-    returns a tuple (validphys nodes should be immutable)
-    of commondata instances with experimental central values
-    replaced with theory predictions computed from a PDF `closure_test_pdf`
-    and fktables corresponding to datasets within data
-
-    Noise is added on top of the central values according to a
-    multivariate Gaussian with covariance data_generation_covariance_matrix
+    Returns a tuple (validphys nodes should be immutable)
+    of level 1 commondata instances.
+    Noise is added to the level_0_commondata_tuple central values
+    according to a multivariate Gaussian with covariance data_generation_covariance_matrix
 
     Parameters
     ----------
