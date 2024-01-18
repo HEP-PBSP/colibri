@@ -18,6 +18,7 @@ class MCPseudodata:
     pseudodata: jnp.array
     training_indices: jnp.array
     validation_indices: jnp.array
+    trval_split: bool = False
 
     def to_dict(self):
         return asdict(self)
@@ -54,6 +55,7 @@ def mc_pseudodata(
             pseudodata=pseudodata,
             training_indices=all_indices,
             validation_indices=jnp.array([]),
+            trval_split=False,
         )
 
     trval_obj = training_validation_split(
@@ -70,6 +72,7 @@ def mc_pseudodata(
         pseudodata=pseudodata,
         training_indices=training_indices,
         validation_indices=validation_indices,
+        trval_split=True,
     )
 
 def len_trval_data(mc_pseudodata):
