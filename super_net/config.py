@@ -191,12 +191,12 @@ class SuperNetConfig(Config):
         else:
             return [{"replica_index": i, "trval_index": i} for i in range(n_replicas)]
 
-    def produce_dataset_inputs_t0_predictions(self, data, t0set, use_fit_t0):
+    def produce_dataset_inputs_t0_predictions(self, data, t0set, use_fit_t0, use_gen_t0):
         """
         Produce t0 predictions for all datasets in data
         """
 
-        if not use_fit_t0:
+        if (not use_fit_t0) or (not use_gen_t0):
             raise ConfigError(
                 f"use_fit_t0 needs to be set to True so that dataset_inputs_t0_predictions can be generated"
             )
