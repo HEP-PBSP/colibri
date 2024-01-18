@@ -6,7 +6,7 @@ from validphys.calcutils import calc_chi2
 
 from reportengine.table import table
 
-    
+
 @table
 def table_closure_test_central_chi2(data, closure_test_pdf, pdf):
     """
@@ -41,7 +41,7 @@ def table_closure_test_central_chi2(data, closure_test_pdf, pdf):
         cv_pdf = np.array([cd.central_values.to_numpy() for cd in cd_list_pdf])
     except:
         raise RuntimeError("data.load_pseudo_commondata is deprecated")
-    
+
     # compute chi2 for each dataset
     records = []
     for cd_ct, cd_pdf, ds in zip(cd_list_ct, cd_list_pdf, data.datasets):
