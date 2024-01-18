@@ -16,7 +16,6 @@ from super_net import covmats as super_net_covmats
 from reportengine.configparser import explicit_node, ConfigError
 
 from super_net import commondata_utils
-from super_net.core import SuperNetDataGroupSpec
 
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
 

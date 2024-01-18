@@ -23,7 +23,7 @@ def experimental_commondata_tuple(data):
 
     Parameters
     ----------
-    data: super_net.core.SuperNetDataGroupSpec
+    data: super_net.core.DataGroupSpec
 
     Returns
     -------
@@ -47,7 +47,7 @@ def level_0_commondata_tuple(
 
     Parameters
     ----------
-    data: super_net.core.SuperNetDataGroupSpec
+    data: super_net.core.DataGroupSpec
 
     experimental_commondata_tuple: tuple
         tuple of commondata with experimental central values
