@@ -251,6 +251,8 @@ def make_chi2_validation_data_with_positivity(
     @jax.jit Callable
         function to compute chi2 of a pdf grid on validation data.
     """
+    if not mc_pseudodata.trval_split:
+        return lambda pdf, alpha, lambda_positivity: jnp.nan
 
     val_idx = mc_pseudodata.validation_indices
     central_values = mc_pseudodata.pseudodata[val_idx]

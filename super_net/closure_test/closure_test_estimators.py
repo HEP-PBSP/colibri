@@ -31,14 +31,16 @@ def table_closure_test_central_chi2(data, closure_test_pdf, pdf):
         chi2 computed as described above.
 
     """
+    try:
+        cd_list_ct = data.load_pseudo_commondata(
+            closure_test_pdf=closure_test_pdf, fakedata=True
+        )
+        cv_ct = np.array([cd.central_values.to_numpy() for cd in cd_list_ct])
 
-    cd_list_ct = data.load_pseudo_commondata(
-        closure_test_pdf=closure_test_pdf, fakedata=True
-    )
-    cv_ct = np.array([cd.central_values.to_numpy() for cd in cd_list_ct])
-
-    cd_list_pdf = data.load_pseudo_commondata(closure_test_pdf=pdf, fakedata=True)
-    cv_pdf = np.array([cd.central_values.to_numpy() for cd in cd_list_pdf])
+        cd_list_pdf = data.load_pseudo_commondata(closure_test_pdf=pdf, fakedata=True)
+        cv_pdf = np.array([cd.central_values.to_numpy() for cd in cd_list_pdf])
+    except:
+        raise RuntimeError("data.load_pseudo_commondata is deprecated")
 
     # compute chi2 for each dataset
     records = []

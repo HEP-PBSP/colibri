@@ -143,7 +143,9 @@ class SuperNetConfig(Config):
         elif closure_test_level == 1:
             return commondata_utils.level_1_commondata_tuple
         else:
-            raise ValueError("closure_test_level must be None, 0 or 1.")
+            raise ValueError(
+                "closure_test_level must be 0 or 1, if not specified in the runcard then Experimental data is used."
+            )
 
     @explicit_node
     def produce_fit_covariance_matrix(self, use_fit_t0: bool = True):
