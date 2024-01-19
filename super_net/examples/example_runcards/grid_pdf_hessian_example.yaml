@@ -1,22 +1,22 @@
 dataset_inputs:
- - {'dataset':'NMC'}
-#  - {'dataset': 'SLACP_dwsh'}
-#  - {'dataset': 'SLACD_dw_ite'}
-#  - {'dataset': 'BCDMSP_dwsh'}
-#  - {'dataset': 'BCDMSD_dw_ite'}
-#  - {'dataset': 'CHORUSNUPb_dw_ite'}
-#  - {'dataset': 'CHORUSNBPb_dw_ite'}
-#  - {'dataset': 'NTVNUDMNFe_dw_ite', 'cfac': ['MAS']}
-#  - {'dataset': 'NTVNBDMNFe_dw_ite', 'cfac': ['MAS']}
-  # - {'dataset': 'HERACOMBNCEM'}
-  # - {'dataset': 'HERACOMBNCEP575'}
-  # - {'dataset': 'HERACOMBNCEP820'}
-  # - {'dataset': 'HERACOMBNCEP920'}
-  # - {'dataset': 'HERACOMBNCEP460'}
-  # - {'dataset': 'HERACOMBCCEP'}
-  # - {'dataset': 'HERACOMBCCEM'}
-#  - {'dataset': 'HERACOMB_SIGMARED_B'}
-#  - {'dataset': 'HERACOMB_SIGMARED_C'}
+ - {'dataset': 'NMC'}
+ - {'dataset': 'SLACP_dwsh'}
+ - {'dataset': 'SLACD_dw_ite'}
+ - {'dataset': 'BCDMSP_dwsh'}
+ - {'dataset': 'BCDMSD_dw_ite'}
+ - {'dataset': 'CHORUSNUPb_dw_ite'}
+ - {'dataset': 'CHORUSNBPb_dw_ite'}
+ - {'dataset': 'NTVNUDMNFe_dw_ite', 'cfac': ['MAS']}
+ - {'dataset': 'NTVNBDMNFe_dw_ite', 'cfac': ['MAS']}
+ - {'dataset': 'HERACOMBNCEM'}
+ - {'dataset': 'HERACOMBNCEP575'}
+ - {'dataset': 'HERACOMBNCEP820'}
+ - {'dataset': 'HERACOMBNCEP920'}
+ - {'dataset': 'HERACOMBNCEP460'}
+ - {'dataset': 'HERACOMBCCEP'}
+ - {'dataset': 'HERACOMBCCEM'}
+ - {'dataset': 'HERACOMB_SIGMARED_B'}
+ - {'dataset': 'HERACOMB_SIGMARED_C'}
 
 positivity:
   posdatasets:
@@ -76,7 +76,7 @@ xgrids:
   T24: []
   T35: []
 
-tolerance: 10
+tolerance: 5
 
 actions_:
 - analytic_hessian_grid_fit

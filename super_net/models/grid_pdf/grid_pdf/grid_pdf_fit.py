@@ -92,7 +92,7 @@ def analytic_hessian_grid_fit(
         theoryid,
         folder=lhapdf_path,
         output_path=output_path,
-        error_type="replicas",
+        error_type="hessian",
     )
 
     # Produce the central replica

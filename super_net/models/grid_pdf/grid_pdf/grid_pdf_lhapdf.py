@@ -127,7 +127,11 @@ def lhapdf_grid_pdf_from_samples(
 
         # Modify the info file with the fit-specific info
         info = info_file.build(theory, op, 1, info_update={})
-        info["NumMembers"] = n_posterior_samples
+        if error_type == "hessian":
+            # Thank you LHAPDF for this convention
+            info["NumMembers"] = n_posterior_samples+1
+        else:
+            info["NumMembers"] = n_posterior_samples
         info["ErrorType"] = error_type
         info["XMin"] = float(LHAPDF_XGRID[0])
         info["XMax"] = float(LHAPDF_XGRID[-1])
