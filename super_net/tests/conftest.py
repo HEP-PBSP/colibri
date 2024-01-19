@@ -25,6 +25,7 @@ T0_PDFSET = {"t0pdfset": "NNPDF40_nnlo_as_01180"}
 CLOSURE_TEST_PDFSET = {"closure_test_pdf": "NNPDF40_nnlo_as_01180"}
 
 TRVAL_INDEX = {"trval_index": 1}
+REPLICA_INDEX = {"replica_index": 1}
 
 TEST_PDFSET = "NNPDF40_nnlo_as_01180"
 

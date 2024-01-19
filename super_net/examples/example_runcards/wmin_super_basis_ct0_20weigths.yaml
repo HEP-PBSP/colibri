@@ -45,28 +45,30 @@ wminpdfset: wmin_super_basis
 n_replicas_wmin: 20
 wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
 
-# Level 0 closure test
-fakedata: True
-pseudodata: False
+# Level closure test
+closure_test_level: 0 
 closure_test_pdf: NNPDF40_nnlo_as_01180
 
 # fit specs
-use_t0: True
+use_fit_t0: True
 t0pdfset: NNPDF40_nnlo_as_01180
-
+use_gen_t0: True
 # positivity specs
 alpha: 1e-7
 lambda_positivity: 0.0
 
 # nested sampling specs
+ns_settings:
+  min_num_live_points: 500
+  min_ess: 50
+  vectorized: False
+  ndraw_max: 500
+  n_posterior_samples: 10
+
 bayesian_fit: True
 prior_type: uniform
-vectorized: True
-ndraw_max: 500
 unif_prior_min_val: -10.0
 unif_prior_max_val: 10.0
-min_num_live_points: 500
-min_ess: 50
 
 
 trval_index: 1

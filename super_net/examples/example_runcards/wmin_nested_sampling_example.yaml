@@ -45,14 +45,14 @@ wminpdfset: wmin_super_basis
 n_replicas_wmin: 20
 wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
 
-# Level 0 closure test
-fakedata: True
-pseudodata: False
+# Level closure test
+closure_test_level: 0
 closure_test_pdf: wmin_super_basis
 
 # fit specs
-use_t0: True
+use_fit_t0: True
 t0pdfset: 210623_mnc_disonly_linear_1000
+use_gen_t0: True
 
 # positivity specs
 alpha: 1e-7
