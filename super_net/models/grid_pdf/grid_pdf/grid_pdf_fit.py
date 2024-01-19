@@ -25,9 +25,12 @@ def analytic_hessian_grid_fit(
     _data_values,
     flavour_indices,
     reduced_xgrids,
+    length_reduced_xgrids,
     precomputed_predictions,
     tolerance,
     output_path,
+    theoryid,
+    lhapdf_path,
 ):
     """
     Same as hessian_grid_fit, but gives an analytic solution for DIS without
@@ -79,6 +82,25 @@ def analytic_hessian_grid_fit(
 
     df = pd.DataFrame(pdf_evecs, columns=parameters, index=index)
     df.to_csv(str(output_path) + "/hessian_result.csv")
+
+    lhapdf_grid_pdf_from_samples(
+        pdf_evecs,
+        reduced_xgrids,
+        flavour_indices,
+        length_reduced_xgrids,
+        len(pdf_evecs),
+        theoryid,
+        folder=lhapdf_path,
+        output_path=output_path,
+        error_type="replicas",
+    )
+
+    # Produce the central replica
+    l = Loader()
+    pdf = l.check_pdf(str(output_path).split("/")[-1])
+    generate_replica0(pdf)
+
+    log.info("Hessian fit complete!")
 
 def hessian_grid_fit(
     _chi2_with_positivity,

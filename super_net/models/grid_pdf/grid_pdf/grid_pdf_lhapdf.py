@@ -73,7 +73,7 @@ for i in range(num_flav):
             export_to_evolution_matrix[i,j] = 0
         j += 1
 
-evolution_to_export_matrix = np.linalg.inv(export_to_evolution_matrix)    
+evolution_to_export_matrix = np.linalg.inv(export_to_evolution_matrix)
 
 def lhapdf_grid_pdf_from_samples(
         samples,
@@ -83,7 +83,8 @@ def lhapdf_grid_pdf_from_samples(
         n_posterior_samples,
         theoryid,
         folder=lhapdf_path,
-        output_path=None, 
+        output_path=None,
+        error_type="replicas",
     ):
     """
     TODO
@@ -127,7 +128,7 @@ def lhapdf_grid_pdf_from_samples(
         # Modify the info file with the fit-specific info
         info = info_file.build(theory, op, 1, info_update={})
         info["NumMembers"] = n_posterior_samples
-        info["ErrorType"] = "replicas"
+        info["ErrorType"] = error_type
         info["XMin"] = float(LHAPDF_XGRID[0])
         info["XMax"] = float(LHAPDF_XGRID[-1])
         # Save the PIDs in the info file in the same order as in the evolution
@@ -141,7 +142,7 @@ def lhapdf_grid_pdf_from_samples(
 
         genpdf.export.dump_info(lhapdf_destination, info)
 
-        progress = 1 
+        progress = 1
         for replica, pdf_data in initial_PDFs_dict.items():
             log.info("Evolving replica " + str(progress) + " of " + str(n_posterior_samples))
             evolved_blocks = evolve_exportgrid(pdf_data, eko_op, LHAPDF_XGRID)
@@ -281,4 +282,4 @@ def write_exportgrid(df, reduced_xgrids, length_reduced_xgrids, flavour_indices,
 
     export_grid['pdfgrid'] = grid_for_writing
 
-    return export_grid 
+    return export_grid
