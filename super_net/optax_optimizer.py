@@ -29,12 +29,16 @@ def optimizer_provider(
     return opt(**kwargs)
 
 
-def early_stopper(min_delta=1e-5, patience=20, max_epochs=1000, mc_validation_fraction=0.2):
-    """ 
+def early_stopper(
+    min_delta=1e-5, patience=20, max_epochs=1000, mc_validation_fraction=0.2
+):
+    """
     Define the early stopping criteria.
     If mc_validation_fraction is zero then patience is the same as max_epochs.
     """
     if not mc_validation_fraction:
-        log.warning("No validation data provided, patience of early stopping set to max_epochs.")
+        log.warning(
+            "No validation data provided, patience of early stopping set to max_epochs."
+        )
         return EarlyStopping(min_delta=min_delta, patience=max_epochs)
     return EarlyStopping(min_delta=min_delta, patience=patience)
