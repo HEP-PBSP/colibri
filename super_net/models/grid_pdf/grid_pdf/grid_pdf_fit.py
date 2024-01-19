@@ -9,6 +9,7 @@ from validphys.lhio import generate_replica0
 import ultranest
 import jax
 import jax.numpy as jnp
+import jax.numpy.linalg as jla
 import pandas as pd
 import optax
 from super_net.data_batch import data_batches
@@ -19,6 +20,171 @@ import logging
 from reportengine import collect
 
 log = logging.getLogger(__name__)
+
+def analytic_hessian_grid_fit(
+    _data_values,
+    flavour_indices,
+    reduced_xgrids,
+    precomputed_predictions,
+    tolerance,
+    output_path,
+):
+    """
+    Same as hessian_grid_fit, but gives an analytic solution for DIS without
+    positivity sets.
+    """
+    training_data = _data_values.training_data
+    central_values = training_data.central_values
+    covmat = training_data.covmat
+    central_values_idx = training_data.central_values_idx
+
+    # Invert the covmat
+    inv_covmat = jla.inv(covmat)
+
+    # Solve chi2 analytically for the mean
+    Y = central_values
+    Sigma = inv_covmat
+    X = (precomputed_predictions[:, central_values_idx]).T
+
+    t0 = time.time()
+    gridpdf_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
+
+    # Now compute the Hessian matrix at the mean
+    @jax.jit
+    def chi2_func(params):
+        diff = central_values - X @ params
+        return diff.T @ Sigma @ diff
+
+    hessian = jax.hessian(chi2_func)
+    # Factor of 1/2 needed in Taylor expansion
+    hessian_at_mean = 0.5*hessian(gridpdf_mean)
+
+    # Find the Hessian eigenvectors and eigenvalues
+    evals_and_evecs = jla.eigh(hessian_at_mean)
+
+    # Construct the eigenvector basis for the PDFs
+    pdf_evecs = []
+    index = []
+    for i in range(len(evals_and_evecs[0])):
+        eval, evec = evals_and_evecs[0][i], evals_and_evecs[1][:,i].T
+        pdf_evecs += [gridpdf_mean + tolerance*jnp.sqrt(1/eval)*evec]
+        pdf_evecs += [gridpdf_mean - tolerance*jnp.sqrt(1/eval)*evec]
+
+        index += [f'evec_{i+1}_+', f'evec_{i+1}_-']
+
+    # Save the Hessian eigenvectors
+    parameters = [
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
+    ]
+
+    df = pd.DataFrame(pdf_evecs, columns=parameters, index=index)
+    df.to_csv(str(output_path) + "/hessian_result.csv")
+
+def hessian_grid_fit(
+    _chi2_with_positivity,
+    interpolate_grid,
+    init_stacked_pdf_grid,
+    optimizer_provider,
+    early_stopper,
+    max_epochs,
+    batch_size=128,
+    batch_seed=1,
+    alpha=1e-7,
+    lambda_positivity=1000,
+):
+    """
+    This method implements the Hessian uncertainty estimation method employed
+    by the CTEQ and MSHT collaborations. Suppose that the chi2 is a function
+    of the parameters c, chi2(c). The global minimum is first computed, c0,
+    and the chi2 difference is defined by:
+
+        Delta chi2(c) := chi2(c) - chi2(c0)
+
+    The chi2 difference is then approximated by a quadratic form,
+
+        Delta chi2 =approx= (c - c0)^T H (c - c0),
+
+    where H is the Hessian matrix defined by:
+
+        H_ij = partial^2 Delta chi^2 / partial ci partial cj (c0),
+
+    i.e. the matrix of second partial derivatives evaluated at the global
+    minimum. The Hessian is diagonalised by an orthonormal basis v1,...,vN
+    satisfying Hvk = epsilon_k vk, so that the difference in the chi2 can be
+    written as:
+
+    """
+
+    # Begin by computing the global minimum, using a standard stochastic
+    # gradient descent optimiser
+    @jax.jit
+    def loss_training(stacked_pdf_grid, batch_idx):
+        pdf = interpolate_grid(stacked_pdf_grid)
+
+        return _chi2_training_data_with_positivity(
+            pdf, batch_idx, alpha, lambda_positivity
+        )
+
+    @jax.jit
+    def loss_validation(stacked_pdf_grid):
+        pdf = interpolate_grid(stacked_pdf_grid)
+
+        return _chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
+
+    @jax.jit
+    def step(params, opt_state, batch_idx):
+        loss_value, grads = jax.value_and_grad(loss_training)(params, batch_idx)
+        updates, opt_state = optimizer_provider.update(grads, opt_state, params)
+        params = optax.apply_updates(params, updates)
+        return params, opt_state, loss_value
+
+    loss = []
+    val_loss = []
+
+    opt_state = optimizer_provider.init(init_stacked_pdf_grid)
+    stacked_pdf_grid = init_stacked_pdf_grid.copy()
+
+    data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
+    batches = data_batch.data_batch_stream_index()
+    num_batches = data_batch.num_batches
+    batch_size = data_batch.batch_size
+
+    for i in range(max_epochs):
+        epoch_loss = 0
+        epoch_val_loss = 0
+
+        for _ in range(num_batches):
+            batch = next(batches)
+
+            stacked_pdf_grid, opt_state, loss_value = step(
+                stacked_pdf_grid, opt_state, batch
+            )
+
+            epoch_loss += loss_training(stacked_pdf_grid, batch) / batch_size
+
+        epoch_val_loss += loss_validation(stacked_pdf_grid) / len_val_idx
+        epoch_loss /= num_batches
+
+        loss.append(epoch_loss)
+        val_loss.append(epoch_val_loss)
+
+        _, early_stopper = early_stopper.update(epoch_val_loss)
+        if early_stopper.should_stop:
+            log.info("Met early stopping criteria, breaking...")
+            break
+
+        if i % 50 == 0:
+            log.info(
+                f"step {i}, loss: {epoch_loss:.3f}, validation_loss: {epoch_val_loss:.3f}"
+            )
+            log.info(f"epoch:{i}, early_stopper: {early_stopper}")
+
+    print(stacked_pdf_grid)
+
+    # Now we have the minimum parameters, compute the Hessian matrix,
+    # which is possible analytically using jax gradients
+
+    # Next, diagonalise the Hessian matrix
 
 
 def ultranest_grid_fit(

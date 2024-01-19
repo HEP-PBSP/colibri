@@ -1,5 +1,5 @@
 """
-Note: so far this only works when the reduced grids are of the 
+Note: so far this only works when the reduced grids are of the
 same shape for each flavour.
 
 The problem in using different sizes for different flavours is in the generation
@@ -27,6 +27,22 @@ Specifies which flavours to include in a fit.
 """
 FLAVOUR_MAPPING = [1, 2, 3]
 
+def interpolate_grid_nonvec(
+    reduced_xgrids,
+    length_reduced_xgrids,
+    flavour_indices,
+    interpolation_grid=XGRID,
+):
+    """
+    Returns interpolation function non vectorised.
+    """
+    return interpolate_grid(
+        reduced_xgrids,
+        length_reduced_xgrids,
+        flavour_indices,
+        interpolation_grid,
+        vectorized=False,
+    )
 
 def interpolate_grid(
     reduced_xgrids,
