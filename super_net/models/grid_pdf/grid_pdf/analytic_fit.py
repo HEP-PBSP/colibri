@@ -115,6 +115,7 @@ def analyticmc_gridpdf_fit(
     precomputed_predictions,
     shuffle_indices=True,
     n_replicas=100,
+    mc_validation_fraction=0.2,
 ):
     """
     Valid only for DIS datasets.
@@ -124,31 +125,32 @@ def analyticmc_gridpdf_fit(
     ]
 
     covmat = fit_covariance_matrix
-    # Invert the covmat
-    inv_covmat = jla.inv(covmat)
 
     mc_replicas = []
     for i in range(n_replicas):
+        trval_key = jax.random.PRNGKey(i)
         replica = mc_pseudodata(
             pseudodata_central_covmat_index,
             i,
-            i,
-            shuffle_indices,
-            mc_validation_fraction=0.0,
+            trval_seed=trval_key,
+            shuffle_indices=shuffle_indices,
+            mc_validation_fraction=mc_validation_fraction,
         )
 
-        central_values = replica.pseudodata
         central_values_idx = replica.training_indices
+        central_values = replica.pseudodata[central_values_idx]
+        replica_covmat = covmat[central_values_idx][:, central_values_idx]
+        replica_inv_covmat = jla.inv(replica_covmat)
 
-        mc_replicas.append(central_values)
+        mc_replicas.append((central_values, central_values_idx, replica_inv_covmat))
 
     t0 = time.time()
     samples = []
-    for replica in mc_replicas:
+    for central_values, idx, inv_covmat in mc_replicas:
         # Solve chi2 analytically for the mean
-        Y = replica
+        Y = central_values
         Sigma = inv_covmat
-        X = (precomputed_predictions[:, central_values_idx]).T
+        X = (precomputed_predictions[:, idx]).T
 
         gridpdf_replica = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
 

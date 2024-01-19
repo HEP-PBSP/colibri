@@ -54,8 +54,7 @@ t0pdfset: NNPDF31_nnlo_as_0118
 alpha: 1e-7
 lambda_positivity: 1000
 
-trval_index: 1
-bayesian_fit: True
+mc_validation_fraction: 0.0
 # grid specs
 flavour_mapping: ["\\Sigma", "g", V]
 xgrids:
