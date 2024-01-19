@@ -131,12 +131,12 @@ class SuperNetConfig(Config):
         )
 
     @explicit_node
-    def produce_commondata_tuple(self, closure_test_level=None):
+    def produce_commondata_tuple(self, closure_test_level=False):
         """
         Produces a commondata tuple node in the reportengine dag
         according to some options
         """
-        if closure_test_level is None:
+        if closure_test_level is False:
             return commondata_utils.experimental_commondata_tuple
         elif closure_test_level == 0:
             return commondata_utils.level_0_commondata_tuple
@@ -144,7 +144,7 @@ class SuperNetConfig(Config):
             return commondata_utils.level_1_commondata_tuple
         else:
             raise ValueError(
-                "closure_test_level must be 0 or 1, if not specified in the runcard then Experimental data is used."
+                "closure_test_level must be either False, 0 or 1, if not specified in the runcard then Experimental data is used."
             )
 
     @explicit_node
