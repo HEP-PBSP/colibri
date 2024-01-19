@@ -16,7 +16,6 @@ super_net_providers = [
     "super_net.data_batch",
     "super_net.utils",
     "super_net.commondata_utils",
-    "super_net.closure_test.closure_test_estimators",
     "super_net.training_validation",
     "super_net.covmats",
     "super_net.plots_and_tables.plotting",

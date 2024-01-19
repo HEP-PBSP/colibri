@@ -16,7 +16,6 @@ from super_net import covmats as super_net_covmats
 from reportengine.configparser import explicit_node, ConfigError
 
 from super_net import commondata_utils
-from super_net.core import SuperNetDataGroupSpec
 
 from super_net.utils import FLAVOUR_TO_ID_MAPPING
 
@@ -112,31 +111,13 @@ class SuperNetConfig(Config):
 
         return ns_settings
 
-    def produce_data(
-        self,
-        data_input,
-        *,
-        group_name="data",
-    ):
-        """A set of datasets where correlated systematics are taken
-        into account
-        """
-        datasets = []
-        for dsinp in data_input:
-            with self.set_context(ns=self._curr_ns.new_child({"dataset_input": dsinp})):
-                datasets.append(self.parse_from_(None, "dataset", write=False)[1])
-
-        return SuperNetDataGroupSpec(
-            name=group_name, datasets=datasets, dsinputs=data_input
-        )
-
     @explicit_node
-    def produce_commondata_tuple(self, closure_test_level=None):
+    def produce_commondata_tuple(self, closure_test_level=False):
         """
         Produces a commondata tuple node in the reportengine dag
         according to some options
         """
-        if closure_test_level is None:
+        if closure_test_level is False:
             return commondata_utils.experimental_commondata_tuple
         elif closure_test_level == 0:
             return commondata_utils.level_0_commondata_tuple
@@ -144,7 +125,7 @@ class SuperNetConfig(Config):
             return commondata_utils.level_1_commondata_tuple
         else:
             raise ValueError(
-                "closure_test_level must be 0 or 1, if not specified in the runcard then Experimental data is used."
+                "closure_test_level must be either False, 0 or 1, if not specified in the runcard then Experimental data is used."
             )
 
     @explicit_node
