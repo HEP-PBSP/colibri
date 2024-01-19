@@ -41,13 +41,14 @@ theoryid: 400
 use_cuts: internal
 
 # Level 0 closure test
-fakedata: True
-pseudodata: False
+closure_test_level: 0
 closure_test_pdf: NNPDF31_nnlo_as_0118
+reduced_xgrid_data: True
 
 # fit specs
-use_t0: True
+use_fit_t0: True
 t0pdfset: NNPDF31_nnlo_as_0118
+use_gen_t0: True
 
 # positivity specs
 alpha: 1e-7

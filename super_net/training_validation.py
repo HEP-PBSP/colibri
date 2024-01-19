@@ -38,7 +38,7 @@ def make_data_values(
     trval_seed: jnp.array,
     hyperopt: bool = False,
     bayesian_fit: bool = False,
-    test_size: float = 0.2,
+    mc_validation_fraction: float = 0.2,
     shuffle_indices: bool = True,
 ):
     """
@@ -55,7 +55,7 @@ def make_data_values(
     trval_seed: jnp.array,
     hyperopt: bool = False,
     bayesian_fit: bool = False,
-    test_size: float = 0.2,
+    mc_validation_fraction: float = 0.2,
     shuffle_indices: bool = True
 
     Returns
@@ -80,7 +80,7 @@ def make_data_values(
 
     # perform tr/val split
     trval_split = training_validation_split(
-        central_values_indices, test_size, trval_seed, shuffle_indices
+        central_values_indices, mc_validation_fraction, trval_seed, shuffle_indices
     )
     indices_train = trval_split.training
     indices_validation = trval_split.validation
@@ -116,7 +116,7 @@ class PosdataTrainValidationSplit(TrainValidationSplit):
 
 
 def make_posdata_split(
-    posdatasets, trval_seed, test_size=0.2, shuffle_indices=True, bayesian_fit=False
+    posdatasets, trval_seed, mc_validation_fraction=0.2, shuffle_indices=True, bayesian_fit=False
 ):
     """
     Function for positivity training validation split.
@@ -132,7 +132,7 @@ def make_posdata_split(
     trval_seed: jax.random.PRNGKey
         utils.trval_seed, super_net provider.
 
-    test_size: float, default is 0.2
+    mc_validation_fraction: float, default is 0.2
 
     shuffle_indices: bool, default is True
 
@@ -165,7 +165,7 @@ def make_posdata_split(
         )
 
     trval_split = training_validation_split(
-        indices, test_size, trval_seed, shuffle_indices
+        indices, mc_validation_fraction, trval_seed, shuffle_indices
     )
     n_training = len(trval_split.training)
     n_validation = len(trval_split.validation)

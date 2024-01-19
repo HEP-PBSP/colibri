@@ -159,7 +159,7 @@ class GridPdfFit:
 def grid_pdf_mc_fit(
     _chi2_training_data_with_positivity,
     _chi2_validation_data_with_positivity,
-    _data_values,
+    len_trval_data,
     xgrids,
     interpolate_grid,
     init_stacked_pdf_grid,
@@ -224,6 +224,8 @@ def grid_pdf_mc_fit(
         xgrids: dict
     """
 
+    len_tr_idx, len_val_idx = len_trval_data
+
     @jax.jit
     def loss_training(stacked_pdf_grid, batch_idx):
         pdf = interpolate_grid(stacked_pdf_grid)
@@ -251,9 +253,7 @@ def grid_pdf_mc_fit(
     opt_state = optimizer_provider.init(init_stacked_pdf_grid)
     stacked_pdf_grid = init_stacked_pdf_grid.copy()
 
-    data_batch = data_batches(
-        _data_values.training_data.n_training_points, batch_size, batch_seed
-    )
+    data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
     batches = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
     batch_size = data_batch.batch_size
@@ -271,10 +271,7 @@ def grid_pdf_mc_fit(
 
             epoch_loss += loss_training(stacked_pdf_grid, batch) / batch_size
 
-        epoch_val_loss += (
-            loss_validation(stacked_pdf_grid)
-            / _data_values.validation_data.n_validation_points
-        )
+        epoch_val_loss += loss_validation(stacked_pdf_grid) / len_val_idx
         epoch_loss /= num_batches
 
         loss.append(epoch_loss)

@@ -48,16 +48,16 @@ wmin_grid_index: 1 # random seed used for random parametrisation of wmin pdf
 use_same_wmin_param_per_replica: True
 
 # closure test
-fakedata: True
-pseudodata: True
+closure_test_level: 0
 closure_test_pdf: NNPDF40_nnlo_as_01180
 
 # positivity
 lambda_positivity: 0 # do not include positivity
 
 # monte carlo fit specs
-use_t0: True
+use_fit_t0: True
 t0pdfset: NNPDF40_nnlo_as_01180
+use_gen_t0: True
 
 # training specs
 max_epochs: 1000

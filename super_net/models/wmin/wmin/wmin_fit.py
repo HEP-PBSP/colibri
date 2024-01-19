@@ -47,7 +47,7 @@ class WeightMinimizationFit(WeightMinimizationGrid):
 def weight_minimization_fit(
     _chi2_training_data_with_positivity,
     _chi2_validation_data_with_positivity,
-    _data_values,
+    len_trval_data,
     weight_minimization_grid,
     optimizer_provider,
     early_stopper,
@@ -60,6 +60,8 @@ def weight_minimization_fit(
     """
     TODO
     """
+
+    len_tr_data, len_val_data = len_trval_data
 
     @jax.jit
     def loss_training(weights, batch_idx):
@@ -93,7 +95,7 @@ def weight_minimization_fit(
     weights = weight_minimization_grid.init_wmin_weights
 
     data_batch = data_batches(
-        _data_values.training_data.n_training_points, batch_size, batch_seed
+        len_tr_data, batch_size, batch_seed
     )
     batches = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
@@ -111,7 +113,7 @@ def weight_minimization_fit(
             epoch_loss += loss_training(weights, batch) / batch_size
 
         epoch_val_loss += (
-            loss_validation(weights) / _data_values.validation_data.n_validation_points
+            loss_validation(weights) / len_val_data
         )
         epoch_loss /= num_batches
 
