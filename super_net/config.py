@@ -110,7 +110,11 @@ class SuperNetConfig(Config):
             ns_settings["resume"] = "overwrite"
 
         return ns_settings
-
+    
+    def produce_vectorized(self, ns_settings):
+        """Returns True if the fit is vectorized, False otherwise."""
+        return ns_settings["vectorized"]
+    
     @explicit_node
     def produce_commondata_tuple(self, closure_test_level=False):
         """
