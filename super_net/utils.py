@@ -63,7 +63,9 @@ class TrainValidationSplit:
         return asdict(self)
 
 
-def training_validation_split(indices, mc_validation_fraction, random_seed, shuffle_indices=True):
+def training_validation_split(
+    indices, mc_validation_fraction, random_seed, shuffle_indices=True
+):
     """
     Performs training validation split on an array.
 
@@ -146,6 +148,7 @@ def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
     )
     return grid
 
+
 def resample_from_ns_posterior(
     samples, n_posterior_samples=1000, posterior_resampling_seed=123456
 ):
@@ -162,6 +165,7 @@ def resample_from_ns_posterior(
     )
 
     return resampled_samples
+
 
 def closure_test_central_pdf_grid(closure_test_pdf_grid):
     """

@@ -94,9 +94,7 @@ def weight_minimization_fit(
     opt_state = optimizer_provider.init(weight_minimization_grid.init_wmin_weights)
     weights = weight_minimization_grid.init_wmin_weights
 
-    data_batch = data_batches(
-        len_tr_data, batch_size, batch_seed
-    )
+    data_batch = data_batches(len_tr_data, batch_size, batch_seed)
     batches = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
     batch_size = data_batch.batch_size
@@ -112,9 +110,7 @@ def weight_minimization_fit(
 
             epoch_loss += loss_training(weights, batch) / batch_size
 
-        epoch_val_loss += (
-            loss_validation(weights) / len_val_data
-        )
+        epoch_val_loss += loss_validation(weights) / len_val_data
         epoch_loss /= num_batches
 
         loss.append(epoch_loss)

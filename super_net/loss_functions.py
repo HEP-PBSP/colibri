@@ -12,7 +12,6 @@ import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
 
-
 def make_chi2(_data_values, _pred_data, vectorized=False):
     """
     Returns a jax.jit compiled function that computes the chi2

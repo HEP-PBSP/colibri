@@ -12,31 +12,36 @@ import os, sys
 
 import pandas as pd
 
+
 def get_fit_path(fit):
     fit_path = pathlib.Path(sys.prefix) / "share/super_net/results" / fit
     if not os.path.exists(fit_path):
-        raise FileNotFoundError("Could not find a fit " + fit + " in the super_net/results directory.")
+        raise FileNotFoundError(
+            "Could not find a fit " + fit + " in the super_net/results directory."
+        )
     return str(fit_path)
+
 
 @figuregen
 def plot_histograms(super_net_fits):
-    """Plots comparison histograms for the fits in super_net_fits
-    """
+    """Plots comparison histograms for the fits in super_net_fits"""
 
     fit_dfs = []
     for fit in super_net_fits:
         fit_path = get_fit_path(fit)
-        if os.path.exists(fit_path + '/ns_result.csv'):
-            fit_dfs += [pd.read_csv(fit_path + '/ns_result.csv', index_col=0)]
-        elif os.path.exists(fit_path + '/mc_result.csv'):
-            fit_dfs += [pd.read_csv(fit_path + '/mc_result.csv', index_col=0)]
+        if os.path.exists(fit_path + "/ns_result.csv"):
+            fit_dfs += [pd.read_csv(fit_path + "/ns_result.csv", index_col=0)]
+        elif os.path.exists(fit_path + "/mc_result.csv"):
+            fit_dfs += [pd.read_csv(fit_path + "/mc_result.csv", index_col=0)]
         else:
-            raise FileNotFoundError('Could not find the results of an NS or MC fit for fit ' + fit)
+            raise FileNotFoundError(
+                "Could not find the results of an NS or MC fit for fit " + fit
+            )
 
     # Check that the parameters for the fits are all the same
     for fit_df in fit_dfs:
         if not all(fit_df.columns == fit_dfs[0].columns):
-            raise ValueError('The supplied fits do not have the same parameters.')
+            raise ValueError("The supplied fits do not have the same parameters.")
 
     fig, ax = plt.subplots()
     params = fit_dfs[0].columns
@@ -47,6 +52,7 @@ def plot_histograms(super_net_fits):
             ax.set_xlabel(param)
         yield fig
         ax.cla()
+
 
 @figure
 def plot_ultranest_results(ultranest_results_path):
