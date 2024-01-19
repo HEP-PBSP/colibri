@@ -3,6 +3,7 @@ from validphys.loader import Loader
 from validphys.lhio import generate_replica0
 
 from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples
+from super_net.mc_utils import mc_pseudodata
 
 import jax
 import jax.scipy.linalg as jla
@@ -107,11 +108,12 @@ def perform_analytic_gridpdf_fit(
 
 
 def analyticmc_gridpdf_fit(
-    _data_values,
+    pseudodata_central_covmat_index,
+    fit_covariance_matrix,
     flavour_indices,
     reduced_xgrids,
     precomputed_predictions,
-    pdfgrid_sampling_index=123456,
+    shuffle_indices=True,
     n_replicas=100,
 ):
     """
@@ -121,22 +123,25 @@ def analyticmc_gridpdf_fit(
         f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
     ]
 
-    training_data = _data_values.training_data
-    central_values = training_data.central_values
-    covmat = training_data.covmat
-    central_values_idx = training_data.central_values_idx
-
+    covmat = fit_covariance_matrix
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
-    key = jax.random.PRNGKey(pdfgrid_sampling_index)
+    mc_replicas = []
+    for i in range(n_replicas):
+        replica = mc_pseudodata(
+            pseudodata_central_covmat_index,
+            i,
+            i,
+            shuffle_indices,
+            mc_validation_fraction=0.0,
+        )
 
-    mc_replicas = jax.random.multivariate_normal(
-        key,
-        central_values,
-        covmat,
-        shape=(n_replicas,),
-    )
+        central_values = replica.pseudodata
+        central_values_idx = replica.training_indices
+
+        mc_replicas.append(central_values)
+
     t0 = time.time()
     samples = []
     for replica in mc_replicas:
