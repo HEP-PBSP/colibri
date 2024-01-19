@@ -77,6 +77,12 @@ xgrids:
   T35: []
 
 tolerance: 5
+grid_initializer:
+  type: uniform
+  minval: 0.0
+  maxval: 5.0
+replica_index: 1
+max_epochs: 15000
 
 actions_:
-- analytic_hessian_grid_fit
+- hessian_grid_fit 

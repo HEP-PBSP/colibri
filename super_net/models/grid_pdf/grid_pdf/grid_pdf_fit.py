@@ -52,6 +52,8 @@ def analytic_hessian_grid_fit(
     t0 = time.time()
     gridpdf_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
 
+    print(gridpdf_mean)
+
     # Now compute the Hessian matrix at the mean
     @jax.jit
     def chi2_func(params):
@@ -104,13 +106,17 @@ def analytic_hessian_grid_fit(
 
 def hessian_grid_fit(
     _chi2_with_positivity,
+    flavour_indices,
+    reduced_xgrids,
+    length_reduced_xgrids,
     interpolate_grid,
+    tolerance,
+    output_path,
+    theoryid,
+    lhapdf_path,
     init_stacked_pdf_grid,
     optimizer_provider,
-    early_stopper,
     max_epochs,
-    batch_size=128,
-    batch_seed=1,
     alpha=1e-7,
     lambda_positivity=1000,
 ):
@@ -137,77 +143,109 @@ def hessian_grid_fit(
 
     """
 
-    # Begin by computing the global minimum, using a standard stochastic
-    # gradient descent optimiser
+    # First, compute the mean by stochastic gradient descent applied to the
+    # chi2_with_positivity function.
     @jax.jit
-    def loss_training(stacked_pdf_grid, batch_idx):
+    def loss_training(stacked_pdf_grid):
         pdf = interpolate_grid(stacked_pdf_grid)
+        return _chi2_with_positivity(pdf)
 
-        return _chi2_training_data_with_positivity(
-            pdf, batch_idx, alpha, lambda_positivity
-        )
-
+    # Currently, a training/validation split is not applied, but this may be
+    # necessary, we shall see I suppose...
     @jax.jit
     def loss_validation(stacked_pdf_grid):
         pdf = interpolate_grid(stacked_pdf_grid)
 
-        return _chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
+        return lambda pdf, alpha, lambda_positivity: jnp.nan
 
     @jax.jit
-    def step(params, opt_state, batch_idx):
-        loss_value, grads = jax.value_and_grad(loss_training)(params, batch_idx)
+    def step(params, opt_state):
+        loss_value, grads = jax.value_and_grad(loss_training)(params)
         updates, opt_state = optimizer_provider.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
         return params, opt_state, loss_value
 
     loss = []
-    val_loss = []
 
     opt_state = optimizer_provider.init(init_stacked_pdf_grid)
     stacked_pdf_grid = init_stacked_pdf_grid.copy()
 
-    data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
-    batches = data_batch.data_batch_stream_index()
-    num_batches = data_batch.num_batches
-    batch_size = data_batch.batch_size
-
     for i in range(max_epochs):
         epoch_loss = 0
-        epoch_val_loss = 0
 
-        for _ in range(num_batches):
-            batch = next(batches)
+        stacked_pdf_grid, opt_state, loss_value = step(
+            stacked_pdf_grid, opt_state
+        )
 
-            stacked_pdf_grid, opt_state, loss_value = step(
-                stacked_pdf_grid, opt_state, batch
-            )
-
-            epoch_loss += loss_training(stacked_pdf_grid, batch) / batch_size
-
-        epoch_val_loss += loss_validation(stacked_pdf_grid) / len_val_idx
-        epoch_loss /= num_batches
+        epoch_loss += loss_training(stacked_pdf_grid)
 
         loss.append(epoch_loss)
-        val_loss.append(epoch_val_loss)
-
-        _, early_stopper = early_stopper.update(epoch_val_loss)
-        if early_stopper.should_stop:
-            log.info("Met early stopping criteria, breaking...")
-            break
 
         if i % 50 == 0:
             log.info(
-                f"step {i}, loss: {epoch_loss:.3f}, validation_loss: {epoch_val_loss:.3f}"
+                f"step {i}, loss: {epoch_loss:.3f}"
             )
-            log.info(f"epoch:{i}, early_stopper: {early_stopper}")
 
-    print(stacked_pdf_grid)
+    gridpdf_mean = stacked_pdf_grid
 
-    # Now we have the minimum parameters, compute the Hessian matrix,
-    # which is possible analytically using jax gradients
+    # Construct the 'naive' best Hessian matrix
+    hessian = jax.hessian(loss_training)
+    hessian_at_mean = 0.5*hessian(stacked_pdf_grid)
 
-    # Next, diagonalise the Hessian matrix
+    # # Now begins the iterative procedure to compute the 'best' Hessian...?
+    # # The procedure is detailed on pages 5,6 of https://arxiv.org/pdf/hep-ph/0008191.pdf
+    # # but it is rather obscure, and does require several readings!
+    # u_initial = jnp.eye(len(stacked_pdf_grid))
+    # t_initial = jnp.array([1.0]*len(stacked_pdf_grid))
+    #
+    # print(u_initial)
+    # print(t_initial)
+    #
+    # n_iterations = 5
+    #
+    # for i in range(n_iterations):
+    #     c_grad_xi_matrix
+    #     phi = c_grad_xi_matrix.T @ hessian_at_mean @ c_grad_xi_matrix
 
+    # Find the Hessian eigenvectors and eigenvalues
+    evals_and_evecs = jla.eigh(hessian_at_mean)
+
+    # Construct the eigenvector basis for the PDFs
+    pdf_evecs = []
+    index = []
+    for i in range(len(evals_and_evecs[0])):
+        eval, evec = evals_and_evecs[0][i], evals_and_evecs[1][:,i].T
+        pdf_evecs += [gridpdf_mean + tolerance*jnp.sqrt(1/eval)*evec]
+        pdf_evecs += [gridpdf_mean - tolerance*jnp.sqrt(1/eval)*evec]
+
+        index += [f'evec_{i+1}_+', f'evec_{i+1}_-']
+
+    # Save the Hessian eigenvectors
+    parameters = [
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
+    ]
+
+    df = pd.DataFrame(pdf_evecs, columns=parameters, index=index)
+    df.to_csv(str(output_path) + "/hessian_result.csv")
+
+    lhapdf_grid_pdf_from_samples(
+        pdf_evecs,
+        reduced_xgrids,
+        flavour_indices,
+        length_reduced_xgrids,
+        len(pdf_evecs),
+        theoryid,
+        folder=lhapdf_path,
+        output_path=output_path,
+        error_type="hessian",
+    )
+
+    # Produce the central replica
+    l = Loader()
+    pdf = l.check_pdf(str(output_path).split("/")[-1])
+    generate_replica0(pdf)
+
+    log.info("Hessian fit complete!")
 
 def ultranest_grid_fit(
     _chi2_with_positivity,
