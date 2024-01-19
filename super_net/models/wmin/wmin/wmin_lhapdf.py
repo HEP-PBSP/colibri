@@ -65,7 +65,6 @@ def lhapdf_from_collected_weights(
             else:
                 out_stream.write(l)
 
-
     headers, grids = load_all_replicas(wminpdfset)
     replicas_df = rep_matrix(grids)
 

@@ -126,7 +126,9 @@ def weight_minimization_grid(
         )[0]
 
         # discard central wmin replica from wmin basis
-        wmin_basis_idx = wmin_basis_idx[jnp.where(wmin_basis_idx != wmin_central_replica)]
+        wmin_basis_idx = wmin_basis_idx[
+            jnp.where(wmin_basis_idx != wmin_central_replica)
+        ]
 
     else:
         # reduce INPUT_GRID to only keep n_replicas_wmin PDF replicas

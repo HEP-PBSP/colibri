@@ -116,7 +116,11 @@ class PosdataTrainValidationSplit(TrainValidationSplit):
 
 
 def make_posdata_split(
-    posdatasets, trval_seed, mc_validation_fraction=0.2, shuffle_indices=True, bayesian_fit=False
+    posdatasets,
+    trval_seed,
+    mc_validation_fraction=0.2,
+    shuffle_indices=True,
+    bayesian_fit=False,
 ):
     """
     Function for positivity training validation split.
