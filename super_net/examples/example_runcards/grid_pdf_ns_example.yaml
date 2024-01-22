@@ -68,7 +68,7 @@ ns_settings:
   Run_settings:
     min_num_live_points: 500
     min_ess: 50
-    frac_remain: 0.1
+    frac_remain: 0.01
 
 # grid specs
 flavour_mapping: ["\\Sigma", "g", V]
