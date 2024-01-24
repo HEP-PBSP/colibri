@@ -16,17 +16,32 @@ log = logging.getLogger(__name__)
 
 
 def optimizer_provider(
-    optimizer: str = "adam", learning_rate: float = 5e-4, weight_decay=2
+    optimizer: str = "adam", learning_rate: float = 5e-4, optimizer_settings={}
 ) -> optax._src.base.GradientTransformationExtraArgs:
-    """ """
+    """
+    Define the optimizer.
+
+    Parameters
+    ----------
+    optimizer : str
+        Name of the optimizer to use.
+
+    learning_rate : float
+        Learning rate.
+
+    optimizer_settings : dict
+        Dictionary containing the optimizer settings.
+    
+    Returns
+    -------
+    optax._src.base.GradientTransformationExtraArgs
+        Optax optimizer.
+
+    """
     opt = getattr(optax, optimizer)
-    kwargs = {"learning_rate": learning_rate}
+    opt_inp = {"learning_rate": learning_rate, **optimizer_settings}
 
-    # Check if the optimizer has the weight_decay argument
-    if "weight_decay" in opt.__code__.co_varnames:
-        kwargs["weight_decay"] = weight_decay
-
-    return opt(**kwargs)
+    return opt(**opt_inp)
 
 
 def early_stopper(
