@@ -31,7 +31,7 @@ def optimizer_provider(
 
     optimizer_settings : dict
         Dictionary containing the optimizer settings.
-    
+
     Returns
     -------
     optax._src.base.GradientTransformationExtraArgs
