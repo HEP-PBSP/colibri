@@ -46,16 +46,11 @@ class SuperNetConfig(Config):
 
         # Begin by checking that the user-supplied keys are known; warn the user otherwise.
         known_keys = {
-            "min_num_live_points",
-            "min_ess",
             "n_posterior_samples",
             "posterior_resampling_seed",
-            "ndraw_max",
-            "vectorized",
-            "slice_sampler",
-            "slice_steps",
-            "resume",
-            "log_dir",
+            "ReactiveNS_settings",
+            "Run_settings",
+            "SliceSampler_settings",
         }
 
         kdiff = settings.keys() - known_keys
@@ -68,46 +63,53 @@ class SuperNetConfig(Config):
         # valid
         ns_settings = {}
 
-        # Set min_num_live_points and min_ess
-        ns_settings["min_num_live_points"] = settings.get("min_num_live_points", 400)
-        ns_settings["min_ess"] = settings.get("min_ess", 40)
-
         # Set the posterior resampling parameters
         ns_settings["n_posterior_samples"] = settings.get("n_posterior_samples", 1000)
         ns_settings["posterior_resampling_seed"] = settings.get(
             "posterior_resampling_seed", 123456
         )
 
-        # Vectorization is switched off, by default
-        ns_settings["vectorized"] = settings.get("vectorized", False)
-        ns_settings["ndraw_max"] = settings.get("ndraw_max", 500)
+        # Parse internal settings, if they are not mentioned, set to empty dict
+        ns_settings["ReactiveNS_settings"] = settings.get("ReactiveNS_settings", {})
+        ns_settings["Run_settings"] = settings.get("Run_settings", {})
+        ns_settings["SliceSampler_settings"] = settings.get("SliceSampler_settings", {})
 
-        # Set the slice sampler parameters
-        ns_settings["slice_sampler"] = settings.get("slice_sampler", False)
-        ns_settings["slice_steps"] = settings.get("slice_steps", 100)
+        # Check that the ReactiveNS_settings key was provided, if not set to default
+        if ns_settings["ReactiveNS_settings"]:
+            # Set the directory where the ultranest logs will be stored; by default
+            # they are stored in output_path/ultranest_logs
+            ns_settings["ReactiveNS_settings"]["log_dir"] = settings[
+                "ReactiveNS_settings"
+            ].get("log_dir", str(output_path / "ultranest_logs"))
 
-        # Fit will not resume from previous ultranest fit by default
-        ns_settings["resume"] = settings.get("resume", False)
-
-        # Set the directory where the ultranest logs will be stored; by default
-        # they are stored in output_path/ultranest_logs
-        ns_settings["log_dir"] = settings.get("log_dir", output_path / "ultranest_logs")
+            ns_settings["ReactiveNS_settings"]["resume"] = settings[
+                "ReactiveNS_settings"
+            ].get("resume", False)
+        else:
+            ns_settings["ReactiveNS_settings"]["log_dir"] = str(
+                output_path / "ultranest_logs"
+            )
+            ns_settings["ReactiveNS_settings"]["resume"] = False
 
         # In the case that the fit is resuming from a previous ultranest fit, the logs
         # directory must exist
-        if ns_settings["resume"]:
-            if not os.path.exists(ns_settings["log_dir"]):
+        if ns_settings["ReactiveNS_settings"]["resume"]:
+            if not os.path.exists(ns_settings["ReactiveNS_settings"]["log_dir"]):
                 raise FileNotFoundError(
                     "Could not find previous ultranest fit at "
-                    + str(ns_settings["log_dir"])
+                    + str(ns_settings["ReactiveNS_settings"]["log_dir"])
                     + "."
                 )
 
-            log.info("Resuming ultranest fit from " + str(ns_settings["log_dir"]) + ".")
+            log.info(
+                "Resuming ultranest fit from "
+                + str(ns_settings["ReactiveNS_settings"]["log_dir"])
+                + "."
+            )
 
         # If the resume option is false, ultranest expects "overwrite" instead
-        if not ns_settings["resume"]:
-            ns_settings["resume"] = "overwrite"
+        if not ns_settings["ReactiveNS_settings"]["resume"]:
+            ns_settings["ReactiveNS_settings"]["resume"] = "overwrite"
 
         return ns_settings
 

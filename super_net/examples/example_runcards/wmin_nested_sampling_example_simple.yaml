@@ -62,8 +62,15 @@ bayesian_fit: True
 prior_type: uniform
 unif_prior_min_val: -2.0
 unif_prior_max_val: 2.0
-min_num_live_points: 500
-min_ess: 50
+ns_settings:
+  n_posterior_samples: 10
+  ReactiveNS_settings:
+    vectorized: False
+    ndraw_max: 500
+  Run_settings:
+    min_num_live_points: 500
+    min_ess: 50
+    frac_remain: 0.01
 
 
 trval_index: 1

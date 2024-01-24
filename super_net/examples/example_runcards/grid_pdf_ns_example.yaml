@@ -61,11 +61,14 @@ sigma_pdf_prior: 1
 trval_index: 1
 
 ns_settings:
-  min_num_live_points: 500
-  min_ess: 50
-  vectorized: False
-  ndraw_max: 500
   n_posterior_samples: 10
+  ReactiveNS_settings:
+    vectorized: False
+    ndraw_max: 500
+  Run_settings:
+    min_num_live_points: 500
+    min_ess: 50
+    frac_remain: 0.01
 
 # grid specs
 flavour_mapping: ["\\Sigma", "g", V]
