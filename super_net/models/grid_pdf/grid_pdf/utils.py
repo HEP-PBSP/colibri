@@ -102,6 +102,7 @@ def init_stacked_pdf_grid(
     length_stackedpdf,
     grid_initializer,
     replica_index,
+    pdf_prior_grid,
 ):
     if grid_initializer["type"] == "zeros":
         return jnp.zeros(shape=length_stackedpdf)
@@ -115,3 +116,6 @@ def init_stacked_pdf_grid(
             minval=grid_initializer["minval"],
             maxval=grid_initializer["maxval"],
         )
+
+    elif grid_initializer["type"] == "pdf":
+        return pdf_prior_grid.stacked_pdf_grid_prior
