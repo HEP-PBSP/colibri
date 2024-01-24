@@ -16,20 +16,17 @@ log = logging.getLogger(__name__)
 
 
 def optimizer_provider(
-    optimizer: str = "adam", learning_rate: float = 5e-4, optimizer_settings={}
+    optimizer="adam", optimizer_settings={}
 ) -> optax._src.base.GradientTransformationExtraArgs:
     """
     Define the optimizer.
 
     Parameters
     ----------
-    optimizer : str
+    optimizer : str, default = "adam"
         Name of the optimizer to use.
 
-    learning_rate : float
-        Learning rate.
-
-    optimizer_settings : dict
+    optimizer_settings : dict, default = {}
         Dictionary containing the optimizer settings.
 
     Returns
@@ -38,10 +35,13 @@ def optimizer_provider(
         Optax optimizer.
 
     """
-    opt = getattr(optax, optimizer)
-    opt_inp = {"learning_rate": learning_rate, **optimizer_settings}
+    # if optimizer_settings is empty, fill it with the default values
+    if not "learning_rate" in optimizer_settings.keys():
+        optimizer_settings["learning_rate"] = 5e-4
 
-    return opt(**opt_inp)
+    opt = getattr(optax, optimizer)
+
+    return opt(**optimizer_settings)
 
 
 def early_stopper(
