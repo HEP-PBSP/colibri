@@ -55,6 +55,9 @@ class SuperNetApp(App):
         args = super().get_commandline_arguments(cmdline)
         if args["output"] is None:
             args["output"] = pathlib.Path(args["config_yml"]).stem
+
+        if args["replica_index"] is None:
+            args["replica_index"] = 0
         return args
 
     def run(self):
