@@ -218,3 +218,7 @@ class SuperNetConfig(Config):
             return indices
 
         return None
+
+    def produce_replica_index(self):
+        """The replica index used in the fit"""
+        return self.environment.replica_index

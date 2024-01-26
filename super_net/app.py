@@ -7,6 +7,7 @@ Date: 11.11.2023
 
 from validphys.app import App
 from super_net.config import SuperNetConfig
+import pathlib
 
 
 super_net_providers = [
@@ -31,6 +32,35 @@ class SuperNetApp(App):
 
     def __init__(self, name="super_net", providers=[]):
         super().__init__(name, super_net_providers + providers)
+
+    @property
+    def argparser(self):
+        """Parser arguments for grid_pdf app can be added here"""
+        parser = super().argparser
+
+        parser.add_argument(
+            "-o",
+            "--output",
+            nargs="?",
+            default=None,
+            help="Name of the output directory.",
+        )
+
+        parser.add_argument("-rep", "--replica_index", help="MC replica number")
+
+        return parser
+
+    def get_commandline_arguments(self, cmdline=None):
+        """Get commandline arguments"""
+        args = super().get_commandline_arguments(cmdline)
+        if args["output"] is None:
+            args["output"] = pathlib.Path(args["config_yml"]).stem
+        return args
+
+    def run(self):
+        self.environment.config_yml = pathlib.Path(self.args["config_yml"]).absolute()
+        self.environment.replica_index = int(self.args["replica_index"])
+        super().run()
 
 
 def main():
