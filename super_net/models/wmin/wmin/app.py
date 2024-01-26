@@ -4,6 +4,7 @@ wmin.app.py
 Author: Mark N. Costantini
 Date: 11.11.2023
 """
+
 from super_net.app import SuperNetApp
 from wmin.config import WminConfig
 
