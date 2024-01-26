@@ -14,6 +14,7 @@ Simple Usage:
 >> fig.show()
 
 """
+
 import logging
 
 from reportengine import api

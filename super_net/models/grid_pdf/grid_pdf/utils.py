@@ -6,6 +6,7 @@ Module containing util functions for grid PDF fits.
 Author: Luca Mantani
 Date: 18.12.2023
 """
+
 import logging
 from datetime import datetime
 import jax
@@ -70,11 +71,13 @@ def closure_test_central_pdf_grid(
     # the flavour selection/mapping is then done by flavour_mapping (flavour_indices)
     reduced_pdfgrid = jnp.array(
         [
-            convolution.evolution.grid_values(closure_test_pdf, [fl], x_vals, [Q0])
-            .squeeze(-1)[0]
-            .squeeze(0)
-            if x_vals
-            else jnp.zeros(length_reduced_xgrids)
+            (
+                convolution.evolution.grid_values(closure_test_pdf, [fl], x_vals, [Q0])
+                .squeeze(-1)[0]
+                .squeeze(0)
+                if x_vals
+                else jnp.zeros(length_reduced_xgrids)
+            )
             for fl, x_vals in xgrids.items()
         ],
     )

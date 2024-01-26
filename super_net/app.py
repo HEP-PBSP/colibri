@@ -4,6 +4,7 @@ super_net.app.py
 Author: Mark N. Costantini
 Date: 11.11.2023
 """
+
 from validphys.app import App
 from super_net.config import SuperNetConfig
 
