@@ -230,15 +230,19 @@ def lhapdf_grid_pdf_from_samples(
     # Load the export grids into a dictionary
     initial_PDFs_dict = {}
     if single_replica_fit:
-        yaml_file = next(Path(ns_replicas_path).glob(f"replica_{replica_index}/{output_path.name}.exportgrid"))
-        
+        yaml_file = next(
+            Path(ns_replicas_path).glob(
+                f"replica_{replica_index}/{output_path.name}.exportgrid"
+            )
+        )
+
         data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
         initial_PDFs_dict[yaml_file.parent.stem] = data
 
     else:
         for yaml_file in Path(ns_replicas_path).glob(
-        f"replica_*/{output_path.name}.exportgrid"
-    ):
+            f"replica_*/{output_path.name}.exportgrid"
+        ):
             data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
             initial_PDFs_dict[yaml_file.parent.stem] = data
 
