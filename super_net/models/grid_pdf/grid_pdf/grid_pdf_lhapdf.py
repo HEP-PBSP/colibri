@@ -187,7 +187,7 @@ def lhapdf_grid_pdf_from_samples(
     length_reduced_xgrids,
     n_posterior_samples,
     theoryid,
-    replica_index,
+    replica_index=None,
     single_replica_fit=False,
     folder=lhapdf_path,
     output_path=None,
