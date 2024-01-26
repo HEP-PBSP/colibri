@@ -10,6 +10,9 @@ super_net is a machine learning framework to perform fits of parton distribution
 Contents
 ========
 .. toctree::
+   :maxdepth: 2
+
+   installation.rst
    methodology.rst
 
 The PBSP team
