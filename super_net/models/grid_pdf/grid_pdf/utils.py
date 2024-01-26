@@ -16,6 +16,7 @@ from validphys import convolution
 import super_net
 from super_net.constants import XGRID
 from super_net.utils import FLAVOURS_ID_MAPPINGS
+from grid_pdf.grid_pdf_model import pdf_prior_grid
 
 log = logging.getLogger(__name__)
 
@@ -99,9 +100,11 @@ def gridpdf_fit_name(set_name=None):
 
 
 def init_stacked_pdf_grid(
-    length_stackedpdf,
     grid_initializer,
+    length_stackedpdf,
     replica_index,
+    reduced_xgrids,
+    flavour_indices,
 ):
     if grid_initializer["type"] == "zeros":
         return jnp.zeros(shape=length_stackedpdf)
@@ -115,3 +118,36 @@ def init_stacked_pdf_grid(
             minval=grid_initializer["minval"],
             maxval=grid_initializer["maxval"],
         )
+
+    elif grid_initializer["type"] == "pdf":
+        # initialize the pdf prior
+        init_pdf = pdf_prior_grid(
+            grid_initializer["pdf_prior"], reduced_xgrids, flavour_indices
+        )
+
+        # if init_type is central, return the central pdf
+        if grid_initializer["init_type"] == "central":
+            return init_pdf.stacked_pdf_grid_prior
+
+        # if init_type is uniform, return a random pdf
+        # with a uniform distribution around the central pdf
+        elif grid_initializer["init_type"] == "uniform":
+            rng = jax.random.PRNGKey(replica_index)
+
+            sigma_pdf_init = grid_initializer["sigma_pdf_init"]
+
+            error68_up = init_pdf.error68_up
+            error68_down = init_pdf.error68_down
+
+            # Compute the delta between the central and the upper/lower error
+            delta = (error68_up - error68_down) / 2
+
+            # Generate a random number between -sigma_pdf_init and sigma_pdf_init
+            epsilon = jax.random.uniform(
+                rng,
+                shape=(length_stackedpdf,),
+                minval=-sigma_pdf_init,
+                maxval=sigma_pdf_init,
+            )
+
+            return init_pdf.stacked_pdf_grid_prior + epsilon * delta
