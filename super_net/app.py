@@ -56,13 +56,11 @@ class SuperNetApp(App):
         if args["output"] is None:
             args["output"] = pathlib.Path(args["config_yml"]).stem
 
-        if args["replica_index"] is None:
-            args["replica_index"] = 0
         return args
 
     def run(self):
         self.environment.config_yml = pathlib.Path(self.args["config_yml"]).absolute()
-        self.environment.replica_index = int(self.args["replica_index"])
+        self.environment.replica_index = self.args["replica_index"]
         super().run()
 
 

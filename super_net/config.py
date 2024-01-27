@@ -221,4 +221,8 @@ class SuperNetConfig(Config):
 
     def produce_replica_index(self):
         """The replica index used in the fit"""
-        return self.environment.replica_index
+
+        if self.environment.replica_index is None:
+            return None
+        else:
+            return int(self.environment.replica_index)
