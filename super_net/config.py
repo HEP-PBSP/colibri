@@ -26,7 +26,10 @@ log = logging.getLogger(__name__)
 
 
 class Environment(Environment):
-    pass
+    def __init__(self, replica_index, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.replica_index = replica_index
 
 
 class SuperNetConfig(Config):

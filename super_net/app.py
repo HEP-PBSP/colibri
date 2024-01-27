@@ -6,7 +6,7 @@ Date: 11.11.2023
 """
 
 from validphys.app import App
-from super_net.config import SuperNetConfig
+from super_net.config import SuperNetConfig, Environment
 import pathlib
 
 
@@ -29,6 +29,7 @@ super_net_providers = [
 
 class SuperNetApp(App):
     config_class = SuperNetConfig
+    environment_class = Environment
 
     def __init__(self, name="super_net", providers=[]):
         super().__init__(name, super_net_providers + providers)
@@ -41,10 +42,6 @@ class SuperNetApp(App):
         parser.add_argument("-rep", "--replica_index", help="MC replica number")
 
         return parser
-
-    def run(self):
-        self.environment.replica_index = self.args["replica_index"]
-        super().run()
 
 
 def main():
