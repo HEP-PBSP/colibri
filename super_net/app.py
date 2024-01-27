@@ -38,28 +38,11 @@ class SuperNetApp(App):
         """Parser arguments for grid_pdf app can be added here"""
         parser = super().argparser
 
-        parser.add_argument(
-            "-o",
-            "--output",
-            nargs="?",
-            default=None,
-            help="Name of the output directory.",
-        )
-
         parser.add_argument("-rep", "--replica_index", help="MC replica number")
 
         return parser
 
-    def get_commandline_arguments(self, cmdline=None):
-        """Get commandline arguments"""
-        args = super().get_commandline_arguments(cmdline)
-        if args["output"] is None:
-            args["output"] = pathlib.Path(args["config_yml"]).stem
-
-        return args
-
     def run(self):
-        self.environment.config_yml = pathlib.Path(self.args["config_yml"]).absolute()
         self.environment.replica_index = self.args["replica_index"]
         super().run()
 
