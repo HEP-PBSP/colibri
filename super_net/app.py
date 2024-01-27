@@ -7,7 +7,6 @@ Date: 11.11.2023
 
 from validphys.app import App
 from super_net.config import SuperNetConfig, Environment
-import pathlib
 
 
 super_net_providers = [
