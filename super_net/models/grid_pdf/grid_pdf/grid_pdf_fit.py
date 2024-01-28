@@ -382,9 +382,4 @@ def perform_single_mc_gridpdf_fit(
         output_path=output_path,
     )
 
-    # # Produce the central replica
-    # l = Loader()
-    # pdf = l.check_pdf(str(output_path).split("/")[-1])
-    # generate_replica0(pdf)
-
     log.info("Monte Carlo fit completed!")
