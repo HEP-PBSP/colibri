@@ -244,15 +244,15 @@ def write_exportgrid_from_fit_samples(
 
 def evolution_of_exportgrid(fit_path, fit_name, theoryid, n_posterior_samples, folder=lhapdf_path):
     """
-    Evolves the exportgrids stored in the replicas folder of the fit_path.
-    The evolved grids are written to the folder specified by folder which is
+    This function does the following:
+    1) Evolves the exportgrids stored in the replicas folder of the fit_path.
+    2) Writes the evolved grids to the folder specified by folder which is
     assumed to be the share/LHAPDF folder.
+    3) Generates the central replica.
 
-    Once the evolved grids are written, the central replica is generated.
     Note: for a successful generation of the central replica, the n_posterior_samples
     must be equal to the number of replicas in the replicas folder.
-
-
+    
     Parameters
     ----------
     fit_path: str
