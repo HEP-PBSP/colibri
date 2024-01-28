@@ -360,3 +360,148 @@ def evolution_of_exportgrid(
     generate_replica0(pdf)
 
     return None
+
+
+# This class is copied directly from evolven3fit_new
+class LhapdfLike:
+    """
+    Class which emulates lhapdf but only for an initial condition PDF (i.e. with only one q2 value).
+
+    Q20 is the fitting scale fo the pdf and it is the only available scale for the objects of this class.
+
+    X_GRID is the grid of x values on top of which the pdf is interpolated.
+
+    PDF_GRID is a dictionary containing the pdf grids at fitting scale for each pid.
+    """
+
+    def __init__(self, pdf_grid, q20, x_grid):
+        self.pdf_grid = pdf_grid
+        self.q20 = q20
+        self.x_grid = x_grid
+        self.funcs = [
+            interp1d(self.x_grid, self.pdf_grid[pid], kind="cubic")
+            for pid in range(len(PIDS_DICT))
+        ]
+
+    def xfxQ2(self, pid, x, q2):
+        """Return the value of the PDF for the requested pid, x value and, whatever the requested
+        q2 value, for the fitting q2.
+
+        Parameters
+        ----------
+
+            pid: int
+                pid index of particle
+            x: float
+                x-value
+            q2: float
+                Q square value
+
+        Returns
+        -------
+            : float
+            x * PDF value
+        """
+        return self.funcs[list(PIDS_DICT.values()).index(PIDS_DICT[pid])](x)
+
+    def hasFlavor(self, pid):
+        """Check if the requested pid is in the PDF."""
+        return pid in PIDS_DICT
+
+
+# This function is copied directly from evolven3fit_new
+def evolve_exportgrid(exportgrid, eko, x_grid):
+    """
+    Evolves the provided exportgrid for the desired replica with the eko and returns the evolved block
+
+    Parameters
+    ----------
+        exportgrid: dict
+            exportgrid of pdf at fitting scale
+        eko: eko object
+            eko operator for evolution
+        xgrid: list
+            xgrid to be used as the targetgrid
+    Returns
+    -------
+        : list(np.array)
+        list of evolved blocks
+    """
+    # construct LhapdfLike object
+    pdf_grid = np.array(exportgrid["pdfgrid"]).transpose()
+    pdf_to_evolve = LhapdfLike(pdf_grid, exportgrid["q20"], x_grid)
+    # evolve pdf
+    evolved_pdf = apply.apply_pdf(eko, pdf_to_evolve)
+    # generate block to dump
+    targetgrid = eko.bases.targetgrid.tolist()
+
+    # Finally separate by nf block (and order per nf/q)
+    by_nf = defaultdict(list)
+    for q, nf in sorted(eko.evolgrid, key=lambda ep: ep[1]):
+        by_nf[nf].append(q)
+    q2block_per_nf = {nf: sorted(qs) for nf, qs in by_nf.items()}
+
+    blocks = []
+    for nf, q2grid in q2block_per_nf.items():
+
+        def pdf_xq2(pid, x, Q2):
+            x_idx = targetgrid.index(x)
+            return x * evolved_pdf[(Q2, nf)]["pdfs"][pid][x_idx]
+
+        block = genpdf.generate_block(
+            pdf_xq2,
+            xgrid=targetgrid,
+            sorted_q2grid=q2grid,
+            pids=basis_rotation.flavor_basis_pids,
+        )
+        blocks.append(block)
+
+    return blocks
+
+
+def write_exportgrid(
+    df,
+    reduced_xgrids,
+    length_reduced_xgrids,
+    flavour_indices,
+    replica,
+    Q0=1.65,
+    xgrid=LHAPDF_XGRID,
+):
+    """
+
+    Parameters
+    ---------
+    xgrid:
+      A list of x points.
+
+    Q0:
+      The initial scale at which the grids are written.
+
+    replica:
+      An integer which indexes the replica.
+    """
+
+    # Interpolate on the xgrid
+    interpolate = interpolate_grid(
+        reduced_xgrids, length_reduced_xgrids, flavour_indices, interpolation_grid=xgrid
+    )
+    grid_for_writing = interpolate(df[replica])
+
+    # Rotate the grid from the evolution basis into the export grid basis
+    grid_for_writing = np.array(grid_for_writing)
+    grid_for_writing = evolution_to_export_matrix @ grid_for_writing
+    grid_for_writing = grid_for_writing.T.tolist()
+
+    # Prepare a dictionary for the exportgrid
+    export_grid = {}
+
+    # Set the initial Q2 value, which will always be the same.
+    export_grid["q20"] = Q0**2
+    export_grid["xgrid"] = xgrid
+    export_grid["replica"] = int(replica)
+    export_grid["labels"] = EXPORT_LABELS
+
+    export_grid["pdfgrid"] = grid_for_writing
+
+    return export_grid
