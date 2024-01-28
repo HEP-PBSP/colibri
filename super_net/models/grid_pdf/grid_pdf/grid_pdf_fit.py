@@ -297,8 +297,6 @@ def perform_mc_gridpdf_fit(
     flavour_indices,
     length_reduced_xgrids,
     n_replicas,
-    theoryid,
-    lhapdf_path,
     output_path,
 ):
     """
@@ -318,21 +316,14 @@ def perform_mc_gridpdf_fit(
     df = pd.DataFrame(samples, columns=parameters)
     df.to_csv(str(output_path) + "/mc_result.csv")
 
-    # Produce the LHAPDF grid
-    lhapdf_grid_pdf_from_samples(
-        samples,
-        reduced_xgrids,
-        flavour_indices,
-        length_reduced_xgrids,
-        n_replicas,
-        theoryid,
-        folder=lhapdf_path,
+    # Produce exportgrid files for each posterior sample
+    write_exportgrid_from_fit_samples(
+        samples=samples,
+        n_posterior_samples=n_replicas,
+        reduced_xgrids=reduced_xgrids,
+        length_reduced_xgrids=length_reduced_xgrids,
+        flavour_indices=flavour_indices,
         output_path=output_path,
     )
-
-    # Produce the central replica
-    l = Loader()
-    pdf = l.check_pdf(str(output_path).split("/")[-1])
-    generate_replica0(pdf)
-
+    
     log.info("Monte Carlo fit completed!")
