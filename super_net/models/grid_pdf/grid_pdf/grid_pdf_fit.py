@@ -1,6 +1,6 @@
 from validphys.convolution import FK_FLAVOURS
 
-from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples
+from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples, write_exportgrid_from_fit_samples
 from super_net.utils import resample_from_ns_posterior
 
 from validphys.loader import Loader
@@ -108,36 +108,27 @@ def perform_nested_sampling_grid_pdf_fit(
     flavour_indices,
     length_reduced_xgrids,
     ns_settings,
-    lhapdf_path,
     output_path,
-    theoryid,
 ):
     """
     Performs a Nested Sampling fit using the grid.
     """
 
-    # Save the resampled posterior as a pandas df
+    # Save the resampled posterior to a csv file
     parameter_names, ultranest_grid_fit = ultranest_grid_fit
     df = pd.DataFrame(ultranest_grid_fit, columns=parameter_names)
     df.to_csv(str(output_path) + "/ns_result.csv")
 
-    # Produce the LHAPDF grid
-    lhapdf_grid_pdf_from_samples(
-        ultranest_grid_fit,
-        reduced_xgrids,
-        flavour_indices,
-        length_reduced_xgrids,
-        ns_settings["n_posterior_samples"],
-        theoryid,
-        folder=lhapdf_path,
+    # Produce exportgrid files for each posterior sample
+    write_exportgrid_from_fit_samples(
+        samples=ultranest_grid_fit,
+        n_posterior_samples=ns_settings["n_posterior_samples"],
+        reduced_xgrids=reduced_xgrids,
+        length_reduced_xgrids=length_reduced_xgrids,
+        flavour_indices=flavour_indices,
         output_path=output_path,
     )
-
-    # Produce the central replica
-    l = Loader()
-    pdf = l.check_pdf(str(output_path).split("/")[-1])
-    generate_replica0(pdf)
-
+    
     log.info("Nested Sampling grid PDF fit completed!")
 
 
