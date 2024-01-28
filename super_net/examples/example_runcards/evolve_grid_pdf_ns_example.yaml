@@ -1,0 +1,8 @@
+
+fit_path: "/Users/markcostantini/codes/super_net/super_net/examples/example_runcards/grid_pdf_ns_example"
+fit_name: "grid_pdf_ns_example"
+theoryid: 400
+n_posterior_samples: 1
+
+actions_:
+- evolution_of_exportgrid
