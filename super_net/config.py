@@ -26,15 +26,17 @@ log = logging.getLogger(__name__)
 
 
 class Environment(Environment):
-    def __init__(self, replica_index, *args, **kwargs):
+    def __init__(self, replica_index, trval_index, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.replica_index = replica_index
+        self.trval_index = trval_index
 
     @classmethod
     def ns_dump_description(cls):
         return {
             "replica_index": "The MC replica index",
+            "trval_index": "The Training/Validation split index",
             **super().ns_dump_description(),
         }
 

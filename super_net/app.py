@@ -42,6 +42,13 @@ class SuperNetApp(App):
             "-rep", "--replica_index", help="MC replica number", type=int, default=None
         )
 
+        parser.add_argument(
+            "--trval_index",
+            help="Training/Validation seed used to perform the random split",
+            type=int,
+            default=0,
+        )
+
         return parser
 
 
