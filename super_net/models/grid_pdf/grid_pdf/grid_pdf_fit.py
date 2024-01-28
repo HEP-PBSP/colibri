@@ -323,3 +323,40 @@ def perform_mc_gridpdf_fit(
     )
 
     log.info("Monte Carlo fit completed!")
+
+
+def perform_single_mc_gridpdf_fit(
+    grid_pdf_mc_fit,
+    replica_index,
+    reduced_xgrids,
+    flavour_indices,
+    length_reduced_xgrids,
+    output_path,
+):
+    """
+    Performs a Monte Carlo fit using the grid_pdf parametrisation.
+    """
+
+    sample = grid_pdf_mc_fit.stacked_pdf_grid
+
+    # Save the samples
+    parameters = [
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
+    ]
+
+    df = pd.DataFrame([sample], columns=parameters)
+    df.to_csv(str(output_path) + "/mc_result.csv")
+
+    # Produce exportgrid files for each posterior sample
+    write_exportgrid_from_fit_samples(
+        samples=[sample],
+        n_posterior_samples=1,
+        reduced_xgrids=reduced_xgrids,
+        length_reduced_xgrids=length_reduced_xgrids,
+        flavour_indices=flavour_indices,
+        replica_index=replica_index,
+        single_replica_fit=True,
+        output_path=output_path,
+    )
+
+    log.info(f"Monte Carlo fit of replica {replica_index} completed!")

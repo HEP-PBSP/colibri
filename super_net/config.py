@@ -26,7 +26,10 @@ log = logging.getLogger(__name__)
 
 
 class Environment(Environment):
-    pass
+    def __init__(self, replica_index, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.replica_index = replica_index
 
 
 class SuperNetConfig(Config):
@@ -218,3 +221,11 @@ class SuperNetConfig(Config):
             return indices
 
         return None
+
+    def produce_replica_index(self):
+        """The replica index used in the fit"""
+
+        if self.environment.replica_index is None:
+            return None
+        else:
+            return int(self.environment.replica_index)

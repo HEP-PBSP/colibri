@@ -187,6 +187,8 @@ def write_exportgrid_from_fit_samples(
     reduced_xgrids,
     length_reduced_xgrids,
     flavour_indices,
+    replica_index=None,
+    single_replica_fit=False,
     output_path=None,
 ):
     """
@@ -220,6 +222,7 @@ def write_exportgrid_from_fit_samples(
     None
 
     """
+    
 
     # Write an export grid at the initial scale for each of the replicas in the posterior
     # sample.
@@ -230,7 +233,11 @@ def write_exportgrid_from_fit_samples(
     fit_name = str(output_path).split("/")[-1]
 
     for i in range(n_posterior_samples):
-        rep_path = replicas_path + "/replica_" + str(i + 1)
+        if single_replica_fit:
+            rep_path = replicas_path + f"/replica_{replica_index}"
+        else:
+            rep_path = replicas_path + "/replica_" + str(i + 1)
+
         if not os.path.exists(rep_path):
             os.mkdir(rep_path)
         exportgrid = write_exportgrid(
@@ -243,7 +250,7 @@ def write_exportgrid_from_fit_samples(
 
 
 def evolution_of_exportgrid(
-    fit_path, fit_name, theoryid, n_posterior_samples, folder=lhapdf_path
+    fit_path, fit_name, theoryid, n_posterior_samples, folder=lhapdf_path, single_replica_fit=False, replica_index=None
 ):
     """
     This function does the following:
@@ -291,9 +298,22 @@ def evolution_of_exportgrid(
 
     # Load the export grids into a dictionary
     initial_PDFs_dict = {}
-    for yaml_file in Path(replicas_path).glob(f"replica_*/{fit_name}.exportgrid"):
+    if single_replica_fit:
+        yaml_file = next(
+            Path(replicas_path).glob(
+                f"replica_{replica_index}/{fit_name}.exportgrid"
+            )
+        )
+
         data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
         initial_PDFs_dict[yaml_file.parent.stem] = data
+
+    else:
+        for yaml_file in Path(replicas_path).glob(
+            f"replica_*/{fit_name}.exportgrid"
+        ):
+            data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
+            initial_PDFs_dict[yaml_file.parent.stem] = data
 
     with eko.EKO.read(eko_path) as eko_op:
         # Read the cards directly from the eko to make sure they are consistent

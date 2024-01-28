@@ -46,7 +46,7 @@ def replica_seed(replica_index):
     return int(randint)
 
 
-def trval_seed(trval_index):
+def trval_seed(trval_index=0):
     """
     Returns a PRNGKey key given `trval_index` seed.
     """
