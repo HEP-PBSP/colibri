@@ -199,16 +199,16 @@ def write_exportgrid_from_fit_samples(
     ----------
     samples: list
         List of posterior samples.
-    
+
     n_posterior_samples: int
         Number of posterior samples.
-    
+
     reduced_xgrids: dict
         The reduced x-grids used in the fit, organised by flavour.
-    
+
     length_reduced_xgrids: int
         The length of the reduced x-grids.
-    
+
     flavour_indices: list
         The indices of the flavours used in the fit.
 
@@ -218,7 +218,7 @@ def write_exportgrid_from_fit_samples(
     Returns
     -------
     None
-        
+
     """
 
     # Write an export grid at the initial scale for each of the replicas in the posterior
@@ -242,7 +242,9 @@ def write_exportgrid_from_fit_samples(
     return None
 
 
-def evolution_of_exportgrid(fit_path, fit_name, theoryid, n_posterior_samples, folder=lhapdf_path):
+def evolution_of_exportgrid(
+    fit_path, fit_name, theoryid, n_posterior_samples, folder=lhapdf_path
+):
     """
     This function does the following:
     1) Evolves the exportgrids stored in the replicas folder of the fit_path.
@@ -252,7 +254,7 @@ def evolution_of_exportgrid(fit_path, fit_name, theoryid, n_posterior_samples, f
 
     Note: for a successful generation of the central replica, the n_posterior_samples
     must be equal to the number of replicas in the replicas folder.
-    
+
     Parameters
     ----------
     fit_path: str
@@ -260,20 +262,20 @@ def evolution_of_exportgrid(fit_path, fit_name, theoryid, n_posterior_samples, f
 
     fit_name: str
         Name of the fit (is the same name of the runcard used for the fit).
-    
+
     theoryid: validphys.core.TheoryIDSpec
         TheoryID of the theory used for the fit.
-    
+
     n_posterior_samples: int
         Number of posterior samples.
-    
+
     folder: str, default=lhapdf_path
         Path to the LHAPDF folder.
-    
+
     Returns
     -------
     None
-        
+
     """
     replicas_path = str(fit_path) + "/replicas"
 
@@ -289,9 +291,7 @@ def evolution_of_exportgrid(fit_path, fit_name, theoryid, n_posterior_samples, f
 
     # Load the export grids into a dictionary
     initial_PDFs_dict = {}
-    for yaml_file in Path(replicas_path).glob(
-        f"replica_*/{fit_name}.exportgrid"
-    ):
+    for yaml_file in Path(replicas_path).glob(f"replica_*/{fit_name}.exportgrid"):
         data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
         initial_PDFs_dict[yaml_file.parent.stem] = data
 
@@ -332,7 +332,7 @@ def evolution_of_exportgrid(fit_path, fit_name, theoryid, n_posterior_samples, f
             )
 
             progress += 1
-    
+
     log.info("Generating central replica")
     # Produce the central replica
     l = Loader()

@@ -1,6 +1,9 @@
 from validphys.convolution import FK_FLAVOURS
 
-from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples, write_exportgrid_from_fit_samples
+from grid_pdf.grid_pdf_lhapdf import (
+    lhapdf_grid_pdf_from_samples,
+    write_exportgrid_from_fit_samples,
+)
 from super_net.utils import resample_from_ns_posterior
 
 from validphys.loader import Loader
@@ -128,7 +131,7 @@ def perform_nested_sampling_grid_pdf_fit(
         flavour_indices=flavour_indices,
         output_path=output_path,
     )
-    
+
     log.info("Nested Sampling grid PDF fit completed!")
 
 
