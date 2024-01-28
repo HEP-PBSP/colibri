@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 class Environment(Environment):
-    def __init__(self, replica_index, trval_index, *args, **kwargs):
+    def __init__(self, replica_index=None, trval_index=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.replica_index = replica_index
