@@ -31,6 +31,13 @@ class Environment(Environment):
 
         self.replica_index = replica_index
 
+    @classmethod
+    def ns_dump_description(cls):
+        return {
+            "replica_index": "The MC replica index",
+            **super().ns_dump_description(),
+        }
+
 
 class SuperNetConfig(Config):
     """
@@ -221,11 +228,3 @@ class SuperNetConfig(Config):
             return indices
 
         return None
-
-    def produce_replica_index(self):
-        """The replica index used in the fit"""
-
-        if self.environment.replica_index is None:
-            return None
-        else:
-            return int(self.environment.replica_index)

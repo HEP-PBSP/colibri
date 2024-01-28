@@ -38,7 +38,9 @@ class SuperNetApp(App):
         """Parser arguments for grid_pdf app can be added here"""
         parser = super().argparser
 
-        parser.add_argument("-rep", "--replica_index", help="MC replica number")
+        parser.add_argument(
+            "-rep", "--replica_index", help="MC replica number", type=int, default=None
+        )
 
         return parser
 
