@@ -157,6 +157,7 @@ def grid_pdf_mc_fit(
     batch_seed=1,
     alpha=1e-7,
     lambda_positivity=1000,
+    multiple_initiators=False,
 ):
     """This functions performs a Monte Carlo fit using the grid_pdf parametrisation.
 
@@ -237,13 +238,30 @@ def grid_pdf_mc_fit(
     loss = []
     val_loss = []
 
-    opt_state = optimizer_provider.init(init_stacked_pdf_grid)
-    stacked_pdf_grid = init_stacked_pdf_grid.copy()
 
     data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
     batches = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
     batch_size = data_batch.batch_size
+
+    if multiple_initiators:
+        # choose the best initiator based on argmin of the training loss
+        
+        stacked_pdf_grids = init_stacked_pdf_grid.copy()
+        tmp_batch = next(batches)
+        argmin = jnp.argmin(
+            jnp.array(
+                [
+                    loss_training(stacked_pdf_grids[i], tmp_batch) for i in range(len(stacked_pdf_grids))
+                ]
+            )
+        )
+        opt_state = optimizer_provider.init(stacked_pdf_grids[argmin])
+        stacked_pdf_grid = stacked_pdf_grids[argmin].copy()
+        
+    else:
+        opt_state = optimizer_provider.init(init_stacked_pdf_grid)
+        stacked_pdf_grid = init_stacked_pdf_grid.copy()
 
     for i in range(max_epochs):
         epoch_loss = 0

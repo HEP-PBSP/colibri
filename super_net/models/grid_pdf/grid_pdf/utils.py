@@ -102,12 +102,49 @@ def gridpdf_fit_name(set_name=None):
     return f"{current_time}_grid_fit"
 
 
+def pdf_prior_grid_initializer(grid_initializer, reduced_xgrids, flavour_indices, length_stackedpdf, replica_index):
+    """
+    Returns the pdf prior grid initializer.
+    """
+    init_pdf = pdf_prior_grid(
+            grid_initializer["pdf_prior"], reduced_xgrids, flavour_indices
+        )
+
+    # if init_type is central, return the central pdf
+    if grid_initializer["init_type"] == "central":
+        return init_pdf.stacked_pdf_grid_prior
+
+    # if init_type is uniform, return a random pdf
+    # with a uniform distribution around the central pdf
+    elif grid_initializer["init_type"] == "uniform":
+        rng = jax.random.PRNGKey(replica_index)
+
+        sigma_pdf_init = grid_initializer["sigma_pdf_init"]
+
+        error68_up = init_pdf.error68_up
+        error68_down = init_pdf.error68_down
+
+        # Compute the delta between the central and the upper/lower error
+        delta = (error68_up - error68_down) / 2
+
+        # Generate a random number between -sigma_pdf_init and sigma_pdf_init
+        epsilon = jax.random.uniform(
+            rng,
+            shape=(length_stackedpdf,),
+            minval=-sigma_pdf_init,
+            maxval=sigma_pdf_init,
+        )
+
+        return init_pdf.stacked_pdf_grid_prior + epsilon * delta
+
+
 def init_stacked_pdf_grid(
     grid_initializer,
     length_stackedpdf,
     replica_index,
     reduced_xgrids,
     flavour_indices,
+    multiple_initiators=False,
 ):
     if grid_initializer["type"] == "zeros":
         return jnp.zeros(shape=length_stackedpdf)
@@ -123,34 +160,12 @@ def init_stacked_pdf_grid(
         )
 
     elif grid_initializer["type"] == "pdf":
-        # initialize the pdf prior
-        init_pdf = pdf_prior_grid(
-            grid_initializer["pdf_prior"], reduced_xgrids, flavour_indices
-        )
+        
+        if not multiple_initiators:
+            init_grid = pdf_prior_grid_initializer(grid_initializer, reduced_xgrids, flavour_indices, length_stackedpdf, replica_index)
+            return init_grid
 
-        # if init_type is central, return the central pdf
-        if grid_initializer["init_type"] == "central":
-            return init_pdf.stacked_pdf_grid_prior
-
-        # if init_type is uniform, return a random pdf
-        # with a uniform distribution around the central pdf
-        elif grid_initializer["init_type"] == "uniform":
-            rng = jax.random.PRNGKey(replica_index)
-
-            sigma_pdf_init = grid_initializer["sigma_pdf_init"]
-
-            error68_up = init_pdf.error68_up
-            error68_down = init_pdf.error68_down
-
-            # Compute the delta between the central and the upper/lower error
-            delta = (error68_up - error68_down) / 2
-
-            # Generate a random number between -sigma_pdf_init and sigma_pdf_init
-            epsilon = jax.random.uniform(
-                rng,
-                shape=(length_stackedpdf,),
-                minval=-sigma_pdf_init,
-                maxval=sigma_pdf_init,
-            )
-
-            return init_pdf.stacked_pdf_grid_prior + epsilon * delta
+        # if multiple_initiators is True, return a list of multiple initializers
+        rng = jax.random.PRNGKey(replica_index)
+        multiple_init_grid = [pdf_prior_grid_initializer(grid_initializer, reduced_xgrids, flavour_indices, length_stackedpdf, k) for k in jax.random.randint(rng, minval=0, maxval=1000, shape=(100,))]
+        return multiple_init_grid
