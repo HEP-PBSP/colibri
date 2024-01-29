@@ -1,10 +1,9 @@
 from validphys.convolution import FK_FLAVOURS
 
-from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples
+from grid_pdf.grid_pdf_lhapdf import (
+    write_exportgrid_from_fit_samples,
+)
 from super_net.utils import resample_from_ns_posterior
-
-from validphys.loader import Loader
-from validphys.lhio import generate_replica0
 
 import ultranest
 import jax
@@ -111,35 +110,26 @@ def perform_nested_sampling_grid_pdf_fit(
     flavour_indices,
     length_reduced_xgrids,
     ns_settings,
-    lhapdf_path,
     output_path,
-    theoryid,
 ):
     """
     Performs a Nested Sampling fit using the grid.
     """
 
-    # Save the resampled posterior as a pandas df
+    # Save the resampled posterior to a csv file
     parameter_names, ultranest_grid_fit = ultranest_grid_fit
     df = pd.DataFrame(ultranest_grid_fit, columns=parameter_names)
     df.to_csv(str(output_path) + "/ns_result.csv")
 
-    # Produce the LHAPDF grid
-    lhapdf_grid_pdf_from_samples(
-        ultranest_grid_fit,
-        reduced_xgrids,
-        flavour_indices,
-        length_reduced_xgrids,
-        ns_settings["n_posterior_samples"],
-        theoryid,
-        folder=lhapdf_path,
+    # Produce exportgrid files for each posterior sample
+    write_exportgrid_from_fit_samples(
+        samples=ultranest_grid_fit,
+        n_posterior_samples=ns_settings["n_posterior_samples"],
+        reduced_xgrids=reduced_xgrids,
+        length_reduced_xgrids=length_reduced_xgrids,
+        flavour_indices=flavour_indices,
         output_path=output_path,
     )
-
-    # Produce the central replica
-    l = Loader()
-    pdf = l.check_pdf(str(output_path).split("/")[-1])
-    generate_replica0(pdf)
 
     log.info("Nested Sampling grid PDF fit completed!")
 
@@ -306,8 +296,6 @@ def perform_mc_gridpdf_fit(
     flavour_indices,
     length_reduced_xgrids,
     n_replicas,
-    theoryid,
-    lhapdf_path,
     output_path,
 ):
     """
@@ -327,22 +315,17 @@ def perform_mc_gridpdf_fit(
     df = pd.DataFrame(samples, columns=parameters)
     df.to_csv(str(output_path) + "/mc_result.csv")
 
-    # Produce the LHAPDF grid
-    lhapdf_grid_pdf_from_samples(
+    # Produce exportgrid files for each posterior sample
+    write_exportgrid_from_fit_samples(
         samples,
-        reduced_xgrids,
-        flavour_indices,
-        length_reduced_xgrids,
-        n_replicas,
-        theoryid,
-        folder=lhapdf_path,
+        n_posterior_samples=n_replicas,
+        reduced_xgrids=reduced_xgrids,
+        length_reduced_xgrids=length_reduced_xgrids,
+        flavour_indices=flavour_indices,
+        replica_index=None,
+        single_replica_fit=False,
         output_path=output_path,
     )
-
-    # Produce the central replica
-    l = Loader()
-    pdf = l.check_pdf(str(output_path).split("/")[-1])
-    generate_replica0(pdf)
 
     log.info("Monte Carlo fit completed!")
 
@@ -353,8 +336,6 @@ def perform_single_mc_gridpdf_fit(
     reduced_xgrids,
     flavour_indices,
     length_reduced_xgrids,
-    theoryid,
-    lhapdf_path,
     output_path,
 ):
     """
@@ -375,18 +356,29 @@ def perform_single_mc_gridpdf_fit(
     else:
         df.to_csv(str(output_path) + "/mc_result.csv")
 
-    # Produce the LHAPDF grid
-    lhapdf_grid_pdf_from_samples(
+    # Produce exportgrid file
+    write_exportgrid_from_fit_samples(
         [sample],
-        reduced_xgrids,
-        flavour_indices,
-        length_reduced_xgrids,
-        1,
-        theoryid,
-        replica_index,
+        n_posterior_samples=1,
+        reduced_xgrids=reduced_xgrids,
+        length_reduced_xgrids=length_reduced_xgrids,
+        flavour_indices=flavour_indices,
+        replica_index=replica_index,
         single_replica_fit=True,
-        folder=lhapdf_path,
         output_path=output_path,
+    )
+
+    # Save the training and validation loss
+    df = pd.DataFrame(
+        {
+            "epochs": range(len(grid_pdf_mc_fit.training_loss)),
+            "training_loss": grid_pdf_mc_fit.training_loss,
+            "validation_loss": grid_pdf_mc_fit.validation_loss,
+        }
+    )
+    df.to_csv(
+        str(output_path) + f"/replicas/replica_{replica_index}" + "/mc_loss.csv",
+        index=False,
     )
 
     log.info("Monte Carlo fit completed!")
