@@ -2,8 +2,10 @@ from validphys.convolution import FK_FLAVOURS
 from validphys.loader import Loader
 from validphys.lhio import generate_replica0
 
-from grid_pdf.grid_pdf_lhapdf import lhapdf_grid_pdf_from_samples
 from super_net.mc_utils import mc_pseudodata
+from grid_pdf.grid_pdf_lhapdf import (
+    write_exportgrid_from_fit_samples,
+)
 
 import jax
 import jax.scipy.linalg as jla
@@ -74,9 +76,7 @@ def perform_analytic_gridpdf_fit(
     flavour_indices,
     length_reduced_xgrids,
     n_posterior_samples,
-    lhapdf_path,
     output_path,
-    theoryid,
 ):
     """
     Performs an Analytic fit using the grid.
@@ -87,22 +87,15 @@ def perform_analytic_gridpdf_fit(
     df = pd.DataFrame(analytic_gridpdf_fit, columns=parameter_names)
     df.to_csv(str(output_path) + "/analytic_result.csv")
 
-    # Produce the LHAPDF grid
-    lhapdf_grid_pdf_from_samples(
-        analytic_gridpdf_fit,
-        reduced_xgrids,
-        flavour_indices,
-        length_reduced_xgrids,
-        n_posterior_samples,
-        theoryid,
-        folder=lhapdf_path,
+    # Produce exportgrid files for each posterior sample
+    write_exportgrid_from_fit_samples(
+        samples=analytic_gridpdf_fit,
+        n_posterior_samples=n_posterior_samples,
+        reduced_xgrids=reduced_xgrids,
+        length_reduced_xgrids=length_reduced_xgrids,
+        flavour_indices=flavour_indices,
         output_path=output_path,
     )
-
-    # Produce the central replica
-    l = Loader()
-    pdf = l.check_pdf(str(output_path).split("/")[-1])
-    generate_replica0(pdf)
 
     log.info("Analytic grid PDF fit completed!")
 
@@ -168,9 +161,7 @@ def perform_analyticmc_gridpdf_fit(
     flavour_indices,
     length_reduced_xgrids,
     n_replicas,
-    lhapdf_path,
     output_path,
-    theoryid,
 ):
     """
     Performs an Analytic fit using the grid.
@@ -181,21 +172,14 @@ def perform_analyticmc_gridpdf_fit(
     df = pd.DataFrame(analyticmc_gridpdf_fit, columns=parameter_names)
     df.to_csv(str(output_path) + "/analyticmc_result.csv")
 
-    # Produce the LHAPDF grid
-    lhapdf_grid_pdf_from_samples(
-        analyticmc_gridpdf_fit,
-        reduced_xgrids,
-        flavour_indices,
-        length_reduced_xgrids,
-        n_replicas,
-        theoryid,
-        folder=lhapdf_path,
+    # Produce exportgrid files for each posterior sample
+    write_exportgrid_from_fit_samples(
+        samples=analyticmc_gridpdf_fit,
+        n_posterior_samples=n_replicas,
+        reduced_xgrids=reduced_xgrids,
+        length_reduced_xgrids=length_reduced_xgrids,
+        flavour_indices=flavour_indices,
         output_path=output_path,
     )
-
-    # Produce the central replica
-    l = Loader()
-    pdf = l.check_pdf(str(output_path).split("/")[-1])
-    generate_replica0(pdf)
 
     log.info("Analytic MC grid PDF fit completed!")
