@@ -92,6 +92,15 @@ def len_trval_data(mc_pseudodata):
 
 
 def mc_postfit(fit_path, chi2_threshold=3.0):
+    """Postfit function for the Monte Carlo fit. It will filter out the replicas
+    with final training loss above the threshold and copy the remaining ones
+    to the replicas directory.
+    """
+
+    log.info("Running postfit for the Monte Carlo fit")
+    log.debug(f"Threshold for final training loss: {chi2_threshold}")
+
+    # Convert fit_path to a pathlib.Path object
     fit_path = pathlib.Path(fit_path)
     # Filter out only the directories
     replicas_path = fit_path / "fit_replicas"
@@ -121,3 +130,5 @@ def mc_postfit(fit_path, chi2_threshold=3.0):
         shutil.copytree(replica, fit_path / f"replicas/replica_{i}")
         # Increase replica index
         i += 1
+
+    log.info(f"Postfit done, {i-1} replicas pass postfit selection")
