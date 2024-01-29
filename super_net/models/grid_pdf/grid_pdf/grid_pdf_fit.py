@@ -368,4 +368,17 @@ def perform_single_mc_gridpdf_fit(
         output_path=output_path,
     )
 
+    # Save the training and validation loss
+    df = pd.DataFrame(
+        {
+            "epochs": range(len(grid_pdf_mc_fit.training_loss)),
+            "training_loss": grid_pdf_mc_fit.training_loss,
+            "validation_loss": grid_pdf_mc_fit.validation_loss,
+        }
+    )
+    df.to_csv(
+        str(output_path) + f"/replicas/replica_{replica_index}" + "/mc_loss.csv",
+        index=False,
+    )
+
     log.info("Monte Carlo fit completed!")
