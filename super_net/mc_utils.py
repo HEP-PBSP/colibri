@@ -92,8 +92,9 @@ def len_trval_data(mc_pseudodata):
 
 
 def mc_postfit(fit_path, chi2_threshold=3.0):
-    """Postfit function for the Monte Carlo fit. It will filter out the replicas
-    with final training loss above the threshold and copy the remaining ones
+    """Postfit function for the Monte Carlo fit.
+    It filters out the replicas with final training loss
+    above the threshold and copy the remaining ones
     to the replicas directory.
     """
 
