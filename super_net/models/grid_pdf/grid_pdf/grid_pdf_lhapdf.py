@@ -187,7 +187,7 @@ def write_exportgrid_from_fit_samples(
     reduced_xgrids,
     length_reduced_xgrids,
     flavour_indices,
-    replica_index,
+    replica_index=None,
     single_replica_fit=False,
     output_path=None,
 ):
