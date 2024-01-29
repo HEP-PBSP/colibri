@@ -105,7 +105,11 @@ def mc_postfit(fit_path, chi2_threshold=3.0):
     # Filter out only the directories
     replicas_path = fit_path / "fit_replicas"
     # Create the directory for the replicas if it does not exist
+    # else delete it and create it again
     if not os.path.exists(fit_path / "replicas"):
+        os.mkdir(fit_path / "replicas")
+    else:
+        shutil.rmtree(fit_path / "replicas")
         os.mkdir(fit_path / "replicas")
 
     replicas_list = sorted(list(replicas_path.iterdir()))

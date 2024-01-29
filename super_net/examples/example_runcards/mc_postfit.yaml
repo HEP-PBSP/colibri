@@ -1,0 +1,7 @@
+# add here path to the fit
+fit_path: "grid_pdf_mc_example"
+
+chi2_threshold: 3.0
+
+actions_:
+- mc_postfit
