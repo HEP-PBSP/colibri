@@ -187,6 +187,8 @@ def write_exportgrid_from_fit_samples(
     reduced_xgrids,
     length_reduced_xgrids,
     flavour_indices,
+    replica_index,
+    single_replica_fit=False,
     output_path=None,
 ):
     """
@@ -231,9 +233,9 @@ def write_exportgrid_from_fit_samples(
 
     for i in range(n_posterior_samples):
         if single_replica_fit:
-            rep_path = ns_replicas_path + f"/replica_{replica_index}"
+            rep_path = replicas_path + f"/replica_{replica_index}"
         else:
-            rep_path = ns_replicas_path + "/replica_" + str(i + 1)
+            rep_path = replicas_path + "/replica_" + str(i + 1)
 
         if not os.path.exists(rep_path):
             os.mkdir(rep_path)
@@ -247,7 +249,7 @@ def write_exportgrid_from_fit_samples(
 
 
 def evolution_of_exportgrid(
-    fit_path, fit_name, theoryid, n_posterior_samples, folder=lhapdf_path
+    fit_path, fit_name, theoryid, n_posterior_samples, replica_index=None, single_replica_fit=False, folder=lhapdf_path
 ):
     """
     This function does the following:
@@ -298,8 +300,8 @@ def evolution_of_exportgrid(
 
     if single_replica_fit:
         yaml_file = next(
-            Path(ns_replicas_path).glob(
-                f"replica_{replica_index}/{output_path.name}.exportgrid"
+            Path(replicas_path).glob(
+                f"replica_{replica_index}/{fit_name}.exportgrid"
             )
         )
 
@@ -307,8 +309,8 @@ def evolution_of_exportgrid(
         initial_PDFs_dict[yaml_file.parent.stem] = data
 
     else:
-        for yaml_file in Path(ns_replicas_path).glob(
-            f"replica_*/{output_path.name}.exportgrid"
+        for yaml_file in Path(replicas_path).glob(
+            f"replica_*/{fit_name}.exportgrid"
         ):
             data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
             initial_PDFs_dict[yaml_file.parent.stem] = data
