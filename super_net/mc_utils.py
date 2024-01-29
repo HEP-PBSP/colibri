@@ -12,6 +12,12 @@ import jax.numpy as jnp
 from dataclasses import dataclass, asdict
 
 from super_net.utils import training_validation_split
+import pathlib
+import pandas as pd
+
+import logging
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -81,3 +87,17 @@ def mc_pseudodata(
 def len_trval_data(mc_pseudodata):
     """Returns the number of training data points."""
     return len(mc_pseudodata.training_indices), len(mc_pseudodata.validation_indices)
+
+
+def mc_postfit(fit_path, chi2_threshold=3.0):
+    # Filter out only the directories
+    replicas_path = pathlib.Path(fit_path) / "replicas"
+
+    for replica in replicas_path.iterdir():
+        # Get last iteration from the mc_loss.csv file
+        final_loss = pd.read_csv(replica / "mc_loss.csv").iloc[-1]["training_loss"]
+
+        # Check if final loss is above the threshold
+        if final_loss > chi2_threshold:
+            index = int(replica.name.split("_")[1])
+            log.info(f"Replica {index} has final loss {final_loss:.3f}")
