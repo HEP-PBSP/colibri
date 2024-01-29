@@ -32,9 +32,6 @@ ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
 
 # Configure the handler and formatter
 handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG if debug_flag else logging.INFO)
-formatter = logging.Formatter("[ultranest] [%(levelname)s] %(message)s")
-handler.setFormatter(formatter)
 ultranest_logger.addHandler(handler)
 
 
@@ -74,9 +71,14 @@ def ultranest_grid_fit(
         pdf = interpolate_grid(stacked_pdf_grid)
         return -0.5 * _chi2_with_positivity(pdf)
 
+    log.info("Starting ULTRANEST run...")
+    log.debug(f"ULTRANEST settings: {ns_settings}")
+
     parameters = [
         f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
     ]
+
+    log.debug(f"ULTRANEST parameters: {parameters}")
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
@@ -235,8 +237,6 @@ def grid_pdf_mc_fit(
         xgrids: dict
     """
 
-    len_tr_idx, len_val_idx = len_trval_data
-
     @jax.jit
     def loss_training(stacked_pdf_grid, batch_idx):
         pdf = interpolate_grid(stacked_pdf_grid)
@@ -257,6 +257,12 @@ def grid_pdf_mc_fit(
         updates, opt_state = optimizer_provider.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
         return params, opt_state, loss_value
+
+    log.info("Starting Monte Carlo fit...")
+
+    len_tr_idx, len_val_idx = len_trval_data
+
+    log.debug(f"len_tr_idx: {len_tr_idx}, len_val_idx: {len_val_idx}")
 
     loss = []
     val_loss = []
