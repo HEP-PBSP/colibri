@@ -16,7 +16,10 @@ from super_net.data_batch import data_batches
 from dataclasses import dataclass
 import time
 import logging
+import os
+
 from reportengine import collect
+
 
 log = logging.getLogger(__name__)
 
@@ -366,7 +369,11 @@ def perform_single_mc_gridpdf_fit(
     ]
 
     df = pd.DataFrame([sample], columns=parameters)
-    df.to_csv(str(output_path) + "/mc_result.csv")
+    # if mc_result.csv already exists, append to it
+    if os.path.isfile(str(output_path) + "/mc_result.csv"):
+        df.to_csv(str(output_path) + "/mc_result.csv", mode="a", header=False)
+    else:
+        df.to_csv(str(output_path) + "/mc_result.csv")
 
     # Produce the LHAPDF grid
     lhapdf_grid_pdf_from_samples(
