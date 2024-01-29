@@ -7,6 +7,7 @@ Date: 11.11.2023
 
 from validphys.app import App
 from super_net.config import SuperNetConfig, Environment
+import pathlib
 
 
 super_net_providers = [
@@ -49,7 +50,22 @@ class SuperNetApp(App):
             default=0,
         )
 
+        parser.add_argument(
+            "-o",
+            "--output",
+            nargs="?",
+            default=None,
+            help="Name of the output directory.",
+        )
+
         return parser
+
+    def get_commandline_arguments(self, cmdline=None):
+        """Get commandline arguments"""
+        args = super().get_commandline_arguments(cmdline)
+        if args["output"] is None:
+            args["output"] = pathlib.Path(args["config_yml"]).stem
+        return args
 
 
 def main():
