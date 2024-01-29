@@ -9,8 +9,10 @@ pip install validobj pineappl "ruamel.yaml<0.18.0" ultranest
 ```
 
 Now we need to do some manual stuff:
-Download the nnpdf repository.
+Download the nnpdf repository. 
+We need to checkout to a specific commit where validphys was still a separate Python package.
 ```
+git checkout ce6c05c
 cd nnpdf/validphys2
 pip install -e .
 ```
