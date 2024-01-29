@@ -116,7 +116,7 @@ def mc_postfit(fit_path, chi2_threshold=3.0):
     replicas_list = sorted(list(replicas_path.iterdir()))
 
     # We will copy the replicas and order them starting with 1
-    # and increasing the index for each replica, as to not leave holes
+    # and increasing the index for each replica
     i = 1
     for replica in replicas_list:
         # Get last iteration from the mc_loss.csv file
