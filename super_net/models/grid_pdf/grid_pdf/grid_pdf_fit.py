@@ -16,7 +16,10 @@ from super_net.data_batch import data_batches
 from dataclasses import dataclass
 import time
 import logging
+import os
+
 from reportengine import collect
+
 
 log = logging.getLogger(__name__)
 
@@ -65,25 +68,19 @@ def ultranest_grid_fit(
         parameters,
         log_likelihood,
         grid_pdf_model_prior,
-        log_dir=ns_settings["log_dir"],
-        resume=ns_settings["resume"],
-        vectorized=ns_settings["vectorized"],
-        ndraw_max=ns_settings["ndraw_max"],
+        **ns_settings["ReactiveNS_settings"],
     )
 
-    if ns_settings["slice_sampler"]:
+    if ns_settings["SliceSampler_settings"]:
         import ultranest.stepsampler as ustepsampler
 
         sampler.stepsampler = ustepsampler.SliceSampler(
-            nsteps=ns_settings["slice_steps"],
             generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
+            **ns_settings["SliceSampler_settings"],
         )
 
     t0 = time.time()
-    ultranest_result = sampler.run(
-        min_num_live_points=ns_settings["min_num_live_points"],
-        min_ess=ns_settings["min_ess"],
-    )
+    ultranest_result = sampler.run(**ns_settings["Run_settings"])
     t1 = time.time()
     log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
@@ -346,5 +343,50 @@ def perform_mc_gridpdf_fit(
     l = Loader()
     pdf = l.check_pdf(str(output_path).split("/")[-1])
     generate_replica0(pdf)
+
+    log.info("Monte Carlo fit completed!")
+
+
+def perform_single_mc_gridpdf_fit(
+    grid_pdf_mc_fit,
+    replica_index,
+    reduced_xgrids,
+    flavour_indices,
+    length_reduced_xgrids,
+    theoryid,
+    lhapdf_path,
+    output_path,
+):
+    """
+    Performs a Monte Carlo fit using the grid_pdf parametrisation.
+    """
+
+    sample = grid_pdf_mc_fit.stacked_pdf_grid
+
+    # Save the samples
+    parameters = [
+        f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
+    ]
+
+    df = pd.DataFrame([sample], columns=parameters)
+    # if mc_result.csv already exists, append to it
+    if os.path.isfile(str(output_path) + "/mc_result.csv"):
+        df.to_csv(str(output_path) + "/mc_result.csv", mode="a", header=False)
+    else:
+        df.to_csv(str(output_path) + "/mc_result.csv")
+
+    # Produce the LHAPDF grid
+    lhapdf_grid_pdf_from_samples(
+        [sample],
+        reduced_xgrids,
+        flavour_indices,
+        length_reduced_xgrids,
+        1,
+        theoryid,
+        replica_index,
+        single_replica_fit=True,
+        folder=lhapdf_path,
+        output_path=output_path,
+    )
 
     log.info("Monte Carlo fit completed!")

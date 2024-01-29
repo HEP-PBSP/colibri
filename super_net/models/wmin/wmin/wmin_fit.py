@@ -183,7 +183,6 @@ def weight_minimization_ultranest(
     weight_minimization_grid,
     weight_minimization_prior,
     n_replicas_wmin,
-    output_path,
     ns_settings,
 ):
     """
@@ -220,15 +219,12 @@ def weight_minimization_ultranest(
 
         return -0.5 * _chi2_with_positivity(pdf)
 
-    if ns_settings["vectorized"]:
+    if ns_settings["ReactiveNS_settings"]["vectorized"]:
         sampler = ultranest.ReactiveNestedSampler(
             parameters,
             log_likelihood_vectorized,
             weight_minimization_prior,
-            vectorized=True,
-            ndraw_max=ns_settings["ndraw_max"],
-            log_dir=ns_settings["log_dir"],
-            resume=ns_settings["resume"],
+            **ns_settings["ReactiveNS_settings"],
         )
 
     else:
@@ -236,21 +232,17 @@ def weight_minimization_ultranest(
             parameters,
             log_likelihood,
             weight_minimization_prior,
-            log_dir=ns_settings["log_dir"],
-            resume=ns_settings["resume"],
+            **ns_settings["ReactiveNS_settings"],
         )
 
-    if ns_settings["slice_sampler"]:
+    if ns_settings["SliceSampler_settings"]:
         sampler.stepsampler = ustepsampler.SliceSampler(
-            nsteps=ns_settings["slice_steps"],
             generate_direction=ustepsampler.generate_mixture_random_direction,
+            **ns_settings["SliceSampler_settings"],
         )
 
     t0 = time.time()
-    ultranest_result = sampler.run(
-        min_num_live_points=ns_settings["min_num_live_points"],
-        min_ess=ns_settings["min_ess"],
-    )
+    ultranest_result = sampler.run(**ns_settings["Run_settings"])
     t1 = time.time()
     log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
