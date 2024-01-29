@@ -91,11 +91,22 @@ def len_trval_data(mc_pseudodata):
     return len(mc_pseudodata.training_indices), len(mc_pseudodata.validation_indices)
 
 
-def mc_postfit(fit_path, chi2_threshold=3.0):
+def mc_postfit(fit_path, chi2_threshold=3.0, n_replica_target=100):
     """Postfit function for the Monte Carlo fit.
     It filters out the replicas with final training loss
     above the threshold and copy the remaining ones
     to the replicas directory.
+
+    Parameters
+    ----------
+    fit_path : str
+        Path to the fit directory.
+
+    chi2_threshold : float, optional
+        Threshold for the final training loss, by default 3.0.
+
+    n_replica_target : int, optional
+        Target number of replicas, by default 100.
     """
 
     log.info("Running postfit for the Monte Carlo fit")
@@ -115,9 +126,9 @@ def mc_postfit(fit_path, chi2_threshold=3.0):
 
     replicas_list = sorted(list(replicas_path.iterdir()))
 
-    # We will copy the replicas and order them starting with 1
-    # and increasing the index for each replica
-    i = 1
+    # We will copy the replicas and order them starting with 0
+    # and increasing the index for each good replica we find
+    i = 0
     for replica in replicas_list:
         # Get last iteration from the mc_loss.csv file
         final_loss = pd.read_csv(replica / "mc_loss.csv").iloc[-1]["training_loss"]
@@ -131,9 +142,25 @@ def mc_postfit(fit_path, chi2_threshold=3.0):
 
             continue
 
-        # If not, copy the replica to the fit directory
-        shutil.copytree(replica, fit_path / f"replicas/replica_{i}")
-        # Increase replica index
-        i += 1
+        else:
+            # We found a good replica
+            # Increase replica index
+            i += 1
+            # Copy the replica to the fit directory
+            shutil.copytree(replica, fit_path / f"replicas/replica_{i}")
 
-    log.info(f"Postfit done, {i-1} replicas pass postfit selection")
+        if i == n_replica_target:
+            break
+
+    log.info(f"{i} replicas pass postfit selection")
+
+    if i < n_replica_target:
+        log.critical(
+            f"You asked for {n_replica_target} replicas, but only {i} replicas pass postfit selection.\n"
+            f"You could consider increasing the threshold for the final training loss.",
+        )
+
+    else:
+        log.info(
+            f"Target number of replicas reached, {i} replicas pass postfit selection"
+        )

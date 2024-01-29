@@ -3,5 +3,7 @@ fit_path: "grid_pdf_mc_example"
 
 chi2_threshold: 3.0
 
+n_replica_target: 100
+
 actions_:
 - mc_postfit
