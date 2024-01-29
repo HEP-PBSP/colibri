@@ -10,7 +10,6 @@ Date: 18.12.2023
 from grid_pdf.grid_pdf_model import interpolate_grid
 from super_net.utils import FLAVOURS_ID_MAPPINGS
 from validphys.loader import Loader
-from validphys.lhio import generate_replica0
 from super_net.constants import LHAPDF_XGRID
 
 from pathlib import Path
@@ -19,7 +18,7 @@ import lhapdf
 import numpy as np
 import os
 import yaml
-
+import shutil
 import logging
 from scipy.interpolate import interp1d
 
@@ -181,62 +180,35 @@ for i in range(num_flav):
 evolution_to_export_matrix = np.linalg.inv(export_to_evolution_matrix)
 
 
-def write_exportgrid_from_fit_samples(
+def lhapdf_grid_pdf_from_samples(
     samples,
-    n_posterior_samples,
     reduced_xgrids,
-    length_reduced_xgrids,
     flavour_indices,
-    replica_index,
+    length_reduced_xgrids,
+    n_posterior_samples,
+    theoryid,
+    replica_index=None,
     single_replica_fit=False,
+    folder=lhapdf_path,
     output_path=None,
 ):
     """
-    Writes an exportgrid for each of the replicas in the posterior sample.
-    The exportgrids are written to a folder called "replicas" in the output_path.
-    The exportgrids are written in the format required by EKO, but are not yet
-    evolved.
-
-    Parameters
-    ----------
-    samples: list
-        List of posterior samples.
-
-    n_posterior_samples: int
-        Number of posterior samples.
-
-    reduced_xgrids: dict
-        The reduced x-grids used in the fit, organised by flavour.
-
-    length_reduced_xgrids: int
-        The length of the reduced x-grids.
-
-    flavour_indices: list
-        The indices of the flavours used in the fit.
-
-    output_path: pathlib.PosixPath
-        Path to the output folder.
-
-    Returns
-    -------
-    None
-
+    TODO
     """
 
     # Write an export grid at the initial scale for each of the replicas in the posterior
     # sample.
-    replicas_path = str(output_path) + "/replicas"
-    if not os.path.exists(replicas_path):
-        os.mkdir(replicas_path)
+    ns_replicas_path = str(output_path) + "/ns_replicas"
+    if not os.path.exists(ns_replicas_path):
+        os.mkdir(ns_replicas_path)
 
     fit_name = str(output_path).split("/")[-1]
 
     for i in range(n_posterior_samples):
         if single_replica_fit:
-            rep_path = replicas_path + f"/replica_{replica_index}"
+            rep_path = ns_replicas_path + f"/replica_{replica_index}"
         else:
-            rep_path = replicas_path + "/replica_" + str(i + 1)
-
+            rep_path = ns_replicas_path + "/replica_" + str(i + 1)
         if not os.path.exists(rep_path):
             os.mkdir(rep_path)
         exportgrid = write_exportgrid(
@@ -244,52 +216,6 @@ def write_exportgrid_from_fit_samples(
         )
         with open(rep_path + "/" + fit_name + ".exportgrid", "w") as outfile:
             yaml.dump(exportgrid, outfile)
-
-    return None
-
-
-def evolution_of_exportgrid(
-    fit_path,
-    fit_name,
-    theoryid,
-    n_posterior_samples,
-    replica_index=None,
-    single_replica_fit=False,
-    folder=lhapdf_path,
-):
-    """
-    This function does the following:
-    1) Evolves the exportgrids stored in the replicas folder of the fit_path.
-    2) Writes the evolved grids to the folder specified by folder which is
-    assumed to be the share/LHAPDF folder.
-    3) Generates the central replica.
-
-    Note: for a successful generation of the central replica, the n_posterior_samples
-    must be equal to the number of replicas in the replicas folder.
-
-    Parameters
-    ----------
-    fit_path: str
-        Path to the fit folder.
-
-    fit_name: str
-        Name of the fit (is the same name of the runcard used for the fit).
-
-    theoryid: validphys.core.TheoryIDSpec
-        TheoryID of the theory used for the fit.
-
-    n_posterior_samples: int
-        Number of posterior samples.
-
-    folder: str, default=lhapdf_path
-        Path to the LHAPDF folder.
-
-    Returns
-    -------
-    None
-
-    """
-    replicas_path = str(fit_path) + "/replicas"
 
     # Now run EKO on the exportgrids to complete the PDF evolution
     log.info(f"Loading eko from theory {theoryid.id}")
@@ -303,17 +229,20 @@ def evolution_of_exportgrid(
 
     # Load the export grids into a dictionary
     initial_PDFs_dict = {}
-
     if single_replica_fit:
         yaml_file = next(
-            Path(replicas_path).glob(f"replica_{replica_index}/{fit_name}.exportgrid")
+            Path(ns_replicas_path).glob(
+                f"replica_{replica_index}/{output_path.name}.exportgrid"
+            )
         )
 
         data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
         initial_PDFs_dict[yaml_file.parent.stem] = data
 
     else:
-        for yaml_file in Path(replicas_path).glob(f"replica_*/{fit_name}.exportgrid"):
+        for yaml_file in Path(ns_replicas_path).glob(
+            f"replica_*/{output_path.name}.exportgrid"
+        ):
             data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
             initial_PDFs_dict[yaml_file.parent.stem] = data
 
@@ -333,7 +262,7 @@ def evolution_of_exportgrid(
         # info["NumFlavors"] = theory.heavy.num_flavs_max_pdf
 
         # If no LHAPDF folder exists, create one
-        lhapdf_destination = folder() + "/" + fit_name
+        lhapdf_destination = folder + "/" + fit_name
         if not os.path.exists(lhapdf_destination):
             os.mkdir(lhapdf_destination)
 
@@ -354,14 +283,6 @@ def evolution_of_exportgrid(
             )
 
             progress += 1
-
-    log.info("Generating central replica")
-    # Produce the central replica
-    l = Loader()
-    pdf = l.check_pdf(fit_name)
-    generate_replica0(pdf)
-
-    return None
 
 
 # This class is copied directly from evolven3fit_new
