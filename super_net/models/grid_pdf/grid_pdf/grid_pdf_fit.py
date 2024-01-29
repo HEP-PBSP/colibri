@@ -325,6 +325,7 @@ def perform_mc_gridpdf_fit(
         replica_index=None,
         single_replica_fit=False,
         output_path=output_path,
+        replicas_folder="fit_replicas",
     )
 
     log.info("Monte Carlo fit completed!")
@@ -366,6 +367,7 @@ def perform_single_mc_gridpdf_fit(
         replica_index=replica_index,
         single_replica_fit=True,
         output_path=output_path,
+        replicas_folder="fit_replicas",
     )
 
     # Save the training and validation loss
@@ -377,7 +379,7 @@ def perform_single_mc_gridpdf_fit(
         }
     )
     df.to_csv(
-        str(output_path) + f"/replicas/replica_{replica_index}" + "/mc_loss.csv",
+        str(output_path) + f"/fit_replicas/replica_{replica_index}" + "/mc_loss.csv",
         index=False,
     )
 

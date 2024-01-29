@@ -14,6 +14,8 @@ from dataclasses import dataclass, asdict
 from super_net.utils import training_validation_split
 import pathlib
 import pandas as pd
+import os
+import shutil
 
 import logging
 
@@ -90,14 +92,32 @@ def len_trval_data(mc_pseudodata):
 
 
 def mc_postfit(fit_path, chi2_threshold=3.0):
+    fit_path = pathlib.Path(fit_path)
     # Filter out only the directories
-    replicas_path = pathlib.Path(fit_path) / "replicas"
+    replicas_path = fit_path / "fit_replicas"
+    # Create the directory for the replicas if it does not exist
+    if not os.path.exists(fit_path / "replicas"):
+        os.mkdir(fit_path / "replicas")
 
-    for replica in replicas_path.iterdir():
+    replicas_list = sorted(list(replicas_path.iterdir()))
+
+    # We will copy the replicas and order them starting with 1
+    # and increasing the index for each replica, as to not leave holes
+    i = 1
+    for replica in replicas_list:
         # Get last iteration from the mc_loss.csv file
         final_loss = pd.read_csv(replica / "mc_loss.csv").iloc[-1]["training_loss"]
 
         # Check if final loss is above the threshold
         if final_loss > chi2_threshold:
             index = int(replica.name.split("_")[1])
-            log.info(f"Replica {index} has final loss {final_loss:.3f}")
+            log.warning(
+                f"Discarding replica {index}, it has final training loss {final_loss:.3f}"
+            )
+
+            continue
+
+        # If not, copy the replica to the fit directory
+        shutil.copytree(replica, fit_path / f"replicas/replica_{i}")
+        # Increase replica index
+        i += 1
