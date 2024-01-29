@@ -317,11 +317,13 @@ def perform_mc_gridpdf_fit(
 
     # Produce exportgrid files for each posterior sample
     write_exportgrid_from_fit_samples(
-        samples=samples,
+        samples,
         n_posterior_samples=n_replicas,
         reduced_xgrids=reduced_xgrids,
         length_reduced_xgrids=length_reduced_xgrids,
         flavour_indices=flavour_indices,
+        replica_index=None,
+        single_replica_fit=False,
         output_path=output_path,
     )
 
@@ -334,8 +336,6 @@ def perform_single_mc_gridpdf_fit(
     reduced_xgrids,
     flavour_indices,
     length_reduced_xgrids,
-    theoryid,
-    lhapdf_path,
     output_path,
 ):
     """
@@ -356,17 +356,15 @@ def perform_single_mc_gridpdf_fit(
     else:
         df.to_csv(str(output_path) + "/mc_result.csv")
 
-    # Produce the LHAPDF grid
-    lhapdf_grid_pdf_from_samples(
+    # Produce exportgrid file
+    write_exportgrid_from_fit_samples(
         [sample],
-        reduced_xgrids,
-        flavour_indices,
-        length_reduced_xgrids,
-        1,
-        theoryid,
-        replica_index,
+        n_posterior_samples=1,
+        reduced_xgrids=reduced_xgrids,
+        length_reduced_xgrids=length_reduced_xgrids,
+        flavour_indices=flavour_indices,
+        replica_index=replica_index,
         single_replica_fit=True,
-        folder=lhapdf_path,
         output_path=output_path,
     )
 
