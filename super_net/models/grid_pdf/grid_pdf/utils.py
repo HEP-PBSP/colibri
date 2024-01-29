@@ -102,13 +102,15 @@ def gridpdf_fit_name(set_name=None):
     return f"{current_time}_grid_fit"
 
 
-def pdf_prior_grid_initializer(grid_initializer, reduced_xgrids, flavour_indices, length_stackedpdf, replica_index):
+def pdf_prior_grid_initializer(
+    grid_initializer, reduced_xgrids, flavour_indices, length_stackedpdf, replica_index
+):
     """
     Returns the pdf prior grid initializer.
     """
     init_pdf = pdf_prior_grid(
-            grid_initializer["pdf_prior"], reduced_xgrids, flavour_indices
-        )
+        grid_initializer["pdf_prior"], reduced_xgrids, flavour_indices
+    )
 
     # if init_type is central, return the central pdf
     if grid_initializer["init_type"] == "central":
@@ -160,12 +162,23 @@ def init_stacked_pdf_grid(
         )
 
     elif grid_initializer["type"] == "pdf":
-        
+
         if not multiple_initiators:
-            init_grid = pdf_prior_grid_initializer(grid_initializer, reduced_xgrids, flavour_indices, length_stackedpdf, replica_index)
+            init_grid = pdf_prior_grid_initializer(
+                grid_initializer,
+                reduced_xgrids,
+                flavour_indices,
+                length_stackedpdf,
+                replica_index,
+            )
             return init_grid
 
         # if multiple_initiators is True, return a list of multiple initializers
         rng = jax.random.PRNGKey(replica_index)
-        multiple_init_grid = [pdf_prior_grid_initializer(grid_initializer, reduced_xgrids, flavour_indices, length_stackedpdf, k) for k in jax.random.randint(rng, minval=0, maxval=1000, shape=(100,))]
+        multiple_init_grid = [
+            pdf_prior_grid_initializer(
+                grid_initializer, reduced_xgrids, flavour_indices, length_stackedpdf, k
+            )
+            for k in jax.random.randint(rng, minval=0, maxval=1000, shape=(100,))
+        ]
         return multiple_init_grid
