@@ -249,7 +249,13 @@ def write_exportgrid_from_fit_samples(
 
 
 def evolution_of_exportgrid(
-    fit_path, fit_name, theoryid, n_posterior_samples, replica_index=None, single_replica_fit=False, folder=lhapdf_path
+    fit_path,
+    fit_name,
+    theoryid,
+    n_posterior_samples,
+    replica_index=None,
+    single_replica_fit=False,
+    folder=lhapdf_path,
 ):
     """
     This function does the following:
@@ -300,18 +306,14 @@ def evolution_of_exportgrid(
 
     if single_replica_fit:
         yaml_file = next(
-            Path(replicas_path).glob(
-                f"replica_{replica_index}/{fit_name}.exportgrid"
-            )
+            Path(replicas_path).glob(f"replica_{replica_index}/{fit_name}.exportgrid")
         )
 
         data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
         initial_PDFs_dict[yaml_file.parent.stem] = data
 
     else:
-        for yaml_file in Path(replicas_path).glob(
-            f"replica_*/{fit_name}.exportgrid"
-        ):
+        for yaml_file in Path(replicas_path).glob(f"replica_*/{fit_name}.exportgrid"):
             data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
             initial_PDFs_dict[yaml_file.parent.stem] = data
 
