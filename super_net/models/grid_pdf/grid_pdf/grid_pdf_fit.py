@@ -17,11 +17,25 @@ from dataclasses import dataclass
 import time
 import logging
 import os
+import sys
 
 from reportengine import collect
 
-
 log = logging.getLogger(__name__)
+
+# Check if --debug flag is present
+debug_flag = "--debug" in sys.argv
+
+# Set the Ultrnest logging level based on the presence of --debug flag
+ultranest_logger = logging.getLogger("ultranest")
+ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
+
+# Configure the handler and formatter
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG if debug_flag else logging.INFO)
+formatter = logging.Formatter("[ultranest] [%(levelname)s] %(message)s")
+handler.setFormatter(formatter)
+ultranest_logger.addHandler(handler)
 
 
 def ultranest_grid_fit(
