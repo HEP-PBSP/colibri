@@ -12,7 +12,8 @@ import os, sys
 
 import pandas as pd
 
-color_key = ['#66C2A5', '#FC8D62', '#8DA0CB']
+color_key = ["#66C2A5", "#FC8D62", "#8DA0CB"]
+
 
 def get_fit_path(fit):
     fit_path = pathlib.Path(sys.prefix) / "share/super_net/results" / fit
@@ -22,11 +23,12 @@ def get_fit_path(fit):
         )
     return str(fit_path)
 
+
 @figure
 def plot_corner(super_net_fits):
     """Plots comparison corner plot for the fits in super_net_fits"""
     fit_dfs = []
-    
+
     for fit in super_net_fits:
         fit_path = get_fit_path(fit)
         if os.path.exists(fit_path + "/ns_result.csv"):
@@ -41,16 +43,19 @@ def plot_corner(super_net_fits):
     # Check that the parameters for the fits are all the same
     for fit_df in fit_dfs:
         if len(fit_df.columns) != len(fit_dfs[0].columns):
-            raise ValueError("The supplied fits do not have the same number of parameters.")
+            raise ValueError(
+                "The supplied fits do not have the same number of parameters."
+            )
         if not all(fit_df.columns == fit_dfs[0].columns):
             raise ValueError("The supplied fits do not have the same parameters.")
 
     fig = corner.corner(fit_dfs[0], color=color_key[0])
     if len(fit_dfs) > 1:
         for i in range(len(fit_dfs[1:])):
-            fig = corner.corner(fit_dfs[i], fig=fig, color=color_key[i+1])
+            fig = corner.corner(fit_dfs[i], fig=fig, color=color_key[i + 1])
 
     return fig
+
 
 @figuregen
 def plot_histograms(super_net_fits):
@@ -71,7 +76,9 @@ def plot_histograms(super_net_fits):
     # Check that the parameters for the fits are all the same
     for fit_df in fit_dfs:
         if len(fit_df.columns) != len(fit_dfs[0].columns):
-            raise ValueError("The supplied fits do not have the same number of parameters.")
+            raise ValueError(
+                "The supplied fits do not have the same number of parameters."
+            )
         if not all(fit_df.columns == fit_dfs[0].columns):
             raise ValueError("The supplied fits do not have the same parameters.")
 
