@@ -109,11 +109,20 @@ def mc_postfit(fit_path, chi2_threshold=3.0, n_replica_target=100):
         Target number of replicas, by default 100.
     """
 
+    # Convert fit_path to a pathlib.Path object
+    fit_path = pathlib.Path(fit_path)
+
+    # Check that the folder fit_replicas exists
+    if not os.path.exists(fit_path / "fit_replicas"):
+        log.error(
+            f"The folder {fit_path}/fit_replicas does not exist.\n"
+            f"Please run the Monte Carlo fit first."
+        )
+        raise FileNotFoundError(f"{fit_path}/fit_replicas does not exist")
+
     log.info("Running postfit for the Monte Carlo fit")
     log.debug(f"Threshold for final training loss: {chi2_threshold}")
 
-    # Convert fit_path to a pathlib.Path object
-    fit_path = pathlib.Path(fit_path)
     # Filter out only the directories
     replicas_path = fit_path / "fit_replicas"
     # Create the directory for the replicas if it does not exist
