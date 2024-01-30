@@ -154,3 +154,21 @@ def init_stacked_pdf_grid(
             )
 
             return init_pdf.stacked_pdf_grid_prior + epsilon * delta
+
+
+def precomputed_predictions(
+    _pred_data_non_vectorized, interpolate_grid_nonvec, length_stackedpdf
+):
+    """
+    Precompute predictions for the basis of grid_pdf.
+    """
+    bases = jnp.identity(length_stackedpdf)
+
+    pdf_bases = [interpolate_grid_nonvec(basis) for basis in bases]
+
+    # Precompute predictions for the basis of grid_pdf
+    predictions = jnp.array(
+        [_pred_data_non_vectorized(pdf_basis) for pdf_basis in pdf_bases]
+    )
+
+    return predictions

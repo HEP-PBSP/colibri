@@ -119,6 +119,24 @@ def interpolate_grid(
     return interp_func
 
 
+def interpolate_grid_nonvec(
+    reduced_xgrids,
+    length_reduced_xgrids,
+    flavour_indices,
+    interpolation_grid=XGRID,
+):
+    """
+    Returns interpolation function non vectorised.
+    """
+    return interpolate_grid(
+        reduced_xgrids,
+        length_reduced_xgrids,
+        flavour_indices,
+        interpolation_grid,
+        vectorized=False,
+    )
+
+
 @dataclass(frozen=True)
 class PdfPriorGrid:
     """
