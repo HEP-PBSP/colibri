@@ -5,15 +5,12 @@ This module writes the LHAPDF grids for the result of a super_net fit.
 
 """
 
-from super_net.constants import (
-    LHAPDF_XGRID,
-    evolution_to_export_matrix,
-    EXPORT_LABELS
-)
+from super_net.constants import LHAPDF_XGRID, evolution_to_export_matrix, EXPORT_LABELS
 
 import os
 import numpy as np
 import yaml
+
 
 def write_exportgrid(
     parameters,
@@ -64,7 +61,7 @@ def write_exportgrid(
     export_grid = {}
 
     # Set the initial Q2 value, which will always be the same.
-    export_grid["q20"] = (1.65)**2
+    export_grid["q20"] = (1.65) ** 2
     export_grid["xgrid"] = LHAPDF_XGRID
     export_grid["replica"] = int(replica_index)
     export_grid["labels"] = EXPORT_LABELS

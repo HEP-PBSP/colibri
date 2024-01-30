@@ -18,6 +18,7 @@ from super_net.utils import resample_from_ns_posterior
 
 log = logging.getLogger(__name__)
 
+
 def ultranest_fit(
     _chi2_with_positivity,
     pdf_model,
@@ -25,8 +26,7 @@ def ultranest_fit(
     ns_settings,
     output_path,
 ):
-    """The complete Nested Sampling fitting routine, for any PDF model.
-    """
+    """The complete Nested Sampling fitting routine, for any PDF model."""
 
     parameters = pdf_model.param_names
     log_dir = output_path / "ultranest"
@@ -82,4 +82,6 @@ def ultranest_fit(
     # Finish by writing the replicas to export grids, ready for evolution
     for i in range(n_posterior_samples):
         log.info(f"Writing exportgrid for replica {i+1}")
-        write_exportgrid(jnp.array(df.iloc[i,:].tolist()), pdf_model, i+1, output_path)
+        write_exportgrid(
+            jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path
+        )

@@ -15,6 +15,7 @@ from dataclasses import dataclass, asdict
 from super_net.constants import XGRID
 from validphys import convolution
 
+
 def replica_seed(replica_index):
     """
     Generate a random integer given a replica_index.

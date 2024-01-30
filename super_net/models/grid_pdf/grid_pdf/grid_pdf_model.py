@@ -9,12 +9,14 @@ from validphys.core import PDF
 
 from super_net.pdf_model import PDFModel
 
+
 def pdf_model(flavour_xgrids):
     return GridPDFModel(flavour_xgrids)
 
+
 class GridPDFModel(PDFModel):
-    """A PDFModel implementation for the grid_pdf module.
-    """
+    """A PDFModel implementation for the grid_pdf module."""
+
     xgrids: dict
     param_names: list
 
@@ -23,8 +25,7 @@ class GridPDFModel(PDFModel):
 
     @property
     def param_names(self):
-        """The fitted parameters of the model.
-        """
+        """The fitted parameters of the model."""
         return [f"{fl}({x})" for fl in self.fitted_flavours for x in self.xgrids[fl]]
 
     @property
@@ -49,21 +50,25 @@ class GridPDFModel(PDFModel):
             interpolants = []
             for i, flavour in enumerate(convolution.FK_FLAVOURS):
                 if flavour in self.fitted_flavours:
-                    interpolants += [jnp.interp(
-                        jnp.array(interpolation_grid),
-                        jnp.array(self.xgrids[flavour]),
-                        jnp.array(params[:len(self.xgrids[flavour])]),
-                    )]
+                    interpolants += [
+                        jnp.interp(
+                            jnp.array(interpolation_grid),
+                            jnp.array(self.xgrids[flavour]),
+                            jnp.array(params[: len(self.xgrids[flavour])]),
+                        )
+                    ]
                 else:
-                    interpolants += [jnp.array([0.0]*len(interpolation_grid))]
-                params = params[len(self.xgrids[flavour]):]
+                    interpolants += [jnp.array([0.0] * len(interpolation_grid))]
+                params = params[len(self.xgrids[flavour]) :]
             return jnp.array(interpolants)
 
         return interp_func
 
+
 def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
-    if mc_initialiser_settings['type'] == 'zeros':
-        return [0.0]*len(pdf_model.param_names)
+    if mc_initialiser_settings["type"] == "zeros":
+        return [0.0] * len(pdf_model.param_names)
+
 
 def bayesian_prior(pdf_model, prior_settings):
     """
@@ -73,23 +78,24 @@ def bayesian_prior(pdf_model, prior_settings):
     """
 
     # Load the prior PDF
-    pdf = PDF(prior_settings['pdf_prior'])
-    nsigma = prior_settings['nsigma']
+    pdf = PDF(prior_settings["pdf_prior"])
+    nsigma = prior_settings["nsigma"]
 
-    replicas_grid = jnp.concatenate([
-        convolution.evolution.grid_values(
-            pdf,
-            [flavour],
-            pdf_model.xgrids[flavour],
-            [1.65]
-        )
-    for flavour in pdf_model.fitted_flavours], axis=2)
+    replicas_grid = jnp.concatenate(
+        [
+            convolution.evolution.grid_values(
+                pdf, [flavour], pdf_model.xgrids[flavour], [1.65]
+            )
+            for flavour in pdf_model.fitted_flavours
+        ],
+        axis=2,
+    )
 
-    central_prior_grid = replicas_grid[0,:,:,:].squeeze()
+    central_prior_grid = replicas_grid[0, :, :, :].squeeze()
     # Remove central replica
-    replicas_grid = replicas_grid[1:,:,:,:]
+    replicas_grid = replicas_grid[1:, :, :, :]
 
-    if prior_settings['type'] == 'uniform_pdf_prior':
+    if prior_settings["type"] == "uniform_pdf_prior":
         error68_up = jnp.nanpercentile(replicas_grid, 84.13, axis=0).reshape(-1)
         error68_down = jnp.nanpercentile(replicas_grid, 15.87, axis=0).reshape(-1)
 
@@ -110,8 +116,10 @@ def bayesian_prior(pdf_model, prior_settings):
 
         return prior_transform
 
-    elif prior_settings['type'] == 'gaussian_pdf_prior':
-        pdf_covmat_prior = jnp.cov(replicas_grid.reshape((replicas_grid.shape[0], -1)).T)
+    elif prior_settings["type"] == "gaussian_pdf_prior":
+        pdf_covmat_prior = jnp.cov(
+            replicas_grid.reshape((replicas_grid.shape[0], -1)).T
+        )
 
         # note: this matrix could be ill-conditioned when too many xgrids are used
         # this is because xgrid values are not independent
