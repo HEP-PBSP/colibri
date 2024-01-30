@@ -23,6 +23,8 @@ super_net_providers = [
     "super_net.plots_and_tables.plotting",
     "super_net.provider_aliases",
     "super_net.mc_utils",
+    "super_net.ultranest_fit",
+    "super_net.pdf_model",
     "reportengine.report",
 ]
 

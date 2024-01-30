@@ -12,10 +12,6 @@ import pathlib
 
 grid_pdf_providers = [
     "grid_pdf.grid_pdf_model",
-    "grid_pdf.grid_pdf_fit",
-    "grid_pdf.grid_pdf_lhapdf",
-    "grid_pdf.provider_aliases",
-    "grid_pdf.utils",
 ]
 
 

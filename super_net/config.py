@@ -17,7 +17,7 @@ from reportengine.configparser import explicit_node, ConfigError
 
 from super_net import commondata_utils
 
-from super_net.utils import FLAVOUR_TO_ID_MAPPING
+from super_net.constants import FLAVOUR_TO_ID_MAPPING
 
 import logging
 import os
