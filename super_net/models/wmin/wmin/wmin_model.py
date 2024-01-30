@@ -42,7 +42,7 @@ class WMinPDF(PDFModel):
 
         @jax.jit
         def interp_func(weights):
-            weights = jnp.concatenate((jnp.array([1.0]), weights))
+            weights = jnp.concatenate((jnp.array([1.0]), jnp.array(weights)))
             pdf = jnp.einsum(
                 "i,ijk", weights, input_grid
             )
