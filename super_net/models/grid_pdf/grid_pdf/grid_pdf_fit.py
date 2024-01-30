@@ -313,7 +313,7 @@ def perform_mc_gridpdf_fit(
     ]
 
     df = pd.DataFrame(samples, columns=parameters)
-    df.to_csv(str(output_path) + "/mc_result.csv")
+    df.to_csv(str(output_path) + "/fit_mc_result.csv")
 
     # Produce exportgrid files for each posterior sample
     write_exportgrid_from_fit_samples(
@@ -325,6 +325,7 @@ def perform_mc_gridpdf_fit(
         replica_index=None,
         single_replica_fit=False,
         output_path=output_path,
+        replicas_folder="fit_replicas",
     )
 
     log.info("Monte Carlo fit completed!")
@@ -351,10 +352,10 @@ def perform_single_mc_gridpdf_fit(
 
     df = pd.DataFrame([sample], columns=parameters, index=[replica_index])
     # if mc_result.csv already exists, append to it
-    if os.path.isfile(str(output_path) + "/mc_result.csv"):
-        df.to_csv(str(output_path) + "/mc_result.csv", mode="a", header=False)
+    if os.path.isfile(str(output_path) + "/fit_mc_result.csv"):
+        df.to_csv(str(output_path) + "/fit_mc_result.csv", mode="a", header=False)
     else:
-        df.to_csv(str(output_path) + "/mc_result.csv")
+        df.to_csv(str(output_path) + "/fit_mc_result.csv")
 
     # Produce exportgrid file
     write_exportgrid_from_fit_samples(
@@ -366,6 +367,7 @@ def perform_single_mc_gridpdf_fit(
         replica_index=replica_index,
         single_replica_fit=True,
         output_path=output_path,
+        replicas_folder="fit_replicas",
     )
 
     # Save the training and validation loss
@@ -377,7 +379,7 @@ def perform_single_mc_gridpdf_fit(
         }
     )
     df.to_csv(
-        str(output_path) + f"/replicas/replica_{replica_index}" + "/mc_loss.csv",
+        str(output_path) + f"/fit_replicas/replica_{replica_index}" + "/mc_loss.csv",
         index=False,
     )
 

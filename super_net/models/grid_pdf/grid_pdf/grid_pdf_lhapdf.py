@@ -190,6 +190,7 @@ def write_exportgrid_from_fit_samples(
     replica_index=None,
     single_replica_fit=False,
     output_path=None,
+    replicas_folder="replicas",
 ):
     """
     Writes an exportgrid for each of the replicas in the posterior sample.
@@ -217,6 +218,9 @@ def write_exportgrid_from_fit_samples(
     output_path: pathlib.PosixPath
         Path to the output folder.
 
+    replicas_folder: str
+        Name of the folder where the replicas are stored.
+
     Returns
     -------
     None
@@ -225,24 +229,24 @@ def write_exportgrid_from_fit_samples(
 
     # Write an export grid at the initial scale for each of the replicas in the posterior
     # sample.
-    replicas_path = str(output_path) + "/replicas"
+    replicas_path = output_path / replicas_folder
     if not os.path.exists(replicas_path):
         os.mkdir(replicas_path)
 
-    fit_name = str(output_path).split("/")[-1]
+    fit_name = output_path.name.split("/")[-1]
 
     for i in range(n_posterior_samples):
         if single_replica_fit:
-            rep_path = replicas_path + f"/replica_{replica_index}"
+            rep_path = replicas_path / f"replica_{replica_index}"
         else:
-            rep_path = replicas_path + "/replica_" + str(i + 1)
+            rep_path = replicas_path / "replica_" + str(i + 1)
 
         if not os.path.exists(rep_path):
             os.mkdir(rep_path)
         exportgrid = write_exportgrid(
             samples, reduced_xgrids, length_reduced_xgrids, flavour_indices, i
         )
-        with open(rep_path + "/" + fit_name + ".exportgrid", "w") as outfile:
+        with open(rep_path / (fit_name + ".exportgrid"), "w") as outfile:
             yaml.dump(exportgrid, outfile)
 
     return None
