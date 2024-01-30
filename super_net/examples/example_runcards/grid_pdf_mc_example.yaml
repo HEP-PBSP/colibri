@@ -77,7 +77,7 @@ xgrids:
 mc_validation_fraction: 0.0
 max_epochs: 100
 patience: 10
-trval_index: 1
+
 use_same_trval_split_per_replica: True
 grid_initializer: 
   type: uniform
@@ -86,7 +86,6 @@ grid_initializer:
 
 # lhapdf output
 n_replicas: 3
-set_name: test
 
 actions_:
 - perform_mc_gridpdf_fit
