@@ -58,7 +58,6 @@ lambda_positivity: 1000
 bayesian_fit: True
 pdf_prior: NNPDF31_nnlo_as_0118
 sigma_pdf_prior: 1
-trval_index: 1
 
 ns_settings:
   n_posterior_samples: 10
