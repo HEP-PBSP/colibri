@@ -352,10 +352,10 @@ def perform_single_mc_gridpdf_fit(
 
     df = pd.DataFrame([sample], columns=parameters, index=[replica_index])
     # if mc_result.csv already exists, append to it
-    if os.path.isfile(str(output_path) + "/mc_result.csv"):
-        df.to_csv(str(output_path) + "/mc_result.csv", mode="a", header=False)
+    if os.path.isfile(str(output_path) + "/fit_mc_result.csv"):
+        df.to_csv(str(output_path) + "/fit_mc_result.csv", mode="a", header=False)
     else:
-        df.to_csv(str(output_path) + "/mc_result.csv")
+        df.to_csv(str(output_path) + "/fit_mc_result.csv")
 
     # Produce exportgrid file
     write_exportgrid_from_fit_samples(

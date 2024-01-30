@@ -126,6 +126,9 @@ def mc_postfit(fit_path, chi2_threshold=3.0, n_replica_target=100):
 
     replicas_list = sorted(list(replicas_path.iterdir()))
 
+    # List of replicas to be rejected
+    reject_replicas = []
+
     # We will copy the replicas and order them starting with 0
     # and increasing the index for each good replica we find
     i = 0
@@ -139,6 +142,9 @@ def mc_postfit(fit_path, chi2_threshold=3.0, n_replica_target=100):
             log.warning(
                 f"Discarding replica {index}, it has final training loss {final_loss:.3f}"
             )
+
+            # Add the replica to the list of replicas to be rejected
+            reject_replicas.append(index)
 
             continue
 
@@ -164,3 +170,13 @@ def mc_postfit(fit_path, chi2_threshold=3.0, n_replica_target=100):
         log.info(
             f"Target number of replicas reached, {i} replicas pass postfit selection"
         )
+
+    fit_df = pd.read_csv(fit_path / "fit_mc_result.csv", index_col=0)
+
+    # Filter out the replicas with index in reject_replicas
+    postfit_df = fit_df.drop(reject_replicas)
+
+    # Save the postfit dataframe
+    postfit_df.to_csv(fit_path / "mc_result.csv")
+
+    log.info("Postfit completed")
