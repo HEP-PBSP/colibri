@@ -20,16 +20,18 @@ class GridPdfConfig(SuperNetConfig):
     def produce_flavour_xgrids(self, grid_pdf_settings):
         return grid_pdf_settings['xgrids']
 
-    def produce_grid_prior(self, grid_pdf_settings):
-        if 'prior_settings' in grid_pdf_settings.keys():
-            settings = grid_pdf_settings['prior_settings']
-            settings['pdf_prior'] = self.parse_pdf(settings['pdf_prior'])
-            return settings
-        return None
+    def parse_prior_settings(self, settings):
 
-    def produce_grid_initialiser(self, grid_pdf_settings):
-        if 'initialiser_settings' in grid_pdf_settings.keys():
-            settings = grid_pdf_settings['initialiser_settings']
-            settings['pdf_prior'] = self.parse_pdf(settings['pdf_prior'])
-            return settings
-        return None
+        # Uniform prior, around a specified central PDF.
+        if settings['type'] == 'uniform_pdf_prior':
+
+            # Check if PDF is supplied, and raise error otherwise.
+            if 'pdf_prior' not in settings.keys():
+                raise ValueError('Missing key prior_pdf for uniform_pdf_prior')
+
+            # Check if number of standard deviations are supplied, default to 2
+            # otherwise.
+            if 'nsigma' not in settings.keys():
+                settings['nsigma'] = 2
+
+        return settings

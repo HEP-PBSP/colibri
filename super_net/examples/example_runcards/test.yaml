@@ -86,10 +86,11 @@ grid_pdf_settings:
     T15: []
     T24: []
     T35: []
-  prior_settings:
-    type: 'uniform_pdf_prior'
-    pdf_prior: NNPDF31_nnlo_as_0118
-    nsigma: 20
+
+prior_settings:
+  type: 'uniform_pdf_prior'
+  pdf_prior: NNPDF31_nnlo_as_0118
+  nsigma: 20
 
 
 actions_:

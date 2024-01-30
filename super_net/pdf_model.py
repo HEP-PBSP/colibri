@@ -17,21 +17,9 @@ class PDFModel(ABC):
         """
         pass
 
-    @abstractproperty
-    def init_params(self):
-        """This should return a valid list of initial model parameters, for MC fits.
-        """
-        pass
-
     @abstractmethod
     def grid_values_func(self, xgrid):
         """This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
-        """
-        pass
-
-    @abstractproperty
-    def bayesian_prior(self):
-        """This should return the Bayesian prior for a Nested Sampling fit.
         """
         pass

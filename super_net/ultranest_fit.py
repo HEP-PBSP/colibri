@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 def ultranest_fit(
     _chi2_with_positivity,
     pdf_model,
+    bayesian_prior,
     ns_settings,
     output_path,
 ):
@@ -29,8 +30,6 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
     log_dir = output_path / "ultranest"
-
-    guess = pdf_model.bayesian_prior
 
     fit_grid_values_func = pdf_model.grid_values_func(XGRID)
 
@@ -42,7 +41,7 @@ def ultranest_fit(
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
         log_likelihood,
-        pdf_model.bayesian_prior,
+        bayesian_prior,
         **ns_settings["ReactiveNS_settings"],
     )
 
