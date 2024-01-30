@@ -313,7 +313,7 @@ def perform_mc_gridpdf_fit(
     ]
 
     df = pd.DataFrame(samples, columns=parameters)
-    df.to_csv(str(output_path) + "/mc_result.csv")
+    df.to_csv(str(output_path) + "/fit_mc_result.csv")
 
     # Produce exportgrid files for each posterior sample
     write_exportgrid_from_fit_samples(
