@@ -16,8 +16,6 @@ class GridPDFModel(PDFModel):
     """A PDFModel implementation for the grid_pdf module.
     """
     xgrids: dict
-    grid_prior: dict
-    grid_init: dict
     param_names: list
 
     def __init__(self, flavour_xgrids):
