@@ -18,15 +18,6 @@ def bayesian_prior(pdf_model, prior_settings):
         pdf = PDF(prior_settings['pdf_prior'])
         nsigma = prior_settings['nsigma']
 
-        central_prior_grid = jnp.concatenate([jnp.array(
-            convolution.evolution.grid_values(
-                pdf,
-                [flavour],
-                pdf_model.xgrids[flavour],
-                [1.65]
-            )
-        ).squeeze(-1)[0].T for flavour in pdf_model.fitted_flavours]).T
-
         replicas_grid = jnp.concatenate([
             convolution.evolution.grid_values(
                 pdf,
@@ -35,6 +26,10 @@ def bayesian_prior(pdf_model, prior_settings):
                 [1.65]
             )
         for flavour in pdf_model.fitted_flavours], axis=2)
+
+        central_prior_grid = replicas_grid[0,:,:,:].squeeze()
+        # Remove central replica
+        replicas_grid = replicas_grid[1:,:,:,:]
 
         error68_up = jnp.nanpercentile(replicas_grid, 84.13, axis=0).reshape(-1)
         error68_down = jnp.nanpercentile(replicas_grid, 15.87, axis=0).reshape(-1)
