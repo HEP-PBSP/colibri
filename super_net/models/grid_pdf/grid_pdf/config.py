@@ -21,14 +21,14 @@ class GridPdfConfig(SuperNetConfig):
         return grid_pdf_settings['xgrids']
 
     def parse_prior_settings(self, settings):
+        # Currently, all possible prior choices require a central PDF.
+        if 'pdf_prior' not in settings.keys():
+            raise ValueError('Missing key prior_pdf for uniform_pdf_prior')
 
-        # Uniform prior, around a specified central PDF.
+        # In the case of a uniform prior around a central PDF, we also need
+        # to specify the total number of standard deviations around the mean
+        # which we allow.
         if settings['type'] == 'uniform_pdf_prior':
-
-            # Check if PDF is supplied, and raise error otherwise.
-            if 'pdf_prior' not in settings.keys():
-                raise ValueError('Missing key prior_pdf for uniform_pdf_prior')
-
             # Check if number of standard deviations are supplied, default to 2
             # otherwise.
             if 'nsigma' not in settings.keys():
