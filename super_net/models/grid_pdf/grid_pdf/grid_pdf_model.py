@@ -61,6 +61,10 @@ class GridPDFModel(PDFModel):
 
         return interp_func
 
+def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
+    if mc_initialiser_settings['type'] == 'zeros':
+        return [0.0]*len(pdf_model.param_names)
+
 def bayesian_prior(pdf_model, prior_settings):
     """
     Produces the Bayesian prior for a grid_pdf fit. The options for the

@@ -50,6 +50,10 @@ class WMinPDF(PDFModel):
 
         return interp_func
 
+def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
+    if mc_initialiser_settings['type'] == 'zeros':
+        return [0.0]*pdf_model.n_basis
+
 def bayesian_prior(prior_settings):
     if prior_settings['type'] == 'uniform_parameter_prior':
         max_val = prior_settings['max_val']
