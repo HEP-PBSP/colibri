@@ -349,7 +349,7 @@ def perform_single_mc_gridpdf_fit(
         f"{FK_FLAVOURS[i]}({j})" for i in flavour_indices for j in reduced_xgrids[i]
     ]
 
-    df = pd.DataFrame([sample], columns=parameters)
+    df = pd.DataFrame([sample], columns=parameters, index=[replica_index])
     # if mc_result.csv already exists, append to it
     if os.path.isfile(str(output_path) + "/mc_result.csv"):
         df.to_csv(str(output_path) + "/mc_result.csv", mode="a", header=False)
