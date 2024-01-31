@@ -239,7 +239,7 @@ def write_exportgrid_from_fit_samples(
         if single_replica_fit:
             rep_path = replicas_path / f"replica_{replica_index}"
         else:
-            rep_path = replicas_path / "replica_" + str(i + 1)
+            rep_path = replicas_path / ("replica_" + str(i + 1))
 
         if not os.path.exists(rep_path):
             os.mkdir(rep_path)
