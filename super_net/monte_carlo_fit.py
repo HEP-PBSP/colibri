@@ -154,7 +154,10 @@ def monte_carlo_fit(
 
     df = pd.DataFrame(parameters, index=pdf_model.param_names).T
 
-    replicas_path = str(output_path) + "/replicas"
+    # In a Monte Carlo fit, replicas are written to the fit_replicas
+    # directory, and mc_postfit must then be applied to select valid ones
+    # based on a chi2 threshold. No such problem exists for Nested Sampling
+    replicas_path = str(output_path) + "/fit_replicas"
     if not os.path.exists(replicas_path):
         os.mkdir(replicas_path)
 
