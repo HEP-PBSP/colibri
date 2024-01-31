@@ -11,6 +11,7 @@ import pandas as pd
 import ultranest
 import time
 import logging
+import sys
 
 from super_net.constants import XGRID
 from super_net.lhapdf import write_exportgrid
@@ -18,6 +19,16 @@ from super_net.utils import resample_from_ns_posterior
 
 log = logging.getLogger(__name__)
 
+# Check if --debug flag is present
+debug_flag = "--debug" in sys.argv
+
+# Set the Ultrnest logging level based on the presence of --debug flag
+ultranest_logger = logging.getLogger("ultranest")
+ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
+
+# Configure the handler and formatter
+handler = logging.StreamHandler(sys.stdout)
+ultranest_logger.addHandler(handler)
 
 def ultranest_fit(
     _chi2_with_positivity,
