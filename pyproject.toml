@@ -21,3 +21,4 @@ doc = [
 
 [tool.flit.scripts]
 super_net = "super_net.app:main"
+super_grids = "super_net.scripts.super_grids:main"
