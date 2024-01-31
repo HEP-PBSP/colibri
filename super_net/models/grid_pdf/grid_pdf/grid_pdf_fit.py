@@ -281,9 +281,6 @@ def grid_pdf_mc_fit(
         epoch_val_loss += loss_validation(stacked_pdf_grid) / len_val_idx
         epoch_loss /= num_batches
 
-        loss.append(epoch_loss)
-        val_loss.append(epoch_val_loss)
-
         _, early_stopper = early_stopper.update(epoch_val_loss)
         if early_stopper.should_stop:
             log.info("Met early stopping criteria, breaking...")
@@ -294,6 +291,9 @@ def grid_pdf_mc_fit(
                 f"step {i}, loss: {epoch_loss:.3f}, validation_loss: {epoch_val_loss:.3f}"
             )
             log.info(f"epoch:{i}, early_stopper: {early_stopper}")
+            # store loss values every 50 epochs
+            loss.append(epoch_loss)
+            val_loss.append(epoch_val_loss)
 
     return GridPdfFit(
         stacked_pdf_grid=stacked_pdf_grid,
