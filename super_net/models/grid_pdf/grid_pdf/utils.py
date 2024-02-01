@@ -7,6 +7,10 @@ Module containing util functions for grid PDF fits.
 from validphys import convolution
 from super_net.constants import XGRID
 
+import jax.numpy as jnp
+
+import super_net
+
 def closure_test_central_pdf_grid(
     closure_test_pdf,
     pdf_model,
@@ -46,10 +50,12 @@ def closure_test_central_pdf_grid(
     interpolator = pdf_model.grid_values_func(XGRID)
 
     parameters = []
-    for fl in pdf_model.xgrids:
-        x_vals = pdf_model.xgrids[flavour]
-        parameters += [convolution.evolution.grid_values(closure_test_pdf, [fl], x_vals, [1.65])]
+    for fl in pdf_model.xgrids.keys():
+        x_vals = pdf_model.xgrids[fl]
+        if len(x_vals):
+            parameters += [convolution.evolution.grid_values(closure_test_pdf, [fl], x_vals, [1.65]).squeeze(-1)[0].squeeze(0)]
 
+    parameters = jnp.concatenate(parameters)
     reduced_pdfgrid = interpolator(parameters)
 
     return reduced_pdfgrid
