@@ -1,6 +1,7 @@
 """
 The grid_pdf model.
 """
+
 import jax
 import jax.numpy as jnp
 
