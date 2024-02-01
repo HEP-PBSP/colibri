@@ -11,7 +11,7 @@ from grid_pdf.config import GridPdfConfig
 import pathlib
 
 grid_pdf_providers = [
-    "grid_pdf.grid_pdf_model",
+    "grid_pdf.model",
     "grid_pdf.utils",
 ]
 
