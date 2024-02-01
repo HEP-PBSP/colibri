@@ -29,7 +29,25 @@ def analytic_fit(
     analytic_settings,
     output_path,
 ):
-    """Analytic fits, for any *linear* PDF model."""
+    """Analytic fits, for any *linear* PDF model.
+
+    Parameters
+    ----------
+    _data_values: MakeDataValues
+        Data values for the fit.
+
+    _pred_data: @jax.jit CompiledFunction
+        Prediction function for the fit.
+
+    pdf_model: PDFModel
+        PDF model to fit.
+
+    analytic_settings: dict
+        Settings for the analytic fit.
+
+    output_path: str
+        Path to write the results to.
+    """
 
     parameters = pdf_model.param_names
     fit_grid_values_func = pdf_model.grid_values_func(XGRID)
