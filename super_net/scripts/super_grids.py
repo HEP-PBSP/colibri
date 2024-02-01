@@ -27,9 +27,11 @@ from collections import defaultdict
 
 from validphys.lhio import generate_replica0
 
+
 def lhapdf_path():
     """Returns the path to the share/LHAPDF directory"""
     return lhapdf.paths()[0]
+
 
 def main():
     parser = argparse.ArgumentParser(description="Script to evolve PDF exportgrids")
@@ -37,9 +39,9 @@ def main():
     args = parser.parse_args()
 
     # Read theory from fit runcard, and load eko
-    with open(args.fit_name + '/input/runcard.yaml', 'r') as file:
+    with open(args.fit_name + "/input/runcard.yaml", "r") as file:
         runcard = yaml.safe_load(file)
-    theoryid = runcard['theoryid']
+    theoryid = runcard["theoryid"]
 
     eko_path = (Loader().check_theoryID(theoryid).path) / "eko.tar"
 
@@ -51,7 +53,7 @@ def main():
 
     # Load all replicas into a dictionary
     initial_PDFs_dict = {}
-    replicas_path = args.fit_name + '/replicas'
+    replicas_path = args.fit_name + "/replicas"
     for yaml_file in Path(replicas_path).glob(f"replica_*/{args.fit_name}.exportgrid"):
         data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
         initial_PDFs_dict[yaml_file.parent.stem] = data
@@ -65,7 +67,7 @@ def main():
         # Modify the info file with the fit-specific info
         info = info_file.build(theory, op, 1, info_update={})
         info["NumMembers"] = len(initial_PDFs_dict)
-        info["ErrorType"] = "replicas" # Needs to be modified if Hessian!
+        info["ErrorType"] = "replicas"  # Needs to be modified if Hessian!
         info["XMin"] = float(LHAPDF_XGRID[0])
         info["XMax"] = float(LHAPDF_XGRID[-1])
         info["Flavors"] = basis_rotation.flavor_basis_pids

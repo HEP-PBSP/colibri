@@ -18,6 +18,7 @@ from super_net.lhapdf import write_exportgrid
 
 log = logging.getLogger(__name__)
 
+
 def monte_carlo_fit(
     _chi2_training_data_with_positivity,
     _chi2_validation_data_with_positivity,
@@ -129,9 +130,7 @@ def monte_carlo_fit(
         for _ in range(num_batches):
             batch = next(batches)
 
-            parameters, opt_state, loss_value = step(
-                parameters, opt_state, batch
-            )
+            parameters, opt_state, loss_value = step(parameters, opt_state, batch)
 
             epoch_loss += loss_training(parameters, batch) / batch_size
 
@@ -164,7 +163,7 @@ def monte_carlo_fit(
     # Finish by writing the export grid, ready for evolution
     log.info(f"Writing exportgrid for replica {replica_index}")
     write_exportgrid(
-        jnp.array(df.iloc[0,:].tolist()),
+        jnp.array(df.iloc[0, :].tolist()),
         pdf_model,
         replica_index,
         output_path,
@@ -172,7 +171,11 @@ def monte_carlo_fit(
     )
 
     # Save the output to csv
-    df.to_csv(replicas_path + f"/replica_{replica_index}/" + f"/mc_result_replica_{replica_index}.csv")
+    df.to_csv(
+        replicas_path
+        + f"/replica_{replica_index}/"
+        + f"/mc_result_replica_{replica_index}.csv"
+    )
 
     # Save the training and validation loss
     df = pd.DataFrame(

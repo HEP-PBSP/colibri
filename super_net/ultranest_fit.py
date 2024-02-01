@@ -30,6 +30,7 @@ ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
 handler = logging.StreamHandler(sys.stdout)
 ultranest_logger.addHandler(handler)
 
+
 def ultranest_fit(
     _chi2_with_positivity,
     pdf_model,

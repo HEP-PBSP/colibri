@@ -21,6 +21,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 def analytic_fit(
     _data_values,
     _pred_data,
@@ -36,9 +37,7 @@ def analytic_fit(
     # Precompute predictions for the basis of grid_pdf
     bases = jnp.identity(len(parameters))
     pdf_bases = [fit_grid_values_func(basis) for basis in bases]
-    predictions = jnp.array(
-        [_pred_data(pdf_basis) for pdf_basis in pdf_bases]
-    )
+    predictions = jnp.array([_pred_data(pdf_basis) for pdf_basis in pdf_bases])
 
     # Construct the analytic solution
     training_data = _data_values.training_data
@@ -64,13 +63,13 @@ def analytic_fit(
             "The obtained covariance matrix for the analytic solution is not semi-postive definite."
         )
 
-    key = jax.random.PRNGKey(analytic_settings['sampling_seed'])
+    key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
     samples = jax.random.multivariate_normal(
         key,
         sol_mean,
         sol_covmat,
-        shape=(analytic_settings['n_posterior_samples'],),
+        shape=(analytic_settings["n_posterior_samples"],),
     )
     t1 = time.time()
     log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
@@ -80,7 +79,7 @@ def analytic_fit(
     df.to_csv(str(output_path) + "/analytic_result.csv")
 
     # Finish by writing the replicas to export grids, ready for evolution
-    for i in range(analytic_settings['n_posterior_samples']):
+    for i in range(analytic_settings["n_posterior_samples"]):
         log.info(f"Writing exportgrid for replica {i+1}")
         write_exportgrid(
             jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path

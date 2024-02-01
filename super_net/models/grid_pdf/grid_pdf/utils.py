@@ -11,6 +11,7 @@ import jax.numpy as jnp
 
 import super_net
 
+
 def closure_test_central_pdf_grid(
     closure_test_pdf,
     pdf_model,
@@ -53,7 +54,13 @@ def closure_test_central_pdf_grid(
     for fl in pdf_model.xgrids.keys():
         x_vals = pdf_model.xgrids[fl]
         if len(x_vals):
-            parameters += [convolution.evolution.grid_values(closure_test_pdf, [fl], x_vals, [1.65]).squeeze(-1)[0].squeeze(0)]
+            parameters += [
+                convolution.evolution.grid_values(
+                    closure_test_pdf, [fl], x_vals, [1.65]
+                )
+                .squeeze(-1)[0]
+                .squeeze(0)
+            ]
 
     parameters = jnp.concatenate(parameters)
     reduced_pdfgrid = interpolator(parameters)

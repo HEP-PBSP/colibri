@@ -12,8 +12,11 @@ import pathlib
 
 log = logging.getLogger(__name__)
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Script to select MC replicas post-fit")
+    parser = argparse.ArgumentParser(
+        description="Script to select MC replicas post-fit"
+    )
     parser.add_argument("fit_name", help="The super_net fit to perform post-fit on.")
     parser.add_argument(
         "--chi2_threshold",
@@ -39,7 +42,9 @@ def main():
 
     # Check that the folder fit_replicas exists
     if not os.path.exists(fit_path / "fit_replicas"):
-        raise FileNotFoundError(f"{fit_path}/fit_replicas does not exist; please run the Monte Carlo fit first.")
+        raise FileNotFoundError(
+            f"{fit_path}/fit_replicas does not exist; please run the Monte Carlo fit first."
+        )
 
     # Filter out only the directories
     replicas_path = fit_path / "fit_replicas"
@@ -90,11 +95,16 @@ def main():
 
     fit_dfs = []
     for i in good_replicas:
-        fit_dfs += [pd.read_csv(replicas_path / f"replica_{i}" / f"mc_result_replica_{i}.csv", index_col=0)]
+        fit_dfs += [
+            pd.read_csv(
+                replicas_path / f"replica_{i}" / f"mc_result_replica_{i}.csv",
+                index_col=0,
+            )
+        ]
 
     # Keep only the replicas with index in good_replicas
     postfit_df = pd.concat(fit_dfs)
-    postfit_df.index = [i+1 for i in range(len(good_replicas))]
+    postfit_df.index = [i + 1 for i in range(len(good_replicas))]
 
     # Save the postfit dataframe
     postfit_df.to_csv(fit_path / "mc_result.csv")
