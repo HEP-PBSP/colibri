@@ -1,54 +1,49 @@
-dataset_inputs:
+meta: 'An example fit using Colibri.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:                        # The list of datasets to be used in the fit.
  - {'dataset': 'NMC'}
  - {'dataset': 'HERACOMBNCEM'} 
  - {'dataset': 'HERACOMBNCEP575'}
  - {'dataset': 'HERACOMBNCEP820'}
  - {'dataset': 'HERACOMBNCEP920'}
 
-positivity:
+theoryid: 400                          # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_level: False                   # The closure test level: False for experimental, level 0
+                                       # for pseudodata with no noise, level 2 for pseudodata with
+                                       # noise.
+
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
   posdatasets:
   - {dataset: POSF2U, maxlambda: 1e6}
 
-theoryid: 400
-use_cuts: internal
+alpha: 1e-7                            # TODO
+lambda_positivity: 0                   # TODO
 
-# closure test settings
-closure_level: False
+use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
 
-# fit specs
-use_fit_t0: True
-use_gen_t0: True
-t0pdfset: NNPDF31_nnlo_as_0118
 
-# positivity specs
-alpha: 1e-7
-lambda_positivity: 0
+#############
+# Model specs
+#############
 
-# Monte Carlo specs
-max_epochs: 5000
-
-# Nested Sampling parameters
-ns_settings:
-  n_posterior_samples: 10
-  ReactiveNS_settings:
-    vectorized: False
-    ndraw_max: 500
-  Run_settings:
-    min_num_live_points: 500
-    min_ess: 50
-    frac_remain: 0.01
-
-# analytic specs
-analytic_settings:
-  n_posterior_samples: 10
-  sampling_seed: 123456
-
-# weight minimisation specs
+# Weight minimisation settings
 wmin_settings:
   wminpdfset: NNPDF31_nnlo_as_0118
   n_basis: 50
 
-# grid specs
+# Grid PDF settings
 grid_pdf_settings:
   xgrids:
     photon: []
@@ -66,13 +61,37 @@ grid_pdf_settings:
     T24: []
     T35: []
 
-prior_settings:
-  type: 'uniform_pdf_prior'
-  pdf_prior: NNPDF31_nnlo_as_0118
-  nsigma: 20
 
-mc_initialiser_settings:
-  type: 'zeros'
+###################
+# Methodology specs
+###################
+
+# Nested Sampling settings
+ns_settings: 
+  n_posterior_samples: 10
+  ReactiveNS_settings:
+    vectorized: False
+    ndraw_max: 500
+  Run_settings:
+    min_num_live_points: 500
+    min_ess: 50
+    frac_remain: 0.01
+
+prior_settings:
+  type: 'uniform_pdf_prior'            # The type of prior used in Nested Sampling (model dependent)
+  pdf_prior: NNPDF31_nnlo_as_0118      # For this prior type, uniform band around this PDF
+  nsigma: 20                           # Size of the uniform band around the PDF
+
+# Monte Carlo settings
+use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
+max_epochs: 5000                       # The max number of epochs in Monte Carlo training.
+mc_initialiser_settings:               # The initialiser for Monte Carlo training.
+  type: 'zeros'                        # This setting starts with all parameters equal to zero.
+
+# Analytic settings
+analytic_settings:
+  n_posterior_samples: 10
+  sampling_seed: 123456
 
 actions_:
-- analytic_fit
+- analytic_fit                         # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
