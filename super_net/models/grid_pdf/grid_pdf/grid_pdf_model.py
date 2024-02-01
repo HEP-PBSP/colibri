@@ -96,13 +96,13 @@ def bayesian_prior(pdf_model, prior_settings):
     # Remove central replica
     replicas_grid = replicas_grid[1:, :, :, :]
 
+    # This is needed to avoid ultranest crashing with
+    # ValueError: Buffer dtype mismatch, expected 'float_t' but got 'float'
+    jax.config.update("jax_enable_x64", True)
+
     if prior_settings["type"] == "uniform_pdf_prior":
         error68_up = jnp.nanpercentile(replicas_grid, 84.13, axis=0).reshape(-1)
         error68_down = jnp.nanpercentile(replicas_grid, 15.87, axis=0).reshape(-1)
-
-        # This is needed to avoid ultranest crashing with
-        # ValueError: Buffer dtype mismatch, expected 'float_t' but got 'float'
-        jax.config.update("jax_enable_x64", True)
 
         # Compute the band for a generic sigma_pdf_prior
         delta = (error68_up - error68_down) / 2
@@ -114,8 +114,6 @@ def bayesian_prior(pdf_model, prior_settings):
         def prior_transform(cube):
             params = error_down + (error_up - error_down) * cube
             return params
-
-        return prior_transform
 
     elif prior_settings["type"] == "gaussian_pdf_prior":
         pdf_covmat_prior = jnp.cov(
@@ -140,8 +138,10 @@ def bayesian_prior(pdf_model, prior_settings):
             independent_gaussian = jax.scipy.stats.norm.ppf(cube)[:, jnp.newaxis]
 
             # generate random samples from a multivariate normal distribution
-            prior = stacked_pdf_grid_prior + jnp.einsum(
+            prior = central_prior_grid + jnp.einsum(
                 "ij,kj->ki", independent_gaussian.T, cholesky_pdf_covmat
             ).squeeze(-1)
 
             return prior
+
+    return prior_transform
