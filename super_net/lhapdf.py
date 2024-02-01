@@ -17,6 +17,7 @@ def write_exportgrid(
     pdf_model,
     replica_index,
     output_path,
+    monte_carlo=False,
 ):
     """
     Writes an exportgrid for each of the replicas in the posterior sample.
@@ -40,6 +41,8 @@ def write_exportgrid(
     """
 
     replicas_path = str(output_path) + "/replicas"
+    if monte_carlo:
+        replicas_path = str(output_path) + "/fit_replicas"
     if not os.path.exists(replicas_path):
         os.mkdir(replicas_path)
 

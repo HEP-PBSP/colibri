@@ -161,18 +161,28 @@ def monte_carlo_fit(
     if not os.path.exists(replicas_path):
         os.mkdir(replicas_path)
 
-    rep_path = replicas_path + f"/replica_{replica_index}"
-    if not os.path.exists(rep_path):
-        os.mkdir(rep_path)
-
-    # Save the output to csv
-    df.to_csv(rep_path + f"/mc_result_replica_{replica_index}.csv")
-
     # Finish by writing the export grid, ready for evolution
     log.info(f"Writing exportgrid for replica {replica_index}")
     write_exportgrid(
         jnp.array(df.iloc[0,:].tolist()),
         pdf_model,
         replica_index,
-        output_path
+        output_path,
+        monte_carlo=True,
+    )
+
+    # Save the output to csv
+    df.to_csv(replicas_path + f"/replica_{replica_index}/" + f"/mc_result_replica_{replica_index}.csv")
+
+    # Save the training and validation loss
+    df = pd.DataFrame(
+        {
+            "epochs": range(len(loss)),
+            "training_loss": loss,
+            "validation_loss": val_loss,
+        }
+    )
+    df.to_csv(
+        str(output_path) + f"/fit_replicas/replica_{replica_index}" + "/mc_loss.csv",
+        index=False,
     )
