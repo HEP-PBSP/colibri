@@ -1,5 +1,5 @@
 # super_net
-![Tests bagde](https://github.com/HEP-PBSP/super_net/actions/workflows/tests.yml/badge.svg)
+![Tests bagde](https://github.com/HEP-PBSP/colibri/actions/workflows/tests.yml/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 A reportengine app to perform PDF fits in a new parametrisation.
