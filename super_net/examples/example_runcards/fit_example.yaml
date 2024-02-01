@@ -6,7 +6,7 @@ meta: 'An example fit using Colibri.'
 
 dataset_inputs:                        # The list of datasets to be used in the fit.
  - {'dataset': 'NMC'}
- - {'dataset': 'HERACOMBNCEM'} 
+ - {'dataset': 'HERACOMBNCEM'}
  - {'dataset': 'HERACOMBNCEP575'}
  - {'dataset': 'HERACOMBNCEP820'}
  - {'dataset': 'HERACOMBNCEP920'}
@@ -14,10 +14,12 @@ dataset_inputs:                        # The list of datasets to be used in the 
 theoryid: 400                          # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
-closure_level: False                   # The closure test level: False for experimental, level 0
-                                       # for pseudodata with no noise, level 2 for pseudodata with
+closure_level: 0                       # The closure test level: False for experimental, level 0
+                                       # for pseudodata with no noise, level 1 for pseudodata with
                                        # noise.
-
+closure_test_pdf: NNPDF31_nnlo_as_0118 # The closure test PDF used if closure_level is not False
+reduced_xgrid_data: True               # An artefact of the old grid_pdf implementation,
+                                       # ensuring we generate closure test data using the model.
 
 #####################
 # Loss function specs
@@ -67,7 +69,7 @@ grid_pdf_settings:
 ###################
 
 # Nested Sampling settings
-ns_settings: 
+ns_settings:
   n_posterior_samples: 10
   ReactiveNS_settings:
     vectorized: False
@@ -94,4 +96,4 @@ analytic_settings:
   sampling_seed: 123456
 
 actions_:
-- analytic_fit                         # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- ultranest_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
