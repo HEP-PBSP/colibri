@@ -1,5 +1,9 @@
 dataset_inputs:
  - {'dataset': 'NMC'}
+ - {'dataset': 'HERACOMBNCEM'} 
+ - {'dataset': 'HERACOMBNCEP575'}
+ - {'dataset': 'HERACOMBNCEP820'}
+ - {'dataset': 'HERACOMBNCEP920'}
 
 positivity:
   posdatasets:
@@ -34,6 +38,11 @@ ns_settings:
     min_ess: 50
     frac_remain: 0.01
 
+# analytic specs
+analytic_settings:
+  n_posterior_samples: 10
+  sampling_seed: 123456
+
 # weight minimisation specs
 wmin_settings:
   wminpdfset: NNPDF31_nnlo_as_0118
@@ -66,4 +75,4 @@ mc_initialiser_settings:
   type: 'zeros'
 
 actions_:
-- monte_carlo_fit
+- analytic_fit
