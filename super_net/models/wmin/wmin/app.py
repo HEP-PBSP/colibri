@@ -11,7 +11,7 @@ from wmin.config import WminConfig
 import pathlib
 
 wmin_providers = [
-    "wmin.wmin_model",
+    "wmin.model",
 ]
 
 
