@@ -91,16 +91,17 @@ def main():
                 evolved_blocks,
                 pdf_type=f"PdfType: replica\nFromMCReplica: {replica_num}\n",
             )
-            
+
             log.info(f"Evolved replica {i+1}.")
 
-        log.info(f"Evolution complete. Evolved grids can be found in {lhapdf_destination}.")
+        log.info(
+            f"Evolution complete. Evolved grids can be found in {lhapdf_destination}."
+        )
         # Produce the central replica
         log.info("Producing central replica.")
         l = Loader()
         pdf = l.check_pdf(args.fit_name)
         generate_replica0(pdf)
-
 
 
 # This class is copied directly from evolven3fit_new
