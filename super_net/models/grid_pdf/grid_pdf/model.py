@@ -75,6 +75,56 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     if mc_initialiser_settings["type"] == "zeros":
         return jnp.zeros(shape=pdf_model.n_parameters)
 
+    rng = jax.random.PRNGKey(replica_index)
+
+    if mc_initialiser_settings["type"] == "uniform":
+        return jax.random.uniform(
+            rng,
+            shape=(pdf_model.n_parameters,),
+            minval=mc_initialiser_settings["minval"],
+            maxval=mc_initialiser_settings["maxval"],
+        )
+
+    elif mc_initialiser_settings["type"] == "pdf":
+        # Load the prior PDF
+        pdf = PDF(mc_initial_parameters["pdf_set"])
+
+        replicas_grid = jnp.concatenate(
+            [
+                convolution.evolution.grid_values(
+                    pdf, [flavour], pdf_model.xgrids[flavour], [1.65]
+                )
+                for flavour in pdf_model.fitted_flavours
+            ],
+            axis=2,
+        )
+
+        central_grid = replicas_grid[0, :, :, :].squeeze()
+        # Remove central replica
+        replicas_grid = replicas_grid[1:, :, :, :]
+
+        if mc_initialiser_settings["init_type"] == "central":
+            return central_grid.flatten()
+
+        elif mc_initialiser_settings["init_type"] == "uniform":
+            nsigma = mc_initial_parameters["nsigma"]
+
+            error68_up = jnp.nanpercentile(replicas_grid, 84.13, axis=0).reshape(-1)
+            error68_down = jnp.nanpercentile(replicas_grid, 15.87, axis=0).reshape(-1)
+
+            # Compute the uncertainty on the central grid
+            delta = (error68_up - error68_down) / 2
+
+            # Generate a random number between -nsigma and nsigma
+            epsilon = jax.random.uniform(
+                rng,
+                shape=(pdf_model.n_parameters,),
+                minval=-nsigma,
+                maxval=nsigma,
+            )
+
+            return central_grid.flatten() + epsilon * delta
+
 
 def bayesian_prior(pdf_model, prior_settings):
     """
@@ -109,7 +159,7 @@ def bayesian_prior(pdf_model, prior_settings):
         error68_up = jnp.nanpercentile(replicas_grid, 84.13, axis=0).reshape(-1)
         error68_down = jnp.nanpercentile(replicas_grid, 15.87, axis=0).reshape(-1)
 
-        # Compute the band for a generic sigma_pdf_prior
+        # Compute the uncertainty on the central grid
         delta = (error68_up - error68_down) / 2
         mean = (error68_up + error68_down) / 2
         error_up = mean + delta * nsigma
