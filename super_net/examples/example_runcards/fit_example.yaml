@@ -87,6 +87,7 @@ prior_settings:
 # Monte Carlo settings
 use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
 max_epochs: 5000                       # The max number of epochs in Monte Carlo training.
+mc_validation_fraction: 0.0            # The fraction of the data used for validation in Monte Carlo training.
 mc_initialiser_settings:               # The initialiser for Monte Carlo training.
   type: pdf                        # This setting starts with all parameters equal to zero.
   pdf_set: NNPDF31_nnlo_as_0118
