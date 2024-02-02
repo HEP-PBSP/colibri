@@ -39,10 +39,10 @@ def write_exportgrid(
     output_path: pathlib.PosixPath
         Path to the output folder.
     """
-
-    replicas_path = str(output_path) + "/replicas"
     if monte_carlo:
         replicas_path = str(output_path) + "/fit_replicas"
+    else:
+        replicas_path = str(output_path) + "/replicas"
     if not os.path.exists(replicas_path):
         os.mkdir(replicas_path)
 
