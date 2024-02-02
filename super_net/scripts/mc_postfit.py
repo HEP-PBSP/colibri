@@ -10,7 +10,11 @@ import argparse
 import logging
 import pathlib
 
-log = logging.getLogger(__name__)
+from reportengine import colors
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
+log.addHandler(colors.ColorHandler())
 
 
 def main():
