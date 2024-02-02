@@ -30,6 +30,11 @@ class GridPDFModel(PDFModel):
         return [f"{fl}({x})" for fl in self.fitted_flavours for x in self.xgrids[fl]]
 
     @property
+    def n_parameters(self):
+        """The number of parameters of the model."""
+        return len(self.param_names)
+
+    @property
     def fitted_flavours(self):
         """The fitted flavours used in the model, in STANDARDISED order,
         according to convolution.FK_FLAVOURS
@@ -68,7 +73,7 @@ class GridPDFModel(PDFModel):
 
 def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     if mc_initialiser_settings["type"] == "zeros":
-        return [0.0] * len(pdf_model.param_names)
+        return jnp.zeros(shape=pdf_model.n_parameters)
 
 
 def bayesian_prior(pdf_model, prior_settings):
