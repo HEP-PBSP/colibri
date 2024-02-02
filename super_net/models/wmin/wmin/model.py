@@ -13,6 +13,10 @@ from validphys.core import PDF
 
 from super_net.pdf_model import PDFModel
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def pdf_model(wmin_settings):
     return WMinPDF(PDF(wmin_settings["wminpdfset"]), wmin_settings["n_basis"])
