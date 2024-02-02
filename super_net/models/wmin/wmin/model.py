@@ -51,8 +51,38 @@ class WMinPDF(PDFModel):
 
 
 def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
+    if mc_initialiser_settings["type"] not in ("zeros", "normal", "uniform"):
+        log.warning(
+            f"MC initialiser type {mc_initialiser_settings['type']} not recognised, using default: 'zeros' instead."
+        )
+
+        mc_initialiser_settings["type"] = "zeros"
+
     if mc_initialiser_settings["type"] == "zeros":
-        return [0.0] * pdf_model.n_basis
+        return jnp.array([0.0] * pdf_model.n_basis)
+
+    random_seed = jax.random.PRNGKey(
+        mc_initialiser_settings["random_seed"] + replica_index
+    )
+
+    if mc_initialiser_settings["type"] == "normal":
+        # Currently, only one standard deviation around a zero mean is implemented
+        initial_values = jax.random.normal(
+            key=random_seed,
+            shape=(pdf_model.n_basis,),
+        )
+        return initial_values
+
+    if mc_initialiser_settings["type"] == "uniform":
+        max_val = mc_initialiser_settings["max_val"]
+        min_val = mc_initialiser_settings["min_val"]
+        initial_values = jax.random.uniform(
+            key=random_seed,
+            shape=(pdf_model.n_basis,),
+            minval=min_val,
+            maxval=max_val,
+        )
+        return initial_values
 
 
 def bayesian_prior(prior_settings):
