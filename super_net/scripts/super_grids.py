@@ -6,7 +6,7 @@ an LHAPDF grid.
 import os
 import argparse
 import yaml
-
+import logging
 import numpy as np
 
 from pathlib import Path
@@ -26,6 +26,9 @@ from super_net.constants import LHAPDF_XGRID
 from collections import defaultdict
 
 from validphys.lhio import generate_replica0
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 def lhapdf_path():
@@ -79,7 +82,7 @@ def main():
 
         genpdf.export.dump_info(lhapdf_destination, info)
 
-        for replica, pdf_data in initial_PDFs_dict.items():
+        for i, (replica, pdf_data) in enumerate(initial_PDFs_dict.items()):
             evolved_blocks = evolve_exportgrid(pdf_data, eko_op, LHAPDF_XGRID)
             replica_num = replica.removeprefix("replica_")
             genpdf.export.dump_blocks(
@@ -88,11 +91,16 @@ def main():
                 evolved_blocks,
                 pdf_type=f"PdfType: replica\nFromMCReplica: {replica_num}\n",
             )
+            
+            log.info(f"Evolved replica {i+1}.")
 
+        log.info(f"Evolution complete. Evolved grids can be found in {lhapdf_destination}.")
         # Produce the central replica
+        log.info("Producing central replica.")
         l = Loader()
         pdf = l.check_pdf(args.fit_name)
         generate_replica0(pdf)
+
 
 
 # This class is copied directly from evolven3fit_new
