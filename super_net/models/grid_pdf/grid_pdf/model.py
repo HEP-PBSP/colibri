@@ -86,8 +86,8 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
         )
 
     elif mc_initialiser_settings["type"] == "pdf":
-        # Load the prior PDF
-        pdf = PDF(mc_initial_parameters["pdf_set"])
+        # Load the PDF
+        pdf = PDF(mc_initialiser_settings["pdf_set"])
 
         replicas_grid = jnp.concatenate(
             [
@@ -104,10 +104,10 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
         replicas_grid = replicas_grid[1:, :, :, :]
 
         if mc_initialiser_settings["init_type"] == "central":
-            return central_grid.flatten()
+            return central_grid
 
         elif mc_initialiser_settings["init_type"] == "uniform":
-            nsigma = mc_initial_parameters["nsigma"]
+            nsigma = mc_initialiser_settings["nsigma"]
 
             error68_up = jnp.nanpercentile(replicas_grid, 84.13, axis=0).reshape(-1)
             error68_down = jnp.nanpercentile(replicas_grid, 15.87, axis=0).reshape(-1)
@@ -123,7 +123,7 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
                 maxval=nsigma,
             )
 
-            return central_grid.flatten() + epsilon * delta
+            return central_grid + epsilon * delta
 
 
 def bayesian_prior(pdf_model, prior_settings):
