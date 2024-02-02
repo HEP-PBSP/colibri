@@ -94,8 +94,8 @@ def monte_carlo_fit(
         )
 
     @jax.jit
-    def loss_validation(stacked_pdf_grid):
-        pdf = fit_grid_values_func(stacked_pdf_grid)
+    def loss_validation(parameters):
+        pdf = fit_grid_values_func(parameters)
 
         return _chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
 
