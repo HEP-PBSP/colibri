@@ -38,6 +38,10 @@ def write_exportgrid(
 
     output_path: pathlib.PosixPath
         Path to the output folder.
+
+    monte_carlo: bool
+        Whether the fit is a Monte Carlo fit. If True, the exportgrids are written
+        to a folder called "fit_replicas" in the output_path.
     """
     if monte_carlo:
         replicas_path = str(output_path) + "/fit_replicas"
