@@ -27,8 +27,12 @@ from collections import defaultdict
 
 from validphys.lhio import generate_replica0
 
+from reportengine import colors
+
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
+log = logging.getLogger()
+log.addHandler(colors.ColorHandler())
+
 
 
 def lhapdf_path():
