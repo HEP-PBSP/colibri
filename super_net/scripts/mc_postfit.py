@@ -12,8 +12,8 @@ import pathlib
 
 from reportengine import colors
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
+log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
 
 
