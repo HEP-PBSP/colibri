@@ -1,0 +1,80 @@
+meta: 'An example fit using Colibri, full dataset.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:    
+  # DIS                
+  - {'dataset': 'NMC'}
+  - {'dataset': 'SLACP_dwsh'}
+  - {'dataset': 'SLACD_dw_ite'}
+  - {'dataset': 'BCDMSP_dwsh'}
+  - {'dataset': 'BCDMSD_dw_ite'}
+  - {'dataset': 'CHORUSNUPb_dw_ite'}
+  - {'dataset': 'CHORUSNBPb_dw_ite'}
+  - {'dataset': 'HERACOMBNCEM'} 
+  - {'dataset': 'HERACOMBNCEP575'}
+  - {'dataset': 'HERACOMBNCEP820'}
+  - {'dataset': 'HERACOMBNCEP920'}
+  - {'dataset': 'HERACOMBNCEP460'}
+
+theoryid: 400                          # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0                  # The closure test level: False for experimental, level 0
+                                       # for pseudodata with no noise, level 1 for pseudodata with
+                                       # noise.
+closure_test_pdf: NNPDF31_nnlo_as_0118 # The closure test PDF used if closure_level is not False
+reduced_xgrid_data: True               # An artefact of the old grid_pdf implementation,
+                                       # ensuring we generate closure test data using the model.
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: POSF2U, maxlambda: 1e6}
+
+alpha: 1e-7                           
+lambda_positivity: 0                 
+
+use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
+
+
+#############
+# Model specs
+#############
+
+# Grid PDF settings
+grid_pdf_settings:
+  xgrids:
+    photon: []
+    \Sigma: [0.001, 0.01, 0.05]
+    g: [0.001, 0.01, 0.05]
+    V: [0.001, 0.01, 0.05]
+    V3: []
+    V8: []
+    V15: []
+    V24: []
+    V35: []
+    T3: []
+    T8: []
+    T15: []
+    T24: []
+    T35: []
+
+
+###################
+# Methodology specs
+###################
+
+# Analytic settings
+analytic_settings:
+  n_posterior_samples: 10
+  sampling_seed: 123456
+
+actions_:
+- analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
