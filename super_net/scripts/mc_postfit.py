@@ -94,13 +94,16 @@ def main():
         )
 
     fit_dfs = []
-    for i in good_replicas:
-        fit_dfs += [
-            pd.read_csv(
-                replicas_path / f"replica_{i}" / f"mc_result_replica_{i}.csv",
-                index_col=0,
-            )
-        ]
+    if good_replicas:
+        for i in good_replicas:
+            fit_dfs += [
+                pd.read_csv(
+                    replicas_path / f"replica_{i}" / f"mc_result_replica_{i}.csv",
+                    index_col=0,
+                )
+            ]
+    else:
+        raise ValueError("No replicas pass the postfit selection.")
 
     # Keep only the replicas with index in good_replicas
     postfit_df = pd.concat(fit_dfs)

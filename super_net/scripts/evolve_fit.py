@@ -34,7 +34,6 @@ log = logging.getLogger()
 log.addHandler(colors.ColorHandler())
 
 
-
 def lhapdf_path():
     """Returns the path to the share/LHAPDF directory"""
     return lhapdf.paths()[0]
