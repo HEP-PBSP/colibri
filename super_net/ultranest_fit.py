@@ -41,7 +41,6 @@ def ultranest_fit(
     """The complete Nested Sampling fitting routine, for any PDF model."""
 
     parameters = pdf_model.param_names
-    log_dir = output_path / "ultranest"
 
     fit_grid_values_func = pdf_model.grid_values_func(XGRID)
 
