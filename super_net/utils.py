@@ -15,6 +15,50 @@ from dataclasses import dataclass, asdict
 from super_net.constants import XGRID
 from validphys import convolution
 
+def compute_maximal_curvature(
+    _data_values,
+    _pred_data,
+    pdf_model,
+):
+    """
+    Given a PDF model and predictions, computes the maximal
+    """
+
+    interp_func = pdf_model.grid_values_func(XGRID)
+
+    @jax.jit
+    def pred_from_params(params):
+        return _pred_data(interp_func(params))
+
+    # The matrix dt/dc from (6.40) of James' thesis
+    jacobian = jax.jacfwd(pred_from_params)
+    covmat = _data_values.training_data.covmat
+    ndat, _ = covmat.shape
+    nparams = len(pdf_model.param_names)
+    inv_covmat = jnp.linalg.inv(covmat)
+
+    # @jax.jit
+    def curvature_prefactor(params):
+        dt_dc = jnp.array(jacobian(params)).reshape((ndat, nparams))
+        Mprime = dt_dc.T @ inv_covmat
+        # Construct the M matrix from the Jacobian. This is effected by finding
+        # the non-zero solutions of Mprime x = 0. Construct the singular value
+        # decomposition of Mprime.
+        _, _, Vh = jnp.linalg.svd(Mprime)
+        M = Vh[:, nparams:]
+        # Now take the determinant from equation (6.40) of James' thesis
+        return abs(jnp.linalg.det(jnp.concatenate([dt_dc, M], axis=1)))
+
+    print(curvature_prefactor([-0.001]*len(pdf_model.param_names)))
+    print(curvature_prefactor([0.001]*len(pdf_model.param_names)))
+    print(curvature_prefactor([0.01]*len(pdf_model.param_names)))
+    print(curvature_prefactor([0.1]*len(pdf_model.param_names)))
+
+    @jax.jit
+    def integral_prefactor(params):
+        # The integral prefactor from James' thesis
+        # This is probably ridiculously difficult to compute
+        pass
 
 def replica_seed(replica_index):
     """
