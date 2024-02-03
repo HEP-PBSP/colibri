@@ -5,7 +5,7 @@
 A reportengine app to perform PDF fits in a new parametrisation.
 
 
-## Super Net Installation
+## colibri Installation
 Create a working environment with conda (or mamba):
 ```
 mamba create nnpdf=4.0.6 -n name_environment -y && conda activate name_environment
