@@ -71,6 +71,7 @@ grid_pdf_settings:
 # Methodology specs
 ###################
 
+bayesian_fit: True
 # Analytic settings
 analytic_settings:
   n_posterior_samples: 10

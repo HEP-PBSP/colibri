@@ -69,6 +69,7 @@ grid_pdf_settings:
 ###################
 
 # Nested Sampling settings
+bayesian_fit: True
 ns_settings:
   n_posterior_samples: 10
   ReactiveNS_settings:
