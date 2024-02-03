@@ -1,0 +1,79 @@
+"""
+colibri.lhapdf.py
+
+This module writes the LHAPDF grids for the result of a colibri fit.
+
+"""
+
+from colibri.constants import LHAPDF_XGRID, evolution_to_export_matrix, EXPORT_LABELS
+
+import os
+import numpy as np
+import yaml
+
+
+def write_exportgrid(
+    parameters,
+    pdf_model,
+    replica_index,
+    output_path,
+    monte_carlo=False,
+):
+    """
+    Writes an exportgrid for each of the replicas in the posterior sample.
+    The exportgrids are written to a folder called "replicas" in the output_path.
+    The exportgrids are written in the format required by EKO, but are not yet
+    evolved.
+
+    Parameters
+    ----------
+    parameters: list
+        The list of parameters defining the replica in the model parametrisation.
+
+    pdf_model: PDFModel
+        The PDF model which relates the parameters to the PDF grid values.
+
+    replica_index: int
+        The replica number which will be written.
+
+    output_path: pathlib.PosixPath
+        Path to the output folder.
+
+    monte_carlo: bool
+        Whether the fit is a Monte Carlo fit. If True, the exportgrids are written
+        to a folder called "fit_replicas" in the output_path.
+    """
+    if monte_carlo:
+        replicas_path = str(output_path) + "/fit_replicas"
+    else:
+        replicas_path = str(output_path) + "/replicas"
+    if not os.path.exists(replicas_path):
+        os.mkdir(replicas_path)
+
+    rep_path = replicas_path + f"/replica_{replica_index}"
+    if not os.path.exists(rep_path):
+        os.mkdir(rep_path)
+
+    fit_name = str(output_path).split("/")[-1]
+
+    # Create the exportgrid
+    lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+
+    # Rotate the grid from the evolution basis into the export grid basis
+    grid_for_writing = np.array(lhapdf_interpolator(parameters))
+    grid_for_writing = evolution_to_export_matrix @ grid_for_writing
+    grid_for_writing = grid_for_writing.T.tolist()
+
+    # Prepare a dictionary for the exportgrid
+    export_grid = {}
+
+    # Set the initial Q2 value, which will always be the same.
+    export_grid["q20"] = (1.65) ** 2
+    export_grid["xgrid"] = LHAPDF_XGRID
+    export_grid["replica"] = int(replica_index)
+    export_grid["labels"] = EXPORT_LABELS
+
+    export_grid["pdfgrid"] = grid_for_writing
+
+    with open(rep_path + "/" + fit_name + ".exportgrid", "w") as outfile:
+        yaml.dump(export_grid, outfile)

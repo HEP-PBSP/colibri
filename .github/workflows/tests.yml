@@ -47,12 +47,12 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest ultranest jax optax flax flit
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Install super_net and models
+    - name: Install colibri and models
       shell: bash -l {0}
       run: |
         conda activate test
         flit install --symlink
-        cd super_net/models/wmin
+        cd colibri/models/wmin
         flit install --symlink
         cd ../grid_pdf
         flit install --symlink
