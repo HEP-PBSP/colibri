@@ -29,7 +29,7 @@ def closure_test_central_pdf_grid(
     ----------
     closure_test_pdf: validphys.core.PDF
 
-    pdf_model: super_net.pdf_model.PDFModel
+    pdf_model: colibri.pdf_model.PDFModel
         Specifically, this is the GridPDFModel for this provider.
 
     reduced_xgrid_data: bool, default is False
