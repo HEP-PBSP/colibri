@@ -121,9 +121,8 @@ def analytic_fit(
         write_exportgrid(
             jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path
         )
-    
+
     return AnalyticFit(
         analytic_specs=analytic_settings,
         resampled_posterior=samples,
     )
-        

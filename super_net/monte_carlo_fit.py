@@ -73,7 +73,7 @@ def monte_carlo_fit(
     len_trval_data: tuple
         Tuple containing the length of the training and validation data.
 
-    pdf_model: PDFModel
+    pdf_model: pdf_model.PDFModel
         A PDFModel specifying the way in which the PDF is constructed from
         the parameters.
 

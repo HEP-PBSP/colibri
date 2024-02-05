@@ -1,7 +1,8 @@
 """
 super_net.lhapdf.py
 
-This module writes the LHAPDF grids for the result of a super_net fit.
+This module containes the functionalities to write the grids in the format required by EKO.
+The Evolution is not yet performed.
 
 """
 

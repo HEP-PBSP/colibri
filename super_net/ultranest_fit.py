@@ -67,7 +67,7 @@ def ultranest_fit(
     _chi2_with_positivity: @jax.jit CompiledFunction
         The chi2 function with positivity constraint.
 
-    pdf_model: PDFModel
+    pdf_model: pdf_model.PDFModel
         The PDF model to fit.
 
     bayesian_prior: @jax.jit CompiledFunction
