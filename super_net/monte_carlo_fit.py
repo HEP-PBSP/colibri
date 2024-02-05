@@ -36,6 +36,7 @@ class MonteCarloFit:
         Array containing the validation loss.
 
     """
+
     monte_carlo_specs: dict
     training_loss: jnp.array
     validation_loss: jnp.array
@@ -69,12 +70,21 @@ def monte_carlo_fit(
     _chi2_validation_data_with_positivity: PjitFunction
         Function that computes the chi2 of the validation data.
 
-    _data_values: dataclass
-        Dataclass containing the training and validation data.
+    len_trval_data: tuple
+        Tuple containing the length of the training and validation data.
 
-    pdf_mode: PDFModel
+    pdf_model: PDFModel
         A PDFModel specifying the way in which the PDF is constructed from
         the parameters.
+
+    mc_initial_parameters: jnp.array
+        Initial parameters for the Monte Carlo fit.
+
+    replica_index: int
+        Index of the replica.
+
+    output_path: str
+        Path to the output directory.
 
     optimizer_provider: optax._src.base.GradientTransformationExtraArgs
         Optax optimizer.
@@ -99,12 +109,10 @@ def monte_carlo_fit(
 
     Returns
     -------
-    GridPdfFit: The result of the fit with following attributes:
-        stacked_pdf_grid: jnp.array
-        pdf_grid: jnp.array
+    MonteCarloFit: The result of the fit with following attributes:
+        monte_carlo_specs: dict
         training_loss: jnp.array
         validation_loss: jnp.array
-        xgrids: dict
     """
 
     fit_grid_values_func = pdf_model.grid_values_func(XGRID)
