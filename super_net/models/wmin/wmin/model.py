@@ -33,7 +33,7 @@ class WMinPDF(PDFModel):
 
     n_basis: int
         The number of basis functions to use for the wmin parameterisation.
-        
+
     """
 
     def __init__(self, wminpdfset, n_basis):
@@ -76,13 +76,13 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     ----------
     pdf_model: pdf_mode.PDFModel
         The PDF model to initialise the parameters for.
-    
+
     mc_initialiser_settings: dict
         The settings for the initialiser.
-    
+
     replica_index: int
         The index of the replica.
-    
+
     Returns
     -------
     initial_values: jnp.array
@@ -130,7 +130,7 @@ def bayesian_prior(prior_settings):
     ----------
     prior_settings: dict
         The settings for the prior transform.
-    
+
     Returns
     -------
     prior_transform: @jax.jit CompiledFunction
