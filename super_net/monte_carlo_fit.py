@@ -35,42 +35,44 @@ def monte_carlo_fit(
     alpha=1e-7,
     lambda_positivity=1000,
 ):
-    """This functions performs a Monte Carlo fit using the grid_pdf parametrisation.
+    """
+    This function performs a Monte Carlo fit.
+
 
     Parameters
     ----------
-    _chi2_training_data_with_positivity (PjitFunction):
+    _chi2_training_data_with_positivity: PjitFunction
         Function that computes the chi2 of the training data.
 
-    _chi2_validation_data_with_positivity (PjitFunction):
+    _chi2_validation_data_with_positivity: PjitFunction
         Function that computes the chi2 of the validation data.
 
-    _data_values (dataclass):
+    _data_values: dataclass
         Dataclass containing the training and validation data.
 
     pdf_mode: PDFModel
         A PDFModel specifying the way in which the PDF is constructed from
         the parameters.
 
-    optimizer_provider (optax._src.base.GradientTransformationExtraArgs):
+    optimizer_provider: optax._src.base.GradientTransformationExtraArgs
         Optax optimizer.
 
-    early_stopper (flax.training.early_stopping.EarlyStopping):
+    early_stopper: flax.training.early_stopping.EarlyStopping
         Early stopping criteria.
 
-    max_epochs (int):
+    max_epochs: int
         Number of maximum epochs.
 
-    batch_size (int, optional):
+    batch_size: int, optional
         Size of batches during training. Defaults to 128.
 
-    batch_seed (int, optional):
+    batch_seed: int, optional
         Seed used to construct the batches. Defaults to 1.
 
-    alpha (float, optional):
+    alpha: float, optional
         Alpha parameter of the ELU positivity penalty term. Defaults to 1e-7.
 
-    lambda_positivity (int, optional):
+    lambda_positivity: int, optional
         Lagrange multiplier of the positivity penalty. Defaults to 1000.
 
     Returns
