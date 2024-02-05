@@ -29,14 +29,13 @@ def closure_test_central_pdf_grid(
     ----------
     closure_test_pdf: validphys.core.PDF
 
-    pdf_model: PDFModel
+    pdf_model: super_net.pdf_model.PDFModel
         Specifically, this is the GridPDFModel for this provider.
 
-    reduced_xgrid_data: bool, default is True
+    reduced_xgrid_data: bool, default is False
         When True the closure_test_central_pdf_grid is overriden.
         When False the closure_test_pdf_grid from super_net.utils is used.
 
-    Q0: float, default is 1.65
 
     Returns
     -------

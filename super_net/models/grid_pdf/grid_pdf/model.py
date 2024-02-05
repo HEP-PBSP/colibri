@@ -84,13 +84,13 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     ----------
     pdf_model: pdf_model.PDFModel
         The PDF model to fit.
-    
+
     mc_initialiser_settings: dict
         Settings for the initialiser.
-    
+
     replica_index: int
         The index of the replica.
-    
+
     Returns
     -------
     jnp.array
@@ -160,10 +160,10 @@ def bayesian_prior(pdf_model, prior_settings):
     ----------
     pdf_model: pdf_model.PDFModel
         The PDF model to fit.
-    
+
     prior_settings: dict
         Settings for the prior.
-    
+
     Returns
     -------
     jit compiled function
