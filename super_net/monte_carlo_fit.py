@@ -1,5 +1,5 @@
 """
-super_net.mc_fit.py
+super_net.monte_carlo_fit.py
 
 This module contains the main Monte Carlo fitting routine of super_net.
 

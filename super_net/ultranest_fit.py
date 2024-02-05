@@ -5,6 +5,7 @@ This module contains the main Bayesian fitting routine of super_net.
 
 """
 
+from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 import pandas as pd
@@ -31,6 +32,25 @@ handler = logging.StreamHandler(sys.stdout)
 ultranest_logger.addHandler(handler)
 
 
+@dataclass(frozen=True)
+class UltranestFit:
+    """
+    Dataclass containing the results and specs of an Ultranest fit.
+
+    Attributes
+    ----------
+    ultranest_specs: dict
+        Dictionary containing the settings of the Ultranest fit.
+    resampled_posterior: jnp.array
+        Array containing the resampled posterior samples.
+    ultranest_result: dict
+        result from ultranest, can be used eg for corner plots
+    """
+
+    ultranest_specs: dict
+    resampled_posterior: jnp.array
+    ultranest_result: dict
+
 def ultranest_fit(
     _chi2_with_positivity,
     pdf_model,
@@ -38,7 +58,27 @@ def ultranest_fit(
     ns_settings,
     output_path,
 ):
-    """The complete Nested Sampling fitting routine, for any PDF model."""
+    """
+    The complete Nested Sampling fitting routine, for any PDF model.
+    
+    Parameters
+    ----------
+    _chi2_with_positivity: @jax.jit CompiledFunction
+        The chi2 function with positivity constraint.
+    
+    pdf_model: PDFModel
+        The PDF model to fit.
+    
+    bayesian_prior: @jax.jit CompiledFunction
+        The prior function for the model.
+    
+    ns_settings: dict
+        Settings for the Nested Sampling fit.
+    
+    output_path: str
+        Path to write the results to.
+    
+    """
 
     parameters = pdf_model.param_names
 
@@ -84,7 +124,7 @@ def ultranest_fit(
         ns_settings["posterior_resampling_seed"],
     )
 
-    # Store run plots to ultranest output folder
+    # Store run plots to ultranest_logs folder (within output_path folder) 
     sampler.plot()
 
     df = pd.DataFrame(resampled_posterior, columns=parameters)
@@ -96,3 +136,9 @@ def ultranest_fit(
         write_exportgrid(
             jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path
         )
+    
+    return UltranestFit(
+        ultranest_specs=ns_settings,
+        resampled_posterior=resampled_posterior,
+        ultranest_result=ultranest_result,
+    )
