@@ -5,6 +5,7 @@ This module contains the main Monte Carlo fitting routine of super_net.
 
 """
 
+from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 import optax
@@ -12,11 +13,32 @@ import logging
 import pandas as pd
 import os
 
+
 from super_net.constants import XGRID
 from super_net.data_batch import data_batches
 from super_net.lhapdf import write_exportgrid
 
 log = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class MonteCarloFit:
+    """
+    Dataclass containing the results and specs of a Monte Carlo fit.
+
+    Attributes
+    ----------
+    monte_carlo_specs: dict
+        Dictionary containing the settings of the Monte Carlo fit.
+    training_loss: jnp.array
+        Array containing the training loss.
+    validation_loss: jnp.array
+        Array containing the validation loss.
+
+    """
+    monte_carlo_specs: dict
+    training_loss: jnp.array
+    validation_loss: jnp.array
 
 
 def monte_carlo_fit(
@@ -190,4 +212,16 @@ def monte_carlo_fit(
     df.to_csv(
         str(output_path) + f"/fit_replicas/replica_{replica_index}" + "/mc_loss.csv",
         index=False,
+    )
+
+    return MonteCarloFit(
+        monte_carlo_specs={
+            "max_epochs": max_epochs,
+            "batch_size": batch_size,
+            "batch_seed": batch_seed,
+            "alpha": alpha,
+            "lambda_positivity": lambda_positivity,
+        },
+        training_loss=jnp.array(loss),
+        validation_loss=jnp.array(val_loss),
     )
