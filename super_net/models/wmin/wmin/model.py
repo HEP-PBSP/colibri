@@ -123,10 +123,24 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
 
 
 def bayesian_prior(prior_settings):
+    """
+    Produces a prior transform function for the weight minimisation parameters.
+
+    Parameters
+    ----------
+    prior_settings: dict
+        The settings for the prior transform.
+    
+    Returns
+    -------
+    prior_transform: @jax.jit CompiledFunction
+        The prior transform function.
+    """
     if prior_settings["type"] == "uniform_parameter_prior":
         max_val = prior_settings["max_val"]
         min_val = prior_settings["min_val"]
 
+        @jax.jit
         def prior_transform(cube):
             return cube * (max_val - min_val) + min_val
 
