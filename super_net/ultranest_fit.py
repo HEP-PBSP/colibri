@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 # Check if --debug flag is present
 debug_flag = "--debug" in sys.argv
 
-# Set the Ultrnest logging level based on the presence of --debug flag
+# Set the Ultranest logging level based on the presence of --debug flag
 ultranest_logger = logging.getLogger("ultranest")
 ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.WARNING)
 
@@ -51,6 +51,7 @@ class UltranestFit:
     resampled_posterior: jnp.array
     ultranest_result: dict
 
+
 def ultranest_fit(
     _chi2_with_positivity,
     pdf_model,
@@ -60,24 +61,28 @@ def ultranest_fit(
 ):
     """
     The complete Nested Sampling fitting routine, for any PDF model.
-    
+
     Parameters
     ----------
     _chi2_with_positivity: @jax.jit CompiledFunction
         The chi2 function with positivity constraint.
-    
+
     pdf_model: PDFModel
         The PDF model to fit.
-    
+
     bayesian_prior: @jax.jit CompiledFunction
         The prior function for the model.
-    
+
     ns_settings: dict
         Settings for the Nested Sampling fit.
-    
+
     output_path: str
         Path to write the results to.
-    
+
+    Returns
+    -------
+    UltranestFit
+        Dataclass containing the results and specs of an Ultranest fit.
     """
 
     parameters = pdf_model.param_names
@@ -124,7 +129,7 @@ def ultranest_fit(
         ns_settings["posterior_resampling_seed"],
     )
 
-    # Store run plots to ultranest_logs folder (within output_path folder) 
+    # Store run plots to ultranest_logs folder (within output_path folder)
     sampler.plot()
 
     df = pd.DataFrame(resampled_posterior, columns=parameters)
@@ -136,7 +141,7 @@ def ultranest_fit(
         write_exportgrid(
             jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path
         )
-    
+
     return UltranestFit(
         ultranest_specs=ns_settings,
         resampled_posterior=resampled_posterior,
