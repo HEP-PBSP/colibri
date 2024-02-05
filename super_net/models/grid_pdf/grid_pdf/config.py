@@ -3,8 +3,6 @@ grid_pdf.config.py
 
 Config module of grid_pdf
 
-Author: Mark N. Costantini
-Date: 15.11.2023
 """
 
 from super_net.config import SuperNetConfig, Environment
@@ -25,7 +23,7 @@ class GridPdfConfig(SuperNetConfig):
     def parse_prior_settings(self, settings):
         # Currently, all possible prior choices require a central PDF.
         if "pdf_prior" not in settings.keys():
-            raise ValueError("Missing key prior_pdf for uniform_pdf_prior")
+            raise ValueError("Missing key pdf_prior for uniform_pdf_prior")
 
         # In the case of a uniform prior around a central PDF, we also need
         # to specify the total number of standard deviations around the mean
