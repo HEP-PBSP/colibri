@@ -6,6 +6,7 @@ model.
 
 """
 
+from dataclasses import dataclass
 import time
 
 import jax
@@ -22,6 +23,23 @@ import logging
 log = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True)
+class AnalyticFit:
+    """
+    Dataclass containing the results and specs of an analytic fit.
+
+    Attributes
+    ----------
+    analytic_specs: dict
+        Dictionary containing the settings of the analytic fit.
+    resampled_posterior: jnp.array
+        Array containing the resampled posterior samples.
+    """
+
+    analytic_specs: dict
+    resampled_posterior: jnp.array
+
+
 def analytic_fit(
     _data_values,
     _pred_data,
@@ -29,7 +47,8 @@ def analytic_fit(
     analytic_settings,
     output_path,
 ):
-    """Analytic fits, for any *linear* PDF model.
+    """
+    Analytic fits, for any *linear* PDF model.
 
     Parameters
     ----------
@@ -39,7 +58,7 @@ def analytic_fit(
     _pred_data: @jax.jit CompiledFunction
         Prediction function for the fit.
 
-    pdf_model: PDFModel
+    pdf_model: pdf_model.PDFModel
         PDF model to fit.
 
     analytic_settings: dict
@@ -102,3 +121,9 @@ def analytic_fit(
         write_exportgrid(
             jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path
         )
+    
+    return AnalyticFit(
+        analytic_specs=analytic_settings,
+        resampled_posterior=samples,
+    )
+        
