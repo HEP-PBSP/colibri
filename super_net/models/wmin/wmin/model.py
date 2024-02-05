@@ -23,6 +23,19 @@ def pdf_model(wmin_settings):
 
 
 class WMinPDF(PDFModel):
+    """
+    A PDFModel implementation for the wmin parameterisation.
+
+    Attributes
+    ----------
+    wminpdfset: validphys.core.PDF
+        The PDF set to use for the wmin parameterisation.
+
+    n_basis: int
+        The number of basis functions to use for the wmin parameterisation.
+        
+    """
+
     def __init__(self, wminpdfset, n_basis):
         self.wminpdfset = wminpdfset
         self.n_basis = n_basis
@@ -46,15 +59,35 @@ class WMinPDF(PDFModel):
         )[: self.n_basis + 1, :, :]
 
         @jax.jit
-        def interp_func(weights):
+        def wmin_param(weights):
             weights = jnp.concatenate((jnp.array([1.0]), jnp.array(weights)))
             pdf = jnp.einsum("i,ijk", weights, input_grid)
             return pdf
 
-        return interp_func
+        return wmin_param
 
 
 def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
+    """
+    This function initialises the parameters for the weight minimisation
+    in a Monte Carlo fit.
+
+    Parameters
+    ----------
+    pdf_model: pdf_mode.PDFModel
+        The PDF model to initialise the parameters for.
+    
+    mc_initialiser_settings: dict
+        The settings for the initialiser.
+    
+    replica_index: int
+        The index of the replica.
+    
+    Returns
+    -------
+    initial_values: jnp.array
+        The initial values for the parameters.
+    """
     if mc_initialiser_settings["type"] not in ("zeros", "normal", "uniform"):
         log.warning(
             f"MC initialiser type {mc_initialiser_settings['type']} not recognised, using default: 'zeros' instead."
