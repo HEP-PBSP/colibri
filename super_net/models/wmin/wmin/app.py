@@ -1,14 +1,11 @@
 """
 wmin.app.py
 
-Author: Mark N. Costantini
-Date: 11.11.2023
+The wmin app.
 """
 
 from super_net.app import SuperNetApp
 from wmin.config import WminConfig
-
-import pathlib
 
 wmin_providers = [
     "wmin.model",
