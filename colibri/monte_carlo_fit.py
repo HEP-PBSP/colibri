@@ -1,10 +1,11 @@
 """
-colibri.mc_fit.py
+colibri.monte_carlo_fit.py
 
 This module contains the main Monte Carlo fitting routine of colibri.
 
 """
 
+from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 import optax
@@ -17,6 +18,27 @@ from colibri.data_batch import data_batches
 from colibri.lhapdf import write_exportgrid
 
 log = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class MonteCarloFit:
+    """
+    Dataclass containing the results and specs of a Monte Carlo fit.
+
+    Attributes
+    ----------
+    monte_carlo_specs: dict
+        Dictionary containing the settings of the Monte Carlo fit.
+    training_loss: jnp.array
+        Array containing the training loss.
+    validation_loss: jnp.array
+        Array containing the validation loss.
+
+    """
+
+    monte_carlo_specs: dict
+    training_loss: jnp.array
+    validation_loss: jnp.array
 
 
 def monte_carlo_fit(
@@ -35,52 +57,61 @@ def monte_carlo_fit(
     alpha=1e-7,
     lambda_positivity=1000,
 ):
-    """This functions performs a Monte Carlo fit using the grid_pdf parametrisation.
+    """
+    This function performs a Monte Carlo fit.
+
 
     Parameters
     ----------
-    _chi2_training_data_with_positivity (PjitFunction):
+    _chi2_training_data_with_positivity: PjitFunction
         Function that computes the chi2 of the training data.
 
-    _chi2_validation_data_with_positivity (PjitFunction):
+    _chi2_validation_data_with_positivity: PjitFunction
         Function that computes the chi2 of the validation data.
 
-    _data_values (dataclass):
-        Dataclass containing the training and validation data.
+    len_trval_data: tuple
+        Tuple containing the length of the training and validation data.
 
-    pdf_mode: PDFModel
+    pdf_model: pdf_model.PDFModel
         A PDFModel specifying the way in which the PDF is constructed from
         the parameters.
 
-    optimizer_provider (optax._src.base.GradientTransformationExtraArgs):
+    mc_initial_parameters: jnp.array
+        Initial parameters for the Monte Carlo fit.
+
+    replica_index: int
+        Index of the replica.
+
+    output_path: str
+        Path to the output directory.
+
+    optimizer_provider: optax._src.base.GradientTransformationExtraArgs
         Optax optimizer.
 
-    early_stopper (flax.training.early_stopping.EarlyStopping):
+    early_stopper: flax.training.early_stopping.EarlyStopping
         Early stopping criteria.
 
-    max_epochs (int):
+    max_epochs: int
         Number of maximum epochs.
 
-    batch_size (int, optional):
+    batch_size: int, optional
         Size of batches during training. Defaults to 128.
 
-    batch_seed (int, optional):
+    batch_seed: int, optional
         Seed used to construct the batches. Defaults to 1.
 
-    alpha (float, optional):
+    alpha: float, optional
         Alpha parameter of the ELU positivity penalty term. Defaults to 1e-7.
 
-    lambda_positivity (int, optional):
+    lambda_positivity: int, optional
         Lagrange multiplier of the positivity penalty. Defaults to 1000.
 
     Returns
     -------
-    GridPdfFit: The result of the fit with following attributes:
-        stacked_pdf_grid: jnp.array
-        pdf_grid: jnp.array
+    MonteCarloFit: The result of the fit with following attributes:
+        monte_carlo_specs: dict
         training_loss: jnp.array
         validation_loss: jnp.array
-        xgrids: dict
     """
 
     fit_grid_values_func = pdf_model.grid_values_func(XGRID)
@@ -188,4 +219,16 @@ def monte_carlo_fit(
     df.to_csv(
         str(output_path) + f"/fit_replicas/replica_{replica_index}" + "/mc_loss.csv",
         index=False,
+    )
+
+    return MonteCarloFit(
+        monte_carlo_specs={
+            "max_epochs": max_epochs,
+            "batch_size": batch_size,
+            "batch_seed": batch_seed,
+            "alpha": alpha,
+            "lambda_positivity": lambda_positivity,
+        },
+        training_loss=jnp.array(loss),
+        validation_loss=jnp.array(val_loss),
     )

@@ -1,14 +1,12 @@
 """
 grid_pdf.app.py
 
-Author: Mark N. Costantini
-Date: 15.11.2023
+The grid_pdf app.
 """
 
 from colibri.app import colibriApp
 from grid_pdf.config import GridPdfConfig
 
-import pathlib
 
 grid_pdf_providers = [
     "grid_pdf.model",
