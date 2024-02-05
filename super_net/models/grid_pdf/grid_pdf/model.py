@@ -74,6 +74,28 @@ class GridPDFModel(PDFModel):
 
 
 def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
+    """
+    The initial parameters for the Monte Carlo fit. The options for the
+    initialiser are given in mc_initialiser_settings, which is a dictionary
+    with required key 'type'. The 'type' is one of 'zeros', 'uniform', 'pdf'.
+
+
+    Parameters
+    ----------
+    pdf_model: pdf_model.PDFModel
+        The PDF model to fit.
+    
+    mc_initialiser_settings: dict
+        Settings for the initialiser.
+    
+    replica_index: int
+        The index of the replica.
+    
+    Returns
+    -------
+    jnp.array
+        The initial parameters.
+    """
     if mc_initialiser_settings["type"] == "zeros":
         return jnp.zeros(shape=pdf_model.n_parameters)
 
@@ -133,6 +155,19 @@ def bayesian_prior(pdf_model, prior_settings):
     Produces the Bayesian prior for a grid_pdf fit. The options for the
     prior are given in prior_settings, which is a dictionary with required
     key 'type'. The 'type' is one of 'uniform_pdf_prior', 'gaussian_pdf_prior'.
+
+    Parameters
+    ----------
+    pdf_model: pdf_model.PDFModel
+        The PDF model to fit.
+    
+    prior_settings: dict
+        Settings for the prior.
+    
+    Returns
+    -------
+    jit compiled function
+        The prior transform function.
     """
 
     # Load the prior PDF
