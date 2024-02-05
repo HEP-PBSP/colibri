@@ -56,7 +56,7 @@ class GridPDFModel(PDFModel):
         def interp_func(params):
             # Perform the interpolation for each flavour in turn
             interpolants = []
-            for i, flavour in enumerate(convolution.FK_FLAVOURS):
+            for flavour in convolution.FK_FLAVOURS:
                 if flavour in self.fitted_flavours:
                     interpolants += [
                         jnp.interp(
