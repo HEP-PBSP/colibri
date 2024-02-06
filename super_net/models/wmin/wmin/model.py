@@ -19,6 +19,19 @@ log = logging.getLogger(__name__)
 
 
 def pdf_model(wmin_settings):
+    """
+    Weight minimization grid is in the evolution basis.
+    The following parametrization is used:
+
+    f_{j,wm} = f_j + sum_i(w_i * (f_i - f_j))
+
+    this has the advantage of automatically satisfying the sum rules.
+
+    Notes:
+        - the central replica of the wminpdfset is always included in the
+          wmin parametrization
+    """
+
     return WMinPDF(PDF(wmin_settings["wminpdfset"]), wmin_settings["n_basis"])
 
 
@@ -45,8 +58,21 @@ class WMinPDF(PDFModel):
         return [f"w_{i+1}" for i in range(self.n_basis)]
 
     def grid_values_func(self, interpolation_grid):
-        """This function should produce a grid values function, which takes
+        """
+        This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
+
+        Weight minimization grid is in the evolution basis.
+        The following parametrization is used:
+
+        f_{j,wm} = f_j + sum_i(w_i * (f_i - f_j))
+
+        this has the advantage of automatically satisfying the sum rules.
+
+        Notes:
+            - the central replica of the wminpdfset is always included in the
+                wmin parametrization
+
         """
 
         input_grid = jnp.array(
@@ -72,11 +98,12 @@ class WMinPDF(PDFModel):
 
         # build wmin input grid so that sum rules are automatically fulfilled
         wmin_input_grid = (
-        input_grid[wmin_basis_idx, :, :] - input_grid[jnp.newaxis, wmin_central_replica]
+            input_grid[wmin_basis_idx, :, :]
+            - input_grid[jnp.newaxis, wmin_central_replica]
         )
 
         wmin_input_grid = jnp.vstack(
-        (input_grid[jnp.newaxis, wmin_central_replica], wmin_input_grid)
+            (input_grid[jnp.newaxis, wmin_central_replica], wmin_input_grid)
         )
 
         @jax.jit
