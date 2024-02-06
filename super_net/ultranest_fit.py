@@ -25,7 +25,7 @@ debug_flag = "--debug" in sys.argv
 
 # Set the Ultranest logging level based on the presence of --debug flag
 ultranest_logger = logging.getLogger("ultranest")
-ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.WARNING)
+ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
 
 # Configure the handler and formatter
 handler = logging.StreamHandler(sys.stdout)
