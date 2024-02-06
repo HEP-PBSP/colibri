@@ -45,6 +45,7 @@ wmin_settings:
   wminpdfset: NNPDF31_nnlo_as_0118
   n_basis: 50
 
+flavour_mapping: ["\\Sigma", "g", "V"]
 # Grid PDF settings
 grid_pdf_settings:
   xgrids:
