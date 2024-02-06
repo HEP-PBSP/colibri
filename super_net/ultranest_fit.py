@@ -17,6 +17,7 @@ import sys
 from super_net.constants import XGRID
 from super_net.lhapdf import write_exportgrid
 from super_net.utils import resample_from_ns_posterior
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +59,7 @@ def ultranest_fit(
     bayesian_prior,
     ns_settings,
     output_path,
+    ultranest_seed=12345,
 ):
     """
     The complete Nested Sampling fitting routine, for any PDF model.
@@ -79,11 +81,17 @@ def ultranest_fit(
     output_path: str
         Path to write the results to.
 
+    ultranest_seed: int
+        Seed for the Ultranest fit.
+
     Returns
     -------
     UltranestFit
         Dataclass containing the results and specs of an Ultranest fit.
     """
+
+    # set the ultranest seed
+    np.random.seed(ultranest_seed)
 
     parameters = pdf_model.param_names
 
