@@ -63,6 +63,7 @@ class SuperNetConfig(Config):
             "ReactiveNS_settings",
             "Run_settings",
             "SliceSampler_settings",
+            "ultranest_seed",
         }
 
         kdiff = settings.keys() - known_keys
@@ -74,6 +75,9 @@ class SuperNetConfig(Config):
         # Now construct the ns_settings dictionary, checking the parameter combinations are
         # valid
         ns_settings = {}
+
+        # Set the ultranest seed
+        ns_settings["ultranest_seed"] = settings.get("ultranest_seed", 123456)
 
         # Set the posterior resampling parameters
         ns_settings["n_posterior_samples"] = settings.get("n_posterior_samples", 1000)

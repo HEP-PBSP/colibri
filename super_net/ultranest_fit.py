@@ -59,7 +59,6 @@ def ultranest_fit(
     bayesian_prior,
     ns_settings,
     output_path,
-    ultranest_seed=12345,
 ):
     """
     The complete Nested Sampling fitting routine, for any PDF model.
@@ -81,9 +80,6 @@ def ultranest_fit(
     output_path: str
         Path to write the results to.
 
-    ultranest_seed: int
-        Seed for the Ultranest fit.
-
     Returns
     -------
     UltranestFit
@@ -91,7 +87,7 @@ def ultranest_fit(
     """
 
     # set the ultranest seed
-    np.random.seed(ultranest_seed)
+    np.random.seed(ns_settings["ultranest_seed"])
 
     parameters = pdf_model.param_names
 
