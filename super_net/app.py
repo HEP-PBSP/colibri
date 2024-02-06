@@ -16,7 +16,6 @@ import jax
 # can occur.
 jax.config.update("jax_enable_x64", True)
 
-
 super_net_providers = [
     "super_net.theory_predictions",
     "super_net.loss_functions",
