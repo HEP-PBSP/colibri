@@ -47,7 +47,7 @@ t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covaria
 #############
 # Model specs
 #############
-
+flavour_mapping: ["\\Sigma", "g", "V"]
 # Grid PDF settings
 grid_pdf_settings:
   xgrids:

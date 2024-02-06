@@ -17,6 +17,7 @@ import sys
 from colibri.constants import XGRID
 from colibri.lhapdf import write_exportgrid
 from colibri.utils import resample_from_ns_posterior
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ debug_flag = "--debug" in sys.argv
 
 # Set the Ultranest logging level based on the presence of --debug flag
 ultranest_logger = logging.getLogger("ultranest")
-ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.WARNING)
+ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
 
 # Configure the handler and formatter
 handler = logging.StreamHandler(sys.stdout)
@@ -84,6 +85,9 @@ def ultranest_fit(
     UltranestFit
         Dataclass containing the results and specs of an Ultranest fit.
     """
+
+    # set the ultranest seed
+    np.random.seed(ns_settings["ultranest_seed"])
 
     parameters = pdf_model.param_names
 
