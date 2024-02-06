@@ -318,7 +318,7 @@ export_to_evolution = {
         "TBAR": -1,
     },
     "T3": {"U": 1, "UBAR": 1, "D": -1, "DBAR": -1},
-    "V3": {"U": 1, "UBAR": -1, "d": -1, "DBAR": 1},
+    "V3": {"U": 1, "UBAR": -1, "D": -1, "DBAR": 1},
     "T8": {"U": 1, "UBAR": 1, "D": 1, "DBAR": 1, "S": -2, "SBAR": -2},
     "V8": {"U": 1, "UBAR": -1, "D": 1, "DBAR": -1, "S": -2, "SBAR": +2},
     "T15": {
@@ -328,7 +328,7 @@ export_to_evolution = {
         "DBAR": 1,
         "S": 1,
         "SBAR": 1,
-        "c": -3,
+        "C": -3,
         "CBAR": -3,
     },
     "V15": {
@@ -338,7 +338,7 @@ export_to_evolution = {
         "DBAR": -1,
         "S": 1,
         "SBAR": -1,
-        "c": -3,
+        "C": -3,
         "CBAR": +3,
     },
     "T24": {
