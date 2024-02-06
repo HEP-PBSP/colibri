@@ -9,6 +9,12 @@ from validphys.app import App
 from super_net.config import SuperNetConfig, Environment
 import pathlib
 
+import jax
+
+# Whenever a colibri app is run, it should use high-precision jax
+# calculations. If this is not on, problems with numerical accuracy
+# can occur.
+jax.config.update("jax_enable_x64", True)
 
 super_net_providers = [
     "super_net.theory_predictions",
