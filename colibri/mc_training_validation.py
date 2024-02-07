@@ -22,6 +22,22 @@ class TrainValidationSplit:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class TrainCentralCovmatIndex(CentralCovmatIndex):
+    n_training_points: int
+
+
+@dataclass(frozen=True)
+class ValidationCentralCovmatIndex(CentralCovmatIndex):
+    n_validation_points: int
+
+
+@dataclass(frozen=True)
+class PosdataTrainValidationSplit(TrainValidationSplit):
+    n_training: int
+    n_validation: int
+
+
 def training_validation_split(
     indices, mc_validation_fraction, random_seed, shuffle_indices=True
 ):
@@ -66,22 +82,6 @@ def trval_seed(trval_index):
     """
     key = jax.random.PRNGKey(trval_index)
     return key
-
-
-@dataclass(frozen=True)
-class TrainCentralCovmatIndex(CentralCovmatIndex):
-    n_training_points: int
-
-
-@dataclass(frozen=True)
-class ValidationCentralCovmatIndex(CentralCovmatIndex):
-    n_validation_points: int
-
-
-@dataclass(frozen=True)
-class PosdataTrainValidationSplit(TrainValidationSplit):
-    n_training: int
-    n_validation: int
 
 
 def mc_posdata_split(
