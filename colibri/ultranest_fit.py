@@ -133,8 +133,9 @@ def ultranest_fit(
         ns_settings["posterior_resampling_seed"],
     )
 
-    # Store run plots to ultranest_logs folder (within output_path folder)
-    sampler.plot()
+    if ns_settings["sampler_plot"]:
+        # Store run plots to ultranest_logs folder (within output_path folder)
+        sampler.plot()
 
     df = pd.DataFrame(resampled_posterior, columns=parameters)
     df.to_csv(str(output_path) + "/ns_result.csv")
