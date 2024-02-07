@@ -67,11 +67,19 @@ def write_exportgrid(
     # Create the exportgrid
 
     if cubic_spline_interpolator:
-        
+
         # use the first and last points to fill the grid outside the range
-        fin, fend = pdf_model.grid_values_func(XGRID)(parameters)[:,0], pdf_model.grid_values_func(XGRID)(parameters)[:,-1]
-        lhapdf_interpolator = interp1d(np.array(XGRID), pdf_model.grid_values_func(XGRID)(parameters), kind='quadratic', 
-                                       bounds_error=False, fill_value=(fin, fend))
+        fin, fend = (
+            pdf_model.grid_values_func(XGRID)(parameters)[:, 0],
+            pdf_model.grid_values_func(XGRID)(parameters)[:, -1],
+        )
+        lhapdf_interpolator = interp1d(
+            np.array(XGRID),
+            pdf_model.grid_values_func(XGRID)(parameters),
+            kind="quadratic",
+            bounds_error=False,
+            fill_value=(fin, fend),
+        )
 
         # Rotate the grid from the evolution basis into the export grid basis
         grid_for_writing = np.array(lhapdf_interpolator(LHAPDF_XGRID))
