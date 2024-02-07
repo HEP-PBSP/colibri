@@ -12,6 +12,9 @@ import os
 import numpy as np
 import yaml
 
+from scipy.interpolate import CubicSpline
+from colibri.constants import XGRID
+
 
 def write_exportgrid(
     parameters,
@@ -19,6 +22,7 @@ def write_exportgrid(
     replica_index,
     output_path,
     monte_carlo=False,
+    cubic_spline_interpolator=False,
 ):
     """
     Writes an exportgrid for each of the replicas in the posterior sample.
@@ -61,12 +65,25 @@ def write_exportgrid(
     fit_name = str(output_path).split("/")[-1]
 
     # Create the exportgrid
-    lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+    
+    # Create the exportgrid
+    if cubic_spline_interpolator:
+        lhapdf_interpolator = CubicSpline(
+            np.array(XGRID), pdf_model.grid_values_func(XGRID)(parameters).T
+        )
 
-    # Rotate the grid from the evolution basis into the export grid basis
-    grid_for_writing = np.array(lhapdf_interpolator(parameters))
-    grid_for_writing = evolution_to_export_matrix @ grid_for_writing
-    grid_for_writing = grid_for_writing.T.tolist()
+        # Rotate the grid from the evolution basis into the export grid basis
+        grid_for_writing = np.array(lhapdf_interpolator(LHAPDF_XGRID)).T
+        grid_for_writing = evolution_to_export_matrix @ grid_for_writing
+        grid_for_writing = grid_for_writing.T.tolist()
+
+    else:
+        lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+
+        # Rotate the grid from the evolution basis into the export grid basis
+        grid_for_writing = np.array(lhapdf_interpolator(parameters))
+        grid_for_writing = evolution_to_export_matrix @ grid_for_writing
+        grid_for_writing = grid_for_writing.T.tolist()
 
     # Prepare a dictionary for the exportgrid
     export_grid = {}
