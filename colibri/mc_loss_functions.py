@@ -98,7 +98,7 @@ def make_chi2_training_data_with_positivity(
         dataclass containing Monte Carlo pseudodata.
 
     mc_posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from utils.TrainValidationSplit
+        dataclass inheriting from mc_training_validation.TrainValidationSplit
 
     fit_covariance_matrix: jnp.array
         covariance matrix of the fit (see config.produce_fit_covariance_matrix).
