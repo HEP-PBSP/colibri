@@ -7,18 +7,6 @@ Author: Luca Mantani
 Date: 21.12.2023
 """
 
-###############################################
-# Aliases of colibri.training_validation.py #
-###############################################
-
-
-def _data_values(make_data_values):
-    """
-    Internal alias function for make_data_values.
-    """
-    return make_data_values
-
-
 ##############################################
 # Aliases of colibri.theory_predictions.py #
 ##############################################
