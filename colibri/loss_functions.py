@@ -24,8 +24,8 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
 
     Parameters
     ----------
-    _data_values: training_validation.MakeDataValues
-        dataclass containing data for training and validation.
+    central_covmat_index: commondata_utils.CentralCovmatIndex class
+        dataclass containing central values and covmat.
 
     _pred_data: theory_predictions._pred_data
         colibri provider for (fktable) theory predictions.
@@ -90,8 +90,8 @@ def make_chi2_with_positivity(
 
     Parameters
     ----------
-    _data_values: training_validation.MakeDataValues
-        dataclass containing data for training and validation.
+    central_covmat_index: commondata_utils.CentralCovmatIndex class
+        dataclass containing central values and covmat.
 
     _pred_data: theory_predictions._pred_data
         colibri provider for (fktable) theory predictions.
