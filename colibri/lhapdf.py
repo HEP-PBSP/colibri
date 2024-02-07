@@ -12,8 +12,8 @@ import os
 import numpy as np
 import yaml
 
-from scipy.interpolate import interp1d
-from colibri.constants import XGRID
+from scipy.ndimage import gaussian_filter1d
+
 
 
 def write_exportgrid(
@@ -22,7 +22,7 @@ def write_exportgrid(
     replica_index,
     output_path,
     monte_carlo=False,
-    cubic_spline_interpolator=False,
+    gaussian_filtering_exportgrid=False,
 ):
     """
     Writes an exportgrid for each of the replicas in the posterior sample.
@@ -65,34 +65,17 @@ def write_exportgrid(
     fit_name = str(output_path).split("/")[-1]
 
     # Create the exportgrid
-
-    if cubic_spline_interpolator:
-
-        # use the first and last points to fill the grid outside the range
-        fin, fend = (
-            pdf_model.grid_values_func(XGRID)(parameters)[:, 0],
-            pdf_model.grid_values_func(XGRID)(parameters)[:, -1],
-        )
-        lhapdf_interpolator = interp1d(
-            np.array(XGRID),
-            pdf_model.grid_values_func(XGRID)(parameters),
-            kind="cubic",
-            bounds_error=False,
-            fill_value=(fin, fend),
-        )
-
-        # Rotate the grid from the evolution basis into the export grid basis
-        grid_for_writing = np.array(lhapdf_interpolator(LHAPDF_XGRID))
-        grid_for_writing = evolution_to_export_matrix @ grid_for_writing
-        grid_for_writing = grid_for_writing.T.tolist()
+    lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+    
+    if gaussian_filtering_exportgrid:
+        grid_for_writing = gaussian_filter1d(np.array(lhapdf_interpolator(parameters)), sigma=1)
 
     else:
-        lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
-
         # Rotate the grid from the evolution basis into the export grid basis
         grid_for_writing = np.array(lhapdf_interpolator(parameters))
-        grid_for_writing = evolution_to_export_matrix @ grid_for_writing
-        grid_for_writing = grid_for_writing.T.tolist()
+
+    grid_for_writing = evolution_to_export_matrix @ grid_for_writing
+    grid_for_writing = grid_for_writing.T.tolist()
 
     # Prepare a dictionary for the exportgrid
     export_grid = {}
