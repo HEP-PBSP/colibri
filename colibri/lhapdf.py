@@ -66,7 +66,6 @@ def write_exportgrid(
 
     # Create the exportgrid
 
-    # Create the exportgrid
     if cubic_spline_interpolator:
         lhapdf_interpolator = CubicSpline(
             np.array(XGRID), pdf_model.grid_values_func(XGRID)(parameters).T
