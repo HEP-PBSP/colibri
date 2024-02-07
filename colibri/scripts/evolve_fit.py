@@ -111,6 +111,8 @@ def main():
             if i % size == rank
         ]
 
+        local_replicas = sorted(local_replicas, key=lambda x: int(x[0].split("_")[-1]))
+
         # Process local replicas
         for replica, pdf_data in local_replicas:
             process_replica(replica, pdf_data, eko_op, lhapdf_destination)
