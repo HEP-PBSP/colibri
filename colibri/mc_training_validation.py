@@ -28,6 +28,14 @@ class PosdataTrainValidationSplit(TrainValidationSplit):
     n_validation: int
 
 
+def trval_seed(trval_index):
+    """
+    Returns a PRNGKey key given `trval_index` seed.
+    """
+    key = jax.random.PRNGKey(trval_index)
+    return key
+
+
 def training_validation_split(
     indices, mc_validation_fraction, random_seed, shuffle_indices=True
 ):
@@ -64,14 +72,6 @@ def training_validation_split(
     indices_validation = permuted_indices[split_point:]
 
     return TrainValidationSplit(training=indices_train, validation=indices_validation)
-
-
-def trval_seed(trval_index):
-    """
-    Returns a PRNGKey key given `trval_index` seed.
-    """
-    key = jax.random.PRNGKey(trval_index)
-    return key
 
 
 def mc_posdata_split(
