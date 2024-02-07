@@ -75,7 +75,6 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
 def make_chi2_with_positivity(
     central_covmat_index,
     _pred_data,
-    posdata_split,
     _penalty_posdata,
     alpha=1e-7,
     lambda_positivity=1000,
@@ -95,9 +94,6 @@ def make_chi2_with_positivity(
 
     _pred_data: theory_predictions._pred_data
         colibri provider for (fktable) theory predictions.
-
-    posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from utils.TrainValidationSplit
 
     _penalty_posdata: theory_predictions._penalty_posdata
         colibri provider used to compute positivity penalty.
@@ -121,8 +117,6 @@ def make_chi2_with_positivity(
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
-    posdata_training_idx = posdata_split.training
-
     if vectorized:
 
         @jax.jit
@@ -133,9 +127,7 @@ def make_chi2_with_positivity(
             loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
 
             # add penalty term due to positivity
-            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
-                :, posdata_training_idx
-            ]
+            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)
 
             loss += jnp.sum(pos_penalty, axis=-1)
 
@@ -151,9 +143,7 @@ def make_chi2_with_positivity(
             loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
             # add penalty term due to positivity
-            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
-                posdata_training_idx
-            ]
+            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)
 
             loss += jnp.sum(pos_penalty)
 

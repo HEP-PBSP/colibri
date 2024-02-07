@@ -90,6 +90,16 @@ def len_trval_data(mc_pseudodata):
     return len(mc_pseudodata.training_indices), len(mc_pseudodata.validation_indices)
 
 
+def replica_seed(replica_index):
+    """
+    Generate a random integer given a replica_index.
+    Note that each replica index has a unique key.
+    """
+    key = jax.random.PRNGKey(replica_index)
+    randint = jax.random.randint(key, shape=(1,), minval=0, maxval=1e10)
+    return int(randint)
+
+
 @dataclass(frozen=True)
 class PosdataTrainValidationSplit(TrainValidationSplit):
     n_training: int

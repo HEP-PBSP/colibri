@@ -10,21 +10,8 @@ Date: 11.11.2023
 import jax
 import jax.numpy as jnp
 
-from dataclasses import dataclass, asdict
-
 from colibri.constants import XGRID
-from colibri.mc_training_validation import PosdataTrainValidationSplit
 from validphys import convolution
-
-
-def replica_seed(replica_index):
-    """
-    Generate a random integer given a replica_index.
-    Note that each replica index has a unique key.
-    """
-    key = jax.random.PRNGKey(replica_index)
-    randint = jax.random.randint(key, shape=(1,), minval=0, maxval=1e10)
-    return int(randint)
 
 
 def t0_pdf_grid(t0pdfset, Q0=1.65):
@@ -98,37 +85,3 @@ def closure_test_central_pdf_grid(closure_test_pdf_grid):
     Returns the central replica of the closure test pdf grid.
     """
     return closure_test_pdf_grid[0]
-
-
-def posdata_split(posdatasets):
-    """
-    Function for positivity split.
-
-    Parameters
-    ----------
-    posdatasets: list
-        list of positivity datasets, see also validphys.config.parse_posdataset.
-
-    Returns
-    -------
-    PosdataTrainValidationSplit
-        dataclass
-
-    """
-
-    ndata_pos = jnp.sum(
-        jnp.array(
-            [
-                pos_ds.load_commondata().with_cuts(pos_ds.cuts).ndata
-                for pos_ds in posdatasets
-            ]
-        )
-    )
-    indices = jnp.arange(ndata_pos)
-
-    return PosdataTrainValidationSplit(
-        training=indices,
-        validation=None,
-        n_training=len(indices),
-        n_validation=None,
-    )
