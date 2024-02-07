@@ -93,7 +93,7 @@ class colibriConfig(Config):
 
         # set sampler plot to True by default
         ns_settings["sampler_plot"] = settings.get("sampler_plot", True)
-        
+
         # Check that the ReactiveNS_settings key was provided, if not set to default
         if ns_settings["ReactiveNS_settings"]:
             # Set the directory where the ultranest logs will be stored; by default
