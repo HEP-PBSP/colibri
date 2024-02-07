@@ -1,0 +1,23 @@
+[build-system]
+requires = ["flit_core >=2,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.metadata]
+module = "grid_pdf"
+author = "Mark N. Costantini"
+author-email = "mnc33@cam.ac.uk"
+home-page = "https://github.com/HEP-PBSP/colibri"
+
+[tool.flit.metadata.requires-extra]
+test = [
+    "pytest",
+    "hypothesis",
+]
+doc = [
+    "sphinx",
+    "recommonmark",
+    "sphinx_rtd_theme"
+]
+
+[tool.flit.scripts]
+grid_pdf = "grid_pdf.app:main"
