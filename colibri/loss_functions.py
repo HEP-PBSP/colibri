@@ -12,7 +12,7 @@ import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
 
-def make_chi2(_data_values, _pred_data, vectorized=False):
+def make_chi2(central_covmat_index, _pred_data, vectorized=False):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on a dataset.
@@ -38,10 +38,9 @@ def make_chi2(_data_values, _pred_data, vectorized=False):
         function to compute chi2 of a pdf grid.
 
     """
-    training_data = _data_values.training_data
-    central_values = training_data.central_values
-    covmat = training_data.covmat
-    central_values_idx = training_data.central_values_idx
+    central_values = central_covmat_index.central_values
+    covmat = central_covmat_index.covmat
+    central_values_idx = central_covmat_index.central_values_idx
 
     # Invert the covmat
     # We use this instead of Cholesky decomposition
@@ -74,7 +73,7 @@ def make_chi2(_data_values, _pred_data, vectorized=False):
 
 
 def make_chi2_with_positivity(
-    _data_values,
+    central_covmat_index,
     _pred_data,
     _posdata_split,
     _penalty_posdata,
@@ -115,10 +114,9 @@ def make_chi2_with_positivity(
         function to compute chi2 of a pdf grid.
 
     """
-    training_data = _data_values.training_data
-    central_values = training_data.central_values
-    covmat = training_data.covmat
-    central_values_idx = training_data.central_values_idx
+    central_values = central_covmat_index.central_values
+    covmat = central_covmat_index.covmat
+    central_values_idx = central_covmat_index.central_values_idx
 
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
