@@ -32,9 +32,11 @@ cd ~/miniconda3/envs/colibri/share/NNPDF
 mkdir results
 cp -r nnpdf/nnpdfcpp/data .
 ```
-Modifying the paths at the beginning of nnprofile.yaml, e.g.
+
+We need to modify the first two paths at the beginning of nnprofile.yaml:
 ```
-data_path: '@PROFILE_PREFIX@/data/' ->  data_path: '/Users/YourUsername/miniconda3/envs/nnpdf-dev/share/NNPDF/data/'`
+data_path: '@PROFILE_PREFIX@/data/' ->  data_path: '/Users/YourUsername/miniconda3/envs/nnpdf-dev/share/NNPDF/data/'
+results_path: '@PROFILE_PREFIX@/results/' -> results_path: '/Users/YourUsername/miniconda3/envs/colibri/share/NNPDF/results/'
 ```
 
 Finally install colibri and the various models:
