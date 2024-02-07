@@ -19,13 +19,6 @@ def _data_values(make_data_values):
     return make_data_values
 
 
-def _posdata_split(make_posdata_split):
-    """
-    Internal alias function for make_posdata_split.
-    """
-    return make_posdata_split
-
-
 ##############################################
 # Aliases of colibri.theory_predictions.py #
 ##############################################
