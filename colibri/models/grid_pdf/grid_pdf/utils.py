@@ -52,7 +52,7 @@ def closure_test_central_pdf_grid(
     parameters = []
     for fl in pdf_model.xgrids.keys():
         x_vals = pdf_model.xgrids[fl]
-        if len(x_vals):
+        if x_vals:
             parameters += [
                 convolution.evolution.grid_values(
                     closure_test_pdf, [fl], x_vals, [1.65]
