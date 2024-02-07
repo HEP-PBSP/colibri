@@ -75,7 +75,7 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
 def make_chi2_with_positivity(
     central_covmat_index,
     _pred_data,
-    _posdata_split,
+    posdata_split,
     _penalty_posdata,
     alpha=1e-7,
     lambda_positivity=1000,
@@ -96,7 +96,7 @@ def make_chi2_with_positivity(
     _pred_data: theory_predictions._pred_data
         colibri provider for (fktable) theory predictions.
 
-    _posdata_split: training_validation.PosdataTrainValidationSplit
+    posdata_split: training_validation.PosdataTrainValidationSplit
         dataclass inheriting from utils.TrainValidationSplit
 
     _penalty_posdata: theory_predictions._penalty_posdata
@@ -121,7 +121,7 @@ def make_chi2_with_positivity(
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
-    posdata_training_idx = _posdata_split.training
+    posdata_training_idx = posdata_split.training
 
     if vectorized:
 

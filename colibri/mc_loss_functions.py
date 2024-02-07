@@ -97,14 +97,14 @@ def make_chi2_training_data_with_positivity(
     mc_pseudodata: mc_utils.MCPseudodata
         dataclass containing Monte Carlo pseudodata.
 
+    mc_posdata_split: training_validation.PosdataTrainValidationSplit
+        dataclass inheriting from utils.TrainValidationSplit
+
     fit_covariance_matrix: jnp.array
         covariance matrix of the fit (see config.produce_fit_covariance_matrix).
 
     _pred_data: theory_predictions._pred_data
         colibri provider for (fktable) theory predictions.
-
-    _posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from utils.TrainValidationSplit
 
     _penalty_posdata: theory_predictions._penalty_posdata
         colibri provider used to compute positivity penalty.
@@ -234,14 +234,14 @@ def make_chi2_validation_data_with_positivity(
     mc_pseudodata: mc_utils.MCPseudodata
         dataclass containing Monte Carlo pseudodata.
 
+    mc_posdata_split: training_validation.PosdataTrainValidationSplit
+        dataclass inheriting from utils.TrainValidationSplit
+
     fit_covariance_matrix: jnp.array
         covariance matrix of the fit (see config.produce_fit_covariance_matrix).
 
     _pred_data: theory_predictions._pred_data
         colibri provider for (fktable) theory predictions.
-
-    _posdata_split: training_validation.PosdataTrainValidationSplit
-        dataclass inheriting from utils.TrainValidationSplit
 
     _penalty_posdata: theory_predictions._penalty_posdata
         colibri provider used to compute positivity penalty.
