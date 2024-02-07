@@ -79,7 +79,6 @@ def analytic_fit(
     # Construct the analytic solution
     central_values = central_covmat_index.central_values
     covmat = central_covmat_index.covmat
-    central_values_idx = central_covmat_index.central_values_idx
 
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
@@ -87,7 +86,7 @@ def analytic_fit(
     # Solve chi2 analytically for the mean
     Y = central_values
     Sigma = inv_covmat
-    X = (predictions[:, central_values_idx]).T
+    X = predictions.T
 
     t0 = time.time()
     sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y

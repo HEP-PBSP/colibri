@@ -40,7 +40,6 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
     """
     central_values = central_covmat_index.central_values
     covmat = central_covmat_index.covmat
-    central_values_idx = central_covmat_index.central_values_idx
 
     # Invert the covmat
     # We use this instead of Cholesky decomposition
@@ -52,7 +51,7 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = _pred_data(pdf)[:, central_values_idx] - central_values
+            diff = _pred_data(pdf) - central_values
 
             loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
 
@@ -63,7 +62,7 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = _pred_data(pdf)[central_values_idx] - central_values
+            diff = _pred_data(pdf) - central_values
 
             loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
@@ -112,7 +111,6 @@ def make_chi2_with_positivity(
     """
     central_values = central_covmat_index.central_values
     covmat = central_covmat_index.covmat
-    central_values_idx = central_covmat_index.central_values_idx
 
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
@@ -122,7 +120,7 @@ def make_chi2_with_positivity(
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = _pred_data(pdf)[:, central_values_idx] - central_values
+            diff = _pred_data(pdf) - central_values
 
             loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
 
@@ -138,7 +136,7 @@ def make_chi2_with_positivity(
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = _pred_data(pdf)[central_values_idx] - central_values
+            diff = _pred_data(pdf) - central_values
 
             loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
