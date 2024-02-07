@@ -52,6 +52,7 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
+    cubic_spline_interpolator=False,
     batch_size=128,
     batch_seed=1,
     alpha=1e-7,
@@ -199,6 +200,7 @@ def monte_carlo_fit(
         replica_index,
         output_path,
         monte_carlo=True,
+        cubic_spline_interpolator=cubic_spline_interpolator,
     )
 
     # Save the output to csv
