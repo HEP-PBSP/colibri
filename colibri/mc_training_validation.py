@@ -23,16 +23,6 @@ class TrainValidationSplit:
 
 
 @dataclass(frozen=True)
-class TrainCentralCovmatIndex(CentralCovmatIndex):
-    n_training_points: int
-
-
-@dataclass(frozen=True)
-class ValidationCentralCovmatIndex(CentralCovmatIndex):
-    n_validation_points: int
-
-
-@dataclass(frozen=True)
 class PosdataTrainValidationSplit(TrainValidationSplit):
     n_training: int
     n_validation: int
