@@ -120,7 +120,11 @@ def analytic_fit(
     for i in range(analytic_settings["n_posterior_samples"]):
         log.info(f"Writing exportgrid for replica {i+1}")
         write_exportgrid(
-            jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path, cubic_spline_interpolator=cubic_spline_interpolator
+            jnp.array(df.iloc[i, :].tolist()),
+            pdf_model,
+            i + 1,
+            output_path,
+            cubic_spline_interpolator=cubic_spline_interpolator,
         )
 
     return AnalyticFit(

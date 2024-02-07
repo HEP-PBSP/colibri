@@ -65,7 +65,7 @@ def write_exportgrid(
     fit_name = str(output_path).split("/")[-1]
 
     # Create the exportgrid
-    
+
     # Create the exportgrid
     if cubic_spline_interpolator:
         lhapdf_interpolator = CubicSpline(
