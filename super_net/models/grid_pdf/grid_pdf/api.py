@@ -12,9 +12,6 @@ Simple Usage:
 >> from grid_pdf.api import API
 >> fig = API.plot_pdfs(pdf="NNPDF_nlo_as_0118", Q=100)
 >> fig.show()
-
-Author: Mark N. Costantini
-Date: 05.01.2024
 """
 
 import logging

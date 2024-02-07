@@ -21,3 +21,5 @@ doc = [
 
 [tool.flit.scripts]
 super_net = "super_net.app:main"
+evolve_fit = "super_net.scripts.evolve_fit:main"
+mc_postfit = "super_net.scripts.mc_postfit:main"

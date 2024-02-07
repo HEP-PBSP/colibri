@@ -1,22 +1,16 @@
 """
 grid_pdf.app.py
 
-Author: Mark N. Costantini
-Date: 15.11.2023
+The grid_pdf app.
 """
 
 from super_net.app import SuperNetApp
 from grid_pdf.config import GridPdfConfig
 
-import pathlib
 
 grid_pdf_providers = [
-    "grid_pdf.grid_pdf_model",
-    "grid_pdf.grid_pdf_fit",
-    "grid_pdf.grid_pdf_lhapdf",
-    "grid_pdf.provider_aliases",
+    "grid_pdf.model",
     "grid_pdf.utils",
-    "grid_pdf.analytic_fit",
 ]
 
 

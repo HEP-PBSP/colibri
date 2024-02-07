@@ -3,12 +3,9 @@ grid_pdf.config.py
 
 Config module of grid_pdf
 
-Author: Mark N. Costantini
-Date: 15.11.2023
 """
 
 from super_net.config import SuperNetConfig, Environment
-from super_net.utils import FLAVOUR_TO_ID_MAPPING
 
 
 class Environment(Environment):
@@ -20,29 +17,21 @@ class GridPdfConfig(SuperNetConfig):
     GridConfig class Inherits from super_net.config.SuperNetConfig
     """
 
-    def parse_pdf_prior(self, name):
-        """PDF set used to generate prior values in grid fit"""
-        return self.parse_pdf(name)
+    def produce_flavour_xgrids(self, grid_pdf_settings):
+        return grid_pdf_settings["xgrids"]
 
-    def produce_length_reduced_xgrids(self, xgrids):
-        """The reduced x-grids used in the fit, organised by flavour."""
-        lengths = [len(val) for (_, val) in xgrids.items()]
-        # Remove all zero-length lists
-        lengths = list(filter((0).__ne__, lengths))
-        if not all(x == lengths[0] for x in lengths):
-            raise ValueError(
-                "Cannot currently support reduced x-grids of different lengths."
-            )
-        return lengths[0]
+    def parse_prior_settings(self, settings):
+        # Currently, all possible prior choices require a central PDF.
+        if "pdf_prior" not in settings.keys():
+            raise ValueError("Missing key pdf_prior for uniform_pdf_prior")
 
-    def produce_length_stackedpdf(self, xgrids):
-        """The lenght of the stacked PDF."""
-        stack = []
-        for _, val in xgrids.items():
-            stack += val
+        # In the case of a uniform prior around a central PDF, we also need
+        # to specify the total number of standard deviations around the mean
+        # which we allow.
+        if settings["type"] == "uniform_pdf_prior":
+            # Check if number of standard deviations are supplied, default to 2
+            # otherwise.
+            if "nsigma" not in settings.keys():
+                settings["nsigma"] = 2
 
-        return len(stack)
-
-    def produce_reduced_xgrids(self, xgrids):
-        """The reduced x-grids used in the fit, organised by flavour."""
-        return {FLAVOUR_TO_ID_MAPPING[flav]: val for (flav, val) in xgrids.items()}
+        return settings

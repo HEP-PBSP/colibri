@@ -1,3 +1,24 @@
+import numpy as np
+
+FLAVOURS_ID_MAPPINGS = {
+    0: "photon",
+    1: "\Sigma",
+    2: "g",
+    3: "V",
+    4: "V3",
+    5: "V8",
+    6: "V15",
+    7: "V24",
+    8: "V35",
+    9: "T3",
+    10: "T8",
+    11: "T15",
+    12: "T24",
+    13: "T35",
+}
+
+FLAVOUR_TO_ID_MAPPING = {val: key for (key, val) in FLAVOURS_ID_MAPPINGS.items()}
+
 XGRID = [
     2.00000000e-07,
     3.03430477e-07,
@@ -249,3 +270,145 @@ LHAPDF_XGRID = [
     0.991610196150662,
     1.0,
 ]
+
+EXPORT_LABELS = [
+    "TBAR",
+    "BBAR",
+    "CBAR",
+    "SBAR",
+    "UBAR",
+    "DBAR",
+    "GLUON",
+    "D",
+    "U",
+    "S",
+    "C",
+    "B",
+    "T",
+    "PHT",
+]
+
+export_to_evolution = {
+    "\Sigma": {
+        "U": 1,
+        "UBAR": 1,
+        "D": 1,
+        "DBAR": 1,
+        "S": 1,
+        "SBAR": 1,
+        "C": 1,
+        "CBAR": 1,
+        "B": 1,
+        "BBAR": 1,
+        "T": 1,
+        "TBAR": 1,
+    },
+    "V": {
+        "U": 1,
+        "UBAR": -1,
+        "D": 1,
+        "DBAR": -1,
+        "S": 1,
+        "SBAR": -1,
+        "C": 1,
+        "CBAR": -1,
+        "B": 1,
+        "BBAR": -1,
+        "T": 1,
+        "TBAR": -1,
+    },
+    "T3": {"U": 1, "UBAR": 1, "D": -1, "DBAR": -1},
+    "V3": {"U": 1, "UBAR": -1, "D": -1, "DBAR": 1},
+    "T8": {"U": 1, "UBAR": 1, "D": 1, "DBAR": 1, "S": -2, "SBAR": -2},
+    "V8": {"U": 1, "UBAR": -1, "D": 1, "DBAR": -1, "S": -2, "SBAR": +2},
+    "T15": {
+        "U": 1,
+        "UBAR": 1,
+        "D": 1,
+        "DBAR": 1,
+        "S": 1,
+        "SBAR": 1,
+        "C": -3,
+        "CBAR": -3,
+    },
+    "V15": {
+        "U": 1,
+        "UBAR": -1,
+        "D": 1,
+        "DBAR": -1,
+        "S": 1,
+        "SBAR": -1,
+        "C": -3,
+        "CBAR": +3,
+    },
+    "T24": {
+        "U": 1,
+        "UBAR": 1,
+        "D": 1,
+        "DBAR": 1,
+        "S": 1,
+        "SBAR": 1,
+        "C": 1,
+        "CBAR": 1,
+        "B": -4,
+        "BBAR": -4,
+    },
+    "V24": {
+        "U": 1,
+        "UBAR": -1,
+        "D": 1,
+        "DBAR": -1,
+        "S": 1,
+        "SBAR": -1,
+        "C": 1,
+        "CBAR": -1,
+        "B": -4,
+        "BBAR": +4,
+    },
+    "T35": {
+        "U": 1,
+        "UBAR": 1,
+        "D": 1,
+        "DBAR": 1,
+        "S": 1,
+        "SBAR": 1,
+        "C": 1,
+        "CBAR": 1,
+        "B": 1,
+        "BBAR": 1,
+        "T": -5,
+        "TBAR": -5,
+    },
+    "V35": {
+        "U": 1,
+        "UBAR": -1,
+        "D": 1,
+        "DBAR": -1,
+        "S": 1,
+        "SBAR": -1,
+        "C": 1,
+        "CBAR": -1,
+        "B": 1,
+        "BBAR": -1,
+        "T": -5,
+        "TBAR": +5,
+    },
+    "g": {"GLUON": 1},
+    "photon": {"PHT": 1},
+}
+
+# Construct the inverse transformation from evolution to export
+num_flav = len(FLAVOURS_ID_MAPPINGS)
+export_to_evolution_matrix = np.zeros((num_flav, num_flav))
+for i in range(num_flav):
+    j = 0
+    for flav in EXPORT_LABELS:
+        if flav in export_to_evolution[FLAVOURS_ID_MAPPINGS[i]].keys():
+            export_to_evolution_matrix[i, j] = export_to_evolution[
+                FLAVOURS_ID_MAPPINGS[i]
+            ][flav]
+        else:
+            export_to_evolution_matrix[i, j] = 0
+        j += 1
+
+evolution_to_export_matrix = np.linalg.inv(export_to_evolution_matrix)
