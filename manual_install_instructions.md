@@ -12,8 +12,8 @@ Now we need to do some manual stuff:
 Download the nnpdf repository. 
 We need to checkout to a specific commit where validphys was still a separate Python package.
 ```
-git checkout ce6c05c
 cd nnpdf/validphys2
+git checkout ce6c05c
 pip install -e .
 ```
 Do the same for reportengine, clone the repository and then
