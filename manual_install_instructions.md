@@ -1,5 +1,6 @@
 # Manual Installation w/o installing all of NNPDF
 
+First we need to create a conda environment with the following packages:
 ```
 mamba create -n colibri -y && mamba activate colibri
 mamba install python=3.10 jax=0.4.13 ml_dtypes optax=0.1.7 flax chex=0.1.83 -c conda-forge -y
@@ -25,15 +26,15 @@ pip install -e .
 ```
 Then continue:
 ```
-mkdir ~/miniforge3/envs/colibri/share/NNPDF
-cp nnpdf/libnnpdf/nnprofile.yaml.in ~/miniforge3/envs/colibri/share/NNPDF/nnprofile.yaml
-cd ~/miniforge3/envs/colibri/share/NNPDF
+mkdir ~/miniconda3/envs/colibri/share/NNPDF
+cp nnpdf/libnnpdf/nnprofile.yaml.in ~/miniconda3/envs/colibri/share/NNPDF/nnprofile.yaml
+cd ~/miniconda3/envs/colibri/share/NNPDF
 mkdir results
 cp -r nnpdf/nnpdfcpp/data .
 ```
 Modifying the paths at the beginning of nnprofile.yaml, e.g.
 ```
-data_path: '@PROFILE_PREFIX@/data/' ->  data_path: '/Users/luca/opt/miniconda3/envs/nnpdf-dev/share/NNPDF/data/'`
+data_path: '@PROFILE_PREFIX@/data/' ->  data_path: '/Users/YourUsername/miniconda3/envs/nnpdf-dev/share/NNPDF/data/'`
 ```
 
 Finally install colibri and the various models:
