@@ -117,6 +117,7 @@ def main():
 
         # Synchronize to ensure all processes have finished
         comm.Barrier()
+
         if rank == 0:
             log.info(
                 f"Evolution complete. Evolved grids can be found in {lhapdf_destination}."
