@@ -104,14 +104,16 @@ def main():
 
         genpdf.export.dump_info(lhapdf_destination, info)
 
+        # Create a list of replicas
+        replicas = [replica for replica in initial_PDFs_dict.items()]
+
+        # Sort the replicas
+        replicas = sorted(replicas, key=lambda x: int(x[0].split("_")[-1]))
+
         # Distribute replicas among processes
         local_replicas = [
-            replica
-            for i, replica in enumerate(initial_PDFs_dict.items())
-            if i % size == rank
+            replica for i, replica in enumerate(replicas) if i % size == rank
         ]
-
-        local_replicas = sorted(local_replicas, key=lambda x: int(x[0].split("_")[-1]))
 
         # Process local replicas
         for replica, pdf_data in local_replicas:
