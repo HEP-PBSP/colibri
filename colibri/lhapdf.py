@@ -12,7 +12,7 @@ import os
 import numpy as np
 import yaml
 
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import interp1d
 from colibri.constants import XGRID
 
 
@@ -67,12 +67,14 @@ def write_exportgrid(
     # Create the exportgrid
 
     if cubic_spline_interpolator:
-        lhapdf_interpolator = CubicSpline(
-            np.array(XGRID), pdf_model.grid_values_func(XGRID)(parameters).T
-        )
+        
+        # use the first and last points to fill the grid outside the range
+        fin, fend = pdf_model.grid_values_func(XGRID)(parameters)[:,0], pdf_model.grid_values_func(XGRID)(parameters)[:,-1]
+        lhapdf_interpolator = interp1d(np.array(XGRID), pdf_model.grid_values_func(XGRID)(parameters), kind='quadratic', 
+                                       bounds_error=False, fill_value=(fin, fend))
 
         # Rotate the grid from the evolution basis into the export grid basis
-        grid_for_writing = np.array(lhapdf_interpolator(LHAPDF_XGRID)).T
+        grid_for_writing = np.array(lhapdf_interpolator(LHAPDF_XGRID))
         grid_for_writing = evolution_to_export_matrix @ grid_for_writing
         grid_for_writing = grid_for_writing.T.tolist()
 
