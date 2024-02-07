@@ -64,6 +64,7 @@ class colibriConfig(Config):
             "Run_settings",
             "SliceSampler_settings",
             "ultranest_seed",
+            "sampler_plot",
         }
 
         kdiff = settings.keys() - known_keys
@@ -90,6 +91,9 @@ class colibriConfig(Config):
         ns_settings["Run_settings"] = settings.get("Run_settings", {})
         ns_settings["SliceSampler_settings"] = settings.get("SliceSampler_settings", {})
 
+        # set sampler plot to True by default
+        ns_settings["sampler_plot"] = settings.get("sampler_plot", True)
+        
         # Check that the ReactiveNS_settings key was provided, if not set to default
         if ns_settings["ReactiveNS_settings"]:
             # Set the directory where the ultranest logs will be stored; by default
