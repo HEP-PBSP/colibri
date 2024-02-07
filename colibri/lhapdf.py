@@ -76,7 +76,7 @@ def write_exportgrid(
         lhapdf_interpolator = interp1d(
             np.array(XGRID),
             pdf_model.grid_values_func(XGRID)(parameters),
-            kind="quadratic",
+            kind="cubic",
             bounds_error=False,
             fill_value=(fin, fend),
         )
