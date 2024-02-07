@@ -9,7 +9,10 @@ Date: 07.02.2024
 import jax.numpy as jnp
 from dataclasses import dataclass
 
-from colibri.utils import training_validation_split, TrainValidationSplit
+from colibri.mc_training_validation import (
+    training_validation_split,
+    TrainValidationSplit,
+)
 
 
 @dataclass(frozen=True)
