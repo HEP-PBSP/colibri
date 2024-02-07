@@ -13,6 +13,7 @@ import jax.numpy as jnp
 from dataclasses import dataclass, asdict
 
 from colibri.constants import XGRID
+from colibri.mc_training_validation import PosdataTrainValidationSplit
 from validphys import convolution
 
 
@@ -97,3 +98,37 @@ def closure_test_central_pdf_grid(closure_test_pdf_grid):
     Returns the central replica of the closure test pdf grid.
     """
     return closure_test_pdf_grid[0]
+
+
+def posdata_split(posdatasets):
+    """
+    Function for positivity split.
+
+    Parameters
+    ----------
+    posdatasets: list
+        list of positivity datasets, see also validphys.config.parse_posdataset.
+
+    Returns
+    -------
+    PosdataTrainValidationSplit
+        dataclass
+
+    """
+
+    ndata_pos = jnp.sum(
+        jnp.array(
+            [
+                pos_ds.load_commondata().with_cuts(pos_ds.cuts).ndata
+                for pos_ds in posdatasets
+            ]
+        )
+    )
+    indices = jnp.arange(ndata_pos)
+
+    return PosdataTrainValidationSplit(
+        training=indices,
+        validation=None,
+        n_training=len(indices),
+        n_validation=None,
+    )

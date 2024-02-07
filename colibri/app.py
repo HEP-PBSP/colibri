@@ -33,7 +33,6 @@ colibri_providers = [
     "colibri.monte_carlo_fit",
     "colibri.analytic_fit",
     "colibri.pdf_model",
-    "colibri.positivity",
     "reportengine.report",
 ]
 
