@@ -58,10 +58,10 @@ class GridPDFModel(PDFModel):
         ----------
         interpolation_grid: list
             The grid to interpolate to.
-        
+
         vectorized: bool, default is False
             Whether to use vectorized weights.
-        
+
         Returns
         -------
         interp_func: @jax.jit CompiledFunction
