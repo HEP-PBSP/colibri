@@ -63,13 +63,19 @@ class GridPDFModel(PDFModel):
                 reshaped_y = y.reshape(
                     (
                         len(self.flavour_indices),
-                        len(self.xgrids[self.fitted_flavours[0]]),  # only works if all xgrids have the same length
+                        len(
+                            self.xgrids[self.fitted_flavours[0]]
+                        ),  # only works if all xgrids have the same length
                     )
                 )
-                
+
                 out = jnp.array(
                     [
-                        jnp.interp(jnp.array(interpolation_grid), jnp.array(self.xgrids[flavour]), reshaped_y[i, :])
+                        jnp.interp(
+                            jnp.array(interpolation_grid),
+                            jnp.array(self.xgrids[flavour]),
+                            reshaped_y[i, :],
+                        )
                         for i, flavour in enumerate(self.fitted_flavours)
                     ]
                 )
@@ -96,9 +102,10 @@ class GridPDFModel(PDFModel):
 
                 return input_grid
 
-            return interp_func 
+            return interp_func
 
         else:
+
             @jax.jit
             def interp_func(params):
                 # Perform the interpolation for each flavour in turn
