@@ -57,7 +57,7 @@ class WMinPDF(PDFModel):
     def param_names(self):
         return [f"w_{i+1}" for i in range(self.n_basis)]
 
-    def grid_values_func(self, interpolation_grid):
+    def grid_values_func(self, interpolation_grid, vectorized=False):
         """
         This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
