@@ -14,7 +14,7 @@ from colibri.pdf_model import PDFModel
 from colibri.constants import XGRID
 
 
-def pdf_model(flavour_xgrids, flavour_indices, vectorized):
+def pdf_model(flavour_xgrids, flavour_indices, vectorized=False):
     return GridPDFModel(flavour_xgrids, flavour_indices, vectorized)
 
 
@@ -24,9 +24,8 @@ class GridPDFModel(PDFModel):
     xgrids: dict
     param_names: list
 
-    def __init__(self, flavour_xgrids, flavour_indices, vectorized):
+    def __init__(self, flavour_xgrids, flavour_indices):
         self.xgrids = flavour_xgrids
-        self.vectorized = vectorized
         self.flavour_indices = flavour_indices
 
     @property
@@ -50,12 +49,12 @@ class GridPDFModel(PDFModel):
                 flavours += [flavour]
         return flavours
 
-    def grid_values_func(self, interpolation_grid):
+    def grid_values_func(self, interpolation_grid, vectorized=False):
         """This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
         """
 
-        if self.vectorized:
+        if vectorized:
             # Function to perform interpolation for a single grid
             @jax.jit
             def interpolate_flavors(y):
