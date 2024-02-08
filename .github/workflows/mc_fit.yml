@@ -56,7 +56,9 @@ jobs:
       run: |
         conda activate test
         for i in {1..5}; do grid_pdf colibri/tests/test_runcards/test_grid_pdf_mc_L0.yaml -o PR_grid_pdf_mc_L0 -rep $i; done
+        for i in {1..5}; do wmin colibri/tests/test_runcards/test_wmin_mc_L0.yaml -o PR_wmin_mc_L0 -rep $i; done
         mc_postfit PR_grid_pdf_mc_L0 -t 5 -c 100
+        mc_postfit PR_wmin_mc_L0 -t 5 -c 100
     
     - name: Checkout main branch
       uses: actions/checkout@v3
@@ -69,7 +71,9 @@ jobs:
       run: |
         conda activate test
         for i in {1..5}; do grid_pdf colibri/tests/test_runcards/test_grid_pdf_mc_L0.yaml -o main_grid_pdf_mc_L0 -rep $i; done
+        for i in {1..5}; do wmin colibri/tests/test_runcards/test_wmin_mc_L0.yaml -o main_wmin_mc_L0 -rep $i; done
         mc_postfit main_grid_pdf_mc_L0 -t 5 -c 100
+        mc_postfit main_wmin_mc_L0 -t 5 -c 100
     
     - name: Compare MC results
       run: |
@@ -77,13 +81,27 @@ jobs:
         if [ -f PR_grid_pdf_mc_L0/mc_result.csv ] && [ -f main_grid_pdf_mc_L0/mc_result.csv ]; then
         # Perform the diff only if both files exist
         if diff PR_grid_pdf_mc_L0/mc_result.csv main_grid_pdf_mc_L0/mc_result.csv &> /dev/null; then
-            echo "Files are identical"
+            echo "grid_pdf fits are identical"
         else
-            echo "Files are different"
+            echo "grid_pdf fits are different"
             exit 1  # Fail the test by exiting with a non-zero code
         fi
         else
-        echo "One or both files do not exist"
+        echo "One or both files do not exist: grid_pdf"
+        exit 1  # Fail the test by exiting with a non-zero code
+        fi
+
+        # Check if files exist
+        if [ -f PR_wmin_mc_L0/mc_result.csv ] && [ -f main_wmin_mc_L0/mc_result.csv ]; then
+        # Perform the diff only if both files exist
+        if diff PR_wmin_mc_L0/mc_result.csv main_wmin_mc_L0/mc_result.csv &> /dev/null; then
+            echo "wmin fits are identical"
+        else
+            echo "wmin fits are different"
+            exit 1  # Fail the test by exiting with a non-zero code
+        fi
+        else
+        echo "One or both files do not exist: wmin"
         exit 1  # Fail the test by exiting with a non-zero code
         fi
 
