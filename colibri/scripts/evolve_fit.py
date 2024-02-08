@@ -99,8 +99,10 @@ def main():
 
         # If no LHAPDF folder exists, create one
         lhapdf_destination = lhapdf_path() + "/" + args.fit_name
-        if not os.path.exists(lhapdf_destination):
+        if rank == 0 and not os.path.exists(lhapdf_destination):
             os.mkdir(lhapdf_destination)
+        # Synchronize to ensure all processes have finished
+        comm.Barrier()
 
         genpdf.export.dump_info(lhapdf_destination, info)
 
