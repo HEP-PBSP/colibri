@@ -46,6 +46,7 @@ def analytic_fit(
     pdf_model,
     analytic_settings,
     output_path,
+    reorder_samples=False,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -110,6 +111,17 @@ def analytic_fit(
     )
     t1 = time.time()
     log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
+
+    # If reorder_samples is on, smooth out everything. This breaks any
+    # correlations in the model, but preserves the marginal distributions
+    # which are usually the only things that are quoted.
+    if reorder_samples:
+        samples = samples.T
+        new_samples = []
+        for sample in samples:
+            new_samples += [jnp.sort(sample)]
+        new_samples = jnp.array(new_samples)
+        samples = new_samples.T
 
     # Save the results
     df = pd.DataFrame(samples, columns=parameters)
