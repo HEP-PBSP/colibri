@@ -76,9 +76,9 @@ jobs:
     - name: Compare NS results
       run: |
         # Check if files exist
-        if [ -f PR_grid_pdf_bayes_L0/ns_results.csv ] && [ -f main_grid_pdf_bayes_L0/ns_results.csv ]; then
+        if [ -f PR_grid_pdf_bayes_L0/ns_result.csv ] && [ -f main_grid_pdf_bayes_L0/ns_result.csv ]; then
         # Perform the diff only if both files exist
-        if diff PR_grid_pdf_bayes_L0/ns_results.csv main_grid_pdf_bayes_L0/ns_results.csv &> /dev/null; then
+        if diff PR_grid_pdf_bayes_L0/ns_result.csv main_grid_pdf_bayes_L0/ns_result.csv &> /dev/null; then
             echo "Files are identical"
         else
             echo "Files are different"
