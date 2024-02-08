@@ -73,6 +73,18 @@ class WMinPDF(PDFModel):
             - the central replica of the wminpdfset is always included in the
                 wmin parametrization
 
+        Parameters
+        ----------
+        interpolation_grid: jnp.array
+            The grid used in the fit.
+        
+        vectorized: bool, default is False
+            Whether to use vectorized weights.
+        
+        Returns
+        -------
+        wmin_param: @jax.jit CompiledFunction
+            The wmin parameterisation function.
         """
 
         input_grid = jnp.array(

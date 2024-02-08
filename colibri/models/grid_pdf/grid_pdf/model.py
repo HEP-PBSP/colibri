@@ -50,8 +50,22 @@ class GridPDFModel(PDFModel):
         return flavours
 
     def grid_values_func(self, interpolation_grid, vectorized=False):
-        """This function should produce a grid values function, which takes
+        """
+        This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
+
+        Parameters
+        ----------
+        interpolation_grid: list
+            The grid to interpolate to.
+        
+        vectorized: bool, default is False
+            Whether to use vectorized weights.
+        
+        Returns
+        -------
+        interp_func: @jax.jit CompiledFunction
+            The interpolation function.
         """
 
         if vectorized:
