@@ -73,7 +73,6 @@ jobs:
     
     - name: Compare NS results
       run: |
-        conda activate test
         # Check if files exist
         if [ -f PR_grid_pdf_bayes_L0/ns_results.csv ] && [ -f main_grid_pdf_bayes_L0/ns_results.csv ]; then
         # Perform the diff only if both files exist
