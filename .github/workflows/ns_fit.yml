@@ -56,6 +56,7 @@ jobs:
       run: |
         conda activate test
         grid_pdf colibri/tests/test_runcards/test_grid_pdf_bayes_L0.yaml -o PR_grid_pdf_bayes_L0
+        wmin colibri/tests/test_runcards/test_wmin_bayes_L0.yaml -o PR_wmin_bayes_L0
     
     - name: Checkout main branch
       uses: actions/checkout@v3
@@ -68,6 +69,7 @@ jobs:
       run: |
         conda activate test
         grid_pdf colibri/tests/test_runcards/test_grid_pdf_bayes_L0.yaml -o main_grid_pdf_bayes_L0
+        wmin colibri/tests/test_runcards/test_wmin_bayes_L0.yaml -o main_wmin_bayes_L0
     
     - name: Compare NS results
       run: |
@@ -75,13 +77,27 @@ jobs:
         if [ -f PR_grid_pdf_bayes_L0/ns_result.csv ] && [ -f main_grid_pdf_bayes_L0/ns_result.csv ]; then
         # Perform the diff only if both files exist
         if diff PR_grid_pdf_bayes_L0/ns_result.csv main_grid_pdf_bayes_L0/ns_result.csv &> /dev/null; then
-            echo "Files are identical"
+            echo "grid_pdf fits are identical"
         else
-            echo "Files are different"
+            echo "grid_pdf fits are different"
             exit 1  # Fail the test by exiting with a non-zero code
         fi
         else
-        echo "One or both files do not exist"
+        echo "One or both files do not exist: grid_pdf"
+        exit 1  # Fail the test by exiting with a non-zero code
+        fi
+
+        # Check if files exist
+        if [ -f PR_wmin_bayes_L0/ns_result.csv ] && [ -f main_wmin_bayes_L0/ns_result.csv ]; then
+        # Perform the diff only if both files exist
+        if diff PR_wmin_bayes_L0/ns_result.csv main_wmin_bayes_L0/ns_result.csv &> /dev/null; then
+            echo "wmin fits are identical"
+        else
+            echo "wmin fits are different"
+            exit 1  # Fail the test by exiting with a non-zero code
+        fi
+        else
+        echo "One or both files do not exist: wmin"
         exit 1  # Fail the test by exiting with a non-zero code
         fi
 
