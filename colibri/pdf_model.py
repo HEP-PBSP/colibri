@@ -17,7 +17,7 @@ class PDFModel(ABC):
         pass
 
     @abstractmethod
-    def grid_values_func(self, xgrid):
+    def grid_values_func(self, xgrid, vectorized=False):
         """This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
         """
