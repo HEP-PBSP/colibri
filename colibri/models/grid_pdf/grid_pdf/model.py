@@ -11,10 +11,11 @@ from validphys import convolution
 from validphys.core import PDF
 
 from colibri.pdf_model import PDFModel
+from colibri.constants import XGRID
 
 
-def pdf_model(flavour_xgrids):
-    return GridPDFModel(flavour_xgrids)
+def pdf_model(flavour_xgrids, flavour_indices, vectorized):
+    return GridPDFModel(flavour_xgrids, flavour_indices, vectorized)
 
 
 class GridPDFModel(PDFModel):
@@ -23,8 +24,10 @@ class GridPDFModel(PDFModel):
     xgrids: dict
     param_names: list
 
-    def __init__(self, flavour_xgrids):
+    def __init__(self, flavour_xgrids, flavour_indices, vectorized):
         self.xgrids = flavour_xgrids
+        self.vectorized = vectorized
+        self.flavour_indices = flavour_indices
 
     @property
     def param_names(self):
@@ -52,23 +55,67 @@ class GridPDFModel(PDFModel):
         in the model parameters, and produces the PDF values on the grid xgrid.
         """
 
-        @jax.jit
-        def interp_func(params):
-            # Perform the interpolation for each flavour in turn
-            interpolants = []
-            for flavour in convolution.FK_FLAVOURS:
-                if flavour in self.fitted_flavours:
-                    interpolants += [
-                        jnp.interp(
-                            jnp.array(interpolation_grid),
-                            jnp.array(self.xgrids[flavour]),
-                            jnp.array(params[: len(self.xgrids[flavour])]),
-                        )
+        if self.vectorized:
+            # Function to perform interpolation for a single grid
+            # @jax.jit
+            def interpolate_flavors(y):
+                # import IPython; IPython.embed()
+                reshaped_y = y.reshape(
+                    (
+                        len(self.flavour_indices),
+                        len(self.xgrids[self.fitted_flavours[0]]),  # only works if all xgrids have the same length
+                    )
+                )
+                
+                out = jnp.array(
+                    [
+                        jnp.interp(jnp.array(interpolation_grid), jnp.array(self.xgrids[flavour]), reshaped_y[i, :])
+                        for i, flavour in enumerate(self.fitted_flavours)
                     ]
-                else:
-                    interpolants += [jnp.array([0.0] * len(interpolation_grid))]
-                params = params[len(self.xgrids[flavour]) :]
-            return jnp.array(interpolants)
+                )
+                return out
+
+            @jax.jit
+            def interp_func(stacked_pdf_grid):
+                # generate an empty matrix of shape (:, valipdhys.convolution.NFK, len(super_net.constants.XGRID),)
+                input_grid = jnp.zeros(
+                    (
+                        stacked_pdf_grid.shape[0],
+                        convolution.NFK,
+                        len(XGRID),
+                    )
+                )
+
+                pdf_interp = jnp.apply_along_axis(
+                    interpolate_flavors,
+                    axis=-1,
+                    arr=stacked_pdf_grid,
+                )
+
+                input_grid = input_grid.at[:, self.flavour_indices, :].set(pdf_interp)
+
+                return input_grid
+
+            return interp_func 
+
+        else:
+            @jax.jit
+            def interp_func(params):
+                # Perform the interpolation for each flavour in turn
+                interpolants = []
+                for flavour in convolution.FK_FLAVOURS:
+                    if flavour in self.fitted_flavours:
+                        interpolants += [
+                            jnp.interp(
+                                jnp.array(interpolation_grid),
+                                jnp.array(self.xgrids[flavour]),
+                                jnp.array(params[: len(self.xgrids[flavour])]),
+                            )
+                        ]
+                    else:
+                        interpolants += [jnp.array([0.0] * len(interpolation_grid))]
+                    params = params[len(self.xgrids[flavour]) :]
+                return jnp.array(interpolants)
 
         return interp_func
 
