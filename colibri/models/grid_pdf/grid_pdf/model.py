@@ -63,7 +63,7 @@ class GridPDFModel(PDFModel):
             The grid to interpolate to.
 
         vectorized: bool, default is False
-            Whether to use vectorized weights.
+            Whether to use vectorized parameters.
 
         Returns
         -------
