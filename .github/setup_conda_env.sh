@@ -1,6 +1,6 @@
 #!/bin/bash
 
-conda init bash
+source $(conda info --base)/etc/profile.d/conda.sh
 conda activate test
 conda install nnpdf -y
 conda install mpi4py -y
