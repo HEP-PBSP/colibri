@@ -41,7 +41,7 @@ class AnalyticFit:
 
 
 def analytic_fit(
-    central_covmat_index,
+    _data_values,
     _pred_data,
     pdf_model,
     analytic_settings,
@@ -52,8 +52,8 @@ def analytic_fit(
 
     Parameters
     ----------
-    central_covmat_index: commondata_utils.CentralCovmatIndex
-        dataclass containing central values and covmat.
+    _data_values: MakeDataValues
+        Data values for the fit.
 
     _pred_data: @jax.jit CompiledFunction
         Prediction function for the fit.
@@ -77,8 +77,10 @@ def analytic_fit(
     predictions = jnp.array([_pred_data(pdf_basis) for pdf_basis in pdf_bases])
 
     # Construct the analytic solution
-    central_values = central_covmat_index.central_values
-    covmat = central_covmat_index.covmat
+    training_data = _data_values.training_data
+    central_values = training_data.central_values
+    covmat = training_data.covmat
+    central_values_idx = training_data.central_values_idx
 
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
@@ -86,7 +88,7 @@ def analytic_fit(
     # Solve chi2 analytically for the mean
     Y = central_values
     Sigma = inv_covmat
-    X = predictions.T
+    X = (predictions[:, central_values_idx]).T
 
     t0 = time.time()
     sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
