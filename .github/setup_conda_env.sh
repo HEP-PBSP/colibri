@@ -1,5 +1,6 @@
 #!/bin/bash
 
+conda init bash
 conda activate test
 conda install nnpdf -y
 conda install mpi4py -y

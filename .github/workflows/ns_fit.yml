@@ -37,6 +37,7 @@ jobs:
         conda activate test
         conda install boa --yes
     - name: Install dependencies
+      shell: bash -l {0}
       run: |
         ./.github/setup_conda_env.sh
 
