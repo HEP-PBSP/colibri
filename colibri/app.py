@@ -24,7 +24,7 @@ colibri_providers = [
     "colibri.data_batch",
     "colibri.utils",
     "colibri.commondata_utils",
-    "colibri.training_validation",
+    "colibri.mc_training_validation",
     "colibri.covmats",
     "colibri.plots_and_tables.plotting",
     "colibri.provider_aliases",
