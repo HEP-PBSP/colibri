@@ -53,6 +53,7 @@ jobs:
         flit install --symlink
         cd ../grid_pdf
         flit install --symlink
+    
     - name: Run grid_pdf NS fit
       shell: bash -l {0}
       run: |
