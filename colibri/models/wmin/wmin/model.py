@@ -77,10 +77,10 @@ class WMinPDF(PDFModel):
         ----------
         interpolation_grid: jnp.array
             The grid used in the fit.
-        
+
         vectorized: bool, default is False
             Whether to use vectorized weights.
-        
+
         Returns
         -------
         wmin_param: @jax.jit CompiledFunction
@@ -119,25 +119,25 @@ class WMinPDF(PDFModel):
         )
 
         if vectorized:
+
             @jax.jit
             def wmin_param(weights):
                 """
                 Wmin parameterisation for vectorized weights.
                 """
                 wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
-                pdf = jnp.einsum(
-                    "ri,ijk -> rjk", wmin_weights, wmin_input_grid
-                )
+                pdf = jnp.einsum("ri,ijk -> rjk", wmin_weights, wmin_input_grid)
 
                 return pdf
 
         else:
+
             @jax.jit
             def wmin_param(weights):
                 weights = jnp.concatenate((jnp.array([1.0]), jnp.array(weights)))
                 pdf = jnp.einsum("i,ijk", weights, wmin_input_grid)
                 return pdf
-            
+
         return wmin_param
 
 
