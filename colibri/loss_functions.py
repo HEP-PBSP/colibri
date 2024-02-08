@@ -12,7 +12,7 @@ import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
 
-def make_chi2(central_covmat_index, _pred_data, vectorized=False):
+def make_chi2(_data_values, _pred_data, vectorized=False):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on a dataset.
@@ -24,8 +24,8 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
 
     Parameters
     ----------
-    central_covmat_index: commondata_utils.CentralCovmatIndex class
-        dataclass containing central values and covmat.
+    _data_values: training_validation.MakeDataValues
+        dataclass containing data for training and validation.
 
     _pred_data: theory_predictions._pred_data
         colibri provider for (fktable) theory predictions.
@@ -38,8 +38,10 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
         function to compute chi2 of a pdf grid.
 
     """
-    central_values = central_covmat_index.central_values
-    covmat = central_covmat_index.covmat
+    training_data = _data_values.training_data
+    central_values = training_data.central_values
+    covmat = training_data.covmat
+    central_values_idx = training_data.central_values_idx
 
     # Invert the covmat
     # We use this instead of Cholesky decomposition
@@ -51,7 +53,7 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = _pred_data(pdf) - central_values
+            diff = _pred_data(pdf)[:, central_values_idx] - central_values
 
             loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
 
@@ -62,7 +64,7 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = _pred_data(pdf) - central_values
+            diff = _pred_data(pdf)[central_values_idx] - central_values
 
             loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
@@ -72,8 +74,9 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
 
 
 def make_chi2_with_positivity(
-    central_covmat_index,
+    _data_values,
     _pred_data,
+    _posdata_split,
     _penalty_posdata,
     alpha=1e-7,
     lambda_positivity=1000,
@@ -88,11 +91,14 @@ def make_chi2_with_positivity(
 
     Parameters
     ----------
-    central_covmat_index: commondata_utils.CentralCovmatIndex class
-        dataclass containing central values and covmat.
+    _data_values: training_validation.MakeDataValues
+        dataclass containing data for training and validation.
 
     _pred_data: theory_predictions._pred_data
         colibri provider for (fktable) theory predictions.
+
+    _posdata_split: training_validation.PosdataTrainValidationSplit
+        dataclass inheriting from utils.TrainValidationSplit
 
     _penalty_posdata: theory_predictions._penalty_posdata
         colibri provider used to compute positivity penalty.
@@ -109,23 +115,29 @@ def make_chi2_with_positivity(
         function to compute chi2 of a pdf grid.
 
     """
-    central_values = central_covmat_index.central_values
-    covmat = central_covmat_index.covmat
+    training_data = _data_values.training_data
+    central_values = training_data.central_values
+    covmat = training_data.covmat
+    central_values_idx = training_data.central_values_idx
 
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
+
+    posdata_training_idx = _posdata_split.training
 
     if vectorized:
 
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = _pred_data(pdf) - central_values
+            diff = _pred_data(pdf)[:, central_values_idx] - central_values
 
             loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
 
             # add penalty term due to positivity
-            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)
+            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
+                :, posdata_training_idx
+            ]
 
             loss += jnp.sum(pos_penalty, axis=-1)
 
@@ -136,12 +148,14 @@ def make_chi2_with_positivity(
         @jax.jit
         def chi2(pdf):
             """ """
-            diff = _pred_data(pdf) - central_values
+            diff = _pred_data(pdf)[central_values_idx] - central_values
 
             loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
             # add penalty term due to positivity
-            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)
+            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
+                posdata_training_idx
+            ]
 
             loss += jnp.sum(pos_penalty)
 
