@@ -57,9 +57,9 @@ class GridPDFModel(PDFModel):
 
         if self.vectorized:
             # Function to perform interpolation for a single grid
-            # @jax.jit
+            @jax.jit
             def interpolate_flavors(y):
-                # import IPython; IPython.embed()
+                
                 reshaped_y = y.reshape(
                     (
                         len(self.flavour_indices),
