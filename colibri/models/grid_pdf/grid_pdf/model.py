@@ -58,7 +58,7 @@ class GridPDFModel(PDFModel):
             # Function to perform interpolation for a single grid
             @jax.jit
             def interpolate_flavors(y):
-                
+
                 reshaped_y = y.reshape(
                     (
                         len(self.flavour_indices),
