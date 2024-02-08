@@ -51,7 +51,7 @@ jobs:
         cd ../grid_pdf
         flit install --symlink
     
-    - name: Run grid_pdf NS fit
+    - name: Run NS fit
       shell: bash -l {0}
       run: |
         conda activate test
@@ -64,7 +64,7 @@ jobs:
         ref: main
         clean: false
     
-    - name: Run grid_pdf NS fit in main
+    - name: Run NS fit in main
       shell: bash -l {0}
       run: |
         conda activate test
