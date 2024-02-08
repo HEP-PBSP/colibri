@@ -11,7 +11,6 @@ from validphys import convolution
 from validphys.core import PDF
 
 from colibri.pdf_model import PDFModel
-from colibri.constants import XGRID
 
 import logging
 
@@ -115,7 +114,7 @@ class GridPDFModel(PDFModel):
                     (
                         stacked_pdf_grid.shape[0],
                         convolution.NFK,
-                        len(XGRID),
+                        len(interpolation_grid),
                     )
                 )
 
