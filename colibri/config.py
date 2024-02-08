@@ -140,7 +140,8 @@ class colibriConfig(Config):
         return ns_settings
 
     def produce_vectorized(self, ns_settings):
-        """Returns True if the fit is vectorized, False otherwise."""
+        """Returns True if the fit is vectorized, False otherwise. This is required for the predictions functions, which
+        do not take ns_settings as an argument."""
         return ns_settings["ReactiveNS_settings"]["vectorized"]
 
     @explicit_node
