@@ -39,12 +39,8 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        conda activate test
-        conda install nnpdf -y
-        conda install mpi4py -y
-        python -m pip install --upgrade pip
-        python -m pip install flake8 pytest ultranest jax optax flax flit
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        ./.github/setup_conda_env.sh
+
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
