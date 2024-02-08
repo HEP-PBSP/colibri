@@ -14,8 +14,8 @@ from colibri.pdf_model import PDFModel
 from colibri.constants import XGRID
 
 
-def pdf_model(flavour_xgrids, flavour_indices, vectorized=False):
-    return GridPDFModel(flavour_xgrids, flavour_indices, vectorized)
+def pdf_model(flavour_xgrids, flavour_indices):
+    return GridPDFModel(flavour_xgrids, flavour_indices)
 
 
 class GridPDFModel(PDFModel):

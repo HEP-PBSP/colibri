@@ -92,7 +92,7 @@ def ultranest_fit(
     parameters = pdf_model.param_names
 
     fit_grid_values_func = pdf_model.grid_values_func(
-        XGRID, vectorized=ns_settings["vectorized"]
+        XGRID, vectorized=ns_settings["ReactiveNS_settings"]["vectorized"]
     )
 
     @jax.jit
