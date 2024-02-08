@@ -1,6 +1,6 @@
-# This workflow tests that the NS fit in main and the one in the PR are consistent
+# This workflow tests that the MC fit in main and the one in the PR are consistent
 
-name: Nested Sampling CI
+name: Monte Carlo CI
 
 on:
   pull_request:
@@ -51,11 +51,12 @@ jobs:
         cd ../grid_pdf
         flit install --symlink
     
-    - name: Run grid_pdf NS fit
+    - name: Run grid_pdf MC fit
       shell: bash -l {0}
       run: |
         conda activate test
-        grid_pdf colibri/tests/test_runcards/test_grid_pdf_bayes_L0.yaml -o PR_grid_pdf_bayes_L0
+        for i in {1..5}; do grid_pdf colibri/tests/test_runcards/test_grid_pdf_mc_L0.yaml -o PR_grid_pdf_mc_L0 -rep $i; done
+        mc_postfit PR_grid_pdf_mc_L0 -t 5 -c 100
     
     - name: Checkout main branch
       uses: actions/checkout@v3
@@ -63,18 +64,19 @@ jobs:
         ref: main
         clean: false
     
-    - name: Run grid_pdf NS fit in main
+    - name: Run grid_pdf MC fit in main
       shell: bash -l {0}
       run: |
         conda activate test
-        grid_pdf colibri/tests/test_runcards/test_grid_pdf_bayes_L0.yaml -o main_grid_pdf_bayes_L0
+        for i in {1..5}; do grid_pdf colibri/tests/test_runcards/test_grid_pdf_mc_L0.yaml -o main_grid_pdf_mc_L0 -rep $i; done
+        mc_postfit main_grid_pdf_mc_L0 -t 5 -c 100
     
-    - name: Compare NS results
+    - name: Compare MC results
       run: |
         # Check if files exist
-        if [ -f PR_grid_pdf_bayes_L0/ns_result.csv ] && [ -f main_grid_pdf_bayes_L0/ns_result.csv ]; then
+        if [ -f PR_grid_pdf_mc_L0/mc_result.csv ] && [ -f main_grid_pdf_mc_L0/mc_result.csv ]; then
         # Perform the diff only if both files exist
-        if diff PR_grid_pdf_bayes_L0/ns_result.csv main_grid_pdf_bayes_L0/ns_result.csv &> /dev/null; then
+        if diff PR_grid_pdf_mc_L0/mc_result.csv main_grid_pdf_mc_L0/mc_result.csv &> /dev/null; then
             echo "Files are identical"
         else
             echo "Files are different"
