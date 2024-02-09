@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  CACHE_NUMBER: 0  # increase to reset cache manually
+
 jobs:
   build:
 
@@ -21,15 +24,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Cache Conda packages
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.conda/pkgs
-          ~/.conda/envs
-        key: conda-${{ runner.os }}-${{ hashFiles('**/environment.yml') }}
-        restore-keys: |
-          conda-${{ runner.os }}-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -38,26 +32,28 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Config Conda
-      shell: bash -l {0}
-      run: |
-        echo "$NETRC_FILE" | base64 --decode > ~/.netrc
-        conda install -n base conda-libmamba-solver
-        conda config --set solver libmamba
-        conda config --append channels conda-forge
-        conda config --prepend channels https://packages.nnpdf.science/public
-        conda config --set show_channel_urls true
-        conda activate test
-        conda install boa --yes
-    - name: Install dependencies
-      shell: bash -l {0}
-      run: |
-        ./.github/setup_conda_env.sh
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        activate-environment: colibri-dev
+        use-mamba: true    
+    
+    - name: Set cache date
+      run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+    
+    - name: Cache Conda packages
+      uses: actions/cache@v2
+      with:
+        path: ${{ matrix.prefix }}
+        key: ${{ matrix.label }}-conda-${{ hashFiles('environment.yml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
+      id: cache
+    
+    - name: Update environment
+      run: mamba env update -n colibri-env -f environment.yml
+      if: steps.cache.outputs.cache-hit != 'true'
 
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
-        conda activate test
         flit install --symlink
         cd colibri/models/wmin
         flit install --symlink
@@ -66,7 +62,6 @@ jobs:
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
-        conda activate test
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
@@ -74,5 +69,4 @@ jobs:
     - name: Test with pytest
       shell: bash -l {0}
       run: |
-        conda activate test
         pytest
