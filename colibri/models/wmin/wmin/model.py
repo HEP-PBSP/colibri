@@ -118,26 +118,14 @@ class WMinPDF(PDFModel):
             (input_grid[jnp.newaxis, wmin_central_replica], wmin_input_grid)
         )
 
+        @jax.jit
+        def wmin_param(weights):
+            weights = jnp.concatenate((jnp.array([1.0]), jnp.array(weights)))
+            pdf = jnp.einsum("i,ijk", weights, wmin_input_grid)
+            return pdf
+
         if vectorized:
-
-            @jax.jit
-            def wmin_param(weights):
-                """
-                Wmin parameterisation for vectorized weights.
-                """
-                wmin_weights = jnp.c_[jnp.ones(weights.shape[0]), weights]
-                pdf = jnp.einsum("ri,ijk -> rjk", wmin_weights, wmin_input_grid)
-
-                return pdf
-
-        else:
-
-            @jax.jit
-            def wmin_param(weights):
-                weights = jnp.concatenate((jnp.array([1.0]), jnp.array(weights)))
-                pdf = jnp.einsum("i,ijk", weights, wmin_input_grid)
-                return pdf
-
+            return jnp.vectorize(wmin_param, signature="(n)->(m,k)")
         return wmin_param
 
 
