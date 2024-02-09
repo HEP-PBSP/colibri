@@ -29,6 +29,8 @@ from validphys.lhio import generate_replica0
 
 from reportengine import colors
 
+from mpi4py import MPI
+
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
@@ -37,6 +39,19 @@ log.addHandler(colors.ColorHandler())
 def lhapdf_path():
     """Returns the path to the share/LHAPDF directory"""
     return lhapdf.paths()[0]
+
+
+def process_replica(replica, pdf_data, eko_op, lhapdf_destination):
+    evolved_blocks = evolve_exportgrid(pdf_data, eko_op, LHAPDF_XGRID)
+    replica_num = replica.removeprefix("replica_")
+    genpdf.export.dump_blocks(
+        Path(lhapdf_destination),
+        int(replica_num),
+        evolved_blocks,
+        pdf_type=f"PdfType: replica\nFromMCReplica: {replica_num}\n",
+    )
+
+    log.info(f"Evolved replica {replica_num}.")
 
 
 def main():
@@ -48,6 +63,10 @@ def main():
     with open(args.fit_name + "/input/runcard.yaml", "r") as file:
         runcard = yaml.safe_load(file)
     theoryid = runcard["theoryid"]
+
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
 
     eko_path = (Loader().check_theoryID(theoryid).path) / "eko.tar"
 
@@ -80,31 +99,40 @@ def main():
 
         # If no LHAPDF folder exists, create one
         lhapdf_destination = lhapdf_path() + "/" + args.fit_name
-        if not os.path.exists(lhapdf_destination):
+        if rank == 0 and not os.path.exists(lhapdf_destination):
             os.mkdir(lhapdf_destination)
+        # Synchronize to ensure all processes have finished
+        comm.Barrier()
 
         genpdf.export.dump_info(lhapdf_destination, info)
 
-        for i, (replica, pdf_data) in enumerate(initial_PDFs_dict.items()):
-            evolved_blocks = evolve_exportgrid(pdf_data, eko_op, LHAPDF_XGRID)
-            replica_num = replica.removeprefix("replica_")
-            genpdf.export.dump_blocks(
-                Path(lhapdf_destination),
-                int(replica_num),
-                evolved_blocks,
-                pdf_type=f"PdfType: replica\nFromMCReplica: {replica_num}\n",
+        # Create a list of replicas
+        replicas = [replica for replica in initial_PDFs_dict.items()]
+
+        # Sort the replicas
+        replicas = sorted(replicas, key=lambda x: int(x[0].split("_")[-1]))
+
+        # Distribute replicas among processes
+        local_replicas = [
+            replica for i, replica in enumerate(replicas) if i % size == rank
+        ]
+
+        # Process local replicas
+        for replica, pdf_data in local_replicas:
+            process_replica(replica, pdf_data, eko_op, lhapdf_destination)
+
+        # Synchronize to ensure all processes have finished
+        comm.Barrier()
+
+        if rank == 0:
+            log.info(
+                f"Evolution complete. Evolved grids can be found in {lhapdf_destination}."
             )
-
-            log.info(f"Evolved replica {i+1}.")
-
-        log.info(
-            f"Evolution complete. Evolved grids can be found in {lhapdf_destination}."
-        )
-        # Produce the central replica
-        log.info("Producing central replica.")
-        l = Loader()
-        pdf = l.check_pdf(args.fit_name)
-        generate_replica0(pdf)
+            # Produce the central replica
+            log.info("Producing central replica.")
+            l = Loader()
+            pdf = l.check_pdf(args.fit_name)
+            generate_replica0(pdf)
 
 
 # This class is copied directly from evolven3fit_new
