@@ -58,7 +58,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate colibri-dev
-        cp -r colibri/tests/test_theoryID/theory_401 $CONDA_PREFIX/envs/colibri-dev/share/NNPDF/data/
+        cp -r colibri/tests/test_theoryID/theory_401 $CONDA_PREFIX/share/NNPDF/data/
 
     - name: Run NS fit
       shell: bash -l {0}
