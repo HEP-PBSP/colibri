@@ -46,13 +46,13 @@ jobs:
             hashFiles('environment.yml') }}
     
     - name: Update environment
-      run: mamba env update -n colibri-env -f environment.yml
+      run: mamba env update -n colibri-dev -f environment.yml
       if: steps.cache.outputs.cache-hit != 'true'
 
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
-        conda activate colibri-env
+        conda activate colibri-dev
         flit install --symlink
         cd colibri/models/wmin
         flit install --symlink
@@ -61,7 +61,7 @@ jobs:
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
-        conda activate colibri-env
+        conda activate colibri-dev
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
@@ -69,5 +69,5 @@ jobs:
     - name: Test with pytest
       shell: bash -l {0}
       run: |
-        conda activate colibri-env
+        conda activate colibri-dev
         pytest

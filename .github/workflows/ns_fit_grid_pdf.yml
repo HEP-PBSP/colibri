@@ -42,7 +42,7 @@ jobs:
             hashFiles('environment.yml') }}
     
     - name: Update environment
-      run: mamba env update -n colibri-env -f environment.yml
+      run: mamba env update -n colibri-dev -f environment.yml
       if: steps.cache.outputs.cache-hit != 'true'
 
     - name: Install colibri and models
