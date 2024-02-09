@@ -1,0 +1,89 @@
+# This workflow tests that the MC fit in main and the one in the PR are consistent
+
+name: Monte Carlo CI wmin model
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Config Conda
+      shell: bash -l {0}
+      run: |
+        echo "$NETRC_FILE" | base64 --decode > ~/.netrc
+        conda install -n base conda-libmamba-solver
+        conda config --set solver libmamba
+        conda config --append channels conda-forge
+        conda config --prepend channels https://packages.nnpdf.science/public
+        conda config --set show_channel_urls true
+        conda activate test
+        conda install boa --yes
+    - name: Install dependencies
+      shell: bash -l {0}
+      run: |
+        ./.github/setup_conda_env.sh
+
+    - name: Install colibri and models
+      shell: bash -l {0}
+      run: |
+        conda activate test
+        flit install --symlink
+        cd colibri/models/wmin
+        flit install --symlink
+        cd ../grid_pdf
+        flit install --symlink
+    
+    - name: Run MC fit
+      shell: bash -l {0}
+      run: |
+        conda activate test
+        for i in {1..5}; do wmin colibri/tests/test_runcards/test_wmin_mc_L0.yaml -o PR_wmin_mc_L0 -rep $i; done
+        mc_postfit PR_wmin_mc_L0 -t 5 -c 100
+    
+    - name: Checkout main branch
+      uses: actions/checkout@v3
+      with:
+        ref: main
+        clean: false
+    
+    - name: Run MC fit in main
+      shell: bash -l {0}
+      run: |
+        conda activate test
+        for i in {1..5}; do wmin colibri/tests/test_runcards/test_wmin_mc_L0.yaml -o main_wmin_mc_L0 -rep $i; done
+        mc_postfit main_wmin_mc_L0 -t 5 -c 100
+    
+    - name: Compare MC results
+      run: |
+        # Check if files exist
+        if [ -f PR_wmin_mc_L0/mc_result.csv ] && [ -f main_wmin_mc_L0/mc_result.csv ]; then
+        # Perform the diff only if both files exist
+        if diff PR_wmin_mc_L0/mc_result.csv main_wmin_mc_L0/mc_result.csv &> /dev/null; then
+            echo "wmin fits are identical"
+        else
+            echo "wmin fits are different"
+            exit 1  # Fail the test by exiting with a non-zero code
+        fi
+        else
+        echo "One or both files do not exist"
+        exit 1  # Fail the test by exiting with a non-zero code
+        fi
+
