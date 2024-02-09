@@ -71,9 +71,9 @@ def level_0_commondata_tuple(
         # replace central values with theory prediction from `closure_test_pdf`
         fake_data.append(
             cd.with_central_value(
-                make_pred_dataset(ds, flavour_indices=flavour_indices)(
-                    closure_test_central_pdf_grid
-                )
+                make_pred_dataset(
+                    ds, vectorized=False, flavour_indices=flavour_indices
+                )(closure_test_central_pdf_grid)
             )
         )
     return tuple(fake_data)

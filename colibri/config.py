@@ -105,11 +105,16 @@ class colibriConfig(Config):
             ns_settings["ReactiveNS_settings"]["resume"] = settings[
                 "ReactiveNS_settings"
             ].get("resume", False)
+
+            ns_settings["ReactiveNS_settings"]["vectorized"] = settings[
+                "ReactiveNS_settings"
+            ].get("vectorized", False)
         else:
             ns_settings["ReactiveNS_settings"]["log_dir"] = str(
                 output_path / "ultranest_logs"
             )
             ns_settings["ReactiveNS_settings"]["resume"] = False
+            ns_settings["ReactiveNS_settings"]["vectorized"] = False
 
         # In the case that the fit is resuming from a previous ultranest fit, the logs
         # directory must exist
@@ -132,6 +137,12 @@ class colibriConfig(Config):
             ns_settings["ReactiveNS_settings"]["resume"] = "overwrite"
 
         return ns_settings
+
+    def produce_vectorized(self, ns_settings):
+        """Returns True if the fit is vectorized, False otherwise.
+        This is required for the predictions functions, which do not take ns_settings as an argument.
+        """
+        return ns_settings["ReactiveNS_settings"]["vectorized"]
 
     @explicit_node
     def produce_commondata_tuple(self, closure_test_level=False):
