@@ -72,42 +72,7 @@ class GridPDFModel(PDFModel):
         """
 
         if vectorized:
-            # Function to perform interpolation for a single grid
-            log.warning(
-                "grid_pdf model in vectorized mode does not support xgrids of different sizes."
-            )
-
-            # check that all xgrids have the same length
-            if len(set([len(self.xgrids[fl]) for fl in self.fitted_flavours])) != 1:
-                raise ValueError(
-                    "grid_pdf model in vectorized mode does not yet support xgrids of different sizes."
-                )
-
-            @jax.jit
-            def interpolate_flavors(y):
-                """
-                Interpolates one vectorized flavour.
-                """
-                reshaped_y = y.reshape(
-                    (
-                        len(self.flavour_indices),
-                        len(
-                            self.xgrids[self.fitted_flavours[0]]
-                        ),  # only works if all xgrids have the same length
-                    )
-                )
-
-                out = jnp.array(
-                    [
-                        jnp.interp(
-                            jnp.array(interpolation_grid),
-                            jnp.array(self.xgrids[flavour]),
-                            reshaped_y[i, :],
-                        )
-                        for i, flavour in enumerate(self.fitted_flavours)
-                    ]
-                )
-                return out
+            
             
             @jax.jit
             def interpolate_vector(fp, flavour_xgrid):
