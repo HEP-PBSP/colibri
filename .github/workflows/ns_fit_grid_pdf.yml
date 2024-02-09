@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-
 env:
   CACHE_NUMBER: 0  # increase to reset cache manually
 
