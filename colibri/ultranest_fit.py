@@ -94,7 +94,9 @@ def ultranest_fit(
     fit_grid_values_func = pdf_model.grid_values_func(XGRID)
 
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
-        fit_grid_values_func = jnp.vectorize(fit_grid_values_func, signature="(n)->(m,k)")
+        fit_grid_values_func = jnp.vectorize(
+            fit_grid_values_func, signature="(n)->(m,k)"
+        )
 
     @jax.jit
     def log_likelihood(params):
