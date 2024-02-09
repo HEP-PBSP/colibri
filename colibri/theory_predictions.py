@@ -57,18 +57,12 @@ def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
         indices = fktable.luminosity_mapping
         fk_arr = jnp.array(fktable.get_np_fktable())
 
+    @jax.jit
+    def dis_prediction(pdf):
+        return jnp.einsum("ijk, jk ->i", fk_arr, pdf[indices, :])
+
     if vectorized:
-
-        @jax.jit
-        def dis_prediction(pdf):
-            return jnp.einsum("ijk, rjk ->ri", fk_arr, pdf[:, indices, :])
-
-    else:
-
-        @jax.jit
-        def dis_prediction(pdf):
-            return jnp.einsum("ijk, jk ->i", fk_arr, pdf[indices, :])
-
+        return jnp.vectorize(dis_prediction, signature="(m,n)->(k)")
     return dis_prediction
 
 
@@ -123,25 +117,14 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
 
         fk_arr = jnp.array(fktable.get_np_fktable())
 
+    @jax.jit
+    def had_prediction(pdf):
+        return jnp.einsum(
+            "ijkl,jk,jl->i", fk_arr, pdf[first_indices, :], pdf[second_indices, :]
+        )
+
     if vectorized:
-
-        @jax.jit
-        def had_prediction(pdf):
-            return jnp.einsum(
-                "ijkl,rjk,rjl->ri",
-                fk_arr,
-                pdf[:, first_indices, :],
-                pdf[:, second_indices, :],
-            )
-
-    else:
-
-        @jax.jit
-        def had_prediction(pdf):
-            return jnp.einsum(
-                "ijkl,jk,jl->i", fk_arr, pdf[first_indices, :], pdf[second_indices, :]
-            )
-
+        return jnp.vectorize(had_prediction, signature="(m,n)->(k)")
     return had_prediction
 
 
