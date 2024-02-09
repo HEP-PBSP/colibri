@@ -20,6 +20,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    
+    - name: Cache Conda packages
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.conda/pkgs
+          ~/.conda/envs
+        key: conda-${{ runner.os }}-${{ hashFiles('**/environment.yml') }}
+        restore-keys: |
+          conda-${{ runner.os }}-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
