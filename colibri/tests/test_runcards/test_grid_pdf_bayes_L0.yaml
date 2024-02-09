@@ -10,7 +10,7 @@ dataset_inputs:
   - {'dataset': 'SLACP_dwsh'}
   - {'dataset': 'SLACD_dw_ite'}
 
-theoryid: 400                          # The theory from which the predictions are drawn.
+theoryid: 401                          # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
 closure_test_level: 0                  # The closure test level: False for experimental, level 0
