@@ -57,7 +57,7 @@ class colibriApp(App):
             "--trval_index",
             help="Training/Validation seed used to perform the random split",
             type=int,
-            default=0,
+            default=4,
         )
 
         parser.add_argument(

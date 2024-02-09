@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 class Environment(Environment):
-    def __init__(self, replica_index=None, trval_index=0, *args, **kwargs):
+    def __init__(self, replica_index=None, trval_index=4, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.replica_index = replica_index
@@ -78,7 +78,7 @@ class colibriConfig(Config):
         ns_settings = {}
 
         # Set the ultranest seed
-        ns_settings["ultranest_seed"] = settings.get("ultranest_seed", 123456)
+        ns_settings["ultranest_seed"] = settings.get("ultranest_seed", 12345)
 
         # Set the posterior resampling parameters
         ns_settings["n_posterior_samples"] = settings.get("n_posterior_samples", 1000)
