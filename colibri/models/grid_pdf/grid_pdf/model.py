@@ -72,8 +72,7 @@ class GridPDFModel(PDFModel):
         """
 
         if vectorized:
-            
-            
+
             @jax.jit
             def interpolate_vector(fp, flavour_xgrid):
                 """
@@ -83,10 +82,10 @@ class GridPDFModel(PDFModel):
                 ----------
                 fp: jnp.array
                     The PDF values to interpolate.
-                
+
                 flavour_xgrid: jnp.array
                     The xgrid for the flavour.
-                
+
                 Returns
                 -------
                 jnp.array
@@ -107,7 +106,7 @@ class GridPDFModel(PDFModel):
                 ----------
                 stacked_pdf_grid: jnp.array
                     The vectorized stacked PDF grid.
-                
+
                 Returns
                 -------
                 jnp.array
@@ -117,18 +116,26 @@ class GridPDFModel(PDFModel):
                 for flavour in convolution.FK_FLAVOURS:
 
                     if flavour in self.fitted_flavours:
-                        
+
                         # apply vmap to interpolate all vectors of the same flavour at once
-                        interpolated_flavour = jax.vmap(interpolate_vector, in_axes=(0, None))(stacked_pdf_grid[:, :len(self.xgrids[flavour])], jnp.array(self.xgrids[flavour]))
-                        
+                        interpolated_flavour = jax.vmap(
+                            interpolate_vector, in_axes=(0, None)
+                        )(
+                            stacked_pdf_grid[:, : len(self.xgrids[flavour])],
+                            jnp.array(self.xgrids[flavour]),
+                        )
+
                         interpolants += [interpolated_flavour]
                     else:
-                        interpolants += [jnp.zeros((stacked_pdf_grid.shape[0], len(interpolation_grid)))]
+                        interpolants += [
+                            jnp.zeros(
+                                (stacked_pdf_grid.shape[0], len(interpolation_grid))
+                            )
+                        ]
 
-                    stacked_pdf_grid = stacked_pdf_grid[:, len(self.xgrids[flavour]):]      
-                
-                return jnp.transpose(jnp.array(interpolants), (1,0,2))
+                    stacked_pdf_grid = stacked_pdf_grid[:, len(self.xgrids[flavour]) :]
 
+                return jnp.transpose(jnp.array(interpolants), (1, 0, 2))
 
             return interp_func
 
