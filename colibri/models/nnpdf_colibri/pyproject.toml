@@ -20,4 +20,4 @@ doc = [
 ]
 
 [tool.flit.scripts]
-grid_pdf = "nnpdf_colibri.app:main"
+nnpdf_colibri = "nnpdf_colibri.app:main"
