@@ -25,4 +25,6 @@ log = logging.getLogger(__name__)
 
 # API needed its own module, so that it can be used with any Matplotlib backend
 # without breaking validphys.app
-API = api.API(nnpdf_colibri_providers + colibri_providers, NNPDFColibriConfig, Environment)
+API = api.API(
+    nnpdf_colibri_providers + colibri_providers, NNPDFColibriConfig, Environment
+)

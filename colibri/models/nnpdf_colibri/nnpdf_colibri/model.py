@@ -20,7 +20,7 @@ def pdf_model():
 class NNDPF40DenseNN(nn.Module):
     hidden_size1: int = 25
     hidden_size2: int = 20
-    output_size: int = 700 # 14 flavours * 50 x values
+    output_size: int = 700  # 14 flavours * 50 x values
 
     @nn.compact
     def __call__(self, x):
@@ -30,8 +30,6 @@ class NNDPF40DenseNN(nn.Module):
         x = jnp.tanh(x)
         x = nn.Dense(self.output_size, kernel_init=nn.initializers.glorot_normal())(x)
         return x
-        
-
 
 
 class NNPDFColibriModel(PDFModel):
@@ -47,7 +45,7 @@ class NNPDFColibriModel(PDFModel):
         Takes a grid of x values and returns the NNPDF4.0 NN parameterisation of PDFs in the
         evolution basis.
 
-        The parameterisation is given by a dense neural network with two input nodes 
+        The parameterisation is given by a dense neural network with two input nodes
         (X and log(X)), 2 hidden layers with 25 and 20 nodes respectively, and 14 output nodes.
         The NN has hyperbolic tangent activation functions and glorot normal initialisation.
 
@@ -57,21 +55,22 @@ class NNPDFColibriModel(PDFModel):
             The grid of x values to evaluate the PDFs at.
 
         """
-        # Dense flax NN with architecture 
+        # Dense flax NN with architecture
         # 2 -> 25 -> 20 -> 14
-        
+
         interpolation_grid = jnp.array(interpolation_grid)
-        interpolation_grid = jnp.concatenate((interpolation_grid, jnp.log(interpolation_grid) ))
-        
+        interpolation_grid = jnp.concatenate(
+            (interpolation_grid, jnp.log(interpolation_grid))
+        )
 
         pdf_model = NNDPF40DenseNN()
 
         @jax.jit
         def nn_model(params):
-            return pdf_model.apply(params, interpolation_grid).reshape(14,50)
-        
+            return pdf_model.apply(params, interpolation_grid).reshape(14, 50)
+
         return nn_model
-            
+
 
 def mc_initial_parameters(replica_index):
     """
@@ -92,9 +91,9 @@ def mc_initial_parameters(replica_index):
     rng = jax.random.PRNGKey(replica_index)
 
     input_grid = jnp.array(XGRID)
-    input_grid = jnp.concatenate((input_grid, jnp.log(input_grid) ))
-    
+    input_grid = jnp.concatenate((input_grid, jnp.log(input_grid)))
+
     model = NNDPF40DenseNN()
     init_params = model.init(rng, input_grid)
-    
+
     return init_params
