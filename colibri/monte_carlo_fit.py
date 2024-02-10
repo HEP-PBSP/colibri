@@ -147,7 +147,7 @@ def monte_carlo_fit(
     val_loss = []
 
     opt_state = optimizer_provider.init(mc_initial_parameters)
-    parameters = mc_initial_parameters.copy()
+    parameters = mc_initial_parameters #.copy()
 
     data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
     batches = data_batch.data_batch_stream_index()

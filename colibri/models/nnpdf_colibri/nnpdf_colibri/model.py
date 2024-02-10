@@ -29,7 +29,41 @@ class NNDPF40DenseNN(nn.Module):
         x = nn.Dense(self.hidden_size2, kernel_init=nn.initializers.glorot_normal())(x)
         x = jnp.tanh(x)
         x = nn.Dense(self.output_size, kernel_init=nn.initializers.glorot_normal())(x)
+        x = self.sum_rules(x)
         return x
+    
+    
+    def sum_rules(self, x):
+        """
+        Apply the sum rule to: g+Sigma, V, V8, V3
+        This is a special normalization layer.
+
+        """
+        
+        # g+Sigma
+        g_sigma_norm = jnp.trapz(x[50:100] + x[100:150], x=jnp.array(XGRID))
+        
+        for idx in range(50, 150):
+            x = x.at[idx].set(x[idx] / g_sigma_norm)
+
+        # V
+        V_norm = jnp.trapz(x[150:200], x=jnp.array(XGRID))
+        for idx in range(150, 200):
+            x = x.at[idx].set(x[idx] / V_norm * 3)
+        
+
+        # V3
+        V3_norm = jnp.trapz(x[200:250], x=jnp.array(XGRID))
+        for idx in range(200, 250):
+            x = x.at[idx].set(x[idx] / V3_norm)
+
+        # V8
+        V8_norm = jnp.trapz(x[250:300], x=jnp.array(XGRID))
+        for idx in range(250, 300):
+            x = x.at[idx].set(x[idx] / V8_norm * 3)
+        
+        return x
+        
 
 
 class NNPDFColibriModel(PDFModel):
@@ -38,7 +72,7 @@ class NNPDFColibriModel(PDFModel):
     @property
     def param_names(self):
         """The fitted parameters of the model."""
-        return [f"{fl}({x})" for fl in self.fitted_flavours for x in self.xgrids[fl]]
+        pass
 
     def grid_values_func(self, interpolation_grid):
         """
@@ -67,7 +101,8 @@ class NNPDFColibriModel(PDFModel):
 
         @jax.jit
         def nn_model(params):
-            return pdf_model.apply(params, interpolation_grid).reshape(14, 50)
+            pdf = pdf_model.apply(params, interpolation_grid).reshape(14, 50)
+            return pdf
 
         return nn_model
 
