@@ -9,10 +9,8 @@ import jax.numpy as jnp
 
 from flax import linen as nn
 
-from validphys import convolution
-from validphys.core import PDF
-
 from colibri.pdf_model import PDFModel
+from colibri.constants import XGRID
 
 
 def pdf_model():
@@ -22,7 +20,7 @@ def pdf_model():
 class NNDPF40DenseNN(nn.Module):
     hidden_size1: int = 25
     hidden_size2: int = 20
-    output_size: int = 14
+    output_size: int = 700 # 14 flavours * 50 x values
 
     @nn.compact
     def __call__(self, x):
@@ -32,6 +30,7 @@ class NNDPF40DenseNN(nn.Module):
         x = jnp.tanh(x)
         x = nn.Dense(self.output_size, kernel_init=nn.initializers.glorot_normal())(x)
         return x
+        
 
 
 
@@ -61,15 +60,41 @@ class NNPDFColibriModel(PDFModel):
         # Dense flax NN with architecture 
         # 2 -> 25 -> 20 -> 14
         
-        interpolation_grid = jnp.concatenate([[interpolation_grid], [jnp.log(interpolation_grid)]], axis=0)
+        interpolation_grid = jnp.array(interpolation_grid)
+        interpolation_grid = jnp.concatenate((interpolation_grid, jnp.log(interpolation_grid) ))
+        
 
         pdf_model = NNDPF40DenseNN()
 
         @jax.jit
         def nn_model(params):
-            return pdf_model.apply(params, interpolation_grid)
+            return pdf_model.apply(params, interpolation_grid).reshape(14,50)
         
         return nn_model
             
 
-                
+def mc_initial_parameters(replica_index):
+    """
+    This function initialises the parameters for the weight minimisation
+    in a Monte Carlo fit.
+
+    Parameters
+    ----------
+    replica_index: int
+        The index of the replica.
+
+    Returns
+    -------
+    initial_values: flax.core.frozen_dict.FrozenDict
+        The initial values for the NN parameters.
+    """
+    # Getting the initial parameters of the model
+    rng = jax.random.PRNGKey(replica_index)
+
+    input_grid = jnp.array(XGRID)
+    input_grid = jnp.concatenate((input_grid, jnp.log(input_grid) ))
+    
+    model = NNDPF40DenseNN()
+    init_params = model.init(rng, input_grid)
+    
+    return init_params
