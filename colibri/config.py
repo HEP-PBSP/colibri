@@ -249,7 +249,7 @@ class colibriConfig(Config):
             return indices
 
         return None
-    
+
     def produce_flavour_combination(self, luminosity_mapping=None):
         """ """
         if luminosity_mapping is not None:
