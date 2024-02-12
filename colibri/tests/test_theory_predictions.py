@@ -17,13 +17,16 @@ def test_make_dis_prediction():
     pdf_grid = colibriAPI.closure_test_pdf_grid(**CLOSURE_TEST_PDFSET)
 
     fktable = load_fktable(ds.fkspecs[0])
-
-    pred1 = make_dis_prediction(fktable, vectorized=False, flavour_indices=None)(
-        pdf_grid[0]
-    )
+    flavour_combination = colibriAPI.flavour_combination()
+    pred1 = make_dis_prediction(
+        fktable, flavour_combination, vectorized=False, flavour_indices=None
+    )(pdf_grid[0])
 
     pred2 = make_dis_prediction(
-        fktable, vectorized=False, flavour_indices=fktable.luminosity_mapping
+        fktable,
+        flavour_combination,
+        vectorized=False,
+        flavour_indices=fktable.luminosity_mapping,
     )(pdf_grid[0])
 
     assert_allclose(pred1, pred2)
