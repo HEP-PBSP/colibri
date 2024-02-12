@@ -280,7 +280,7 @@ def make_penalty_posdataset(posdataset, flavour_combination=None, vectorized=Fal
     return pos_penalty
 
 
-def make_penalty_posdata(posdatasets, vectorized=False):
+def make_penalty_posdata(posdatasets, flavour_combination=None, vectorized=False, flavour_indices=None):
     """
     Compute positivity penalty for list of PositivitySetSpec
 
@@ -300,7 +300,7 @@ def make_penalty_posdata(posdatasets, vectorized=False):
     predictions = []
 
     for posdataset in posdatasets:
-        predictions.append(make_penalty_posdataset(posdataset, vectorized))
+        predictions.append(make_penalty_posdataset(posdataset, flavour_combination=flavour_combination, vectorized=vectorized, flavour_indices=flavour_indices))
 
     @jax.jit
     def pos_penalties(pdf, alpha, lambda_positivity):
