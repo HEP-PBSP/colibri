@@ -42,27 +42,23 @@ class NNDPF40DenseNN(nn.Module):
         
         # g+Sigma
         g_sigma_norm = jnp.trapz(x[50:100] + x[100:150], x=jnp.array(XGRID))
-        
-        for idx in range(50, 150):
-            x = x.at[idx].set(x[idx] / g_sigma_norm)
+        x_g_sigma = jax.tree_map(lambda x: x[50:150] / g_sigma_norm, x)
 
         # V
         V_norm = jnp.trapz(x[150:200], x=jnp.array(XGRID))
-        for idx in range(150, 200):
-            x = x.at[idx].set(x[idx] / V_norm * 3)
-        
+        x_v = jax.tree_map(lambda x: x[150:200] / V_norm * 3, x)
+
 
         # V3
         V3_norm = jnp.trapz(x[200:250], x=jnp.array(XGRID))
-        for idx in range(200, 250):
-            x = x.at[idx].set(x[idx] / V3_norm)
+        x_v3 = jax.tree_map(lambda x: x[200:250] / V3_norm, x)
 
         # V8
         V8_norm = jnp.trapz(x[250:300], x=jnp.array(XGRID))
-        for idx in range(250, 300):
-            x = x.at[idx].set(x[idx] / V8_norm * 3)
-        
-        return x
+        x_v8 = jax.tree_map(lambda x: x[250:300] / V8_norm * 3, x)
+
+        new_x = jnp.concatenate((x[0:50], x_g_sigma, x_v, x_v3, x_v8, x[300:700]))
+        return new_x
         
 
 
