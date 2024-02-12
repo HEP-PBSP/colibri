@@ -17,7 +17,7 @@ from reportengine.configparser import explicit_node, ConfigError
 
 from colibri import commondata_utils
 
-from colibri.constants import FLAVOUR_TO_ID_MAPPING
+from colibri.constants import FLAVOUR_TO_ID_MAPPING, XGRID, LHAPDF_XGRID
 
 import logging
 import os
@@ -137,7 +137,14 @@ class colibriConfig(Config):
             ns_settings["ReactiveNS_settings"]["resume"] = "overwrite"
 
         return ns_settings
-
+    
+    def produce_parameterisation_grid(self, lhapdf_grid=False):
+        """
+        """
+        if lhapdf_grid:
+            return LHAPDF_XGRID
+        return XGRID
+    
     def produce_vectorized(self, ns_settings):
         """Returns True if the fit is vectorized, False otherwise.
         This is required for the predictions functions, which do not take ns_settings as an argument.
