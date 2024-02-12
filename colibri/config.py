@@ -251,11 +251,10 @@ class colibriConfig(Config):
         return None
 
     def produce_luminosity_mapping(self, flavour_combination=None):
-        """
-        
-        """
+        """ """
         if flavour_combination is not None:
-            return {FLAVOUR_TO_ID_MAPPING[flavour]: FLAVOUR_TO_ID_MAPPING[assigned_flavour] for (flavour, assigned_flavour) in flavour_combination.items()}
+            return {
+                FLAVOUR_TO_ID_MAPPING[flavour]: FLAVOUR_TO_ID_MAPPING[assigned_flavour]
+                for (flavour, assigned_flavour) in flavour_combination.items()
+            }
         return None
-
-
