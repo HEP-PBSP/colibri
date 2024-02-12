@@ -257,4 +257,4 @@ class colibriConfig(Config):
                 FLAVOUR_TO_ID_MAPPING[flavour]: FLAVOUR_TO_ID_MAPPING[assigned_flavour]
                 for (flavour, assigned_flavour) in luminosity_mapping.items()
             }
-        return None
+        return {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10, 11:11, 12:12, 13:13}

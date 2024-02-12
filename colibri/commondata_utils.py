@@ -37,8 +37,8 @@ def level_0_commondata_tuple(
     data,
     experimental_commondata_tuple,
     closure_test_central_pdf_grid,
+    flavour_combination,
     flavour_indices=None,
-    flavour_combination=None,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)

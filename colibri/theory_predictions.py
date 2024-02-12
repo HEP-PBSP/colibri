@@ -20,7 +20,7 @@ OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
 def make_dis_prediction(
-    fktable, flavour_combination=None, vectorized=False, flavour_indices=None
+    fktable, flavour_combination, vectorized=False, flavour_indices=None
 ):
     """
     Given an FKTableData instance returns a jax.jit
@@ -96,7 +96,7 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
     -------
     @jax.jit CompiledFunction
     """
-
+    
     if flavour_indices is not None:
         indices = fktable.luminosity_mapping
         mask_even = jnp.isin(indices[0::2], jnp.array(flavour_indices))
@@ -132,7 +132,7 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
 
 
 def make_pred_dataset(
-    dataset, flavour_combination=None, vectorized=False, flavour_indices=None
+    dataset, flavour_combination, vectorized=False, flavour_indices=None
 ):
     """
     Compute theory prediction for a DataSetSpec
@@ -171,7 +171,7 @@ def make_pred_dataset(
 
 
 def make_pred_data(
-    data, flavour_combination=None, vectorized=False, flavour_indices=None
+    data, flavour_combination, vectorized=False, flavour_indices=None
 ):
     """
     Compute theory prediction for entire DataGroupSpec
@@ -204,7 +204,7 @@ def make_pred_data(
     return eval_preds
 
 
-def make_pred_t0data(data, flavour_combination=None, flavour_indices=None):
+def make_pred_t0data(data, flavour_combination, flavour_indices=None):
     """
     Compute theory prediction for entire DataGroupSpec.
     It is specifically meant for t0 predictions, i.e. it
@@ -249,7 +249,7 @@ def make_pred_data_non_vectorized(data):
 
 
 def make_penalty_posdataset(
-    posdataset, flavour_combination=None, vectorized=False, flavour_indices=None
+    posdataset, flavour_combination, vectorized=False, flavour_indices=None
 ):
     """
     Given a PositivitySetSpec compute the positivity penalty
@@ -300,7 +300,7 @@ def make_penalty_posdataset(
 
 
 def make_penalty_posdata(
-    posdatasets, flavour_combination=None, vectorized=False, flavour_indices=None
+    posdatasets, flavour_combination, vectorized=False, flavour_indices=None
 ):
     """
     Compute positivity penalty for list of PositivitySetSpec
