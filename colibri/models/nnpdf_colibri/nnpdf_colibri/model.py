@@ -107,7 +107,7 @@ class NNPDFColibriModel(PDFModel):
         return nn_model
 
 
-def mc_initial_parameters(replica_index):
+def mc_initial_parameters(replica_index, parameterisation_grid):
     """
     This function initialises the parameters for the weight minimisation
     in a Monte Carlo fit.
@@ -125,7 +125,7 @@ def mc_initial_parameters(replica_index):
     # Getting the initial parameters of the model
     rng = jax.random.PRNGKey(replica_index)
 
-    input_grid = jnp.array(XGRID)
+    input_grid = jnp.array(parameterisation_grid)
     input_grid = jnp.concatenate((input_grid, jnp.log(input_grid)))
 
     model = NNDPF40DenseNN()
