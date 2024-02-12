@@ -250,7 +250,7 @@ class colibriConfig(Config):
 
         return None
 
-    def produce_luminosity_mapping(self, flavour_combination=None):
+    def produce_flavour_combination(self, flavour_combination=None):
         """ """
         if flavour_combination is not None:
             return {

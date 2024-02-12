@@ -19,7 +19,7 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
+def make_dis_prediction(fktable, flavour_combination, vectorized=False, flavour_indices=None):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -47,14 +47,15 @@ def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
     -------
     @jax.jit CompiledFunction
     """
-
+    
     if flavour_indices is not None:
-        indices = fktable.luminosity_mapping
+        # map indices using luminosity_mapping
+        indices = [flavour_combination[fl_idx] for fl_idx in fktable.luminosity_mapping]
         mask = jnp.isin(indices, jnp.array(flavour_indices))
         indices = indices[mask]
         fk_arr = jnp.array(fktable.get_np_fktable())[:, mask, :]
     else:
-        indices = fktable.luminosity_mapping
+        indices = [flavour_combination[fl_idx] for fl_idx in fktable.luminosity_mapping]
         fk_arr = jnp.array(fktable.get_np_fktable())
 
     @jax.jit
