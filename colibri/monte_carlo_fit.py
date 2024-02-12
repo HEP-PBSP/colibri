@@ -13,11 +13,19 @@ import logging
 import pandas as pd
 import os
 
+from typing import Union, Callable
+
 from colibri.constants import XGRID
 from colibri.data_batch import data_batches
 from colibri.lhapdf import write_exportgrid
 
 log = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class FitResult:
+    parameters: Union[Callable, jnp.array, dict]
+
 
 
 @dataclass(frozen=True)
@@ -52,6 +60,7 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
+    parameterisation_grid=XGRID,
     batch_size=128,
     batch_seed=1,
     alpha=1e-7,
@@ -114,8 +123,8 @@ def monte_carlo_fit(
         validation_loss: jnp.array
     """
 
-    fit_grid_values_func = pdf_model.grid_values_func(XGRID)
-
+    fit_grid_values_func = pdf_model.grid_values_func(parameterisation_grid)
+    
     @jax.jit
     def loss_training(parameters, batch_idx):
         pdf = fit_grid_values_func(parameters)
@@ -194,7 +203,7 @@ def monte_carlo_fit(
     # Finish by writing the export grid, ready for evolution
     log.info(f"Writing exportgrid for replica {replica_index}")
     write_exportgrid(
-        jnp.array(df.iloc[0, :].tolist()),
+        FitResult(parameters=parameters),#jnp.array(df.iloc[0, :].tolist()),
         pdf_model,
         replica_index,
         output_path,
