@@ -38,6 +38,7 @@ def level_0_commondata_tuple(
     experimental_commondata_tuple,
     closure_test_central_pdf_grid,
     flavour_indices=None,
+    flavour_combination=None,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -72,7 +73,7 @@ def level_0_commondata_tuple(
         fake_data.append(
             cd.with_central_value(
                 make_pred_dataset(
-                    ds, vectorized=False, flavour_indices=flavour_indices
+                    ds, flavour_combination, vectorized=False, flavour_indices=flavour_indices
                 )(closure_test_central_pdf_grid)
             )
         )
