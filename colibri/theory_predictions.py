@@ -51,13 +51,21 @@ def make_dis_prediction(
     """
 
     if flavour_indices is not None:
-        # map indices using luminosity_mapping
-        indices = [flavour_combination[fl_idx] for fl_idx in fktable.luminosity_mapping]
+
+        # mask to select only the relevant flavours before mapping
+        indices = fktable.luminosity_mapping
         mask = jnp.isin(indices, jnp.array(flavour_indices))
+
+        # map indices using flavour_combination dictionary
+        indices = jnp.array([flavour_combination[fl_idx] for fl_idx in indices])
         indices = indices[mask]
+
+        # mask unused flavours in the fktable
         fk_arr = jnp.array(fktable.get_np_fktable())[:, mask, :]
     else:
-        indices = [flavour_combination[fl_idx] for fl_idx in fktable.luminosity_mapping]
+        indices = jnp.array(
+            [flavour_combination[fl_idx] for fl_idx in fktable.luminosity_mapping]
+        )
         fk_arr = jnp.array(fktable.get_np_fktable())
 
     @jax.jit
@@ -96,7 +104,7 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
     -------
     @jax.jit CompiledFunction
     """
-    
+
     if flavour_indices is not None:
         indices = fktable.luminosity_mapping
         mask_even = jnp.isin(indices[0::2], jnp.array(flavour_indices))
@@ -170,9 +178,7 @@ def make_pred_dataset(
     return prediction
 
 
-def make_pred_data(
-    data, flavour_combination, vectorized=False, flavour_indices=None
-):
+def make_pred_data(data, flavour_combination, vectorized=False, flavour_indices=None):
     """
     Compute theory prediction for entire DataGroupSpec
 
