@@ -412,3 +412,47 @@ for i in range(num_flav):
         j += 1
 
 evolution_to_export_matrix = np.linalg.inv(export_to_evolution_matrix)
+
+""" 
+Reduced 8 flavours export to evolution matrix
+Maps (u, ub, d, db, s, sb, c, g) -> (V, V3, V8, T3, T8, T15, Sigma, g)
+
+"""
+FLAVOUR_TO_EVOLUTION = np.array(
+    [
+        [1, -1, 1, -1, 1, -1, 0, 0],
+        [1, -1, -1, 1, 0, 0, 0, 0],
+        [1, -1, 1, -1, -2, 2, 0, 0],
+        [1, 1, -1, -1, 0, 0, 0, 0],
+        [1, 1, 1, 1, -2, -2, 0, 0],
+        [1, 1, 1, 1, 1, 1, -6, 0],
+        [1, 1, 1, 1, 1, 1, 2, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1],
+    ]
+)
+EvolutionNumbersDict = {
+    "V": 3,
+    "V3": 4,
+    "V8": 5,
+    "T3": 9,
+    "T8": 10,
+    "T15": 11,
+    "\Sigma": 1,
+    "g": 2,
+}
+
+EvolutionNumbers = np.array([3, 4, 5, 9, 10, 11, 1, 2])
+
+FlavourNumbersDict = {
+    "U": 67 / 12,
+    "UBAR": 7 / 4,
+    "D": -(11 / 12),
+    "DBAR": -(3 / 4),
+    "S": -(17 / 12),
+    "SBAR": -(3 / 4),
+    "C": -(5 / 4),
+    "GLUON": 2,
+}
+FlavourNumbers = np.array(
+    [67 / 12, 7 / 4, -(11 / 12), -(3 / 4), -(17 / 12), -(3 / 4), -(5 / 4), 2]
+)
