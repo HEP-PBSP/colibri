@@ -1,0 +1,99 @@
+# This workflow tests that the MC fit in main and the one in the PR are consistent
+
+name: Monte Carlo CI grid_pdf model
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CACHE_NUMBER: 0  # increase to reset cache manually
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        activate-environment: colibri-dev
+        use-mamba: true  
+    - name: Cache Conda packages
+      uses: actions/cache@v3
+      with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('environment.yml') }}
+    
+    - name: Update environment
+      run: mamba env update -n colibri-dev -f environment.yml
+      if: steps.cache.outputs.cache-hit != 'true'
+
+    - name: Install colibri and models
+      shell: bash -l {0}
+      run: |
+        conda activate colibri-dev
+        flit install --symlink
+        cd colibri/models/wmin
+        flit install --symlink
+        cd ../grid_pdf
+        flit install --symlink
+    - name: Copy theory to Conda environment
+      shell: bash -l {0}
+      run: |
+        conda activate colibri-dev
+        mkdir $CONDA_PREFIX/share/NNPDF/theories
+        mkdir $CONDA_PREFIX/share/NNPDF/theories/theory_401
+        cp -r colibri/tests/test_theoryID/theory_401/* $CONDA_PREFIX/share/NNPDF/theories/theory_401/
+    
+    - name: Run MC fit
+      shell: bash -l {0}
+      run: |
+        conda activate colibri-dev
+        for i in {1..5}; do grid_pdf colibri/tests/test_runcards/test_grid_pdf_mc_L0.yaml -o PR_grid_pdf_mc_L0 -rep $i; done
+        mc_postfit PR_grid_pdf_mc_L0 -t 5 -c 100
+    
+    - name: Checkout main branch
+      uses: actions/checkout@v3
+      with:
+        ref: main
+        clean: false
+    
+    - name: Run MC fit in main
+      shell: bash -l {0}
+      run: |
+        conda activate colibri-dev
+        for i in {1..5}; do grid_pdf colibri/tests/test_runcards/test_grid_pdf_mc_L0.yaml -o main_grid_pdf_mc_L0 -rep $i; done
+        mc_postfit main_grid_pdf_mc_L0 -t 5 -c 100
+    
+    - name: Compare MC results
+      run: |
+        # Check if files exist
+        if [ -f PR_grid_pdf_mc_L0/mc_result.csv ] && [ -f main_grid_pdf_mc_L0/mc_result.csv ]; then
+        # Perform the diff only if both files exist
+        if diff PR_grid_pdf_mc_L0/mc_result.csv main_grid_pdf_mc_L0/mc_result.csv &> /dev/null; then
+            echo "grid_pdf fits are identical"
+        else
+            echo "grid_pdf fits are different"
+            exit 1  # Fail the test by exiting with a non-zero code
+        fi
+        else
+        echo "One or both files do not exist"
+        exit 1  # Fail the test by exiting with a non-zero code
+        fi
+

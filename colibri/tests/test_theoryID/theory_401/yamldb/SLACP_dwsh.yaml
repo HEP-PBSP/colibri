@@ -1,0 +1,6 @@
+comment: Original dataset was named SLACP_dwsh
+conversion_factor: 1.0
+operands:
+- - SLAC_NC_EM_P_F2
+operation: null
+target_dataset: SLACP

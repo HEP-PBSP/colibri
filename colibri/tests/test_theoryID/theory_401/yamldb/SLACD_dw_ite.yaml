@@ -1,0 +1,6 @@
+comment: Original dataset was named SLACD_dw_ite
+conversion_factor: 1.0
+operands:
+- - SLAC_NC_EM_D_F2
+operation: null
+target_dataset: SLACD

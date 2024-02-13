@@ -1,4 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# This workflow install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
 name: Tests
@@ -8,6 +8,9 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
+env:
+  CACHE_NUMBER: 0  # increase to reset cache manually
 
 jobs:
   build:
@@ -20,38 +23,36 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
     - name: Set up Conda
-      uses: conda-incubator/setup-miniconda@v2
+      uses: conda-incubator/setup-miniconda@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Config Conda
-      shell: bash -l {0}
-      run: |
-        echo "$NETRC_FILE" | base64 --decode > ~/.netrc
-        conda install -n base conda-libmamba-solver
-        conda config --set solver libmamba
-        conda config --append channels conda-forge
-        conda config --prepend channels https://packages.nnpdf.science/public
-        conda config --set show_channel_urls true
-        conda activate test
-        conda install boa --yes
-    - name: Install dependencies
-      shell: bash -l {0}
-      run: |
-        conda activate test
-        conda install nnpdf -y
-        conda install mpi4py -y
-        python -m pip install --upgrade pip
-        python -m pip install flake8 pytest ultranest jax optax flax flit
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        activate-environment: colibri-dev
+        use-mamba: true    
+    
+    - name: Cache Conda packages
+      uses: actions/cache@v3
+      with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('environment.yml') }}
+    
+    - name: Update environment
+      run: mamba env update -n colibri-dev -f environment.yml
+      if: steps.cache.outputs.cache-hit != 'true'
+
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
-        conda activate test
+        conda activate colibri-dev
         flit install --symlink
         cd colibri/models/wmin
         flit install --symlink
@@ -60,7 +61,7 @@ jobs:
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
-        conda activate test
+        conda activate colibri-dev
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
@@ -68,5 +69,5 @@ jobs:
     - name: Test with pytest
       shell: bash -l {0}
       run: |
-        conda activate test
+        conda activate colibri-dev
         pytest

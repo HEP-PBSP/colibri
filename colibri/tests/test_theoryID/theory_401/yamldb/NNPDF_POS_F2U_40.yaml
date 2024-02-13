@@ -1,0 +1,5 @@
+conversion_factor: 1.0
+operands:
+- - NNPDF_POS_F2U_40
+operation: 'null'
+target_dataset: POSF2U
