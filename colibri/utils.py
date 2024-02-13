@@ -120,6 +120,8 @@ def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
     grid: jnp.array
         grid, is N_rep x N_fl x N_x
     """
+    # Use double precision so as to avoid butterfly effect in pseudodata generation
+    jax.config.update("jax_enable_x64", True)
 
     grid = jnp.array(
         convolution.evolution.grid_values(

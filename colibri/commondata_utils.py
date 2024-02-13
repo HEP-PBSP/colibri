@@ -63,6 +63,8 @@ def level_0_commondata_tuple(
     tuple
         tuple of validphys.coredata.CommonData instances
     """
+    # use double precision so as to avoid butterfly effect in pseudodata generation
+    jax.config.update("jax_enable_x64", True)
 
     fake_data = []
     for cd, ds in zip(experimental_commondata_tuple, data.datasets):
