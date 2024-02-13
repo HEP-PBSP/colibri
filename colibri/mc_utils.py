@@ -39,13 +39,15 @@ def mc_pseudodata(
     trval_seed,
     shuffle_indices=True,
     mc_validation_fraction=0.2,
+    enable_float64_data=True,
 ):
     """Produces Monte Carlo pseudodata for the replica with index replica_index.
     The pseudodata is returned with a set of training indices, which account for
     a fraction mc_validation_fraction of the data.
     """
-    # pseudodata generated with double precision to avoid butterfly effect
-    jax.config.update("jax_enable_x64", True)
+    if enable_float64_data:
+        # pseudodata generated with double precision to avoid butterfly effect
+        jax.config.update("jax_enable_x64", True)
 
     central_values = pseudodata_central_covmat_index.central_values
     covmat = pseudodata_central_covmat_index.covmat

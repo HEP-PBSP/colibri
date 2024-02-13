@@ -15,7 +15,7 @@ from colibri.tests.conftest import (
     TEST_DATASETS,
     T0_PDFSET,
     CLOSURE_TEST_PDFSET,
-    LEVEL_1_SEED,
+    PSEUDODATA_SEED,
 )
 
 from numpy.testing import assert_allclose
@@ -81,7 +81,7 @@ def test_level1_commondata_tuple():
     )
 
     current_level1_central_values = colibriAPI.level_1_commondata_tuple(
-        **{**TEST_DATASETS, **CLOSURE_TEST_PDFSET, "level_1_seed": LEVEL_1_SEED}
+        **{**TEST_DATASETS, **CLOSURE_TEST_PDFSET, "level_1_seed": PSEUDODATA_SEED}
     )
 
     assert_allclose(
