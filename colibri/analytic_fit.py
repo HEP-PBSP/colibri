@@ -90,15 +90,15 @@ def analytic_fit(
     Sigma = inv_covmat
     X = (predictions[:, central_values_idx]).T
 
+    # * Check that cov mat is positive definite
+    if jnp.any(jla.eigh(X.T @ Sigma @ X)[0] <= 0.0):
+        raise ValueError(
+            "The obtained covariance matrix for the analytic solution is not positive definite."
+        )
+
     t0 = time.time()
     sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     sol_covmat = jla.inv(X.T @ Sigma @ X)
-
-    # * Check that cov mat is semi-positive definite
-    if jnp.any(jla.eigh(sol_covmat)[0] < 0.0):
-        raise ValueError(
-            "The obtained covariance matrix for the analytic solution is not semi-postive definite."
-        )
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
