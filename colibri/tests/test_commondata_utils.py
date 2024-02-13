@@ -73,12 +73,18 @@ def test_central_covmat_index():
 def test_level1_commondata_tuple():
     """
     Regression test, testing that the generation of Level 1
-    data is consistent with main. 
+    data is consistent with main.
     Note that level1 data is generated using jax.config.update("jax_enable_x64", True)
     """
-    reference_level1_central_values = pd.read_csv(TEST_COMMONDATA_FOLDER / "NMC_level1_central_values.csv")
-    
-    current_level1_central_values = colibriAPI.level_1_commondata_tuple(**{**TEST_DATASETS, **CLOSURE_TEST_PDFSET, "level_1_seed": LEVEL_1_SEED})
-    
-    assert_allclose(reference_level1_central_values["cv"].values, current_level1_central_values[0].central_values)
+    reference_level1_central_values = pd.read_csv(
+        TEST_COMMONDATA_FOLDER / "NMC_level1_central_values.csv"
+    )
 
+    current_level1_central_values = colibriAPI.level_1_commondata_tuple(
+        **{**TEST_DATASETS, **CLOSURE_TEST_PDFSET, "level_1_seed": LEVEL_1_SEED}
+    )
+
+    assert_allclose(
+        reference_level1_central_values["cv"].values,
+        current_level1_central_values[0].central_values,
+    )

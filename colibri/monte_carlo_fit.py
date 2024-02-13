@@ -20,7 +20,6 @@ from colibri.lhapdf import write_exportgrid
 log = logging.getLogger(__name__)
 
 
-
 @dataclass(frozen=True)
 class MonteCarloFit:
     """
@@ -115,7 +114,7 @@ def monte_carlo_fit(
         training_loss: jnp.array
         validation_loss: jnp.array
     """
-    
+
     if not monte_carlo_double_accuracy:
         # Run Monte Carlo fits with single accuracy for speed up
         jax.config.update("jax_enable_x64", False)
