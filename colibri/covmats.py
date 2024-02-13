@@ -87,7 +87,9 @@ def dataset_inputs_covmat_from_systematics(
     return covmat
 
 
-def colibri_dataset_inputs_t0_predictions(_pred_t0data, t0_pdf_grid, enable_float64_data=True):
+def colibri_dataset_inputs_t0_predictions(
+    _pred_t0data, t0_pdf_grid, enable_float64_data=True
+):
     """
     Similar to validphys.covmats.dataset_inputs_t0_predictions.
 
@@ -115,7 +117,10 @@ def colibri_dataset_inputs_t0_predictions(_pred_t0data, t0_pdf_grid, enable_floa
 
 
 def dataset_inputs_t0_covmat_from_systematics(
-    data, experimental_commondata_tuple, colibri_dataset_inputs_t0_predictions, enable_float64_data=True
+    data,
+    experimental_commondata_tuple,
+    colibri_dataset_inputs_t0_predictions,
+    enable_float64_data=True,
 ):
     """
     Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
