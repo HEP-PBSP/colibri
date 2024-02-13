@@ -53,6 +53,7 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
+    monte_carlo_double_accuracy=False,
     batch_size=128,
     batch_seed=1,
     alpha=1e-7,
@@ -115,6 +116,10 @@ def monte_carlo_fit(
         validation_loss: jnp.array
     """
     
+    if not monte_carlo_double_accuracy:
+        # Run Monte Carlo fits with single accuracy for speed up
+        jax.config.update("jax_enable_x64", False)
+
     fit_grid_values_func = pdf_model.grid_values_func(XGRID)
 
     @jax.jit
