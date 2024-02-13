@@ -20,9 +20,6 @@ from colibri.lhapdf import write_exportgrid
 log = logging.getLogger(__name__)
 
 
-# Use float32 accuracy in a Monte Carlo fit to speed up gradient descendt
-# Especially useful for hadronic fits.
-jax.config.update("jax_enable_x64", False)
 
 @dataclass(frozen=True)
 class MonteCarloFit:
@@ -117,7 +114,7 @@ def monte_carlo_fit(
         training_loss: jnp.array
         validation_loss: jnp.array
     """
-
+    
     fit_grid_values_func = pdf_model.grid_values_func(XGRID)
 
     @jax.jit

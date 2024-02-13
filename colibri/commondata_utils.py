@@ -106,6 +106,8 @@ def level_1_commondata_tuple(
     tuple
         tuple of validphys.coredata.CommonData instances
     """
+    # level1 data generated with double precision to avoid butterfly effect
+    jax.config.update("jax_enable_x64", True)
 
     # First, construct a jax array from the level_0_commondata_tuple
     central_values = jnp.array(
