@@ -12,6 +12,8 @@ import os
 import numpy as np
 import yaml
 
+import dill
+
 
 def write_exportgrid(
     parameters,
@@ -62,6 +64,11 @@ def write_exportgrid(
 
     # Create the exportgrid
     lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+
+    # store pdf_model interpolator using dill
+    with open(output_path / "pdf_model.pkl", "wb") as file:
+        dill.dump(pdf_model, file)
+    
 
     # Rotate the grid from the evolution basis into the export grid basis
     grid_for_writing = np.array(lhapdf_interpolator(parameters))

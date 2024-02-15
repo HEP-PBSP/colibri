@@ -23,3 +23,4 @@ doc = [
 colibri = "colibri.app:main"
 evolve_fit = "colibri.scripts.evolve_fit:main"
 mc_postfit = "colibri.scripts.mc_postfit:main"
+ns_resample = "colibri.scripts.ns_resampler:main"
