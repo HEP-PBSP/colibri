@@ -120,7 +120,7 @@ def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
     grid: jnp.array
         grid, is N_rep x N_fl x N_x
     """
-    
+
     grid = jnp.array(
         convolution.evolution.grid_values(
             closure_test_pdf, convolution.FK_FLAVOURS, XGRID, [Q0]
