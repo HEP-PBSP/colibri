@@ -12,6 +12,7 @@ import optax
 import logging
 import pandas as pd
 import os
+import time
 
 from colibri.constants import XGRID
 from colibri.data_batch import data_batches
@@ -138,6 +139,7 @@ def monte_carlo_fit(
         return params, opt_state, loss_value
 
     log.info("Starting Monte Carlo fit...")
+    t0 = time.time()
 
     len_tr_idx, len_val_idx = len_trval_data
 
@@ -168,7 +170,7 @@ def monte_carlo_fit(
         epoch_val_loss += loss_validation(parameters) / len_val_idx
         epoch_loss /= num_batches
 
-        _, early_stopper = early_stopper.update(epoch_val_loss)
+        early_stopper = early_stopper.update(epoch_val_loss)
         if early_stopper.should_stop:
             log.info("Met early stopping criteria, breaking...")
             break
@@ -181,6 +183,10 @@ def monte_carlo_fit(
             # store loss values every 50 epochs
             loss.append(epoch_loss)
             val_loss.append(epoch_val_loss)
+
+    t1 = time.time()
+
+    log.info("MONTE CARLO RUNNING TIME: %f" % (t1 - t0))
 
     df = pd.DataFrame(parameters, index=pdf_model.param_names).T
 
