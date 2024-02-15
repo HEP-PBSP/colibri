@@ -8,7 +8,6 @@ Notes: Several functions are taken from validphys.covmats
 Date: 11.11.2023
 """
 
-import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
@@ -17,7 +16,7 @@ import numpy as np
 from validphys import covmats
 
 
-def sqrt_covmat_jax(covariance_matrix, enable_float64_data=True):
+def sqrt_covmat_jax(covariance_matrix):
     """
     Same as `validphys.covmats.sqrt_covmat` but
     for jax.numpy arrays
@@ -37,9 +36,6 @@ def sqrt_covmat_jax(covariance_matrix, enable_float64_data=True):
         the lower triangular decomposition. The following should be ``True``:
         ``jnp.allclose(sqrt_covmat @ sqrt_covmat.T, covariance_matrix)``.
     """
-    if enable_float64_data:
-        # double precision data to avoid butterfly effect
-        jax.config.update("jax_enable_x64", True)
 
     dimensions = covariance_matrix.shape
 
@@ -62,7 +58,6 @@ def sqrt_covmat_jax(covariance_matrix, enable_float64_data=True):
 def dataset_inputs_covmat_from_systematics(
     data,
     experimental_commondata_tuple,
-    enable_float64_data=True,
 ):
     """
     Similar to validphys.covmats.dataset_inputs_covmat_from_systematics
@@ -70,9 +65,6 @@ def dataset_inputs_covmat_from_systematics(
 
     Note: see production rule in `config.py` for commondata_tuple options.
     """
-    if enable_float64_data:
-        # double precision data to avoid butterfly effect
-        jax.config.update("jax_enable_x64", True)
 
     covmat = jnp.array(
         covmats.dataset_inputs_covmat_from_systematics(
@@ -87,9 +79,7 @@ def dataset_inputs_covmat_from_systematics(
     return covmat
 
 
-def colibri_dataset_inputs_t0_predictions(
-    _pred_t0data, t0_pdf_grid, enable_float64_data=True
-):
+def colibri_dataset_inputs_t0_predictions(_pred_t0data, t0_pdf_grid):
     """
     Similar to validphys.covmats.dataset_inputs_t0_predictions.
 
@@ -106,9 +96,6 @@ def colibri_dataset_inputs_t0_predictions(
     t0predictions: list
         list of theory predictions for each dataset
     """
-    if enable_float64_data:
-        # double precision data to avoid butterfly effect
-        jax.config.update("jax_enable_x64", True)
     # central PDF member for t0 predictions
     pred = _pred_t0data(t0_pdf_grid[0])
     t0predictions = [np.array(pred[i]) for i in range(len(pred))]
@@ -120,7 +107,6 @@ def dataset_inputs_t0_covmat_from_systematics(
     data,
     experimental_commondata_tuple,
     colibri_dataset_inputs_t0_predictions,
-    enable_float64_data=True,
 ):
     """
     Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
@@ -128,9 +114,6 @@ def dataset_inputs_t0_covmat_from_systematics(
 
     Note: see production rule in `config.py` for commondata_tuple options.
     """
-    if enable_float64_data:
-        # double precision data to avoid butterfly effect
-        jax.config.update("jax_enable_x64", True)
     covmat = jnp.array(
         covmats.dataset_inputs_t0_covmat_from_systematics(
             experimental_commondata_tuple,

@@ -38,7 +38,6 @@ def level_0_commondata_tuple(
     experimental_commondata_tuple,
     closure_test_central_pdf_grid,
     flavour_indices=None,
-    enable_float64_data=True,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -64,9 +63,6 @@ def level_0_commondata_tuple(
     tuple
         tuple of validphys.coredata.CommonData instances
     """
-    if enable_float64_data:
-        # use double precision so as to avoid butterfly effect in pseudodata generation
-        jax.config.update("jax_enable_x64", True)
 
     fake_data = []
     for cd, ds in zip(experimental_commondata_tuple, data.datasets):
@@ -87,7 +83,6 @@ def level_1_commondata_tuple(
     level_0_commondata_tuple,
     data_generation_covariance_matrix,
     level_1_seed=123456,
-    enable_float64_data=True,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -111,9 +106,6 @@ def level_1_commondata_tuple(
     tuple
         tuple of validphys.coredata.CommonData instances
     """
-    if enable_float64_data:
-        # level1 data generated with double precision to avoid butterfly effect
-        jax.config.update("jax_enable_x64", True)
 
     # First, construct a jax array from the level_0_commondata_tuple
     central_values = jnp.array(

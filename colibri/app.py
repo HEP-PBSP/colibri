@@ -9,6 +9,12 @@ from validphys.app import App
 from colibri.config import colibriConfig, Environment
 import pathlib
 
+import jax
+
+# Whenever a colibri app is run, it should use high-precision jax
+# calculations. If this is not on, problems with numerical accuracy
+# can occur.
+jax.config.update("jax_enable_x64", True)
 
 colibri_providers = [
     "colibri.theory_predictions",

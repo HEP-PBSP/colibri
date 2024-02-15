@@ -52,7 +52,6 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
-    enable_float64_monte_carlo=False,
     batch_size=128,
     batch_seed=1,
     alpha=1e-7,
@@ -95,10 +94,6 @@ def monte_carlo_fit(
     max_epochs: int
         Number of maximum epochs.
 
-    enable_float64_monte_carlo: Bool, default is False
-        Defines whether Monte Carlo fit is perform using double or single accuracy.
-        Per default single, float32, accuracy is used.
-
     batch_size: int, optional
         Size of batches during training. Defaults to 128.
 
@@ -118,10 +113,6 @@ def monte_carlo_fit(
         training_loss: jnp.array
         validation_loss: jnp.array
     """
-
-    if not enable_float64_monte_carlo:
-        # Run Monte Carlo fits with single accuracy for speed up
-        jax.config.update("jax_enable_x64", False)
 
     fit_grid_values_func = pdf_model.grid_values_func(XGRID)
 
