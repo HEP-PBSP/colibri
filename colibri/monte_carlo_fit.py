@@ -138,6 +138,8 @@ def monte_carlo_fit(
         params = optax.apply_updates(params, updates)
         return params, opt_state, loss_value
 
+    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
