@@ -22,9 +22,7 @@ log.addHandler(colors.ColorHandler())
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Script to resample from NS posterior"
-    )
+    parser = argparse.ArgumentParser(description="Script to resample from NS posterior")
     parser.add_argument("fit_name", help="The colibri fit from which to sample.")
     parser.add_argument(
         "--nreplicas",
@@ -39,15 +37,14 @@ def main():
         type=int,
         default=1,
         help="The random seed to be used to sample from the posterior.",
-
     )
-     
+
     parser.add_argument(
         "--resampled_fit_name",
         "-newfit",
         type=str,
         default=None,
-        help="The name of the resampled fit."
+        help="The name of the resampled fit.",
     )
 
     args = parser.parse_args()
@@ -60,7 +57,6 @@ def main():
     # path of resampled fit
     resampled_fit_path = pathlib.Path(args.resampled_fit_name)
 
-
     # Give names to other arguments
     nreplicas = args.nreplicas
     resampling_seed = args.resampling_seed
@@ -69,9 +65,9 @@ def main():
 
     log.info(f"Loading pdf model from {fit_path}")
     # load pdf_model from fit using dill
-    with open(fit_path / 'pdf_model.pkl', 'rb') as file:
+    with open(fit_path / "pdf_model.pkl", "rb") as file:
         pdf_model = dill.load(file)
-    
+
     # Check that the .txt file with posterior samples exists
     if not os.path.exists(fit_path / "ultranest_logs/chains/equal_weighted_post.txt"):
         raise FileNotFoundError(
@@ -79,11 +75,10 @@ def main():
             "please run the bayesian fit first."
         )
 
-    
     equal_weight_post_path = fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
 
     samples = pd.read_csv(equal_weight_post_path, sep="\s+", dtype=float).values
-    
+
     if nreplicas > samples.shape[0]:
         nreplicas = samples.shape[0]
         log.warning(
@@ -92,14 +87,12 @@ def main():
             f"samples to {nreplicas}"
         )
 
-    
     resampled_posterior = resample_from_ns_posterior(
-            samples,
-            nreplicas,
-            resampling_seed,
+        samples,
+        nreplicas,
+        resampling_seed,
     )
 
-    
     # copy old fit to resampled fit
     os.system(f"cp -r {fit_path} {resampled_fit_path}")
 
@@ -110,14 +103,13 @@ def main():
     parameters = pdf_model.param_names
     df = pd.DataFrame(resampled_posterior, columns=parameters)
     df.to_csv(str(resampled_fit_path) + "/ns_result.csv")
-    
+
     # write exportgrids for each replica in resampled fit
     for i in range(resampled_posterior.shape[0]):
         log.info(f"Writing exportgrid for replica {i+1}")
         write_exportgrid(
             resampled_posterior[i],
             pdf_model,
-            i+1,
+            i + 1,
             resampled_fit_path,
         )
-    
