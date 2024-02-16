@@ -16,3 +16,4 @@ dependencies:
     - pytest
     - ultranest
     - flit
+    - dill
