@@ -3,8 +3,10 @@
 name: Nested Sampling CI wmin model
 
 on:
-  pull_request:
-    branches: [ "main" ]
+  pull_request_review:
+    types:
+      - submitted
+      - edited
 
 env:
   CACHE_NUMBER: 0  # increase to reset cache manually
