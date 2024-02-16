@@ -6,7 +6,7 @@ mamba create -n colibri -y && mamba activate colibri
 mamba install python=3.10 jax=0.4.13 ml_dtypes optax=0.1.7 flax chex=0.1.83 -c conda-forge -y
 mamba install flit mpich mpi4py -c conda-forge -y
 mamba install lhapdf prompt_toolkit seaborn h5py dask rust eko pandoc -c conda-forge -y
-pip install validobj pineappl "ruamel.yaml<0.18.0" ultranest
+pip install validobj pineappl "ruamel.yaml<0.18.0" ultranest dill
 ```
 
 Now we need to do some manual stuff:
