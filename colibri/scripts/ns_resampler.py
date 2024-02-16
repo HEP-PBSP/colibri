@@ -41,19 +41,18 @@ def main():
         help="The random seed to be used to sample from the posterior.",
 
     )
-    
-    args = parser.parse_args()
-
-    # name of resampled fit
+     
     parser.add_argument(
         "--resampled_fit_name",
         "-newfit",
         type=str,
-        default=f"resampled_{args.fit_name}",
+        default=None,
         help="The name of the resampled fit."
     )
 
     args = parser.parse_args()
+    if args.resampled_fit_name is None:
+        args.resampled_fit_name = "resampled_" + args.fit_name
 
     # Convert fit_path to a pathlib.Path object
     fit_path = pathlib.Path(args.fit_name)
@@ -100,12 +99,21 @@ def main():
             resampling_seed,
     )
 
+    
+    # copy old fit to resampled fit
+    os.system(f"cp -r {fit_path} {resampled_fit_path}")
+
+    # remove old replicas from resampled fit
+    os.system(f"rm -r {resampled_fit_path}/replicas")
+
+
+    # write exportgrids for each replica in resampled fit
     for i in range(resampled_posterior.shape[0]):
         log.info(f"Writing exportgrid for replica {i+1}")
         write_exportgrid(
             resampled_posterior[i],
             pdf_model,
             i+1,
-            fit_path,
+            resampled_fit_path,
         )
     
