@@ -106,7 +106,11 @@ def main():
     # remove old replicas from resampled fit
     os.system(f"rm -r {resampled_fit_path}/replicas")
 
-
+    # overwrite old ns_result.csv with resampled posterior
+    parameters = pdf_model.param_names
+    df = pd.DataFrame(resampled_posterior, columns=parameters)
+    df.to_csv(str(resampled_fit_path) + "/ns_result.csv")
+    
     # write exportgrids for each replica in resampled fit
     for i in range(resampled_posterior.shape[0]):
         log.info(f"Writing exportgrid for replica {i+1}")
