@@ -4,7 +4,6 @@ without having to re run the entire fit.
 """
 
 import os
-import shutil
 import pandas as pd
 import argparse
 import logging
@@ -15,7 +14,6 @@ from reportengine import colors
 
 from colibri.utils import resample_from_ns_posterior
 from colibri.lhapdf import write_exportgrid
-from colibri.constants import LHAPDF_XGRID
 
 
 log = logging.getLogger()
