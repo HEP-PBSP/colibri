@@ -58,9 +58,7 @@ def make_chi2(_data_values, _pred_data, vectorized=False):
         return loss
 
     if vectorized:
-        return jnp.vectorize(
-            chi2, signature="(m,n)->()"
-        )
+        return jnp.vectorize(chi2, signature="(m,n)->()")
     return chi2
 
 
@@ -134,5 +132,5 @@ def make_chi2_with_positivity(
 
     if vectorized:
         return jnp.vectorize(chi2, signature="(m,n)->()")
-    
+
     return chi2
