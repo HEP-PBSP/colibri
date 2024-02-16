@@ -1,4 +1,5 @@
 # This workflow tests that the MC fit in main and the one in the PR are consistent
+# triggered by PR review submission or edit
 
 name: Monte Carlo CI wmin model
 
