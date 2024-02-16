@@ -41,12 +41,26 @@ def main():
         help="The random seed to be used to sample from the posterior.",
 
     )
-
     
+    args = parser.parse_args()
+
+    # name of resampled fit
+    parser.add_argument(
+        "--resampled_fit_name",
+        "-newfit",
+        type=str,
+        default=f"resampled_{args.fit_name}",
+        help="The name of the resampled fit."
+    )
+
     args = parser.parse_args()
 
     # Convert fit_path to a pathlib.Path object
     fit_path = pathlib.Path(args.fit_name)
+
+    # path of resampled fit
+    resampled_fit_path = pathlib.Path(args.resampled_fit_name)
+
 
     # Give names to other arguments
     nreplicas = args.nreplicas
