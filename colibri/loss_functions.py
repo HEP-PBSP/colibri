@@ -133,6 +133,6 @@ def make_chi2_with_positivity(
 
     if vectorized:
         # jnp.vectorize(chi2, signature="(m,n)->()")
-        return jax.vmap(chi2, in_axes=(0,), out_axes=0) 
+        return jax.vmap(chi2, in_axes=(0,), out_axes=0)
 
     return chi2
