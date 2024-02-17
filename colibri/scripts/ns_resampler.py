@@ -106,7 +106,6 @@ def main():
     df = pd.DataFrame(resampled_posterior, columns=parameters)
     df.to_csv(str(resampled_fit_path) + "/ns_result.csv")
 
-
     # initalize MPI
     # mpi communicator
     comm = MPI.COMM_WORLD
@@ -131,7 +130,6 @@ def main():
             i + 1,
             resampled_fit_path,
         )
-
 
     # Wait for all processes to reach this point
     comm.Barrier()
