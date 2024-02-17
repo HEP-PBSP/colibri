@@ -6,13 +6,17 @@ The Evolution is not yet performed.
 
 """
 
-from colibri.constants import LHAPDF_XGRID, evolution_to_export_matrix, EXPORT_LABELS
-
 import os
 import numpy as np
 import yaml
 
 import dill
+from mpi4py import MPI
+
+from colibri.constants import LHAPDF_XGRID, evolution_to_export_matrix, EXPORT_LABELS
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
 
 
 def write_exportgrid(
@@ -53,8 +57,13 @@ def write_exportgrid(
         replicas_path = str(output_path) + "/fit_replicas"
     else:
         replicas_path = str(output_path) + "/replicas"
-    if not os.path.exists(replicas_path):
-        os.mkdir(replicas_path)
+    
+    # only rank 0 should create the folder
+    if rank == 0:
+        if not os.path.exists(replicas_path):
+            os.mkdir(replicas_path)
+    # sync all ranks
+    comm.Barrier()
 
     rep_path = replicas_path + f"/replica_{replica_index}"
     if not os.path.exists(rep_path):
