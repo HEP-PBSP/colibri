@@ -113,3 +113,5 @@ def main():
             i + 1,
             resampled_fit_path,
         )
+
+    log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
