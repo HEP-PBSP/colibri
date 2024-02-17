@@ -8,19 +8,19 @@ from colibri.plots_and_tables.plotting import get_fit_path
 from reportengine.figure import figure
 
 
-def kl_divergence(x,y):
+def kl_divergence(x, y):
     """
     Computes the Kullback-Leibler divergence between two samples of vectors.
     # The kl divergence is computed as the average of the kl divergence between the
     # cartesian product of the two samples.
 
     Let x_i and y_i be two vectors of the same length, then the kl divergence
-    between x_i and y_i is defined as: D_KL(x_i||y_i) = sum_i (x_i * log(x_i/y_i)) 
+    between x_i and y_i is defined as: D_KL(x_i||y_i) = sum_i (x_i * log(x_i/y_i))
 
     The kl divergence between two samples of vectors is then defined as:
 
     D_KL(x||y) = sum_i (sum_j D_KL(x_i||y_j) / len(x)) / len(x)
-    
+
     x and y are assumed to be 2D arrays of the same shape, where the first dimension
     is the length of the vectors and the second dimension is the number of vectors.
 
@@ -28,7 +28,7 @@ def kl_divergence(x,y):
     ----------
     x: np.array
         First sample of vectors.
-    
+
     y: np.array
         Second sample of vectors.
     """
@@ -46,23 +46,23 @@ def kl_divergence(x,y):
         raise ValueError("The two samples must have the same length.")
 
     # compute the kl divergence
-    kl = np.mean([[np.sum(x_i * np.log(x_i/y)) for x_i in x.T] for y in y.T])
-    
+    kl = np.mean([[np.sum(x_i * np.log(x_i / y)) for x_i in x.T] for y in y.T])
+
     return kl
 
 
-def permute_x_y_samples(x,y, random_seed=0):
+def permute_x_y_samples(x, y, random_seed=0):
     """
     Permute samples of x with samples of y at random.
-    
+
     Parameters
     ----------
     x: np.array
         First sample of vectors.
-    
+
     y: np.array
         Second sample of vectors.
-    
+
     """
     np.random.seed(random_seed)
 
@@ -78,14 +78,13 @@ def permute_x_y_samples(x,y, random_seed=0):
     if x.shape[0] != y.shape[0]:
         raise ValueError("The two samples must have the same length.")
 
-    concatenated_x_y = np.concatenate((x,y), axis=1)
+    concatenated_x_y = np.concatenate((x, y), axis=1)
     permute_idx = np.random.permutation(concatenated_x_y.shape[1])
     permute_x_y = concatenated_x_y[:, permute_idx]
 
+    perm_x = permute_x_y[:, : x.shape[1]]
+    perm_y = permute_x_y[:, x.shape[1] :]
 
-    perm_x = permute_x_y[:,:x.shape[1]]
-    perm_y = permute_x_y[:,x.shape[1]:]
-    
     return perm_x, perm_y
 
 
@@ -128,7 +127,13 @@ def plot_kl_distribution(kl_div_test):
     kl_value = kl_div_test["kl_value"]
 
     fig, ax = plt.subplots()
-    ax.hist(kl_distribution, bins=20, color="blue", alpha=0.7, label="Permutation distribution")
+    ax.hist(
+        kl_distribution,
+        bins=20,
+        color="blue",
+        alpha=0.7,
+        label="Permutation distribution",
+    )
     ax.axvline(kl_value, color="red", linestyle="--", label="KL divergence")
     ax.set_xlabel("KL divergence")
     ax.set_ylabel("Frequency")
