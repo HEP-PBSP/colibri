@@ -57,7 +57,7 @@ def write_exportgrid(
         replicas_path = str(output_path) + "/fit_replicas"
     else:
         replicas_path = str(output_path) + "/replicas"
-    
+
     # only rank 0 should create the folder
     if rank == 0:
         if not os.path.exists(replicas_path):

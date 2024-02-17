@@ -94,11 +94,13 @@ def main():
             f"samples to {nreplicas}"
         )
 
-    resampled_posterior = resample_from_ns_posterior(
-        samples,
-        nreplicas,
-        resampling_seed,
-    )
+    if rank == 0:
+        resampled_posterior = resample_from_ns_posterior(
+            samples,
+            nreplicas,
+            resampling_seed,
+        )
+    comm.Barrier()
 
     if rank == 0:
         # copy old fit to resampled fit
