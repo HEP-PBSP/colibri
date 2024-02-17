@@ -10,6 +10,8 @@ import logging
 import pathlib
 import dill
 
+from mpi4py import MPI
+
 from reportengine import colors
 
 from colibri.utils import resample_from_ns_posterior
@@ -104,8 +106,24 @@ def main():
     df = pd.DataFrame(resampled_posterior, columns=parameters)
     df.to_csv(str(resampled_fit_path) + "/ns_result.csv")
 
-    # write exportgrids for each replica in resampled fit
-    for i in range(resampled_posterior.shape[0]):
+
+    # initalize MPI
+    # mpi communicator
+    comm = MPI.COMM_WORLD
+    # rank of process
+    rank = comm.Get_rank()
+    # number of processes
+    size = comm.Get_size()
+
+    # calculate number of replicas per process
+    nreplicas_per_process = nreplicas // size
+    # remainder = nreplicas % size
+
+    # calculate start and end indices for each process
+    start = rank * nreplicas_per_process
+    end = (rank + 1) * nreplicas_per_process if rank < size - 1 else nreplicas
+
+    for i in range(start, end):
         log.info(f"Writing exportgrid for replica {i+1}")
         write_exportgrid(
             resampled_posterior[i],
@@ -114,4 +132,8 @@ def main():
             resampled_fit_path,
         )
 
-    log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
+
+    # Wait for all processes to reach this point
+    comm.Barrier()
+    if rank == 0:
+        log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
