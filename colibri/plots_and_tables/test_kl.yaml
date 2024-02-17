@@ -1,0 +1,7 @@
+mc_fit: grid_pdf_mc_numerical
+
+bayesian_fit: grid_pdf_bayes_numerical
+
+
+actions_:
+ - plot_kl_distribution
