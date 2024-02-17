@@ -58,7 +58,8 @@ def make_chi2(_data_values, _pred_data, vectorized=False):
         return loss
 
     if vectorized:
-        return jnp.vectorize(chi2, signature="(m,n)->()")
+        # return jnp.vectorize(chi2, signature="(m,n)->()")
+        return jax.vmap(chi2, in_axes=(0,), out_axes=0)
     return chi2
 
 
@@ -131,6 +132,7 @@ def make_chi2_with_positivity(
         return loss
 
     if vectorized:
-        return jnp.vectorize(chi2, signature="(m,n)->()")
+        # jnp.vectorize(chi2, signature="(m,n)->()")
+        return jax.vmap(chi2, in_axes=(0,), out_axes=0) 
 
     return chi2
