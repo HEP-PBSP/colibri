@@ -49,6 +49,14 @@ def main():
         help="The name of the resampled fit.",
     )
 
+    # initalize MPI
+    # mpi communicator
+    comm = MPI.COMM_WORLD
+    # rank of process
+    rank = comm.Get_rank()
+    # number of processes
+    size = comm.Get_size()
+
     args = parser.parse_args()
     if args.resampled_fit_name is None:
         args.resampled_fit_name = "resampled_" + args.fit_name
@@ -67,60 +75,59 @@ def main():
 
     log.info(f"Loading pdf model from {fit_path}")
     # load pdf_model from fit using dill
-    with open(fit_path / "pdf_model.pkl", "rb") as file:
-        pdf_model = dill.load(file)
+    if rank == 0:
+        with open(fit_path / "pdf_model.pkl", "rb") as file:
+            pdf_model = dill.load(file)
 
-    # Check that the .txt file with posterior samples exists
-    if not os.path.exists(fit_path / "ultranest_logs/chains/equal_weighted_post.txt"):
-        raise FileNotFoundError(
-            f"{fit_path}/ultranest_logs/chains/equal_weighted_post.txt does not exist;"
-            "please run the bayesian fit first."
+        # Check that the .txt file with posterior samples exists
+        if not os.path.exists(
+            fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
+        ):
+            raise FileNotFoundError(
+                f"{fit_path}/ultranest_logs/chains/equal_weighted_post.txt does not exist;"
+                "please run the bayesian fit first."
+            )
+
+        equal_weight_post_path = (
+            fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
         )
 
-    equal_weight_post_path = fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
+        samples = pd.read_csv(equal_weight_post_path, sep="\s+", dtype=float).values
 
-    samples = pd.read_csv(equal_weight_post_path, sep="\s+", dtype=float).values
+        if nreplicas > samples.shape[0]:
+            nreplicas = samples.shape[0]
+            log.warning(
+                f"The chosen number of posterior samples exceeds the number of posterior"
+                "samples computed by ultranest. Setting the number of resampled posterior"
+                f"samples to {nreplicas}"
+            )
 
-    if nreplicas > samples.shape[0]:
-        nreplicas = samples.shape[0]
-        log.warning(
-            f"The chosen number of posterior samples exceeds the number of posterior"
-            "samples computed by ultranest. Setting the number of resampled posterior"
-            f"samples to {nreplicas}"
+        resampled_posterior = resample_from_ns_posterior(
+            samples,
+            nreplicas,
+            resampling_seed,
         )
 
-    resampled_posterior = resample_from_ns_posterior(
-        samples,
-        nreplicas,
-        resampling_seed,
-    )
+        # copy old fit to resampled fit
+        os.system(f"cp -r {fit_path} {resampled_fit_path}")
 
-    # copy old fit to resampled fit
-    os.system(f"cp -r {fit_path} {resampled_fit_path}")
+        # remove old replicas from resampled fit
+        os.system(f"rm -r {resampled_fit_path}/replicas")
 
-    # remove old replicas from resampled fit
-    os.system(f"rm -r {resampled_fit_path}/replicas")
+        # overwrite old ns_result.csv with resampled posterior
+        parameters = pdf_model.param_names
+        df = pd.DataFrame(resampled_posterior, columns=parameters)
+        df.to_csv(str(resampled_fit_path) + "/ns_result.csv")
 
-    # overwrite old ns_result.csv with resampled posterior
-    parameters = pdf_model.param_names
-    df = pd.DataFrame(resampled_posterior, columns=parameters)
-    df.to_csv(str(resampled_fit_path) + "/ns_result.csv")
+        # calculate number of replicas per process
+        nreplicas_per_process = nreplicas // size
+        # remainder = nreplicas % size
 
-    # initalize MPI
-    # mpi communicator
-    comm = MPI.COMM_WORLD
-    # rank of process
-    rank = comm.Get_rank()
-    # number of processes
-    size = comm.Get_size()
+        # calculate start and end indices for each process
+        start = rank * nreplicas_per_process
+        end = (rank + 1) * nreplicas_per_process if rank < size - 1 else nreplicas
 
-    # calculate number of replicas per process
-    nreplicas_per_process = nreplicas // size
-    # remainder = nreplicas % size
-
-    # calculate start and end indices for each process
-    start = rank * nreplicas_per_process
-    end = (rank + 1) * nreplicas_per_process if rank < size - 1 else nreplicas
+    comm.Barrier()
 
     for i in range(start, end):
         log.info(f"Writing exportgrid for replica {i+1}")
