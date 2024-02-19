@@ -1,112 +1,23 @@
 """
 colibri.training_validation.py
 
-Module containing training validation dataclasses.
+Module containing training validation dataclasses for MC fits.
 
-Author: Mark N. Costantini
 Date: 11.11.2023
 """
 
+import jax
 import jax.numpy as jnp
-from dataclasses import dataclass
-
-from reportengine import collect
-from reportengine.configparser import ConfigError
-
-from colibri.commondata_utils import CentralCovmatIndex
-from colibri.utils import training_validation_split, TrainValidationSplit
+from dataclasses import dataclass, asdict
 
 
 @dataclass(frozen=True)
-class TrainCentralCovmatIndex(CentralCovmatIndex):
-    n_training_points: int
+class TrainValidationSplit:
+    training: jnp.array
+    validation: jnp.array
 
-
-@dataclass(frozen=True)
-class ValidationCentralCovmatIndex(CentralCovmatIndex):
-    n_validation_points: int
-
-
-@dataclass(frozen=True)
-class MakeDataValues:
-    training_data: TrainCentralCovmatIndex = None
-    validation_data: ValidationCentralCovmatIndex = None
-
-
-def make_data_values(
-    central_covmat_index: dataclass,
-    trval_seed: jnp.array,
-    hyperopt: bool = False,
-    bayesian_fit: bool = False,
-    mc_validation_fraction: float = 0.2,
-    shuffle_indices: bool = True,
-):
-    """
-    Validphys provider for data values pre fit.
-    Contains the logic for:
-
-    - Monte Carlo fit
-    - Monte Carlo hyperopt fit
-    - Bayesian fit.
-
-    Parameters
-    ----------
-    central_covmat_index: dataclass
-    trval_seed: jnp.array,
-    hyperopt: bool = False,
-    bayesian_fit: bool = False,
-    mc_validation_fraction: float = 0.2,
-    shuffle_indices: bool = True
-
-    Returns
-    -------
-    dataclass
-    """
-
-    if bayesian_fit:
-        # no tr/val split needed for a bayesian fit
-        fit_data = TrainCentralCovmatIndex(
-            **central_covmat_index.to_dict(),
-            n_training_points=len(central_covmat_index.central_values),
-        )
-        return MakeDataValues(training_data=fit_data)
-
-    if hyperopt:
-        raise ConfigError("hyperopt not implemented yet")
-
-    central_values = central_covmat_index.central_values
-    covmat = central_covmat_index.covmat
-    central_values_indices = central_covmat_index.central_values_idx
-
-    # perform tr/val split
-    trval_split = training_validation_split(
-        central_values_indices, mc_validation_fraction, trval_seed, shuffle_indices
-    )
-    indices_train = trval_split.training
-    indices_validation = trval_split.validation
-
-    # split data
-    training_data = TrainCentralCovmatIndex(
-        central_values=central_values[indices_train],
-        covmat=covmat[indices_train][:, indices_train],
-        central_values_idx=indices_train,
-        n_training_points=len(indices_train),
-    )
-
-    validation_data = ValidationCentralCovmatIndex(
-        central_values=central_values[indices_validation],
-        covmat=covmat[indices_validation][:, indices_validation],
-        central_values_idx=indices_validation,
-        n_validation_points=len(indices_validation),
-    )
-
-    return MakeDataValues(training_data=training_data, validation_data=validation_data)
-
-
-"""
-Collect over trval and replica indices.
-"""
-mc_replicas_make_data_values = collect("make_data_values", ("trval_replica_indices",))
+    def to_dict(self):
+        return asdict(self)
 
 
 @dataclass(frozen=True)
@@ -115,12 +26,57 @@ class PosdataTrainValidationSplit(TrainValidationSplit):
     n_validation: int
 
 
-def make_posdata_split(
+def trval_seed(trval_index):
+    """
+    Returns a PRNGKey key given `trval_index` seed.
+    """
+    key = jax.random.PRNGKey(trval_index)
+    return key
+
+
+def training_validation_split(
+    indices, mc_validation_fraction, random_seed, shuffle_indices=True
+):
+    """
+    Performs training validation split on an array.
+
+    Parameters
+    ----------
+    indices: jaxlib.xla_extension.Array
+
+    mc_validation_fraction: float
+
+    random_seed: jaxlib.xla_extension.Array
+        PRNGKey, obtained as jax.random.PRNGKey(random_number)
+
+    shuffle_indices: bool
+
+    Returns
+    -------
+    dataclass
+    """
+
+    if shuffle_indices:
+        # shuffle indices
+        permuted_indices = jax.random.permutation(random_seed, indices)
+    else:
+        permuted_indices = indices
+
+    # determine split point
+    split_point = int(indices.shape[0] * (1 - mc_validation_fraction))
+
+    # split indices
+    indices_train = permuted_indices[:split_point]
+    indices_validation = permuted_indices[split_point:]
+
+    return TrainValidationSplit(training=indices_train, validation=indices_validation)
+
+
+def mc_posdata_split(
     posdatasets,
     trval_seed,
     mc_validation_fraction=0.2,
     shuffle_indices=True,
-    bayesian_fit=False,
 ):
     """
     Function for positivity training validation split.
@@ -140,8 +96,6 @@ def make_posdata_split(
 
     shuffle_indices: bool, default is True
 
-    bayesian_fit: bool, default is False
-
     Returns
     -------
     PosdataTrainValidationSplit
@@ -158,15 +112,6 @@ def make_posdata_split(
         )
     )
     indices = jnp.arange(ndata_pos)
-
-    # no tr/vl split needed for bayesian fit
-    if bayesian_fit:
-        return PosdataTrainValidationSplit(
-            training=indices,
-            validation=None,
-            n_training=len(indices),
-            n_validation=None,
-        )
 
     trval_split = training_validation_split(
         indices, mc_validation_fraction, trval_seed, shuffle_indices
