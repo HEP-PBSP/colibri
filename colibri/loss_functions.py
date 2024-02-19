@@ -46,28 +46,18 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
     # since we do it only once and for all at the beginning
     inv_covmat = jla.inv(covmat)
 
+    @jax.jit
+    def chi2(pdf):
+        """ """
+        diff = _pred_data(pdf)[central_values_idx] - central_values
+
+        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
+
+        return loss
+
     if vectorized:
-
-        @jax.jit
-        def chi2(pdf):
-            """ """
-            diff = _pred_data(pdf) - central_values
-
-            loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
-
-            return loss
-
-    else:
-
-        @jax.jit
-        def chi2(pdf):
-            """ """
-            diff = _pred_data(pdf) - central_values
-
-            loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
-
-            return loss
-
+        # return jnp.vectorize(chi2, signature="(m,n)->()")
+        return jax.vmap(chi2, in_axes=(0,), out_axes=0)
     return chi2
 
 
@@ -115,36 +105,26 @@ def make_chi2_with_positivity(
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
+    posdata_training_idx = _posdata_split.training
+
+    @jax.jit
+    def chi2(pdf):
+        """ """
+        diff = _pred_data(pdf)[central_values_idx] - central_values
+
+        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
+
+        # add penalty term due to positivity
+        pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
+            posdata_training_idx
+        ]
+
+        loss += jnp.sum(pos_penalty)
+
+        return loss
+
     if vectorized:
-
-        @jax.jit
-        def chi2(pdf):
-            """ """
-            diff = _pred_data(pdf) - central_values
-
-            loss = jnp.einsum("ri,ij,rj -> r", diff, inv_covmat, diff)
-
-            # add penalty term due to positivity
-            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)
-
-            loss += jnp.sum(pos_penalty, axis=-1)
-
-            return loss
-
-    else:
-
-        @jax.jit
-        def chi2(pdf):
-            """ """
-            diff = _pred_data(pdf) - central_values
-
-            loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
-
-            # add penalty term due to positivity
-            pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)
-
-            loss += jnp.sum(pos_penalty)
-
-            return loss
+        # jnp.vectorize(chi2, signature="(m,n)->()")
+        return jax.vmap(chi2, in_axes=(0,), out_axes=0)
 
     return chi2
