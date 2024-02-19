@@ -11,8 +11,7 @@ import jax.numpy as jnp
 
 from dataclasses import dataclass, asdict
 
-from colibri.utils import training_validation_split
-
+from colibri.training_validation import training_validation_split
 
 import logging
 
@@ -86,3 +85,13 @@ def mc_pseudodata(
 def len_trval_data(mc_pseudodata):
     """Returns the number of training data points."""
     return len(mc_pseudodata.training_indices), len(mc_pseudodata.validation_indices)
+
+
+def replica_seed(replica_index):
+    """
+    Generate a random integer given a replica_index.
+    Note that each replica index has a unique key.
+    """
+    key = jax.random.PRNGKey(replica_index)
+    randint = jax.random.randint(key, shape=(1,), minval=0, maxval=1e10)
+    return int(randint)

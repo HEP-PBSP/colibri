@@ -8,6 +8,7 @@ model.
 
 from dataclasses import dataclass
 import time
+import os
 
 import jax
 import jax.numpy as jnp
@@ -41,7 +42,7 @@ class AnalyticFit:
 
 
 def analytic_fit(
-    _data_values,
+    central_covmat_index,
     _pred_data,
     pdf_model,
     analytic_settings,
@@ -52,8 +53,8 @@ def analytic_fit(
 
     Parameters
     ----------
-    _data_values: MakeDataValues
-        Data values for the fit.
+    central_covmat_index: commondata_utils.CentralCovmatIndex
+        dataclass containing central values and covmat.
 
     _pred_data: @jax.jit CompiledFunction
         Prediction function for the fit.
@@ -77,10 +78,8 @@ def analytic_fit(
     predictions = jnp.array([_pred_data(pdf_basis) for pdf_basis in pdf_bases])
 
     # Construct the analytic solution
-    training_data = _data_values.training_data
-    central_values = training_data.central_values
-    covmat = training_data.covmat
-    central_values_idx = training_data.central_values_idx
+    central_values = central_covmat_index.central_values
+    covmat = central_covmat_index.covmat
 
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
@@ -88,7 +87,7 @@ def analytic_fit(
     # Solve chi2 analytically for the mean
     Y = central_values
     Sigma = inv_covmat
-    X = (predictions[:, central_values_idx]).T
+    X = predictions.T
 
     # * Check that cov mat is positive definite
     if jnp.any(jla.eigh(X.T @ Sigma @ X)[0] <= 0.0):
@@ -114,6 +113,11 @@ def analytic_fit(
     # Save the results
     df = pd.DataFrame(samples, columns=parameters)
     df.to_csv(str(output_path) + "/analytic_result.csv")
+
+    # create replicas folder if it does not exist
+    replicas_path = str(output_path) + "/replicas"
+    if not os.path.exists(replicas_path):
+        os.mkdir(replicas_path)
 
     # Finish by writing the replicas to export grids, ready for evolution
     for i in range(analytic_settings["n_posterior_samples"]):

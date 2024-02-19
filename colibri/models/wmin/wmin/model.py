@@ -14,12 +14,13 @@ from validphys.core import PDF
 from colibri.pdf_model import PDFModel
 from colibri.decorators import enable_x64
 
+import dill
 import logging
 
 log = logging.getLogger(__name__)
 
 
-def pdf_model(wmin_settings):
+def pdf_model(wmin_settings, output_path):
     """
     Weight minimization grid is in the evolution basis.
     The following parametrization is used:
@@ -32,8 +33,13 @@ def pdf_model(wmin_settings):
         - the central replica of the wminpdfset is always included in the
           wmin parametrization
     """
+    model = WMinPDF(PDF(wmin_settings["wminpdfset"]), wmin_settings["n_basis"])
 
-    return WMinPDF(PDF(wmin_settings["wminpdfset"]), wmin_settings["n_basis"])
+    # dump model to output_path using dill
+    # this is mainly needed by scripts/ns_resampler.py
+    with open(output_path / "pdf_model.pkl", "wb") as file:
+        dill.dump(model, file)
+    return model
 
 
 class WMinPDF(PDFModel):

@@ -13,6 +13,7 @@ import ultranest
 import time
 import logging
 import sys
+import os
 
 from colibri.constants import XGRID
 from colibri.lhapdf import write_exportgrid
@@ -91,6 +92,8 @@ def ultranest_fit(
         Dataclass containing the results and specs of an Ultranest fit.
     """
 
+    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+
     # set the ultranest seed
     np.random.seed(ns_settings["ultranest_seed"])
 
@@ -158,6 +161,11 @@ def ultranest_fit(
 
         df = pd.DataFrame(resampled_posterior, columns=parameters)
         df.to_csv(str(output_path) + "/ns_result.csv")
+
+        # create replicas folder if it does not exist
+        replicas_path = str(output_path) + "/replicas"
+        if not os.path.exists(replicas_path):
+            os.mkdir(replicas_path)
 
     # Synchronize to ensure all processes have finished
     comm.Barrier()
