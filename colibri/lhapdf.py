@@ -58,7 +58,6 @@ def write_exportgrid(
     else:
         replicas_path = str(output_path) + "/replicas"
 
-
     rep_path = replicas_path + f"/replica_{replica_index}"
     if not os.path.exists(rep_path):
         os.mkdir(rep_path)

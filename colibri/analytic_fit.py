@@ -8,6 +8,7 @@ model.
 
 from dataclasses import dataclass
 import time
+import os
 
 import jax
 import jax.numpy as jnp
