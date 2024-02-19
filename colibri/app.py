@@ -14,6 +14,10 @@ import logging
 
 log = logging.getLogger(__name__)
 
+# enable double precision globally, this is needed so as to avoid numerical
+# instabilities in the generation of pseudodata (colibri effect)
+jax.config.update("jax_enable_x64", True)
+
 
 colibri_providers = [
     "colibri.theory_predictions",
@@ -67,20 +71,6 @@ class colibriApp(App):
             help="Name of the output directory.",
         )
 
-        parser.add_argument(
-            "--global_double_precision",
-            "-gdp",
-            action="store_true",
-            help="Use double precision globally",
-            default=True,
-        )
-        parser.add_argument(
-            "--no-global_double_precision",
-            "-ngdp",
-            dest="global_double_precision",
-            action="store_false",
-        )
-
         return parser
 
     def get_commandline_arguments(self, cmdline=None):
@@ -88,14 +78,6 @@ class colibriApp(App):
         args = super().get_commandline_arguments(cmdline)
         if args["output"] is None:
             args["output"] = pathlib.Path(args["config_yml"]).stem
-
-        if args["global_double_precision"]:
-            jax.config.update("jax_enable_x64", True)
-        else:
-            log.warning(
-                "Using single precision globally, this may lead to numerical instability."
-            )
-
         return args
 
 
