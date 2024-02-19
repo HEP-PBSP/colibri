@@ -10,8 +10,6 @@ import jax
 import jax.numpy as jnp
 from dataclasses import dataclass, asdict
 
-from colibri.commondata_utils import CentralCovmatIndex
-
 
 @dataclass(frozen=True)
 class TrainValidationSplit:
