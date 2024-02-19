@@ -78,7 +78,7 @@ class GridPDFModel(PDFModel):
 
         return interp_func
 
-    def pred_and_pdf_func(self, interpolation_grid, pred_data):
+    def pred_and_pdf_func(self, interpolation_grid, pdf_pred_func):
         """This function should produce a function that takes in the model
         parameters, and produces the predictions for the data, as well as the
         PDF values on the grid.
@@ -87,7 +87,7 @@ class GridPDFModel(PDFModel):
         @jax.jit
         def pred_and_pdf(params):
             pdf = self.grid_values_func(interpolation_grid)(params)
-            predictions = pred_data(pdf)
+            predictions = pdf_pred_func(pdf)
             return predictions, pdf
 
         return pred_and_pdf
