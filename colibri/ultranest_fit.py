@@ -13,6 +13,7 @@ import ultranest
 import time
 import logging
 import sys
+import os
 
 from colibri.constants import XGRID
 from colibri.lhapdf import write_exportgrid
