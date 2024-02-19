@@ -6,6 +6,7 @@ The grid_pdf model.
 
 import jax
 import jax.numpy as jnp
+import dill
 
 from validphys import convolution
 from validphys.core import PDF
@@ -13,8 +14,13 @@ from validphys.core import PDF
 from colibri.pdf_model import PDFModel
 
 
-def pdf_model(flavour_xgrids):
-    return GridPDFModel(flavour_xgrids)
+def pdf_model(flavour_xgrids, output_path):
+    model = GridPDFModel(flavour_xgrids)
+    # dump model to output_path using dill
+    # this is mainly needed by scripts/ns_resampler.py
+    with open(output_path / "pdf_model.pkl", "wb") as file:
+        dill.dump(model, file)
+    return model
 
 
 class GridPDFModel(PDFModel):
