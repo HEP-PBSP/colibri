@@ -188,7 +188,7 @@ def bayesian_prior(prior_settings):
     if prior_settings["type"] == "uniform_parameter_prior":
         max_val = prior_settings["max_val"]
         min_val = prior_settings["min_val"]
-        
+
         @enable_x64
         @jax.jit
         def prior_transform(cube):

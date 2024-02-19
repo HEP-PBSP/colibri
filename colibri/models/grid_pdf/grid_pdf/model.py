@@ -189,8 +189,6 @@ def bayesian_prior(pdf_model, prior_settings):
     # Remove central replica
     replicas_grid = replicas_grid[1:, :, :, :]
 
-    
-
     if prior_settings["type"] == "uniform_pdf_prior":
         error68_up = jnp.nanpercentile(replicas_grid, 84.13, axis=0).reshape(-1)
         error68_down = jnp.nanpercentile(replicas_grid, 15.87, axis=0).reshape(-1)
@@ -203,7 +201,7 @@ def bayesian_prior(pdf_model, prior_settings):
 
         # enable_x64 is needed to avoid ultranest crashing with
         # ValueError: Buffer dtype mismatch, expected 'float_t' but got 'float'
-    
+
         @enable_x64
         @jax.jit
         def prior_transform(cube):
