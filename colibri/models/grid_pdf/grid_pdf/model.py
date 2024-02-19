@@ -78,15 +78,18 @@ class GridPDFModel(PDFModel):
 
         return interp_func
 
-    def pred_and_pdf_func(self, interpolation_grid, pdf_pred_func):
+    def pred_and_pdf_func(self, xgrid, pdf_pred_func):
         """This function should produce a function that takes in the model
         parameters, and produces the predictions for the data, as well as the
         PDF values on the grid.
+
+        The pdf_pred_func is a function that takes in the PDF defined on the
+        xgrid grid. They must therefore be compatible.
         """
 
         @jax.jit
         def pred_and_pdf(params):
-            pdf = self.grid_values_func(interpolation_grid)(params)
+            pdf = self.grid_values_func(xgrid)(params)
             predictions = pdf_pred_func(pdf)
             return predictions, pdf
 
