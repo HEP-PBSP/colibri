@@ -91,6 +91,8 @@ def ultranest_fit(
         Dataclass containing the results and specs of an Ultranest fit.
     """
 
+    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+
     # set the ultranest seed
     np.random.seed(ns_settings["ultranest_seed"])
 

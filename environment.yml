@@ -7,9 +7,6 @@ channels:
 dependencies:
   - nnpdf
   - mpi4py
-  - jax=0.4.13
-  - optax=0.1.7
-  - flax
   - pip
   - pip:
     - flake8
@@ -17,3 +14,7 @@ dependencies:
     - ultranest
     - flit
     - dill
+    - jax
+    - optax
+    - flax
+    
