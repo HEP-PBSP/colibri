@@ -1,5 +1,5 @@
 """
-colibri.mc_training_validation.py
+colibri.training_validation.py
 
 Module containing training validation dataclasses for MC fits.
 

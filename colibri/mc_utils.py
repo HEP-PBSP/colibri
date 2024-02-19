@@ -11,7 +11,7 @@ import jax.numpy as jnp
 
 from dataclasses import dataclass, asdict
 
-from colibri.mc_training_validation import training_validation_split
+from colibri.training_validation import training_validation_split
 
 import logging
 

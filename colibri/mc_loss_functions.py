@@ -97,7 +97,7 @@ def make_chi2_training_data_with_positivity(
     mc_pseudodata: mc_utils.MCPseudodata
         dataclass containing Monte Carlo pseudodata.
 
-    mc_posdata_split: mc_training_validation.PosdataTrainValidationSplit
+    mc_posdata_split: training_validation.PosdataTrainValidationSplit
         dataclass containing the indices of the positivity data
         for the train and validation split.
 
@@ -235,7 +235,7 @@ def make_chi2_validation_data_with_positivity(
     mc_pseudodata: mc_utils.MCPseudodata
         dataclass containing Monte Carlo pseudodata.
 
-    mc_posdata_split: mc_training_validation.PosdataTrainValidationSplit
+    mc_posdata_split: training_validation.PosdataTrainValidationSplit
         dataclass containing the indices of the positivity data
         for the train and validation split.
 
