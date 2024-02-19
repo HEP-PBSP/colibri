@@ -8,6 +8,8 @@ from colibri.plots_and_tables.plotting import get_fit_path
 from reportengine.figure import figure
 
 
+
+
 def kl_divergence(x, y):
     """
     Computes the Kullback-Leibler divergence between two samples of vectors.
