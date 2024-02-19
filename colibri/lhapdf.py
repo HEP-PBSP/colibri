@@ -10,12 +10,8 @@ import os
 import numpy as np
 import yaml
 
-from mpi4py import MPI
 
 from colibri.constants import LHAPDF_XGRID, evolution_to_export_matrix, EXPORT_LABELS
-
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
 
 
 def write_exportgrid(
