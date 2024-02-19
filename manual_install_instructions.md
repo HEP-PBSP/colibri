@@ -4,7 +4,7 @@ First we need to create a conda environment with the following packages:
 ```
 mamba create -n colibri -y && mamba activate colibri
 mamba install python=3.11 flit mpich mpi4py lhapdf prompt_toolkit seaborn h5py dask rust eko pandoc -c conda-forge -y
-pip install validobj pineappl "ruamel.yaml<0.18.0" ultranest jax optax flax
+pip install validobj pineappl "ruamel.yaml<0.18.0" ultranest jax optax flax dill
 ```
 If running on HPC GPU, add the following
 ```

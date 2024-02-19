@@ -43,7 +43,7 @@ t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covaria
 # Weight minimisation settings
 wmin_settings:
   wminpdfset: NNPDF31_nnlo_as_0118
-  n_basis: 50
+  n_basis: 10
 
 flavour_mapping: ["\\Sigma", "g", "V"]
 # Grid PDF settings
@@ -71,6 +71,7 @@ grid_pdf_settings:
 
 # Nested Sampling settings
 ns_settings:
+  sampler_plot: False
   n_posterior_samples: 10
   ReactiveNS_settings:
     vectorized: False

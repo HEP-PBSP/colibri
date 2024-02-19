@@ -8,6 +8,7 @@ model.
 
 from dataclasses import dataclass
 import time
+import os
 
 import jax
 import jax.numpy as jnp
@@ -112,6 +113,11 @@ def analytic_fit(
     # Save the results
     df = pd.DataFrame(samples, columns=parameters)
     df.to_csv(str(output_path) + "/analytic_result.csv")
+
+    # create replicas folder if it does not exist
+    replicas_path = str(output_path) + "/replicas"
+    if not os.path.exists(replicas_path):
+        os.mkdir(replicas_path)
 
     # Finish by writing the replicas to export grids, ready for evolution
     for i in range(analytic_settings["n_posterior_samples"]):

@@ -13,6 +13,8 @@ dependencies:
     - pytest
     - ultranest
     - flit
+    - dill
     - jax
     - optax
     - flax
+    
