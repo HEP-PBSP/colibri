@@ -46,8 +46,10 @@ def kl_divergence(x, y):
         raise ValueError("The two samples must have the same length.")
 
     # compute the kl divergence
-    kl = np.mean([[np.sum(x_i * np.log(x_i / y)) for x_i in x.T] for y in y.T])
-
+    
+    kl = np.mean([np.mean(np.sum(x_i[:,np.newaxis] * np.log(x_i[:,np.newaxis] / y), axis=0)) for x_i in x.T])
+    # same as
+    # kl =np.mean(np.array([[np.sum(x_i * np.log(x_i / y)) for x_i in x.T] for y in y.T]))
     return kl
 
 
