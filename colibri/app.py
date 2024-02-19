@@ -14,8 +14,6 @@ import logging
 
 log = logging.getLogger(__name__)
 
-    
-
 
 colibri_providers = [
     "colibri.theory_predictions",
@@ -82,7 +80,6 @@ class colibriApp(App):
             dest="global_double_precision",
             action="store_false",
         )
-        
 
         return parser
 
@@ -91,11 +88,13 @@ class colibriApp(App):
         args = super().get_commandline_arguments(cmdline)
         if args["output"] is None:
             args["output"] = pathlib.Path(args["config_yml"]).stem
-        
+
         if args["global_double_precision"]:
             jax.config.update("jax_enable_x64", True)
         else:
-            log.warning("Using single precision globally, this may lead to numerical instability.")
+            log.warning(
+                "Using single precision globally, this may lead to numerical instability."
+            )
 
         return args
 
@@ -103,7 +102,6 @@ class colibriApp(App):
 def main():
     a = colibriApp(name="colibri")
     a.main()
-    
 
 
 if __name__ == "__main__":
