@@ -12,7 +12,7 @@ import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
 
-def make_chi2(central_covmat_index, _pred_data, vectorized=False):
+def make_chi2(central_covmat_index, vectorized=False):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on a dataset.
@@ -26,9 +26,6 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
     ----------
     central_covmat_index: commondata_utils.CentralCovmatIndex class
         dataclass containing central values and covmat.
-
-    _pred_data: theory_predictions._pred_data
-        colibri provider for (fktable) theory predictions.
 
     vectorized: bool, default is False
 
@@ -47,9 +44,9 @@ def make_chi2(central_covmat_index, _pred_data, vectorized=False):
     inv_covmat = jla.inv(covmat)
 
     @jax.jit
-    def chi2(pdf):
+    def chi2(predictions):
         """ """
-        diff = _pred_data(pdf) - central_values
+        diff = predictions - central_values
 
         loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
