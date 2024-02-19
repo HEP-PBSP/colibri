@@ -105,7 +105,7 @@ def main():
         os.system(f"cp -r {fit_path} {resampled_fit_path}")
 
         # remove old replicas from resampled fit
-        os.system(f"rm -r {resampled_fit_path}/replicas")
+        os.system(f"rm -r {resampled_fit_path}/replicas/*")
 
         # overwrite old ns_result.csv with resampled posterior
         parameters = pdf_model.param_names
