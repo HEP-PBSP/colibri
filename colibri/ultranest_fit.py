@@ -59,7 +59,7 @@ class UltranestFit:
 
 
 def ultranest_fit(
-    _chi2_with_positivity,
+    _chi2,
     pdf_model,
     bayesian_prior,
     ns_settings,
@@ -71,8 +71,8 @@ def ultranest_fit(
 
     Parameters
     ----------
-    _chi2_with_positivity: @jax.jit CompiledFunction
-        The chi2 function with positivity constraint.
+    _chi2: @jax.jit CompiledFunction
+        The chi2 function of data.
 
     pdf_model: pdf_model.PDFModel
         The PDF model to fit.
@@ -113,7 +113,7 @@ def ultranest_fit(
     @jax.jit
     def log_likelihood(params):
         pdf = fit_grid_values_func(params)
-        return -0.5 * _chi2_with_positivity(pdf)
+        return -0.5 * _chi2(pdf)
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
