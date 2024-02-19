@@ -58,12 +58,6 @@ def write_exportgrid(
     else:
         replicas_path = str(output_path) + "/replicas"
 
-    # only rank 0 should create the folder
-    if rank == 0:
-        if not os.path.exists(replicas_path):
-            os.mkdir(replicas_path)
-    # sync all ranks
-    comm.Barrier()
 
     rep_path = replicas_path + f"/replica_{replica_index}"
     if not os.path.exists(rep_path):

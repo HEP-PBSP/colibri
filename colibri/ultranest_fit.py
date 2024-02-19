@@ -159,6 +159,11 @@ def ultranest_fit(
         df = pd.DataFrame(resampled_posterior, columns=parameters)
         df.to_csv(str(output_path) + "/ns_result.csv")
 
+        # create replicas folder if it does not exist
+        replicas_path = str(output_path) + "/replicas"
+        if not os.path.exists(replicas_path):
+            os.mkdir(replicas_path)
+
     # Synchronize to ensure all processes have finished
     comm.Barrier()
 
