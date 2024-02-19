@@ -10,11 +10,12 @@ from colibri.config import colibriConfig, Environment
 import pathlib
 
 import jax
+import logging
 
-# Whenever a colibri app is run, it should use high-precision jax
-# calculations. If this is not on, problems with numerical accuracy
-# can occur.
-jax.config.update("jax_enable_x64", True)
+log = logging.getLogger(__name__)
+
+    
+
 
 colibri_providers = [
     "colibri.theory_predictions",
@@ -68,6 +69,21 @@ class colibriApp(App):
             help="Name of the output directory.",
         )
 
+        parser.add_argument(
+            "--global_double_precision",
+            "-gdp",
+            action="store_true",
+            help="Use double precision globally",
+            default=True,
+        )
+        parser.add_argument(
+            "--no-global_double_precision",
+            "-ngdp",
+            dest="global_double_precision",
+            action="store_false",
+        )
+        
+
         return parser
 
     def get_commandline_arguments(self, cmdline=None):
@@ -75,12 +91,19 @@ class colibriApp(App):
         args = super().get_commandline_arguments(cmdline)
         if args["output"] is None:
             args["output"] = pathlib.Path(args["config_yml"]).stem
+        
+        if args["global_double_precision"]:
+            jax.config.update("jax_enable_x64", True)
+        else:
+            log.warning("Using single precision globally, this may lead to numerical instability.")
+
         return args
 
 
 def main():
     a = colibriApp(name="colibri")
     a.main()
+    
 
 
 if __name__ == "__main__":
