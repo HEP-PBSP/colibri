@@ -120,6 +120,20 @@ class WMinPDF(PDFModel):
 
         return wmin_param
 
+    def pred_and_pdf_func(self, interpolation_grid, pred_data):
+        """This function should produce a function that takes in the model
+        parameters, and produces the predictions for the data, as well as the
+        PDF values on the grid.
+        """
+
+        @jax.jit
+        def pred_and_pdf(params):
+            pdf = self.grid_values_func(interpolation_grid)(params)
+            predictions = pred_data(pdf)
+            return predictions, pdf
+
+        return pred_and_pdf
+
 
 def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     """
