@@ -75,6 +75,9 @@ def ultranest_fit(
     _chi2: @jax.jit CompiledFunction
         The chi2 function of data.
 
+    _pred_data: theory_predictions.make_pred_data
+        The function to compute the theory predictions.
+
     pdf_model: pdf_model.PDFModel
         The PDF model to fit.
 
@@ -107,7 +110,7 @@ def ultranest_fit(
     pred_func = pdf_model.predictions_func(FIT_XGRID, _pred_data)
 
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
-        pred_func = jnp.vectorize(pred_func, signature="(n)->(m,k)")
+        pred_func = jnp.vectorize(pred_func, signature="(n)->(m)")
 
     @jax.jit
     def log_likelihood(params):
