@@ -1,6 +1,6 @@
-mc_fit: grid_pdf_mc_numerical
+mc_fit: 240130_mnc_hadronic_mc_bayes_prior_1000 # grid_pdf_mc_numerical
 
-bayesian_fit: grid_pdf_bayes_numerical
+bayesian_fit: sigma_v_g_hadronic_fit_bayesian #grid_pdf_bayes_numerical
 
 
 actions_:

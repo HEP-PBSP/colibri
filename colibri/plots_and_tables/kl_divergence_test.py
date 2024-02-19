@@ -88,7 +88,7 @@ def permute_x_y_samples(x, y, random_seed=0):
     return perm_x, perm_y
 
 
-def kl_div_test(mc_fit, bayesian_fit, n_permutations=1000):
+def kl_div_test(mc_fit, bayesian_fit, n_permutations=500):
     """
     TODO
     """
@@ -106,7 +106,7 @@ def kl_div_test(mc_fit, bayesian_fit, n_permutations=1000):
     # this is an approximation, is it a good one?
     x_bayes = np.abs(df_bayes.values.T)
     x_mc = np.abs(df_mc.values.T)
-
+    
     kl_value = kl_divergence(x_mc, x_bayes)
     print(f"KL divergence between MC and Bayesian fit: {kl_value}")
 
