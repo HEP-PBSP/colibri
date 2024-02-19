@@ -26,7 +26,7 @@ class PDFModel(ABC):
     @abstractmethod
     def pred_and_pdf_func(self, xgrid, pdf_pred_func):
         """This function should produce a function that takes in the model
-        parameters, and produces the PDF values on the grid xgrid, and the
+        parameters, and produces the PDF values on the grid xgrid, as well as the
         theory predictions.
         """
         pass
