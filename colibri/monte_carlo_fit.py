@@ -71,6 +71,9 @@ def monte_carlo_fit(
     _chi2_validation_data_with_positivity: PjitFunction
         Function that computes the chi2 of the validation data.
 
+    _pred_data: theory_predictions.make_pred_data
+        The function to compute the theory predictions.
+
     len_trval_data: tuple
         Tuple containing the length of the training and validation data.
 
