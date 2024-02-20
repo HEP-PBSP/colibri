@@ -10,9 +10,6 @@ from colibri.config import colibriConfig, Environment
 import pathlib
 
 import jax
-import logging
-
-log = logging.getLogger(__name__)
 
 # enable double precision globally, this is needed so as to avoid numerical
 # instabilities in the generation of pseudodata (colibri effect)
