@@ -1,49 +1,45 @@
 meta:
-  title: PDF comparison
-  author: Mark N. Costantini
-  keywords: [weight minimization]
-
+  title: Grid PDF results, DIS only
+  author: James Moore
+  keywords: [grid_pdf]
 
 pdfs:
-  - {id: "210623_mnc_disonly_linear_1000", label: "DIS only NNPDF40"}
-  - {id: "NNPDF40_nnlo_as_01180_wmin", label: "DIS only weight minimization"}
-  
+  - {id: "grid_pdf_analytic_bayes", label: "Bayes, analytic"}
+#    - {id: "NNPDF31_nnlo_as_0118", label: "Underlying law"}
 
-# pdfs_noband: ["NNPDF40_nnlo_as_01180"] # Equivalently [3]
+#pdfs_noband: ["NNPDF31_nnlo_as_0118"]
+
 show_mc_errors: True
 
-Q: 10 
+Q: 1.65
+
+xmin: 0.001
+xmax: 0.2
+
+flavours:
+  - \Sigma
+  - V
+  - g 
 
 PDFnormalize:
-  - normtitle: Absolute  # normalize_to default is None
-  - normalize_to: 1      # Specify index in list of PDFs or name of PDF
-    normtitle: Ratio
+    - normtitle: Absolute  # normalize_to default is None
+    - normalize_to: 1      # Specify index in list of PDFs or name of PDF
+      normtitle: Ratio
 
-Basespecs:
-  - basis: flavour
-    basistitle: Flavour basis
-  - basis: evolution
-    basistitle: Evolution basis
+basis: evolution
 
 PDFscalespecs:
-  - xscale: log
-    xscaletitle: Log
-  - xscale: linear
-    xscaletitle: Linear
+    - xscale: log
+      xscaletitle: Log
+    - xscale: linear
+      xscaletitle: Linear
 
 template_text: |
   {@with PDFscalespecs@}
-  {@xscaletitle@} scale
-  =====================
-  {@with Basespecs@}
-  {@basistitle@}
-  -------------
+  # {@xscaletitle@}
   {@with PDFnormalize@}
-  {@normtitle@}
+  ## {@normtitle@}
   {@plot_pdfs@}
-  {@plot_pdf_uncertainties@}
-  {@plot_pdfreplicas@}          
-  {@endwith@}
   {@endwith@}
   {@endwith@}
 
