@@ -11,14 +11,13 @@ import jax
 
 def enable_x64(func):
     """
-    Enable 64-bit precision for the duration of the function call.
+    Enable 64-bit precision
     """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         jax.config.update("jax_enable_x64", True)
         result = func(*args, **kwargs)
-        jax.config.update("jax_enable_x64", False)
         return result
 
     return wrapper
