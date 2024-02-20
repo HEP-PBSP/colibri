@@ -59,9 +59,7 @@ def plot_perm_test(mc_fit, bayesian_fit, perm_settings):
     null_distribution = res.null_distribution
 
     p_value = res.pvalue
-    import IPython
 
-    IPython.embed()
     for i, param in enumerate(parameter_names):
         fig, ax = ptl.subplots()
         ax.hist(null_distribution[:, i], bins=50, label=f"Null Distribution {param}")
