@@ -92,7 +92,7 @@ def permute_x_y_samples(x, y, random_seed=0):
     return perm_x, perm_y
 
 
-def kl_div_test(mc_fit, bayesian_fit, n_permutations=500):
+def kl_div_test(mc_fit, bayesian_fit, n_permutations=1000):
     """
     TODO
     """
