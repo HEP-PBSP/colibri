@@ -11,10 +11,10 @@ import pathlib
 
 import jax
 
-# Whenever a colibri app is run, it should use high-precision jax
-# calculations. If this is not on, problems with numerical accuracy
-# can occur.
+# enable double precision globally, this is needed so as to avoid numerical
+# instabilities in the generation of pseudodata (colibri effect)
 jax.config.update("jax_enable_x64", True)
+
 
 colibri_providers = [
     "colibri.theory_predictions",

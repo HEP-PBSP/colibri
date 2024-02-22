@@ -104,7 +104,9 @@ def colibri_dataset_inputs_t0_predictions(_pred_t0data, t0_pdf_grid):
 
 
 def dataset_inputs_t0_covmat_from_systematics(
-    data, experimental_commondata_tuple, colibri_dataset_inputs_t0_predictions
+    data,
+    experimental_commondata_tuple,
+    colibri_dataset_inputs_t0_predictions,
 ):
     """
     Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
@@ -112,7 +114,6 @@ def dataset_inputs_t0_covmat_from_systematics(
 
     Note: see production rule in `config.py` for commondata_tuple options.
     """
-
     covmat = jnp.array(
         covmats.dataset_inputs_t0_covmat_from_systematics(
             experimental_commondata_tuple,
