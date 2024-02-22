@@ -12,7 +12,6 @@ from validphys import convolution
 from validphys.core import PDF
 
 from colibri.pdf_model import PDFModel
-from colibri.decorators import enable_x64
 
 import dill
 import logging
@@ -195,7 +194,6 @@ def bayesian_prior(prior_settings):
         max_val = prior_settings["max_val"]
         min_val = prior_settings["min_val"]
 
-        @enable_x64
         @jax.jit
         def prior_transform(cube):
             return cube * (max_val - min_val) + min_val

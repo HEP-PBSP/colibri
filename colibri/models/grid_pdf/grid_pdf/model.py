@@ -12,7 +12,6 @@ from validphys import convolution
 from validphys.core import PDF
 
 from colibri.pdf_model import PDFModel
-from colibri.decorators import enable_x64
 
 
 def pdf_model(flavour_xgrids, output_path):
@@ -205,10 +204,6 @@ def bayesian_prior(pdf_model, prior_settings):
         error_up = mean + delta * nsigma
         error_down = mean - delta * nsigma
 
-        # enable_x64 is needed to avoid ultranest crashing with
-        # ValueError: Buffer dtype mismatch, expected 'float_t' but got 'float'
-
-        @enable_x64
         @jax.jit
         def prior_transform(cube):
             params = error_down + (error_up - error_down) * cube
