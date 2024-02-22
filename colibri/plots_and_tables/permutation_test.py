@@ -34,15 +34,18 @@ def plot_perm_test(mc_fit, bayesian_fit, perm_settings):
         )
 
     if perm_settings["statistic"] == "mean":
-        perm_settings["statistic"] = lambda x, y, axis: np.mean(x, axis=axis) - np.mean(
+        perm_settings["statistic"] = lambda x, y, axis: np.mean(np.mean(x, axis=axis) - np.mean(
             y, axis=axis
-        )
+        ))
         name_statistic = "mean"
     elif perm_settings["statistic"] == "var":
-        perm_settings["statistic"] = lambda x, y, axis: np.var(x, axis=axis) - np.var(
+        perm_settings["statistic"] = lambda x, y, axis: np.mean(np.var(x, axis=axis) - np.var(
             y, axis=axis
-        )
+        ))
         name_statistic = "variance"
+    elif perm_settings["statistic"] == "euclid":
+        perm_settings["statistic"] = lambda x, y: np.sum((x-y)**2)
+        name_statistic = "euclidean distance"
 
     if os.path.exists(bayesian_path + "/ns_result.csv"):
         df_bayes = pd.read_csv(bayesian_path + "/ns_result.csv", index_col=0)
