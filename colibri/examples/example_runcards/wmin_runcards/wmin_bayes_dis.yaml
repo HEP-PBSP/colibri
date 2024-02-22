@@ -50,7 +50,7 @@ wmin_settings:
 ###################
 
 # Nested Sampling settings
-bayesian_fit: True
+
 ns_settings:
   sampler_plot: True # is slow for large number of parameters
   n_posterior_samples: 10

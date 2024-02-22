@@ -113,7 +113,6 @@ grid_pdf_settings:
 # Methodology specs
 ###################
 
-bayesian_fit: True
 # Nested Sampling settings
 ns_settings:
   n_posterior_samples: 10
