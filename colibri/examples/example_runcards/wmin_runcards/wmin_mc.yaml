@@ -1,0 +1,70 @@
+meta: 'An example fit using Colibri, reduced DIS dataset.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:    
+  # DIS                
+  - {'dataset': 'NMC'}
+  - {'dataset': 'SLACP_dwsh'}
+  - {'dataset': 'SLACD_dw_ite'}
+  - {'dataset': 'BCDMSP_dwsh'}
+  - {'dataset': 'BCDMSD_dw_ite'}
+  - {'dataset': 'CHORUSNUPb_dw_ite'}
+  - {'dataset': 'CHORUSNBPb_dw_ite'}
+  - {'dataset': 'HERACOMBNCEM'} 
+  - {'dataset': 'HERACOMBNCEP575'}
+  - {'dataset': 'HERACOMBNCEP820'}
+  - {'dataset': 'HERACOMBNCEP920'}
+  - {'dataset': 'HERACOMBNCEP460'}
+
+theoryid: 400                          # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0                  # The closure test level: False for experimental, level 0
+                                       # for pseudodata with no noise, level 1 for pseudodata with
+                                       # noise.
+closure_test_pdf: NNPDF31_nnlo_as_0118 # The closure test PDF used if closure_level is not False
+reduced_xgrid_data: True               # An artefact of the old grid_pdf implementation,
+                                       # ensuring we generate closure test data using the model.
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: POSF2U, maxlambda: 1e6}
+
+alpha: 1e-7                           
+lambda_positivity: 0                 
+
+use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
+
+
+#############
+# Model specs
+#############
+wmin_settings:                         # Settings for the weight minimisation model
+  wminpdfset: NNPDF31_nnlo_as_0118     # PDF set from which the replicas are selected
+  n_basis: 10                          # Number of weights/replicas used in the fit
+
+
+###################
+# Methodology specs
+###################
+
+# Monte Carlo settings
+use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
+max_epochs: 5000                       # The max number of epochs in Monte Carlo training.
+mc_validation_fraction: 0.0            # The fraction of the data used for validation in Monte Carlo training.
+mc_initialiser_settings:               # The initialiser for Monte Carlo training.
+  type: uniform                        # This setting starts with all parameters equal to zero.
+  min_val: -1
+  max_val: 1
+  random_seed: 0
+
+actions_:
+- monte_carlo_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
