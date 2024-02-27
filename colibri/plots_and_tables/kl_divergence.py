@@ -73,7 +73,7 @@ def permute_x_y_samples(x, y, random_seed=0):
     permute_x_y = np.random.permutation(concatenated_x_y)
 
     perm_x = permute_x_y[: x.shape[0], :]
-    perm_y = permute_x_y[y.shape[0] :, :]
+    perm_y = permute_x_y[x.shape[0] :, :]
 
     return perm_x, perm_y
 
