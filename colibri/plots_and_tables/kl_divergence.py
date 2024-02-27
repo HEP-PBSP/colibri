@@ -17,10 +17,10 @@ def gaussian_kl_divergence(x, y):
 
     # Compute the KL divergence
     kl_div = 0.5 * (
-        np.trace(np.linalg.inv(cov_y) @ cov_x)
-        + (mean_y - mean_x) @ np.linalg.inv(cov_y) @ (mean_y - mean_x)
+        np.log(np.linalg.det(cov_y) / np.linalg.det(cov_x))
         - len(mean_x)
-        + np.log(np.linalg.det(cov_y) / np.linalg.det(cov_x))
+        + np.trace(np.linalg.inv(cov_y) @ cov_x)
+        + (mean_y - mean_x) @ np.linalg.inv(cov_y) @ (mean_y - mean_x)
     )
 
     return kl_div
