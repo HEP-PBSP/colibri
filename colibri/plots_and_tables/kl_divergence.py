@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from reportengine.figure import figure
 import numpy as np
 import pandas as pd
-import os
+import glob
 from colibri.plots_and_tables.plotting import get_fit_path
 from scipy.stats import percentileofscore
 
@@ -26,28 +26,27 @@ def gaussian_kl_divergence(x, y):
     return kl_div
 
 
-def kl_div_test(mc_fit, bayesian_fit, n_permutations=1000):
+def kl_div_test(fit_A, fit_B, n_permutations=1000):
     """
     TODO
     """
-    mc_path = get_fit_path(mc_fit)
-    bayesian_path = get_fit_path(bayesian_fit)
+    fit_A_path = get_fit_path(fit_A)
+    fit_B_path = get_fit_path(fit_B)
 
-    if os.path.exists(bayesian_path + "/ns_result.csv"):
-        df_bayes = pd.read_csv(bayesian_path + "/ns_result.csv", index_col=0)
+    # Each folder has only one result file
+    # Read the result file, no matter the type of fit
+    df_A = pd.read_csv(glob.glob(fit_A_path + "/*_result.csv")[0], index_col=0)
+    df_B = pd.read_csv(glob.glob(fit_B_path + "/*_result.csv")[0], index_col=0)
 
-    if os.path.exists(mc_path + "/mc_result.csv"):
-        df_mc = pd.read_csv(mc_path + "/mc_result.csv", index_col=0)
+    x_A = df_A.values
+    x_B = df_B.values
 
-    x_bayes = df_bayes.values
-    x_mc = df_mc.values
-
-    kl_value = gaussian_kl_divergence(x_bayes, x_mc)
+    kl_value = gaussian_kl_divergence(x_A, x_B)
     print(f"KL divergence between MC and Bayesian fit: {kl_value}")
 
     kl_values_perm = []
     for i in range(n_permutations):
-        perm_x, perm_y = permute_x_y_samples(x_mc, x_bayes, random_seed=i)
+        perm_x, perm_y = permute_x_y_samples(x_A, x_B, random_seed=i)
         kl_values_perm.append(gaussian_kl_divergence(perm_x, perm_y))
 
     return {"kl_distribution": kl_values_perm, "kl_value": kl_value}

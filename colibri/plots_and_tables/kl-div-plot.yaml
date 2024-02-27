@@ -1,7 +1,5 @@
-# mc_fit: grid_pdf_mc_had
-mc_fit: 240215-lm-DIS-Sigma-mc
-# bayesian_fit: grid_pdf_bayes_had
-bayesian_fit: 240215-lm-DIS-Sigma
+fit_A: resampled_240221-lm-hadronic-Sigma-bayes
+fit_B: 240214-lm-hadronic-Sigma-mc
 
 actions_:
   - plot_kl_distribution
