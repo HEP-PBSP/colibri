@@ -42,7 +42,7 @@ def kl_div_test(fit_A, fit_B, n_permutations=1000):
     x_B = df_B.values
 
     kl_value = gaussian_kl_divergence(x_A, x_B)
-    print(f"KL divergence between MC and Bayesian fit: {kl_value}")
+    print(f"KL divergence between fit A and fit B: {kl_value}")
 
     kl_values_perm = []
     for i in range(n_permutations):
