@@ -221,26 +221,6 @@ class colibriConfig(Config):
         else:
             return colibri_covmats.dataset_inputs_covmat_from_systematics
 
-    def produce_replica_indices(self, n_replicas):
-        """
-        Produce replica indexes over which to collect.
-        """
-        return [{"replica_index": i} for i in range(n_replicas)]
-
-    def produce_trval_replica_indices(
-        self, n_replicas, use_same_trval_split_per_replica=False, trval_index_default=1
-    ):
-        """
-        Produce replica and training validation split indexes over which to collect.
-        """
-        if use_same_trval_split_per_replica:
-            return [
-                {"replica_index": i, "trval_index": trval_index_default}
-                for i in range(n_replicas)
-            ]
-        else:
-            return [{"replica_index": i, "trval_index": i} for i in range(n_replicas)]
-
     def produce_dataset_inputs_t0_predictions(
         self, data, t0set, use_fit_t0, use_gen_t0
     ):

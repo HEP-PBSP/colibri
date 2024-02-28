@@ -11,7 +11,6 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
-from reportengine import collect
 from colibri.covmats import sqrt_covmat_jax
 
 
@@ -75,11 +74,6 @@ def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
         return loss
 
     return chi2
-
-
-mc_replicas_make_chi2_training_data = collect(
-    "make_chi2_training_data", ("trval_replica_indices",)
-)
 
 
 def make_chi2_training_data_with_positivity(
@@ -165,11 +159,6 @@ def make_chi2_training_data_with_positivity(
     return chi2
 
 
-mc_replicas_make_chi2_training_data_with_positivity = collect(
-    "make_chi2_training_data_with_positivity", ("trval_replica_indices",)
-)
-
-
 def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -213,11 +202,6 @@ def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
         return loss
 
     return chi2
-
-
-mc_replicas_make_chi2_validation_data = collect(
-    "make_chi2_validation_data", ("trval_replica_indices",)
-)
 
 
 def make_chi2_validation_data_with_positivity(
@@ -282,8 +266,3 @@ def make_chi2_validation_data_with_positivity(
         return loss
 
     return chi2
-
-
-mc_replicas_make_chi2_validation_data_with_positivity = collect(
-    "make_chi2_validation_data_with_positivity", ("trval_replica_indices",)
-)
