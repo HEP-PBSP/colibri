@@ -198,6 +198,6 @@ def bayesian_prior(prior_settings):
         def prior_transform(cube):
             return cube * (max_val - min_val) + min_val
 
-        return prior_transform
     else:
         raise ValueError("Invalid prior type. Expected 'uniform_parameter_prior'.")
+    return prior_transform
