@@ -38,6 +38,9 @@ def test_experimental_commondata_tuple():
     for commondata_instance in result:
         assert isinstance(commondata_instance, CommonData)
 
+    # Check that the size of the result matches the number of datasets
+    assert len(result) == len(data.datasets)
+
     # Test that the correct values have been loaded
     for i in range(len(result)):
         path = TEST_COMMONDATA_FOLDER / (data.datasets[i].name + "_commondata.csv")
