@@ -237,8 +237,10 @@ def bayesian_prior(pdf_model, prior_settings):
             ).squeeze(-1)
 
             return prior
-        
+
     else:
-        raise ValueError("Invalid prior type. Expected 'uniform_pdf_prior' or 'gaussian_pdf_prior'.")
+        raise ValueError(
+            "Invalid prior type. Expected 'uniform_pdf_prior' or 'gaussian_pdf_prior'."
+        )
 
     return prior_transform
