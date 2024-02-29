@@ -121,7 +121,7 @@ def plot_ultranest_results(ultranest_results_path):
 
 @figuregen
 def plot_pdf_from_csv_colibrifit(
-    colibri_fits, underlyinglaw=None, load_pdf_model=True, xscale="log"
+    colibri_fits, underlyinglaw=None, xscale="log"
 ):
     """
 
@@ -154,7 +154,7 @@ def plot_pdf_from_csv_colibrifit(
 
         colibri_fit_label = colibri_fit_dict["label"]
 
-        csv_info = csv_file_reader(colibri_fit, load_pdf_model=load_pdf_model)
+        csv_info = csv_file_reader(colibri_fit, load_pdf_model=True)
 
         dict_posterior_samples[colibri_fit] = {"label": colibri_fit_label}
 
