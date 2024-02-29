@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from reportengine.figure import figure
+from reportengine.figure import figure, figuregen
 import numpy as np
 import pandas as pd
 import glob
@@ -15,6 +15,12 @@ def gaussian_kl_divergence(x, y):
     cov_x = np.cov(x, rowvar=False)
     cov_y = np.cov(y, rowvar=False)
 
+    if len(x.shape) == 1:
+        mean_x = mean_x.reshape(-1, 1)
+        mean_y = mean_y.reshape(-1, 1)
+        cov_x = cov_x.reshape(1, 1)
+        cov_y = cov_y.reshape(1, 1)
+
     # Compute the KL divergence
     kl_div = 0.5 * (
         np.log(np.linalg.det(cov_y) / np.linalg.det(cov_x))
@@ -22,6 +28,9 @@ def gaussian_kl_divergence(x, y):
         + np.trace(np.linalg.inv(cov_y) @ cov_x)
         + (mean_y - mean_x) @ np.linalg.inv(cov_y) @ (mean_y - mean_x)
     )
+
+    if len(x.shape) == 1:
+        kl_div = kl_div[0, 0]
 
     return kl_div
 
@@ -50,6 +59,37 @@ def kl_div_test(fit_A, fit_B, n_permutations=1000):
         kl_values_perm.append(gaussian_kl_divergence(perm_x, perm_y))
 
     return {"kl_distribution": kl_values_perm, "kl_value": kl_value}
+
+
+def kl_div_test_1D(fit_A, fit_B, n_permutations=1000):
+    """
+    TODO
+    """
+    fit_A_path = get_fit_path(fit_A)
+    fit_B_path = get_fit_path(fit_B)
+
+    # Each folder has only one result file
+    # Read the result file, no matter the type of fit
+    df_A = pd.read_csv(glob.glob(fit_A_path + "/*_result.csv")[0], index_col=0)
+    df_B = pd.read_csv(glob.glob(fit_B_path + "/*_result.csv")[0], index_col=0)
+
+    x_A = df_A.values
+    x_B = df_B.values
+
+    results = []
+
+    for j in range(x_A.shape[1]):
+
+        kl_value = gaussian_kl_divergence(x_A[:, j], x_B[:, j])
+
+        kl_values_perm = []
+        for i in range(n_permutations):
+            perm_x, perm_y = permute_x_y_samples(x_A, x_B, random_seed=i)
+            kl_values_perm.append(gaussian_kl_divergence(perm_x[:, j], perm_y[:, j]))
+
+        results.append({"kl_distribution": kl_values_perm, "kl_value": kl_value})
+
+    return results
 
 
 def permute_x_y_samples(x, y, random_seed=0):
@@ -106,3 +146,14 @@ def plot_kl_distribution(kl_div_test):
     ax.set_title(f"Permutation test p-value: {p_value:.2f}")
 
     return fig
+
+
+@figuregen
+def plot_kl_distribution_1D(kl_div_test_1D):
+    """
+    TODO
+    """
+
+    for i, result in enumerate(kl_div_test_1D):
+
+        yield plot_kl_distribution(result)
