@@ -120,10 +120,12 @@ def plot_ultranest_results(ultranest_results_path):
 
 
 @figuregen
-def plot_pdf_from_csv_colibrifit(
+def plot_gridpdf_from_csv_colibrifit(
     colibri_fits, underlyinglaw=None, xscale="log"
 ):
     """
+    Plots the grid pdf from the csv file of a colibri fit.
+    The fits must have been performed using the grid pdf model.
 
     Parameters
     ----------
@@ -142,8 +144,23 @@ def plot_pdf_from_csv_colibrifit(
         A figure object with the plot.
     """
     # TODO: implement underlyinglaw
-    # check that pdf model is the same for all fits
-    # TODO
+    pdf_model = csv_file_reader(colibri_fits[0]["id"], load_pdf_model=True)["pdf_model"]
+    
+    
+    from validphys import convolution
+    from validphys.core import PDF
+    
+
+    underlyinglaw_dict = {}
+    for fl in pdf_model.xgrids.keys():
+        x_vals = pdf_model.xgrids[fl]
+        if x_vals:
+            
+            underlyinglaw_dict[fl] = convolution.evolution.grid_values(
+                    PDF(underlyinglaw), [fl], x_vals, [1.65]
+                ).squeeze(-1)[0].squeeze(0)
+            
+
 
     # nested dictionary, first key is the colibri fit, second key is the flavour
     dict_posterior_samples = {}
@@ -202,6 +219,15 @@ def plot_pdf_from_csv_colibrifit(
                 alpha=0.5,
             )
 
+            # plot the underlying law only once
+            if underlyinglaw and colibri_fit == colibri_fits[0]:
+                ax.plot(
+                    x_labels,
+                    underlyinglaw_dict[fl],
+                    linestyle="--",
+                    label=f"Underlying law",
+                )
+            
             ax.set_xscale(xscale)
             ax.legend()
 
