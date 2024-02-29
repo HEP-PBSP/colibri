@@ -52,8 +52,10 @@ jobs:
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
+        echo "Installing colibri and models"
         conda activate colibri-dev
-        flit install --symlink --verbose
+        echo "Installing colibri"
+        flit install --symlink
         cd colibri/models/wmin
         flit install --symlink
         cd ../grid_pdf
