@@ -53,7 +53,7 @@ jobs:
       shell: bash -l {0}
       run: |
         echo "Installing colibri and models"
-        conda activate colibri-dev
+        mamba activate colibri-dev
         echo "Installing colibri"
         flit install --symlink
         cd colibri/models/wmin
