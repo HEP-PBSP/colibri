@@ -51,7 +51,6 @@ jobs:
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
-        conda activate colibri-dev
         flit install --symlink
         cd colibri/models/wmin
         flit install --symlink
@@ -60,7 +59,6 @@ jobs:
     - name: Copy theory to Conda environment
       shell: bash -l {0}
       run: |
-        conda activate colibri-dev
         mkdir $CONDA_PREFIX/share/NNPDF/theories
         mkdir $CONDA_PREFIX/share/NNPDF/theories/theory_401
         cp -r colibri/tests/test_theoryID/theory_401/* $CONDA_PREFIX/share/NNPDF/theories/theory_401/
@@ -68,7 +66,6 @@ jobs:
     - name: Run MC fit
       shell: bash -l {0}
       run: |
-        conda activate colibri-dev
         for i in {1..5}; do grid_pdf colibri/tests/test_runcards/test_grid_pdf_mc_L0.yaml -o PR_grid_pdf_mc_L0 -rep $i; done
         mc_postfit PR_grid_pdf_mc_L0 -t 5 -c 100
     
@@ -81,7 +78,6 @@ jobs:
     - name: Run MC fit in main
       shell: bash -l {0}
       run: |
-        conda activate colibri-dev
         for i in {1..5}; do grid_pdf colibri/tests/test_runcards/test_grid_pdf_mc_L0.yaml -o main_grid_pdf_mc_L0 -rep $i; done
         mc_postfit main_grid_pdf_mc_L0 -t 5 -c 100
     
