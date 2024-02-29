@@ -52,7 +52,7 @@ jobs:
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
-        conda activate colibri-dev
+        conda activate --verbose colibri-dev
         flit install --symlink
         cd colibri/models/wmin
         flit install --symlink
