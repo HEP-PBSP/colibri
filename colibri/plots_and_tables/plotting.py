@@ -1,27 +1,22 @@
 """Plotting utilities."""
 
-import matplotlib.pyplot as plt
-from reportengine.figure import figure
+import os
+import re
 import json
-import corner
 import numpy as np
-
-import pathlib
-from reportengine.figure import figuregen
-import os, sys
-
 import pandas as pd
+import logging
+
+import corner
+import matplotlib.pyplot as plt
+from reportengine.figure import figure, figuregen
+
+from colibri.plots_and_tables.fit_reader import get_fit_path, csv_file_reader
+
+log = logging.getLogger(__name__)
 
 color_key = ["#66C2A5", "#FC8D62", "#8DA0CB"]
 
-
-def get_fit_path(fit):
-    fit_path = pathlib.Path(sys.prefix) / "share/colibri/results" / fit
-    if not os.path.exists(fit_path):
-        raise FileNotFoundError(
-            "Could not find a fit " + fit + " in the colibri/results directory."
-        )
-    return str(fit_path)
 
 
 @figure
@@ -105,7 +100,7 @@ def plot_ultranest_results(ultranest_results_path):
         Path to the output folder of an Ultranest fit.
     """
 
-    fig, ax = plt.subplots()
+    fig, _ = plt.subplots()
 
     with open(
         ultranest_results_path + "/ultranest_results/ultranest_results.json"
@@ -123,3 +118,113 @@ def plot_ultranest_results(ultranest_results_path):
     )
 
     return fig
+
+@figuregen
+def plot_pdf_from_csv_colibrifit(colibri_fits, underlyinglaw=None, load_pdf_model=True, xscale='log'):
+    """
+
+    Parameters
+    ----------
+    colibri_fits : list
+        List of colibri fits to plot.
+    
+    underlyinglaw : str, default is None
+        The underlying law used to generate data in the fits.
+    
+    xscale : str, default is 'log'
+        The scale of the x-axis. Can be 'log' or 'linear'.
+
+    yields
+    ------
+    fig : matplotlib.figure.Figure
+        A figure object with the plot.
+    """
+    # check that pdf model is the same for all fits
+    # TODO
+
+    # nested dictionary, first key is the colibri fit, second key is the flavour
+    dict_posterior_samples = {}
+
+    # save relevant posterior samples into dictionary
+    for colibri_fit in colibri_fits:
+        
+        csv_info = csv_file_reader(colibri_fit, load_pdf_model=load_pdf_model)
+
+        dict_posterior_samples[colibri_fit] = {}
+
+        for fl in csv_info["pdf_model"].fitted_flavours:
+            cols = [col for col in csv_info["posterior_samples"].columns if col.startswith(fl)]
+            
+            dict_posterior_samples[colibri_fit][fl] = csv_info["posterior_samples"][cols]
+            
+
+    # loop over flavours and fits
+    for fl in csv_info["pdf_model"].fitted_flavours:
+        
+        fig, ax = plt.subplots()
+
+        for colibri_fit in colibri_fits:
+
+            # get the posterior samples for the fit and flavour
+            df = dict_posterior_samples[colibri_fit][fl]
+
+            upper_band = np.nanpercentile(df.values, 84.13, axis=0)
+            lower_band = np.nanpercentile(df.values, 15.87, axis=0)
+
+            mean = df.values.mean(axis=0)
+
+            # get x labels and round them
+            pattern = r'\d+\.\d+'
+            x_labels = [float(re.findall(pattern, x)[0]) for x in df.iloc[0].index]
+
+            ax.plot(   
+                x_labels,
+                mean,
+                linestyle='-',
+                label=f"{colibri_fit}, {fl}",
+            )
+            
+
+            ax.fill_between(
+                x_labels,
+                lower_band,
+                upper_band,
+                alpha=0.5,
+            )  
+
+
+            ax.set_xscale(xscale)
+            ax.legend()
+
+        yield fig
+    # log.warning(f"Plotting function plot_pdf_from_csv_colibrifit assumes only 3 flavours were fitted.")
+    
+    # # assuming only 3 flavours
+    # shape_0 = df.iloc[0].shape[0]
+
+    # if not shape_0 % 3:
+
+    #     for i in range(3):
+
+    #         fig, ax = plt.subplots()
+            
+    #         ax.plot(   
+    #             x_labels[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
+    #             mean[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
+    #             linestyle='-',
+    #             label=f"{colibri_fit}, {csv_info['type']}",
+    #         )
+            
+
+    #         ax.fill_between(
+    #             x_labels[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
+    #             lower_band[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
+    #             upper_band[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
+    #             alpha=0.5,
+    #         )  
+
+
+    #         ax.set_xscale(xscale)
+    #         ax.legend()
+    
+    #         yield fig
