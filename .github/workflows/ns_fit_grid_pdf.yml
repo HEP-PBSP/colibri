@@ -50,7 +50,6 @@ jobs:
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
-        conda activate colibri-dev
         flit install --symlink
         cd colibri/models/wmin
         flit install --symlink
@@ -59,7 +58,6 @@ jobs:
     - name: Copy theory to Conda environment
       shell: bash -l {0}
       run: |
-        conda activate colibri-dev
         mkdir $CONDA_PREFIX/share/NNPDF/theories
         mkdir $CONDA_PREFIX/share/NNPDF/theories/theory_401
         cp -r colibri/tests/test_theoryID/theory_401/* $CONDA_PREFIX/share/NNPDF/theories/theory_401/
@@ -67,7 +65,6 @@ jobs:
     - name: Run NS fit
       shell: bash -l {0}
       run: |
-        conda activate colibri-dev
         grid_pdf colibri/tests/test_runcards/test_grid_pdf_bayes_L0.yaml -o PR_grid_pdf_bayes_L0
     
     - name: Checkout main branch
@@ -79,7 +76,6 @@ jobs:
     - name: Run NS fit in main
       shell: bash -l {0}
       run: |
-        conda activate colibri-dev
         grid_pdf colibri/tests/test_runcards/test_grid_pdf_bayes_L0.yaml -o main_grid_pdf_bayes_L0
     
     - name: Compare NS results
