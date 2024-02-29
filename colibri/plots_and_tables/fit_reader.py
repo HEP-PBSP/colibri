@@ -6,6 +6,7 @@ import pathlib
 import os, sys
 import pandas as pd
 import dill
+import glob
 
 import logging
 
@@ -43,28 +44,12 @@ def csv_file_reader(colibri_fit, load_pdf_model=False):
     fit_path = get_fit_path(colibri_fit)
     csv_file_info = {}
 
-    if os.path.exists(fit_path + "/ns_result.csv"):
-        log.info(f"Reading {fit_path}/ns_result.csv for a Bayesian fit.")
-        df = pd.read_csv(fit_path + "/ns_result.csv", index_col=0)
-        csv_file_info["type"] = "ns"
-        csv_file_info["posterior_samples"] = df
+    if not glob.glob(fit_path + "/*result.csv"):
+        raise FileNotFoundError("Could not find the csv results of fit " + colibri_fit)
 
-    elif os.path.exists(fit_path + "/mc_result.csv"):
-        log.info(f"Reading {fit_path}/mc_result.csv for a Monte Carlo fit.")
-        df = pd.read_csv(fit_path + "/mc_result.csv", index_col=0)
-        csv_file_info["type"] = "mc"
-        csv_file_info["posterior_samples"] = df
-
-    elif os.path.exists(fit_path + "/analytic_result.csv"):
-        log.info(f"Reading {fit_path}/analytic_result.csv for an analytic fit.")
-        df = pd.read_csv(fit_path + "/analytic_result.csv", index_col=0)
-        csv_file_info["type"] = "analytic"
-        csv_file_info["posterior_samples"] = df
-
-    else:
-        raise FileNotFoundError(
-            "Could not find the results of an NS or MC fit for fit " + colibri_fit
-        )
+    csv_path = glob.glob(fit_path + "/*result.csv")[0]
+    df = pd.read_csv(csv_path, index_col=0)
+    csv_file_info["posterior_samples"] = df
 
     if load_pdf_model:
         if not os.path.exists(fit_path + "/pdf_model.pkl"):
