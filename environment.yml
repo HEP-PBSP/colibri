@@ -5,7 +5,7 @@ channels:
   - conda-forge
 
 dependencies:
-  - nnpdf==4.0.7
+  - nnpdf==4.0.6
   - mpi4py
   - pip
   - pip:
