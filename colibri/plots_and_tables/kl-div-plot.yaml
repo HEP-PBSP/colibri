@@ -1,5 +1,17 @@
-fit_A: resampled_240221-lm-hadronic-Sigma-bayes
-fit_B: 240214-lm-hadronic-Sigma-mc
+meta:
+  title: Grid PDF results, DIS, FitA vs Fit B
+  author: Luca Mantani
+  keywords: [grid_pdf]
+
+fit_A: fitA
+fit_B: fitAp
+
+template_text: |
+  # KL divergence between fit A and fit B
+  {@plot_kl_distribution@}
+  # KL divergence between marginalised 1D distributions
+  {@plot_kl_distribution_1D@}
+
 
 actions_:
-  - plot_kl_distribution
+  - report(main=True)

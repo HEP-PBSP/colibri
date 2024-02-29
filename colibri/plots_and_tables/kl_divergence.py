@@ -118,7 +118,7 @@ def permute_x_y_samples(x, y, random_seed=0):
 
 
 @figure
-def plot_kl_distribution(kl_div_test):
+def plot_kl_distribution(kl_div_test, title=""):
     """
     TODO
     """
@@ -142,8 +142,7 @@ def plot_kl_distribution(kl_div_test):
     ax.axvline(kl_value, color="red", linestyle="--", label="KL divergence")
     ax.set_xlabel("KL divergence")
     ax.set_ylabel("Frequency")
-    ax.set_title("KL divergence distribution")
-    ax.set_title(f"Permutation test p-value: {p_value:.2f}")
+    ax.set_title(title + f"\nPermutation test p-value: {p_value:.2f}")
 
     return fig
 
@@ -156,4 +155,4 @@ def plot_kl_distribution_1D(kl_div_test_1D):
 
     for i, result in enumerate(kl_div_test_1D):
 
-        yield plot_kl_distribution(result)
+        yield plot_kl_distribution(result, title=f"KL divergence for component {i}")
