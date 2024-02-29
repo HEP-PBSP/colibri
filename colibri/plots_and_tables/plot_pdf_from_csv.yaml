@@ -10,8 +10,28 @@ colibri_fits:
 
 underlyinglaw: NNPDF40_nnlo_as_01180
 
+
+PDFscalespecs:
+  - xscale: log
+    xscaletitle: Log
+  - xscale: linear
+    xscaletitle: Linear
+
+
+normalize_to: 1
+
 template_text: |
+  # PDF plots 
+  {@with PDFscalespecs@}
+  {@xscaletitle@} scale
   {@plot_gridpdf_from_csv_colibrifit@}
+  {@endwith@}
+
+  # Ratio plots
+  {@with PDFscalespecs@}
+  {@xscaletitle@} scale
+  {@plot_ratio_gridpdf_from_csv_colibrifit@}
+  {@endwith@}
 
 actions_:
   - report(main=True)
