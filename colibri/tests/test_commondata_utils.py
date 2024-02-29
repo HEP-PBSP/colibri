@@ -80,6 +80,8 @@ def test_level0_commondata_tuple():
     Note that level0 data is generated using jax.config.update("jax_enable_x64", True).
     """
 
+    data = colibriAPI.data(**TEST_DATASETS)
+
     reference_level0_commondata = pd.read_csv(
         TEST_COMMONDATA_FOLDER / "NMC_level0_central_values.csv"
     )
@@ -88,6 +90,17 @@ def test_level0_commondata_tuple():
         **{**TEST_DATASETS, **CLOSURE_TEST_PDFSET}
     )
 
+    # Check that experimental_commondata_tuple produces a tuple
+    assert isinstance(current_level0_commondata, tuple)
+
+    # Check that experimental_commondata_tuple produces a tuple of CommonData objects
+    for commondata_instance in current_level0_commondata:
+        assert isinstance(commondata_instance, CommonData)
+
+    # Check that the size of the result matches the number of datasets
+    assert len(current_level0_commondata) == len(data.datasets)
+
+    # Check that the central values of the result match the reference from main
     assert_allclose(
         reference_level0_commondata["cv"].values,
         current_level0_commondata[0].central_values,
@@ -100,15 +113,29 @@ def test_level1_commondata_tuple():
     data is consistent with main.
     Note that level1 data is generated using jax.config.update("jax_enable_x64", True)
     """
-    reference_level1_central_values = pd.read_csv(
+
+    reference_level1_commondata = pd.read_csv(
         TEST_COMMONDATA_FOLDER / "NMC_level1_central_values.csv"
     )
 
-    current_level1_central_values = colibriAPI.level_1_commondata_tuple(
+    current_level1_commondata = colibriAPI.level_1_commondata_tuple(
         **{**TEST_DATASETS, **CLOSURE_TEST_PDFSET, "level_1_seed": PSEUDODATA_SEED}
     )
 
+    data = colibriAPI.data(**TEST_DATASETS)
+
+    # Check that experimental_commondata_tuple produces a tuple
+    assert isinstance(current_level1_commondata, tuple)
+
+    # Check that experimental_commondata_tuple produces a tuple of CommonData objects
+    for commondata_instance in current_level1_commondata:
+        assert isinstance(commondata_instance, CommonData)
+
+    # Check that the size of the result matches the number of datasets
+    assert len(current_level1_commondata) == len(data.datasets)
+
+    # Check that the central values of the result match the reference from main
     assert_allclose(
-        reference_level1_central_values["cv"].values,
-        current_level1_central_values[0].central_values,
+        reference_level1_commondata["cv"].values,
+        current_level1_commondata[0].central_values,
     )
