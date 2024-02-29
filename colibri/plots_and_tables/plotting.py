@@ -18,7 +18,6 @@ log = logging.getLogger(__name__)
 color_key = ["#66C2A5", "#FC8D62", "#8DA0CB"]
 
 
-
 @figure
 def plot_corner(colibri_fits):
     """Plots comparison corner plot for the fits in colibri_fits"""
@@ -119,18 +118,21 @@ def plot_ultranest_results(ultranest_results_path):
 
     return fig
 
+
 @figuregen
-def plot_pdf_from_csv_colibrifit(colibri_fits, underlyinglaw=None, load_pdf_model=True, xscale='log'):
+def plot_pdf_from_csv_colibrifit(
+    colibri_fits, underlyinglaw=None, load_pdf_model=True, xscale="log"
+):
     """
 
     Parameters
     ----------
     colibri_fits : list
         List of colibri fits to plot.
-    
+
     underlyinglaw : str, default is None
         The underlying law used to generate data in the fits.
-    
+
     xscale : str, default is 'log'
         The scale of the x-axis. Can be 'log' or 'linear'.
 
@@ -147,20 +149,25 @@ def plot_pdf_from_csv_colibrifit(colibri_fits, underlyinglaw=None, load_pdf_mode
 
     # save relevant posterior samples into dictionary
     for colibri_fit in colibri_fits:
-        
+
         csv_info = csv_file_reader(colibri_fit, load_pdf_model=load_pdf_model)
 
         dict_posterior_samples[colibri_fit] = {}
 
         for fl in csv_info["pdf_model"].fitted_flavours:
-            cols = [col for col in csv_info["posterior_samples"].columns if col.startswith(fl)]
-            
-            dict_posterior_samples[colibri_fit][fl] = csv_info["posterior_samples"][cols]
-            
+            cols = [
+                col
+                for col in csv_info["posterior_samples"].columns
+                if col.startswith(fl)
+            ]
+
+            dict_posterior_samples[colibri_fit][fl] = csv_info["posterior_samples"][
+                cols
+            ]
 
     # loop over flavours and fits
     for fl in csv_info["pdf_model"].fitted_flavours:
-        
+
         fig, ax = plt.subplots()
 
         for colibri_fit in colibri_fits:
@@ -174,57 +181,24 @@ def plot_pdf_from_csv_colibrifit(colibri_fits, underlyinglaw=None, load_pdf_mode
             mean = df.values.mean(axis=0)
 
             # get x labels and round them
-            pattern = r'\d+\.\d+'
+            pattern = r"\d+\.\d+"
             x_labels = [float(re.findall(pattern, x)[0]) for x in df.iloc[0].index]
 
-            ax.plot(   
+            ax.plot(
                 x_labels,
                 mean,
-                linestyle='-',
+                linestyle="-",
                 label=f"{colibri_fit}, {fl}",
             )
-            
 
             ax.fill_between(
                 x_labels,
                 lower_band,
                 upper_band,
                 alpha=0.5,
-            )  
-
+            )
 
             ax.set_xscale(xscale)
             ax.legend()
 
         yield fig
-    # log.warning(f"Plotting function plot_pdf_from_csv_colibrifit assumes only 3 flavours were fitted.")
-    
-    # # assuming only 3 flavours
-    # shape_0 = df.iloc[0].shape[0]
-
-    # if not shape_0 % 3:
-
-    #     for i in range(3):
-
-    #         fig, ax = plt.subplots()
-            
-    #         ax.plot(   
-    #             x_labels[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
-    #             mean[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
-    #             linestyle='-',
-    #             label=f"{colibri_fit}, {csv_info['type']}",
-    #         )
-            
-
-    #         ax.fill_between(
-    #             x_labels[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
-    #             lower_band[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
-    #             upper_band[(i)*int(shape_0/3):(i+1)*int(shape_0/3)],
-    #             alpha=0.5,
-    #         )  
-
-
-    #         ax.set_xscale(xscale)
-    #         ax.legend()
-    
-    #         yield fig
