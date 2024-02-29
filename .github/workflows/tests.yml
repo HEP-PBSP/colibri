@@ -54,6 +54,7 @@ jobs:
       run: |
         echo "Installing colibri and models"
         mamba init
+        exec bash
         mamba activate colibri-dev
         echo "Installing colibri"
         flit install --symlink
