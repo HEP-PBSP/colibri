@@ -141,6 +141,7 @@ def plot_pdf_from_csv_colibrifit(
     fig : matplotlib.figure.Figure
         A figure object with the plot.
     """
+    # TODO: implement underlyinglaw
     # check that pdf model is the same for all fits
     # TODO
 
@@ -148,11 +149,14 @@ def plot_pdf_from_csv_colibrifit(
     dict_posterior_samples = {}
 
     # save relevant posterior samples into dictionary
-    for colibri_fit in colibri_fits:
+    for colibri_fit_dict in colibri_fits:
+        colibri_fit = colibri_fit_dict["id"]
+
+        colibri_fit_label = colibri_fit_dict["label"]
 
         csv_info = csv_file_reader(colibri_fit, load_pdf_model=load_pdf_model)
 
-        dict_posterior_samples[colibri_fit] = {}
+        dict_posterior_samples[colibri_fit] = {"label": colibri_fit_label}
 
         for fl in csv_info["pdf_model"].fitted_flavours:
             cols = [
@@ -173,7 +177,7 @@ def plot_pdf_from_csv_colibrifit(
         for colibri_fit in colibri_fits:
 
             # get the posterior samples for the fit and flavour
-            df = dict_posterior_samples[colibri_fit][fl]
+            df = dict_posterior_samples[colibri_fit["id"]][fl]
 
             upper_band = np.nanpercentile(df.values, 84.13, axis=0)
             lower_band = np.nanpercentile(df.values, 15.87, axis=0)
@@ -188,7 +192,7 @@ def plot_pdf_from_csv_colibrifit(
                 x_labels,
                 mean,
                 linestyle="-",
-                label=f"{colibri_fit}, {fl}",
+                label=f"{dict_posterior_samples[colibri_fit['id']]['label']}, {fl}",
             )
 
             ax.fill_between(
