@@ -11,7 +11,11 @@ import corner
 import matplotlib.pyplot as plt
 from reportengine.figure import figure, figuregen
 
+from validphys import convolution
+from validphys.core import PDF
+
 from colibri.plots_and_tables.fit_reader import get_fit_path, csv_file_reader
+
 
 log = logging.getLogger(__name__)
 
@@ -120,9 +124,7 @@ def plot_ultranest_results(ultranest_results_path):
 
 
 @figuregen
-def plot_gridpdf_from_csv_colibrifit(
-    colibri_fits, underlyinglaw=None, xscale="log"
-):
+def plot_gridpdf_from_csv_colibrifit(colibri_fits, underlyinglaw=None, xscale="log"):
     """
     Plots the grid pdf from the csv file of a colibri fit.
     The fits must have been performed using the grid pdf model.
@@ -143,24 +145,22 @@ def plot_gridpdf_from_csv_colibrifit(
     fig : matplotlib.figure.Figure
         A figure object with the plot.
     """
-    # TODO: implement underlyinglaw
+    # load the pdf model from the first fit
     pdf_model = csv_file_reader(colibri_fits[0]["id"], load_pdf_model=True)["pdf_model"]
-    
-    
-    from validphys import convolution
-    from validphys.core import PDF
-    
 
+    # get the underlying law values on the xgrid points of the pdf model of the first fit
     underlyinglaw_dict = {}
     for fl in pdf_model.xgrids.keys():
         x_vals = pdf_model.xgrids[fl]
         if x_vals:
-            
-            underlyinglaw_dict[fl] = convolution.evolution.grid_values(
-                    PDF(underlyinglaw), [fl], x_vals, [1.65]
-                ).squeeze(-1)[0].squeeze(0)
-            
 
+            underlyinglaw_dict[fl] = (
+                convolution.evolution.grid_values(
+                    PDF(underlyinglaw), [fl], x_vals, [1.65]
+                )
+                .squeeze(-1)[0]
+                .squeeze(0)
+            )
 
     # nested dictionary, first key is the colibri fit, second key is the flavour
     dict_posterior_samples = {}
@@ -227,7 +227,7 @@ def plot_gridpdf_from_csv_colibrifit(
                     linestyle="--",
                     label=f"Underlying law",
                 )
-            
+
             ax.set_xscale(xscale)
             ax.legend()
 

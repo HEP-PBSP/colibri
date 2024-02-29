@@ -3,13 +3,15 @@ meta:
   author: Mark N. Costantini
   keywords: grid_pdf
 
+
 colibri_fits: 
  - {id: 240223_bayes_dis_amsterdam, label: "Bayes, DIS"}
  - {id: 240223_mc_dis_amsterdam, label: "MC, DIS"} 
 
+underlyinglaw: NNPDF40_nnlo_as_01180
 
 template_text: |
-  {@plot_pdf_from_csv_colibrifit@}
+  {@plot_gridpdf_from_csv_colibrifit@}
 
 actions_:
   - report(main=True)
