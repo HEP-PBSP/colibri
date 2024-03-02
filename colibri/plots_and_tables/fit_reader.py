@@ -45,7 +45,7 @@ def get_csv_file_posterior(colibri_fit):
 
     csv_path = glob.glob(fit_path + "/*result.csv")[0]
     df = pd.read_csv(csv_path, index_col=0)
-    
+
     return df
 
 
@@ -67,9 +67,7 @@ def get_pdf_model(colibri_fit):
     fit_path = get_fit_path(colibri_fit)
 
     if not os.path.exists(fit_path + "/pdf_model.pkl"):
-        raise FileNotFoundError(
-            "Could not find the pdf model for fit " + colibri_fit
-        )
+        raise FileNotFoundError("Could not find the pdf model for fit " + colibri_fit)
 
     with open(fit_path + "/pdf_model.pkl", "rb") as file:
         pdf_model = dill.load(file)
