@@ -133,12 +133,11 @@ class ColibriFitsPlotter:
     def __init__(
         self,
         colibri_fit,
-        underlyinglaw=None,        
+        underlyinglaw=None,
     ):
 
         self.colibri_fit = colibri_fit
         self.underlyinglaw = underlyinglaw
-        
 
     @property
     def posterior_from_csv(self):
@@ -235,8 +234,6 @@ def plot_pdf_from_csv_colibrifit(
     flavours=None,
     interpolation_grid=None,
     xscale="log",
-    cubic_spline_interp=False,
-    n_interp_points=50,
 ):
     """
 
@@ -323,6 +320,132 @@ def plot_pdf_from_csv_colibrifit(
                             else pdf_model.xgrids[fl]
                         ),
                     ),
+                    linestyle="--",
+                    label=f"Underlying law",
+                )
+
+            ax.set_xscale(xscale)
+            ax.legend()
+
+        yield fig
+
+
+@figuregen
+def plot_pdf_ratio_from_csv_colibrifit(
+    colibri_fits,
+    normalize_to,
+    underlyinglaw=None,
+    flavours=None,
+    interpolation_grid=None,
+    xscale="log",
+):
+    """
+
+    Parameters
+    ----------
+    colibri_fits: list
+        list of dict containing fit Id and label
+
+    flavour: list, default is None
+        when None all flavours are used
+
+    interpolation_grid: str, default is None, has three possible options
+        if None then grid_pdf model is assumed and the pdf_model.xgrids is used
+        if xgrid: constants.XGRID is used
+        if lhapdf: constants.LHAPDF_XGRID is used
+
+    xscale: str, default is log
+        can be either log or linear
+
+    cubic_spline_interp: Bool, default is False
+        whether to interpolate within xgrid values.
+        Only works for grid_pdf model
+
+    n_interp_points: int, default is 100
+        number of interpolation points
+
+    Yields
+    ------
+    matplotlib figure
+    """
+    # get the fit id from the normalize_to parameter
+    if isinstance(normalize_to, int):
+        normalize_to = colibri_fits[normalize_to - 1]
+
+    # use all flavours per default
+    if not flavours:
+        flavours = FLAVOUR_TO_ID_MAPPING.keys()
+
+    # choose interpolation grid
+    if interpolation_grid == "xgrid":
+        interpolation_grid = XGRID
+    elif interpolation_grid == "lhapdf":
+        interpolation_grid = LHAPDF_XGRID
+
+    # get normalize to pdf:
+    colibri_plotter_normto = ColibriFitsPlotter(
+        normalize_to,
+        underlyinglaw,
+    )
+
+    pdf_model_normto = colibri_plotter_normto.pdf_model
+
+    for fl in flavours:
+
+        fig, ax = plt.subplots()
+
+        upper_band_normto, lower_band_normto, mean_normto = (
+            colibri_plotter_normto.spline_interpolator(
+                fl,
+                (
+                    interpolation_grid
+                    if interpolation_grid
+                    else pdf_model_normto.xgrids[fl]
+                ),
+            )
+        )
+        for fit in colibri_fits:
+
+            colibri_plotter = ColibriFitsPlotter(
+                fit,
+                underlyinglaw,
+            )
+
+            pdf_model = colibri_plotter.pdf_model
+
+            upper_band, lower_band, mean = colibri_plotter.spline_interpolator(
+                fl, interpolation_grid if interpolation_grid else pdf_model.xgrids[fl]
+            )
+
+            x_vals = interpolation_grid if interpolation_grid else pdf_model.xgrids[fl]
+
+            ax.plot(
+                x_vals,
+                mean / mean_normto,
+                linestyle="-",
+                label=f"{fit['label']}, {fl}",
+            )
+
+            ax.fill_between(
+                x_vals,
+                lower_band / lower_band_normto,
+                upper_band / upper_band_normto,
+                alpha=0.5,
+            )
+
+            # plot the underlying law only once
+            if underlyinglaw and (fit == colibri_fits[0]):
+                ax.plot(
+                    interpolation_grid if interpolation_grid else pdf_model.xgrids[fl],
+                    colibri_plotter.underlyinglaw_fl_grid(
+                        fl,
+                        (
+                            interpolation_grid
+                            if interpolation_grid
+                            else pdf_model.xgrids[fl]
+                        ),
+                    )
+                    / mean_normto,
                     linestyle="--",
                     label=f"Underlying law",
                 )
