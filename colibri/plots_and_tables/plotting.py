@@ -158,6 +158,7 @@ class ColibriFitsPlotter:
         """
         TODO
         """
+
         underlyinglaw_fl = (
             convolution.evolution.grid_values(
                 PDF(self.underlyinglaw), [flavour], interpolation_grid, [1.65]
@@ -165,6 +166,7 @@ class ColibriFitsPlotter:
             .squeeze(-1)[0]
             .squeeze(0)
         )
+
         return underlyinglaw_fl
 
     def pdf_values(self, flavour, interpolation_grid):
@@ -394,15 +396,9 @@ def plot_pdf_ratio_from_csv_colibrifit(
 
         fig, ax = plt.subplots()
 
-        upper_band_normto, lower_band_normto, mean_normto = (
-            colibri_plotter_normto.spline_interpolator(
-                fl,
-                (
-                    interpolation_grid
-                    if interpolation_grid
-                    else pdf_model_normto.xgrids[fl]
-                ),
-            )
+        _, _, mean_normto = colibri_plotter_normto.spline_interpolator(
+            fl,
+            (interpolation_grid if interpolation_grid else pdf_model_normto.xgrids[fl]),
         )
         for fit in colibri_fits:
 
@@ -428,8 +424,8 @@ def plot_pdf_ratio_from_csv_colibrifit(
 
             ax.fill_between(
                 x_vals,
-                lower_band / lower_band_normto,
-                upper_band / upper_band_normto,
+                lower_band / mean_normto,
+                upper_band / mean_normto,
                 alpha=0.5,
             )
 
