@@ -22,44 +22,56 @@ def get_fit_path(fit):
     return str(fit_path)
 
 
-def csv_file_reader(colibri_fit, load_pdf_model=False):
+def get_csv_file_posterior(colibri_fit):
     """
     Given a colibri fit, returns the pandas dataframe with the results of the fit
-    differentiating between Monte Carlo and Bayesian fits.
+    at the parameterisation scale.
 
     Parameters
     ----------
     colibri_fit : str
         The name of the fit to read.
 
-    load_pdf_model : bool, default=False
-        Useful for grid pdf model
 
     Returns
     -------
-    csv_file_info : dict
-        A dictionary with the type of fit and the posterior samples.
+    pandas dataframe
     """
 
     fit_path = get_fit_path(colibri_fit)
-    csv_file_info = {}
 
     if not glob.glob(fit_path + "/*result.csv"):
         raise FileNotFoundError("Could not find the csv results of fit " + colibri_fit)
 
     csv_path = glob.glob(fit_path + "/*result.csv")[0]
     df = pd.read_csv(csv_path, index_col=0)
-    csv_file_info["posterior_samples"] = df
+    
+    return df
 
-    if load_pdf_model:
-        if not os.path.exists(fit_path + "/pdf_model.pkl"):
-            raise FileNotFoundError(
-                "Could not find the pdf model for fit " + colibri_fit
-            )
 
-        with open(fit_path + "/pdf_model.pkl", "rb") as file:
-            pdf_model = dill.load(file)
+def get_pdf_model(colibri_fit):
+    """
+    Given a colibri fit, returns the stored pdf model class.
 
-        csv_file_info["pdf_model"] = pdf_model
+    Parameters
+    ----------
+    colibri_fit : str
+        The name of the fit to read.
 
-    return csv_file_info
+
+    Returns
+    -------
+    pdf model class
+    """
+
+    fit_path = get_fit_path(colibri_fit)
+
+    if not os.path.exists(fit_path + "/pdf_model.pkl"):
+        raise FileNotFoundError(
+            "Could not find the pdf model for fit " + colibri_fit
+        )
+
+    with open(fit_path + "/pdf_model.pkl", "rb") as file:
+        pdf_model = dill.load(file)
+
+    return pdf_model
