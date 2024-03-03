@@ -3,7 +3,6 @@ meta:
   author: Mark N. Costantini
   keywords: grid_pdf
 
-
 colibri_fits: 
  - {id: 240223_bayes_dis_amsterdam, label: "Bayes, DIS"}
  - {id: 240223_mc_dis_amsterdam, label: "MC, DIS"} 
@@ -15,6 +14,16 @@ flavours:
   - g
   - V
 
+stats_68_cl_settings:
+    
+    spline_interpolation: true
+    type: log
+    n_new_points: 30
+
+    interp1d_settings:
+        kind: cubic
+        bounds_error: False
+    
 PDFscalespecs:
   - xscale: log
     xscaletitle: Log
