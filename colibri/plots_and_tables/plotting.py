@@ -159,7 +159,7 @@ class ColibriFitsPlotter:
         TODO
         """
         # if interpolation grid is not empty return underlying law
-        if interp_grid.size != 0:
+        if len(interp_grid) != 0:
             underlyinglaw_fl = (
                 convolution.evolution.grid_values(
                     PDF(self.underlyinglaw), [flavour], interp_grid, [1.65]
