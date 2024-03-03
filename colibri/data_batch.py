@@ -16,6 +16,7 @@ import jax.numpy as jnp
 
 log = logging.getLogger(__name__)
 
+
 @dataclass(frozen=True)
 class DataBatches:
     data_batch_stream_index: Callable
@@ -39,7 +40,9 @@ def data_batches(n_training_points, batch_size, batch_seed=1):
     """
 
     if not batch_size:
-        log.warning(f"Batch size not specified, setting it to the full number of data points {n_training_points}")
+        log.warning(
+            f"Batch size not specified, setting it to the full number of data points {n_training_points}"
+        )
         batch_size = n_training_points
 
     if batch_size > n_training_points:
