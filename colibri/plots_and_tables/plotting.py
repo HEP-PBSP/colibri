@@ -5,7 +5,7 @@ import re
 import json
 import numpy as np
 import pandas as pd
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import interp1d
 import logging
 
 import corner
@@ -20,7 +20,7 @@ from colibri.plots_and_tables.fit_reader import (
     get_csv_file_posterior,
     get_pdf_model,
 )
-from colibri.constants import FLAVOUR_TO_ID_MAPPING, XGRID, LHAPDF_XGRID
+from colibri.constants import FLAVOUR_TO_ID_MAPPING, GRID_MAPPING
 
 log = logging.getLogger(__name__)
 
@@ -154,20 +154,23 @@ class ColibriFitsPlotter:
         """
         return get_pdf_model(self.colibri_fit["id"])
 
-    def underlyinglaw_fl_grid(self, flavour, interpolation_grid):
+    def underlyinglaw_fl_grid(self, flavour, interp_grid):
         """
         TODO
         """
-
-        underlyinglaw_fl = (
-            convolution.evolution.grid_values(
-                PDF(self.underlyinglaw), [flavour], interpolation_grid, [1.65]
+        # if interpolation grid is not empty return underlying law
+        if interp_grid.size != 0:
+            underlyinglaw_fl = (
+                convolution.evolution.grid_values(
+                    PDF(self.underlyinglaw), [flavour], interp_grid, [1.65]
+                )
+                .squeeze(-1)[0]
+                .squeeze(0)
             )
-            .squeeze(-1)[0]
-            .squeeze(0)
-        )
 
-        return underlyinglaw_fl
+            return underlyinglaw_fl
+        else:
+            return []
 
     def pdf_values(self, flavour, interpolation_grid):
         """
@@ -195,7 +198,7 @@ class ColibriFitsPlotter:
 
         return pdf_values
 
-    def stats_68_cl(self, flavour, interpolation_grid):
+    def stats_68_cl(self, flavour, interpolation_grid, stats_68_cl_settings=None):
         """
         TODO
         """
@@ -206,27 +209,43 @@ class ColibriFitsPlotter:
 
         mean = pdf_values.mean(axis=0)
 
-        return upper_band, lower_band, mean
+        if stats_68_cl_settings["spline_interpolation"]:
+            interp_ub = interp1d(
+                interpolation_grid,
+                upper_band,
+                **{"bounds_error": False, **stats_68_cl_settings["interp1d_settings"]},
+            )
+            interp_lb = interp1d(
+                interpolation_grid,
+                lower_band,
+                **{"bounds_error": False, **stats_68_cl_settings["interp1d_settings"]},
+            )
+            interp_mean = interp1d(
+                interpolation_grid,
+                mean,
+                **{"bounds_error": False, **stats_68_cl_settings["interp1d_settings"]},
+            )
 
-    def spline_interpolator(self, flavour, interpolation_grid):
-        """
-        TODO
-        """
+            if stats_68_cl_settings["type"] == "linear":
+                x_new = np.linspace(
+                    min(interpolation_grid),
+                    max(interpolation_grid),
+                    stats_68_cl_settings["n_new_points"],
+                )
+            elif stats_68_cl_settings["type"] == "log":
+                x_new = np.logspace(
+                    np.log10(min(interpolation_grid)),
+                    np.log10(max(interpolation_grid)),
+                    stats_68_cl_settings["n_new_points"],
+                )
 
-        upper_band, lower_band, mean = self.stats_68_cl(flavour, interpolation_grid)
+            upper_band = interp_ub(x_new)
+            lower_band = interp_lb(x_new)
+            mean = interp_mean(x_new)
 
-        # do some interpolation stuff
+            return x_new, upper_band, lower_band, mean
 
-        return upper_band, lower_band, mean
-        # cs_mean = CubicSpline(x_vals, mean)
-        # cs_upper = CubicSpline(x_vals, upper_band)
-        # cs_lower = CubicSpline(x_vals, lower_band)
-
-        # mean, upper_band, lower_band = (
-        #     cs_mean(x_new),
-        #     cs_upper(x_new),
-        #     cs_lower(x_new),
-        # )
+        return interpolation_grid, upper_band, lower_band, mean
 
 
 @figuregen
@@ -236,6 +255,7 @@ def plot_pdf_from_csv_colibrifit(
     flavours=None,
     interpolation_grid=None,
     xscale="log",
+    stats_68_cl_settings=None,
 ):
     """
 
@@ -266,16 +286,14 @@ def plot_pdf_from_csv_colibrifit(
     ------
     matplotlib figure
     """
+    if interpolation_grid and (interpolation_grid not in GRID_MAPPING):
+        raise KeyError(
+            f"interpolation_grid has to be set to either 'xgrid' or 'lhapdf_grid', if interpolation_grid is None, then pdf_model has to have 'xgrids' attribute"
+        )
 
     # use all flavours per default
     if not flavours:
         flavours = FLAVOUR_TO_ID_MAPPING.keys()
-
-    # choose interpolation grid
-    if interpolation_grid == "xgrid":
-        interpolation_grid = XGRID
-    elif interpolation_grid == "lhapdf":
-        interpolation_grid = LHAPDF_XGRID
 
     for fl in flavours:
 
@@ -290,21 +308,23 @@ def plot_pdf_from_csv_colibrifit(
 
             pdf_model = colibri_plotter.pdf_model
 
-            upper_band, lower_band, mean = colibri_plotter.spline_interpolator(
-                fl, interpolation_grid if interpolation_grid else pdf_model.xgrids[fl]
+            # if interpolation grid is either 'grid' or 'lhapdf_grid' then take corresponding
+            # grids in GRID_MAPPING, otherwise use the model xgrid (available for grid_pdf model only)
+            interp_grid = GRID_MAPPING.get(interpolation_grid, pdf_model.xgrids[fl])
+
+            interp_grid, upper_band, lower_band, mean = colibri_plotter.stats_68_cl(
+                fl, interp_grid, stats_68_cl_settings
             )
 
-            x_vals = interpolation_grid if interpolation_grid else pdf_model.xgrids[fl]
-
             ax.plot(
-                x_vals,
+                interp_grid,
                 mean,
                 linestyle="-",
                 label=f"{fit['label']}, {fl}",
             )
 
             ax.fill_between(
-                x_vals,
+                interp_grid,
                 lower_band,
                 upper_band,
                 alpha=0.5,
@@ -312,15 +332,12 @@ def plot_pdf_from_csv_colibrifit(
 
             # plot the underlying law only once
             if underlyinglaw and (fit == colibri_fits[0]):
+                # this bit here is probably quite inefficient
                 ax.plot(
-                    interpolation_grid if interpolation_grid else pdf_model.xgrids[fl],
+                    interp_grid,
                     colibri_plotter.underlyinglaw_fl_grid(
                         fl,
-                        (
-                            interpolation_grid
-                            if interpolation_grid
-                            else pdf_model.xgrids[fl]
-                        ),
+                        interp_grid,
                     ),
                     linestyle="--",
                     label=f"Underlying law",
@@ -340,6 +357,7 @@ def plot_pdf_ratio_from_csv_colibrifit(
     flavours=None,
     interpolation_grid=None,
     xscale="log",
+    stats_68_cl_settings=None,
 ):
     """
 
@@ -370,6 +388,11 @@ def plot_pdf_ratio_from_csv_colibrifit(
     ------
     matplotlib figure
     """
+    if interpolation_grid and (interpolation_grid not in GRID_MAPPING):
+        raise KeyError(
+            f"interpolation_grid has to be set to either 'xgrid' or 'lhapdf_grid', if interpolation_grid is None, then pdf_model has to have 'xgrids' attribute"
+        )
+
     # get the fit id from the normalize_to parameter
     if isinstance(normalize_to, int):
         normalize_to = colibri_fits[normalize_to - 1]
@@ -377,12 +400,6 @@ def plot_pdf_ratio_from_csv_colibrifit(
     # use all flavours per default
     if not flavours:
         flavours = FLAVOUR_TO_ID_MAPPING.keys()
-
-    # choose interpolation grid
-    if interpolation_grid == "xgrid":
-        interpolation_grid = XGRID
-    elif interpolation_grid == "lhapdf":
-        interpolation_grid = LHAPDF_XGRID
 
     # get normalize to pdf:
     colibri_plotter_normto = ColibriFitsPlotter(
@@ -396,10 +413,15 @@ def plot_pdf_ratio_from_csv_colibrifit(
 
         fig, ax = plt.subplots()
 
-        _, _, mean_normto = colibri_plotter_normto.spline_interpolator(
-            fl,
-            (interpolation_grid if interpolation_grid else pdf_model_normto.xgrids[fl]),
+        normto_interp_grid = GRID_MAPPING.get(
+            interpolation_grid, pdf_model_normto.xgrids[fl]
         )
+        _, _, _, mean_normto = colibri_plotter_normto.stats_68_cl(
+            fl,
+            normto_interp_grid,
+            stats_68_cl_settings,
+        )
+
         for fit in colibri_fits:
 
             colibri_plotter = ColibriFitsPlotter(
@@ -409,21 +431,23 @@ def plot_pdf_ratio_from_csv_colibrifit(
 
             pdf_model = colibri_plotter.pdf_model
 
-            upper_band, lower_band, mean = colibri_plotter.spline_interpolator(
-                fl, interpolation_grid if interpolation_grid else pdf_model.xgrids[fl]
+            # if interpolation grid is either 'grid' or 'lhapdf_grid' then take corresponding
+            # grids in GRID_MAPPING, otherwise use the model xgrid (available for grid_pdf model only)
+            interp_grid = GRID_MAPPING.get(interpolation_grid, pdf_model.xgrids[fl])
+
+            interp_grid, upper_band, lower_band, mean = colibri_plotter.stats_68_cl(
+                fl, interp_grid, stats_68_cl_settings
             )
 
-            x_vals = interpolation_grid if interpolation_grid else pdf_model.xgrids[fl]
-
             ax.plot(
-                x_vals,
+                interp_grid,
                 mean / mean_normto,
                 linestyle="-",
                 label=f"{fit['label']}, {fl}",
             )
 
             ax.fill_between(
-                x_vals,
+                interp_grid,
                 lower_band / mean_normto,
                 upper_band / mean_normto,
                 alpha=0.5,
@@ -432,14 +456,10 @@ def plot_pdf_ratio_from_csv_colibrifit(
             # plot the underlying law only once
             if underlyinglaw and (fit == colibri_fits[0]):
                 ax.plot(
-                    interpolation_grid if interpolation_grid else pdf_model.xgrids[fl],
+                    interp_grid,
                     colibri_plotter.underlyinglaw_fl_grid(
                         fl,
-                        (
-                            interpolation_grid
-                            if interpolation_grid
-                            else pdf_model.xgrids[fl]
-                        ),
+                        (interp_grid),
                     )
                     / mean_normto,
                     linestyle="--",
