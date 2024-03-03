@@ -244,7 +244,7 @@ def plot_pdf_from_csv_colibrifit(
     colibri_fits: list
         list of dict containing fit Id and label
 
-    flavour: list, default is None
+    flavours: list, default is None
         when None all flavours are used
 
     interpolation_grid: str, default is None, has three possible options
