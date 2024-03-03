@@ -9,10 +9,12 @@ Date: 11.11.2023
 
 from typing import Callable
 from dataclasses import dataclass
+import logging
 
 import jax
 import jax.numpy as jnp
 
+log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class DataBatches:
@@ -27,7 +29,7 @@ def data_batches(n_training_points, batch_size, batch_seed=1):
     ----------
     n_training_points: int
 
-    batch_size: int
+    batch_size: int, default is None which sets it to n_training_points
 
     batch_seed: int, default is 1
 
@@ -35,6 +37,10 @@ def data_batches(n_training_points, batch_size, batch_seed=1):
     -------
     DataBatches dataclass
     """
+
+    if not batch_size:
+        log.warning(f"Batch size not specified, setting it to the full number of data points {n_training_points}")
+        batch_size = n_training_points
 
     if batch_size > n_training_points:
         raise ValueError(
