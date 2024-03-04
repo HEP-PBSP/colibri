@@ -53,7 +53,7 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
-    batch_size=128,
+    batch_size=None,
     batch_seed=1,
     alpha=1e-7,
     lambda_positivity=1000,
@@ -95,8 +95,8 @@ def monte_carlo_fit(
     max_epochs: int
         Number of maximum epochs.
 
-    batch_size: int, optional
-        Size of batches during training. Defaults to 128.
+    batch_size: int, default is None which sets it to the full size of data
+        Size of batches during training.
 
     batch_seed: int, optional
         Seed used to construct the batches. Defaults to 1.
