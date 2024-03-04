@@ -209,7 +209,7 @@ class ColibriFitsPlotter:
 
         mean = pdf_values.mean(axis=0)
 
-        if stats_68_cl_settings["spline_interpolation"]:
+        if stats_68_cl_settings and stats_68_cl_settings["spline_interpolation"]:
             interp_ub = interp1d(
                 interpolation_grid,
                 upper_band,
