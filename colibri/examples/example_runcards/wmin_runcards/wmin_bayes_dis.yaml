@@ -1,10 +1,11 @@
-meta: 'An example fit using Colibri.'
+meta: 'An example of a bayesian fit using wmin parameterisation on a reduced DIS dataset'
 
 #######################
 # Data and theory specs
 #######################
 
-dataset_inputs:                        # The list of datasets to be used in the fit.
+dataset_inputs:    
+  # DIS                
  - {'dataset': 'NMC'}
  - {'dataset': 'HERACOMBNCEM'}
  - {'dataset': 'HERACOMBNCEP575'}

@@ -1,4 +1,4 @@
-meta: 'An example fit using Colibri, reduced DIS dataset.'
+meta: 'An example of Monte Carlo fit, using wmin parameterisation, on a reduced DIS dataset.'
 
 #######################
 # Data and theory specs
