@@ -1,0 +1,58 @@
+meta: 'An example fit using Colibri, reduced DIS dataset.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:    
+  # DIS                
+ - {'dataset': 'NMC'}
+ - {'dataset': 'HERACOMBNCEM'}
+ - {'dataset': 'HERACOMBNCEP575'}
+ - {'dataset': 'HERACOMBNCEP820'}
+ - {'dataset': 'HERACOMBNCEP920'}
+
+
+theoryid: 400                          # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0                  # The closure test level: False for experimental, level 0
+                                       # for pseudodata with no noise, level 1 for pseudodata with
+                                       # noise.
+closure_test_pdf: NNPDF40_nnlo_as_01180 # The closure test PDF used if closure_level is not False
+
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: POSF2U, maxlambda: 1e6}
+
+alpha: 1e-7                           
+lambda_positivity: 0                 
+
+use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
+
+
+#############
+# Model specs
+#############
+wmin_settings:                         # Settings for the weight minimisation model
+  wminpdfset: NNPDF40_nnlo_as_01180     # PDF set from which the replicas are selected
+  n_basis: 10                          # Number of weights/replicas used in the fit
+
+
+###################
+# Methodology specs
+###################
+
+# Analytic settings
+analytic_settings:
+  n_posterior_samples: 10
+  sampling_seed: 123456
+
+actions_:
+- analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
