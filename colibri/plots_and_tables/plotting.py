@@ -297,6 +297,15 @@ def plot_pdf_from_csv_colibrifit(
     for fl in flavours:
 
         fig, ax = plt.subplots()
+        ax.grid(True, linestyle="-", color="0.75")  # Light gray gridlines
+
+        # Set the spines for all sides
+        ax.spines["top"].set_visible(True)
+        ax.spines["right"].set_visible(True)
+        ax.spines["bottom"].set_visible(True)
+        ax.spines["left"].set_visible(True)
+
+        ax.tick_params(axis="both", direction="inout", colors="k", grid_color="0.75")
 
         for fit in colibri_fits:
 
@@ -309,17 +318,19 @@ def plot_pdf_from_csv_colibrifit(
 
             # if interpolation grid is either 'grid' or 'lhapdf_grid' then take corresponding
             # grids in GRID_MAPPING, otherwise use the model xgrid (available for grid_pdf model only)
-            interp_grid = GRID_MAPPING.get(interpolation_grid, pdf_model.xgrids[fl])
+            if pdf_model.__class__.__name__ == "GridPDFModel":
+                interp_grid = GRID_MAPPING.get(interpolation_grid, pdf_model.xgrids[fl])
+            else:
+                interp_grid = GRID_MAPPING[interpolation_grid]
 
             interp_grid, upper_band, lower_band, mean = colibri_plotter.stats_68_cl(
                 fl, interp_grid, stats_68_cl_settings
             )
 
-            ax.plot(
+            (line,) = ax.plot(
                 interp_grid,
                 mean,
                 linestyle="-",
-                label=f"{fit['label']}, {fl}",
             )
 
             ax.fill_between(
@@ -327,6 +338,8 @@ def plot_pdf_from_csv_colibrifit(
                 lower_band,
                 upper_band,
                 alpha=0.5,
+                label=f"{fit['label']}, {fl}",
+                color=line.get_color(),
             )
 
             # plot the underlying law only once
@@ -400,26 +413,36 @@ def plot_pdf_ratio_from_csv_colibrifit(
     if not flavours:
         flavours = FLAVOUR_TO_ID_MAPPING.keys()
 
-    # get normalize to pdf:
-    colibri_plotter_normto = ColibriFitsPlotter(
-        normalize_to,
-        underlyinglaw,
-    )
+    if normalize_to != "underlyinglaw":
+        # get normalize to pdf:
+        colibri_plotter_normto = ColibriFitsPlotter(
+            normalize_to,
+            underlyinglaw,
+        )
 
-    pdf_model_normto = colibri_plotter_normto.pdf_model
+        pdf_model_normto = colibri_plotter_normto.pdf_model
 
     for fl in flavours:
 
         fig, ax = plt.subplots()
 
-        normto_interp_grid = GRID_MAPPING.get(
-            interpolation_grid, pdf_model_normto.xgrids[fl]
-        )
-        _, _, _, mean_normto = colibri_plotter_normto.stats_68_cl(
-            fl,
-            normto_interp_grid,
-            stats_68_cl_settings,
-        )
+        ax.grid(True, linestyle="-", color="0.75")  # Light gray gridlines
+
+        # Set the spines for all sides
+        ax.spines["top"].set_visible(True)
+        ax.spines["right"].set_visible(True)
+        ax.spines["bottom"].set_visible(True)
+        ax.spines["left"].set_visible(True)
+
+        if normalize_to != "underlyinglaw":
+            normto_interp_grid = GRID_MAPPING.get(
+                interpolation_grid, pdf_model_normto.xgrids[fl]
+            )
+            _, _, _, mean_normto = colibri_plotter_normto.stats_68_cl(
+                fl,
+                normto_interp_grid,
+                stats_68_cl_settings,
+            )
 
         for fit in colibri_fits:
 
@@ -432,17 +455,25 @@ def plot_pdf_ratio_from_csv_colibrifit(
 
             # if interpolation grid is either 'grid' or 'lhapdf_grid' then take corresponding
             # grids in GRID_MAPPING, otherwise use the model xgrid (available for grid_pdf model only)
-            interp_grid = GRID_MAPPING.get(interpolation_grid, pdf_model.xgrids[fl])
+            if pdf_model.__class__.__name__ == "GridPDFModel":
+                interp_grid = GRID_MAPPING.get(interpolation_grid, pdf_model.xgrids[fl])
+            else:
+                interp_grid = GRID_MAPPING[interpolation_grid]
 
             interp_grid, upper_band, lower_band, mean = colibri_plotter.stats_68_cl(
                 fl, interp_grid, stats_68_cl_settings
             )
 
-            ax.plot(
+            if normalize_to == "underlyinglaw":
+                mean_normto = colibri_plotter.underlyinglaw_fl_grid(
+                    fl,
+                    interp_grid,
+                )
+
+            (line,) = ax.plot(
                 interp_grid,
                 mean / mean_normto,
                 linestyle="-",
-                label=f"{fit['label']}, {fl}",
             )
 
             ax.fill_between(
@@ -450,6 +481,8 @@ def plot_pdf_ratio_from_csv_colibrifit(
                 lower_band / mean_normto,
                 upper_band / mean_normto,
                 alpha=0.5,
+                label=f"{fit['label']}, {fl}",
+                color=line.get_color(),
             )
 
             # plot the underlying law only once
