@@ -25,6 +25,8 @@ log = logging.getLogger(__name__)
 
 color_key = ["#66C2A5", "#FC8D62", "#8DA0CB"]
 
+plt.style.use("ourstyle.mplstyle")
+
 
 @figure
 def plot_corner(colibri_fits):
@@ -128,13 +130,11 @@ def plot_ultranest_results(ultranest_results_path):
 
 
 class ColibriFitsPlotter:
-
     def __init__(
         self,
         colibri_fit,
         underlyinglaw=None,
     ):
-
         self.colibri_fit = colibri_fit
         self.underlyinglaw = underlyinglaw
 
@@ -295,20 +295,10 @@ def plot_pdf_from_csv_colibrifit(
         flavours = FLAVOUR_TO_ID_MAPPING.keys()
 
     for fl in flavours:
-
         fig, ax = plt.subplots()
-        ax.grid(True, linestyle="-", color="0.75")  # Light gray gridlines
-
-        # Set the spines for all sides
-        ax.spines["top"].set_visible(True)
-        ax.spines["right"].set_visible(True)
-        ax.spines["bottom"].set_visible(True)
-        ax.spines["left"].set_visible(True)
-
-        ax.tick_params(axis="both", direction="inout", colors="k", grid_color="0.75")
+        ax.grid(False)  # Light gray gridlines
 
         for fit in colibri_fits:
-
             colibri_plotter = ColibriFitsPlotter(
                 fit,
                 underlyinglaw,
@@ -356,7 +346,7 @@ def plot_pdf_from_csv_colibrifit(
                 )
 
             ax.set_xscale(xscale)
-            ax.legend()
+            ax.legend(frameon=False)
 
         yield fig
 
@@ -423,16 +413,9 @@ def plot_pdf_ratio_from_csv_colibrifit(
         pdf_model_normto = colibri_plotter_normto.pdf_model
 
     for fl in flavours:
-
         fig, ax = plt.subplots()
 
-        ax.grid(True, linestyle="-", color="0.75")  # Light gray gridlines
-
-        # Set the spines for all sides
-        ax.spines["top"].set_visible(True)
-        ax.spines["right"].set_visible(True)
-        ax.spines["bottom"].set_visible(True)
-        ax.spines["left"].set_visible(True)
+        ax.grid(False)  # Light gray gridlines
 
         if normalize_to != "underlyinglaw":
             normto_interp_grid = GRID_MAPPING.get(
@@ -445,7 +428,6 @@ def plot_pdf_ratio_from_csv_colibrifit(
             )
 
         for fit in colibri_fits:
-
             colibri_plotter = ColibriFitsPlotter(
                 fit,
                 underlyinglaw,
@@ -499,6 +481,6 @@ def plot_pdf_ratio_from_csv_colibrifit(
                 )
 
             ax.set_xscale(xscale)
-            ax.legend()
+            ax.legend(frameon=False)
 
         yield fig
