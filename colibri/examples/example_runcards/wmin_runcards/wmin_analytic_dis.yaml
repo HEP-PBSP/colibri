@@ -1,4 +1,4 @@
-meta: 'An example of a bayesian fit using wmin parameterisation on a reduced DIS dataset'
+meta: 'An example of analytic fit using wmin paramterisation on reduced DIS dataset.'
 
 #######################
 # Data and theory specs
@@ -11,6 +11,7 @@ dataset_inputs:
  - {'dataset': 'HERACOMBNCEP575'}
  - {'dataset': 'HERACOMBNCEP820'}
  - {'dataset': 'HERACOMBNCEP920'}
+
 
 theoryid: 400                          # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
@@ -29,8 +30,8 @@ positivity:                            # Positivity datasets, used in the positi
   posdatasets:
   - {dataset: POSF2U, maxlambda: 1e6}
 
-alpha: 1e-7                            # TODO
-lambda_positivity: 0                   # TODO
+alpha: 1e-7                           
+lambda_positivity: 0                 
 
 use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
@@ -39,34 +40,19 @@ t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covari
 #############
 # Model specs
 #############
-
-# Weight minimisation settings
-wmin_settings:
-  wminpdfset: NNPDF40_nnlo_as_01180
-  n_basis: 10
+wmin_settings:                         # Settings for the weight minimisation model
+  wminpdfset: NNPDF40_nnlo_as_01180     # PDF set from which the replicas are selected
+  n_basis: 10                          # Number of weights/replicas used in the fit
 
 
 ###################
 # Methodology specs
 ###################
 
-# Nested Sampling settings
-
-ns_settings:
-  sampler_plot: True # is slow for large number of parameters
+# Analytic settings
+analytic_settings:
   n_posterior_samples: 10
-  ReactiveNS_settings:
-    vectorized: False
-    ndraw_max: 500
-  Run_settings:
-    min_num_live_points: 500
-    min_ess: 50
-    frac_remain: 0.01
-
-prior_settings:
-  type: 'uniform_parameter_prior'            # The type of prior used in Nested Sampling (model dependent)
-  max_val: 10.0
-  min_val: -10.0
+  sampling_seed: 123456
 
 actions_:
-- ultranest_fit                       
+- analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
