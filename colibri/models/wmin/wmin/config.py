@@ -18,6 +18,10 @@ class WminConfig(colibriConfig):
     """
 
     def parse_prior_settings(self, settings):
+
+        if "type" not in settings.keys():
+            raise ValueError("Missing key type for prior_settings")
+
         # Currently, only prior is uniform with max/min val
         if settings["type"] == "uniform_parameter_prior":
             # Check if max and min vals are defined, if not set them to defaults
