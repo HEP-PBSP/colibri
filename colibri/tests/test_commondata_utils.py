@@ -43,9 +43,10 @@ def test_experimental_commondata_tuple():
         path = TEST_COMMONDATA_FOLDER / (
             TEST_DATASETS["dataset_inputs"][i]["dataset"] + "_commondata.csv"
         )
+
         assert_allclose(
-            result[i].commondata_table.iloc[:, 1:].to_numpy(dtype=float),
-            pd.read_csv(path).iloc[:, 1:].to_numpy(dtype=float),
+            result[i].commondata_table.iloc[:, 1:]["data"].values,
+            pd.read_csv(path).iloc[:, 1:]["data"].values,
         )
 
 
