@@ -16,8 +16,8 @@ def gaussian_kl_divergence(x, y):
     cov_y = np.cov(y, rowvar=False)
 
     if len(x.shape) == 1:
-        mean_x = mean_x.reshape(-1, 1)
-        mean_y = mean_y.reshape(-1, 1)
+        mean_x = mean_x.reshape(1, 1)
+        mean_y = mean_y.reshape(1, 1)
         cov_x = cov_x.reshape(1, 1)
         cov_y = cov_y.reshape(1, 1)
 
