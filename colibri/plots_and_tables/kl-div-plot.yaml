@@ -3,12 +3,18 @@ meta:
   author: Luca Mantani
   keywords: [grid_pdf]
 
-fit_A: fitA
-fit_B: fitAp
+fit_A: 240301_mnc_analytic_dis_level1
+fit_B: 240301_mnc_monte_carlo_dis_level1
+
+symm: True
+
+n_resample: 200
 
 template_text: |
   # KL divergence between fit A and fit B
   {@plot_kl_distribution@}
+  # KL divergence resample
+  {@plot_kl_distribution_resample@}
   # KL divergence between marginalised 1D distributions
   {@plot_kl_distribution_1D@}
 
