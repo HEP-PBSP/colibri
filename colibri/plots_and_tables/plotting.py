@@ -25,7 +25,13 @@ log = logging.getLogger(__name__)
 
 color_key = ["#66C2A5", "#FC8D62", "#8DA0CB"]
 
-plt.style.use("ourstyle.mplstyle")
+# Get the directory of the current script or module
+current_directory = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to the style file relative to the current directory
+style_file_path = os.path.join(current_directory, "ourstyle.mplstyle")
+
+plt.style.use(style_file_path)
 
 
 @figure
