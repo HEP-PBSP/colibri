@@ -6,8 +6,9 @@ meta:
 colibri_fits: 
  - {id: 240301_mnc_analytic_dis_level1, label: "Analytic, DIS"}
  - {id: 240301_mnc_monte_carlo_dis_level1, label: "Monte Carlo, DIS"} 
+ - {id: 240301_mnc_bayesian_dis_level1, label: "Nested Sampling, DIS"}
 
-underlyinglaw: NNPDF40_nnlo_as_01180
+normalize_to: 3
 
 flavours:
   - \Sigma
@@ -16,7 +17,7 @@ flavours:
 
 stats_68_cl_settings:
     
-    spline_interpolation: true
+    spline_interpolation: false
     type: log
     n_new_points: 30
 
@@ -30,8 +31,6 @@ PDFscalespecs:
   - xscale: linear
     xscaletitle: Linear
 
-
-normalize_to: 1
 
 template_text: |
   # Chi2 distribution
