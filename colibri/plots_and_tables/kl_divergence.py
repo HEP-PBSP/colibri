@@ -5,6 +5,15 @@ import pandas as pd
 import glob
 from colibri.plots_and_tables.plotting import get_fit_path
 from scipy.stats import percentileofscore
+import os
+
+# Get the directory of the current script or module
+current_directory = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to the style file relative to the current directory
+style_file_path = os.path.join(current_directory, "ourstyle.mplstyle")
+
+plt.style.use(style_file_path)
 
 
 def gaussian_kl_divergence(x, y, symm=False):
@@ -129,7 +138,13 @@ def kl_div_test_1D(fit_A, fit_B, n_permutations=1000):
             perm_x, perm_y = permute_x_y_samples(x_A, x_B, random_seed=i)
             kl_values_perm.append(gaussian_kl_divergence(perm_x[:, j], perm_y[:, j]))
 
-        results.append({"kl_distribution": kl_values_perm, "kl_value": kl_value})
+        results.append(
+            {
+                "kl_distribution": kl_values_perm,
+                "kl_value": kl_value,
+                "label": df_A.columns[j],
+            }
+        )
 
     return results
 
@@ -160,20 +175,20 @@ def permute_x_y_samples(x, y, random_seed=0):
 
 
 @figure
-def plot_kl_distribution_resample(kl_div_test_resample, title=""):
+def plot_kl_distribution_resample(kl_div_test_resample, n_resample=100):
     """
     TODO
     """
     kl_distribution = kl_div_test_resample["kl_perm_distribution"]
     kl_distro = kl_div_test_resample["kl_distro"]
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(9, 7))
     ax.hist(
         kl_distribution,
         bins=20,
         color="blue",
         alpha=0.7,
-        label="Permutation distribution",
+        label="Perm. null distr.",
         density=True,
     )
 
@@ -182,11 +197,15 @@ def plot_kl_distribution_resample(kl_div_test_resample, title=""):
         bins=20,
         color="red",
         alpha=0.7,
-        label="",
         density=True,
+        label="Fits KL div.",
     )
-    ax.set_xlabel("KL divergence")
-    ax.set_ylabel("Frequency")
+    ax.set_xlabel("KL divergence", fontsize=18)
+    ax.set_ylabel("Prob. density", fontsize=18)
+    ax.set_title(
+        "KL divergence distribution for resample size " + str(n_resample), fontsize=15
+    )
+    ax.legend(frameon=False, fontsize=15)
 
     return fig
 
@@ -205,18 +224,20 @@ def plot_kl_distribution(kl_div_test, title=""):
     # Calculate the p-value
     p_value = (100 - percentile_rank) / 100
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(9, 7))
     ax.hist(
         kl_distribution,
         bins=20,
         color="blue",
         alpha=0.7,
-        label="Permutation distribution",
+        label="Perm. null distr.",
+        density=True,
     )
-    ax.axvline(kl_value, color="red", linestyle="--", label="KL divergence")
-    ax.set_xlabel("KL divergence")
-    ax.set_ylabel("Frequency")
-    ax.set_title(title + f"\nPermutation test p-value: {p_value:.2f}")
+    ax.axvline(kl_value, color="red", linestyle="--", label="Fits KL div.")
+    ax.set_xlabel("KL divergence", fontsize=18)
+    ax.set_ylabel("Prob. density", fontsize=18)
+    ax.set_title(title + f"\nPermutation test p-value: {p_value:.5f}", fontsize=15)
+    ax.legend(frameon=False, fontsize=15)
 
     return fig
 
@@ -227,6 +248,7 @@ def plot_kl_distribution_1D(kl_div_test_1D):
     TODO
     """
 
-    for i, result in enumerate(kl_div_test_1D):
+    for result in kl_div_test_1D:
+        label = result["label"]
 
-        yield plot_kl_distribution(result, title=f"KL divergence for component {i}")
+        yield plot_kl_distribution(result, title=f"KL divergence for component {label}")
