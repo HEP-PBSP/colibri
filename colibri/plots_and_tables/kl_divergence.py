@@ -74,7 +74,7 @@ def kl_div_test_resample(fit_A, fit_B, n_permutations=1000, symm=False, n_resamp
         )
         kl_values_perm.append(gaussian_kl_divergence(perm_x, perm_y, symm=symm))
 
-    return {"kl_distribution": kl_values_perm, "kl_distro": kl_distro}
+    return {"kl_perm_distribution": kl_values_perm, "kl_distro": kl_distro}
 
 
 def kl_div_test(fit_A, fit_B, n_permutations=1000, symm=False):
@@ -164,7 +164,7 @@ def plot_kl_distribution_resample(kl_div_test_resample, title=""):
     """
     TODO
     """
-    kl_distribution = kl_div_test_resample["kl_distribution"]
+    kl_distribution = kl_div_test_resample["kl_perm_distribution"]
     kl_distro = kl_div_test_resample["kl_distro"]
 
     fig, ax = plt.subplots()
