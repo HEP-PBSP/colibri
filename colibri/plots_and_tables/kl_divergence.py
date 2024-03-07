@@ -29,6 +29,7 @@ def gaussian_kl_divergence(x, y, symm=False):
         + (mean_y - mean_x) @ np.linalg.inv(cov_y) @ (mean_y - mean_x)
     )
 
+    # if symm is True, compute the symmetric KL divergence
     if symm:
         kl_div += 0.5 * (
             np.log(np.linalg.det(cov_x) / np.linalg.det(cov_y))
