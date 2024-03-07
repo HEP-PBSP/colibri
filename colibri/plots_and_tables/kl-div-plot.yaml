@@ -3,7 +3,7 @@ meta:
   author: Luca Mantani
   keywords: [grid_pdf]
 
-fit_A: 240301_mnc_analytic_dis_level1
+fit_A: 240301_mnc_bayesian_dis_level1
 fit_B: 240301_mnc_monte_carlo_dis_level1
 
 symm: True
