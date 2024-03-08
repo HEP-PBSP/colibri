@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
 
     steps:
     - uses: actions/checkout@v3
@@ -52,11 +52,11 @@ jobs:
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
-        flit install --symlink
+        pip install .
         cd colibri/models/wmin
-        flit install --symlink
+        pip install .
         cd ../grid_pdf
-        flit install --symlink
+        pip install .
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
