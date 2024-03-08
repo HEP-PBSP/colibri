@@ -54,7 +54,13 @@ def gaussian_kl_divergence(x, y, symm=False):
 
 
 def kl_div_test_resample(
-    fit_A, fit_B, n_permutations=1000, symm=False, n_resample=100, fit_B_full=False
+    fit_A,
+    fit_B,
+    n_permutations=1000,
+    symm=False,
+    n_resample=100,
+    fit_A_bootstrap=False,
+    fit_B_full=False,
 ):
     """
     TODO
@@ -65,6 +71,7 @@ def kl_div_test_resample(
     # Each folder has only one result file
     # Read the result file, no matter the type of fit
     df_A = pd.read_csv(glob.glob(fit_A_path + "/*_result.csv")[0], index_col=0)
+
     if fit_B_full:
         df_B = pd.read_csv(
             glob.glob(fit_B_path + "/ultranest_logs/chains/equal_weighted_post.txt")[0],
@@ -75,6 +82,13 @@ def kl_div_test_resample(
 
     x_A = df_A.values
     x_B = df_B.values
+
+    if fit_A_bootstrap:
+        mean_A = np.mean(x_A, axis=0)
+        cov_A = np.cov(x_A, rowvar=False)
+
+        # Generate a new sample from the multivariate Gaussian distribution
+        x_A = np.random.multivariate_normal(mean_A, cov_A, size=100000)
 
     kl_distro = []
     for i in range(n_permutations):
