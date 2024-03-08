@@ -1,14 +1,14 @@
 [build-system]
-requires = ["flit_core >=2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.1.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
-[tool.flit.metadata]
-module = "wmin"
-author = "Mark N. Costantini"
-author-email = "mnc33@cam.ac.uk"
-home-page = "https://github.com/HEP-PBSP/colibri"
+[tool.poetry]
+name = "wmin"
+version = "0.0.0"
+authors = ["PBSP Collaboration"]
+description = "the weight minimisation pdf parameterisation "
 
-[tool.flit.metadata.requires-extra]
+[tool.poetry.extras]
 test = [
     "pytest",
     "hypothesis",
@@ -19,5 +19,5 @@ doc = [
     "sphinx_rtd_theme"
 ]
 
-[tool.flit.scripts]
-wmin = "wmin.app:main"
+[tool.poetry.scripts]
+grid_pdf = "wmin.app:main"
