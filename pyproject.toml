@@ -1,14 +1,34 @@
 [build-system]
-requires = ["flit_core >=2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.1.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
-[tool.flit.metadata]
-module = "colibri"
-author = "Mark N. Costantini"
-author-email = "mnc33@cam.ac.uk"
-home-page = "https://github.com/HEP-PBSP/colibri"
 
-[tool.flit.metadata.requires-extra]
+[tool.poetry]
+name = "colibri"
+version = "0.0.0"
+authors = [ "PBSP collaboaration" ]
+description = "A PDF fitting tool"
+repository = "https://github.com/HEP-PBSP/colibri"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+mpich = "*"
+mpi4py = "*"
+prompt_toolkit = "*"
+h5py = "*"
+
+ultranest = "*" 
+jax = "*"
+optax = "*"
+flax = "*"
+dill = "*"
+
+# nnpdf dependency
+nnpdf = { git = "https://github.com/NNPDF/nnpdf", rev = "8519989" }
+
+
+[tool.poetry.extra]
 test = [
     "pytest",
     "hypothesis",
@@ -19,8 +39,9 @@ doc = [
     "sphinx_rtd_theme"
 ]
 
-[tool.flit.scripts]
+[tool.poetry.scripts]
 colibri = "colibri.app:main"
 evolve_fit = "colibri.scripts.evolve_fit:main"
 mc_postfit = "colibri.scripts.mc_postfit:main"
 ns_resample = "colibri.scripts.ns_resampler:main"
+
