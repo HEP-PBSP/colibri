@@ -13,8 +13,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-mpich = "*"
-mpi4py = "*"
 prompt_toolkit = "*"
 h5py = "*"
 
