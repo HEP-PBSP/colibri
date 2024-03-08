@@ -3,12 +3,13 @@ meta:
   author: Luca Mantani
   keywords: [grid_pdf]
 
-fit_A: 240301_mnc_bayesian_dis_level1
-fit_B: 240301_mnc_monte_carlo_dis_level1
+fit_A: 240301_mnc_monte_carlo_dis_level1
+fit_B: 240301_mnc_bayesian_dis_level1
 
 symm: True
 
-n_resample: 200
+n_resample: 1000
+fit_B_full: True
 
 template_text: |
   # KL divergence between fit A and fit B
