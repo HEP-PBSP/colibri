@@ -20,4 +20,4 @@ doc = [
 ]
 
 [tool.poetry.scripts]
-grid_pdf = "wmin.app:main"
+wmin = "wmin.app:main"
