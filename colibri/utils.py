@@ -21,11 +21,17 @@ def fill_dis_fkarr_with_zeros(fktable):
     (Ndat, Nfl, 50)
     """
 
-    new_fkarr = np.zeros((fktable.get_np_fktable().shape[0], fktable.get_np_fktable().shape[1], len(XGRID)))
+    new_fkarr = np.zeros(
+        (
+            fktable.get_np_fktable().shape[0],
+            fktable.get_np_fktable().shape[1],
+            len(XGRID),
+        )
+    )
 
     indices = np.searchsorted(XGRID, fktable.xgrid)
 
-    new_fkarr[:,:,indices] = fktable.get_np_fktable()
+    new_fkarr[:, :, indices] = fktable.get_np_fktable()
 
     return new_fkarr
 
