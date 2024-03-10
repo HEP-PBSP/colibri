@@ -36,6 +36,28 @@ def fill_dis_fkarr_with_zeros(fktable):
     return new_fkarr
 
 
+def fill_had_fkarr_with_zeros(fktable):
+    """
+    Fills the FK array with zeros so as to get array of shape
+    (Ndat, Nfl, 50, 50)
+    """
+
+    new_fkarr = np.zeros(
+        (
+            fktable.get_np_fktable().shape[0],
+            fktable.get_np_fktable().shape[1],
+            len(XGRID),
+            len(XGRID),
+        )
+    )
+
+    indices = np.searchsorted(XGRID, fktable.xgrid)
+
+    new_fkarr[:, :, indices[:, None], indices] = fktable.get_np_fktable()
+
+    return new_fkarr
+
+
 def t0_pdf_grid(t0pdfset, Q0=1.65):
     """
     Computes the t0 pdf grid in the evolution basis.

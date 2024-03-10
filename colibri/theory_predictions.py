@@ -14,7 +14,7 @@ import jax.numpy as jnp
 from validphys import convolution
 from validphys.fkparser import load_fktable
 
-from colibri.utils import fill_dis_fkarr_with_zeros
+from colibri.utils import fill_dis_fkarr_with_zeros, fill_had_fkarr_with_zeros
 
 # Is this needed? -> probably no need to jit compile
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
@@ -109,7 +109,9 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
         first_indices = indices[0::2]
         second_indices = indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask_even * mask_odd, :, :]
+        fk_arr = jnp.array(fill_had_fkarr_with_zeros(fktable))[
+            :, mask_even * mask_odd, :, :
+        ]
 
     else:
         indices = fktable.luminosity_mapping
@@ -117,7 +119,7 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
         first_indices = indices[0::2]
         second_indices = indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())
+        fk_arr = jnp.array(fill_had_fkarr_with_zeros(fktable))
 
     @jax.jit
     def had_prediction(pdf):
