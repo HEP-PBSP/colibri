@@ -9,9 +9,25 @@ Date: 11.11.2023
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from colibri.constants import XGRID
 from validphys import convolution
+
+
+def fill_dis_fkarr_with_zeros(fktable):
+    """
+    Fills the FK array with zeros so as to get array of shape
+    (Ndat, Nfl, 50)
+    """
+
+    new_fkarr = np.zeros((fktable.get_np_fktable().shape[0], fktable.get_np_fktable().shape[1], len(XGRID)))
+
+    indices = np.searchsorted(XGRID, fktable.xgrid)
+
+    new_fkarr[:,:,indices] = fktable.get_np_fktable()
+
+    return new_fkarr
 
 
 def t0_pdf_grid(t0pdfset, Q0=1.65):

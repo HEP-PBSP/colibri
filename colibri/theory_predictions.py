@@ -14,6 +14,7 @@ import jax.numpy as jnp
 from validphys import convolution
 from validphys.fkparser import load_fktable
 
+from colibri.utils import fill_dis_fkarr_with_zeros
 
 # Is this needed? -> probably no need to jit compile
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
@@ -52,10 +53,11 @@ def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
         indices = fktable.luminosity_mapping
         mask = jnp.isin(indices, jnp.array(flavour_indices))
         indices = indices[mask]
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask, :]
+        fk_arr = jnp.array(fill_dis_fkarr_with_zeros(fktable))[:, mask, :]
+
     else:
         indices = fktable.luminosity_mapping
-        fk_arr = jnp.array(fktable.get_np_fktable())
+        fk_arr = jnp.array(fill_dis_fkarr_with_zeros(fktable))
 
     @jax.jit
     def dis_prediction(pdf):
