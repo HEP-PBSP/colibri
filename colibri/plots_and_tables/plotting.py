@@ -352,7 +352,7 @@ def plot_pdf_from_csv_colibrifit(
                 )
 
         ax.set_xscale(xscale)
-        ax.legend(frameon=False)
+        ax.legend(frameon=False, fontsize=13)
         ax.set_xlabel("x", fontsize=18)
         ax.set_ylabel(f"$x {fl}(x)$", fontsize=18)
 
@@ -489,7 +489,7 @@ def plot_pdf_ratio_from_csv_colibrifit(
                 )
 
         ax.set_xscale(xscale)
-        ax.legend(frameon=False)
+        ax.legend(frameon=False, fontsize=13)
         ax.set_xlabel("x", fontsize=18)
 
         normalize_to_lab = normalize_to["label"]
