@@ -334,7 +334,7 @@ def plot_pdf_from_csv_colibrifit(
                 lower_band,
                 upper_band,
                 alpha=0.5,
-                label=f"{fit['label']}, {fl}",
+                label=f"{fit['label']}",
                 color=line.get_color(),
             )
 
@@ -351,8 +351,10 @@ def plot_pdf_from_csv_colibrifit(
                     label=f"Underlying law",
                 )
 
-            ax.set_xscale(xscale)
-            ax.legend(frameon=False)
+        ax.set_xscale(xscale)
+        ax.legend(frameon=False)
+        ax.set_xlabel("x", fontsize=18)
+        ax.set_ylabel(f"$x {fl}(x)$", fontsize=18)
 
         yield fig
 
@@ -469,7 +471,7 @@ def plot_pdf_ratio_from_csv_colibrifit(
                 lower_band / mean_normto,
                 upper_band / mean_normto,
                 alpha=0.5,
-                label=f"{fit['label']}, {fl}",
+                label=f"{fit['label']}",
                 color=line.get_color(),
             )
 
@@ -486,7 +488,11 @@ def plot_pdf_ratio_from_csv_colibrifit(
                     label=f"Underlying law",
                 )
 
-            ax.set_xscale(xscale)
-            ax.legend(frameon=False)
+        ax.set_xscale(xscale)
+        ax.legend(frameon=False)
+        ax.set_xlabel("x", fontsize=18)
+
+        normalize_to_lab = normalize_to["label"]
+        ax.set_ylabel(f"Ratio to {normalize_to_lab}", fontsize=18)
 
         yield fig
