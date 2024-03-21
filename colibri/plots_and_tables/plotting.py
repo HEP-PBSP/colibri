@@ -353,6 +353,7 @@ def plot_pdf_from_csv_colibrifit(
 
         ax.set_xscale(xscale)
         ax.legend(frameon=False, fontsize=13)
+        ax.set_title(f"${fl}$ at $1.65$ GeV", fontsize=18)
         ax.set_xlabel("x", fontsize=18)
         ax.set_ylabel(f"$x {fl}(x)$", fontsize=18)
 
@@ -490,9 +491,98 @@ def plot_pdf_ratio_from_csv_colibrifit(
 
         ax.set_xscale(xscale)
         ax.legend(frameon=False, fontsize=13)
+        ax.set_title(f"${fl}$ at $1.65$ GeV", fontsize=18)
         ax.set_xlabel("x", fontsize=18)
 
         normalize_to_lab = normalize_to["label"]
         ax.set_ylabel(f"Ratio to {normalize_to_lab}", fontsize=18)
+
+        yield fig
+
+
+@figuregen
+def plot_pdf_unc_from_csv_colibrifit(
+    colibri_fits,
+    underlyinglaw=None,
+    flavours=None,
+    interpolation_grid=None,
+    xscale="log",
+    stats_68_cl_settings=None,
+):
+    """
+
+    Parameters
+    ----------
+    colibri_fits: list
+        list of dict containing fit Id and label
+
+    flavours: list, default is None
+        when None all flavours are used
+
+    interpolation_grid: str, default is None, has three possible options
+        if None then grid_pdf model is assumed and the pdf_model.xgrids is used
+        if xgrid: constants.XGRID is used
+        if lhapdf: constants.LHAPDF_XGRID is used
+
+    xscale: str, default is log
+        can be either log or linear
+
+    cubic_spline_interp: Bool, default is False
+        whether to interpolate within xgrid values.
+        Only works for grid_pdf model
+
+    n_interp_points: int, default is 100
+        number of interpolation points
+
+    Yields
+    ------
+    matplotlib figure
+    """
+    if interpolation_grid and (interpolation_grid not in GRID_MAPPING):
+        raise KeyError(
+            f"interpolation_grid has to be set to either 'xgrid' or 'lhapdf_grid', if interpolation_grid is None, then pdf_model has to have 'xgrids' attribute"
+        )
+
+    # use all flavours per default
+    if not flavours:
+        flavours = FLAVOUR_TO_ID_MAPPING.keys()
+
+    for fl in flavours:
+        fig, ax = plt.subplots()
+        ax.grid(False)  # Light gray gridlines
+
+        for fit in colibri_fits:
+            colibri_plotter = ColibriFitsPlotter(
+                fit,
+                underlyinglaw,
+            )
+
+            pdf_model = colibri_plotter.pdf_model
+
+            # if interpolation grid is either 'grid' or 'lhapdf_grid' then take corresponding
+            # grids in GRID_MAPPING, otherwise use the model xgrid (available for grid_pdf model only)
+            if pdf_model.__class__.__name__ == "GridPDFModel":
+                interp_grid = GRID_MAPPING.get(interpolation_grid, pdf_model.xgrids[fl])
+            else:
+                interp_grid = GRID_MAPPING[interpolation_grid]
+
+            interp_grid, upper_band, lower_band, mean = colibri_plotter.stats_68_cl(
+                fl, interp_grid, stats_68_cl_settings
+            )
+
+            error = (upper_band - lower_band) / 2
+
+            (line,) = ax.plot(
+                interp_grid,
+                error,
+                linestyle="-",
+                label=f"{fit['label']}",
+            )
+
+        ax.set_xscale(xscale)
+        ax.legend(frameon=False, fontsize=13)
+        ax.set_title(f"${fl}$ at $1.65$ GeV", fontsize=18)
+        ax.set_xlabel("x", fontsize=18)
+        ax.set_ylabel(f"PDF uncertainty", fontsize=18)
 
         yield fig
