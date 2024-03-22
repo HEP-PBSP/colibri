@@ -34,6 +34,9 @@ PDFscalespecs:
 normalize_to: 1
 
 template_text: |
+  # Chi2 distribution
+  {@plot_chi2_colibri@}
+
   # PDF plots 
   {@with PDFscalespecs@}
   {@xscaletitle@} scale
@@ -44,6 +47,12 @@ template_text: |
   {@with PDFscalespecs@}
   {@xscaletitle@} scale
   {@plot_pdf_ratio_from_csv_colibrifit@}
+  {@endwith@}
+
+  # Error plots
+  {@with PDFscalespecs@}
+  {@xscaletitle@} scale
+  {@plot_pdf_unc_from_csv_colibrifit@}
   {@endwith@}
 
 actions_:
