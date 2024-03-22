@@ -73,3 +73,26 @@ def get_pdf_model(colibri_fit):
         pdf_model = dill.load(file)
 
     return pdf_model
+
+
+def get_chi2_distribution(colibri_fit):
+    """
+    Given a colibri fit, returns the list of chi2 values of the replicas.
+    """
+
+    fit_path = get_fit_path(colibri_fit)
+
+    replicas_path = fit_path + "/replicas"
+    if not os.path.exists(replicas_path):
+        raise FileNotFoundError("Could not find the replicas for fit " + colibri_fit)
+
+    chi2_list = []
+    for replica_folder in os.listdir(replicas_path):
+        chi2_path = replicas_path + "/" + replica_folder + "/mc_loss.csv"
+
+        with open(chi2_path, "r") as file:
+            lines = file.readlines()
+            chi2 = float(lines[-1].split(",")[1])
+            chi2_list.append(chi2)
+
+    return chi2_list

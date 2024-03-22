@@ -18,6 +18,7 @@ from colibri.plots_and_tables.fit_reader import (
     get_fit_path,
     get_csv_file_posterior,
     get_pdf_model,
+    get_chi2_distribution,
 )
 from colibri.constants import FLAVOUR_TO_ID_MAPPING, GRID_MAPPING
 
@@ -158,6 +159,13 @@ class ColibriFitsPlotter:
         Loads the .pkl file into an instance of pdf model class.
         """
         return get_pdf_model(self.colibri_fit["id"])
+
+    @property
+    def chi2_distribution(self):
+        """
+        Reads the last chi2 of training.
+        """
+        return get_chi2_distribution(self.colibri_fit["id"])
 
     def underlyinglaw_fl_grid(self, flavour, interp_grid):
         """
@@ -586,3 +594,30 @@ def plot_pdf_unc_from_csv_colibrifit(
         ax.set_ylabel(f"PDF uncertainty", fontsize=18)
 
         yield fig
+
+
+@figure
+def plot_chi2_colibri(colibri_fits, underlyinglaw=None):
+    """
+    Plots the $\chi^2$ distribution of the fits in colibri_fits.
+    """
+
+    fig, ax = plt.subplots()
+    ax.grid(False)  # Light gray gridlines
+
+    for fit in colibri_fits:
+        colibri_plotter = ColibriFitsPlotter(
+            fit,
+            underlyinglaw,
+        )
+
+        chi2 = colibri_plotter.chi2_distribution
+
+        ax.hist(chi2, bins=30, alpha=0.5, label=f"{fit['label']}", density=True)
+
+    ax.legend(frameon=False, fontsize=13)
+    ax.set_title(f"$\chi^2$ distribution", fontsize=18)
+    ax.set_xlabel("$\chi^2$", fontsize=18)
+    ax.set_ylabel(f"Prob. distribution", fontsize=18)
+
+    return fig
