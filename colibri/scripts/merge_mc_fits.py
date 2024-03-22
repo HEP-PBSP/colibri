@@ -7,7 +7,6 @@ import shutil
 import pandas as pd
 import argparse
 import logging
-import pathlib
 
 from reportengine import colors
 
