@@ -18,7 +18,7 @@ from colibri.plots_and_tables.fit_reader import (
     get_fit_path,
     get_csv_file_posterior,
     get_pdf_model,
-    get_chi2_distribution,
+    get_training_chi2_distribution,
 )
 from colibri.constants import FLAVOUR_TO_ID_MAPPING, GRID_MAPPING
 
@@ -161,11 +161,11 @@ class ColibriFitsPlotter:
         return get_pdf_model(self.colibri_fit["id"])
 
     @property
-    def chi2_distribution(self):
+    def training_chi2_distribution(self):
         """
         Reads the last chi2 of training.
         """
-        return get_chi2_distribution(self.colibri_fit["id"])
+        return get_training_chi2_distribution(self.colibri_fit["id"])
 
     def underlyinglaw_fl_grid(self, flavour, interp_grid):
         """
@@ -597,7 +597,7 @@ def plot_pdf_unc_from_csv_colibrifit(
 
 
 @figure
-def plot_chi2_colibri(colibri_fits, underlyinglaw=None):
+def plot_training_chi2_colibri(colibri_fits, underlyinglaw=None):
     """
     Plots the $\chi^2$ distribution of the fits in colibri_fits.
     """
@@ -611,7 +611,7 @@ def plot_chi2_colibri(colibri_fits, underlyinglaw=None):
             underlyinglaw,
         )
 
-        chi2 = colibri_plotter.chi2_distribution
+        chi2 = colibri_plotter.training_chi2_distribution
 
         ax.hist(chi2, bins=30, alpha=0.5, label=f"{fit['label']}", density=True)
 

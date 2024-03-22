@@ -75,7 +75,7 @@ def get_pdf_model(colibri_fit):
     return pdf_model
 
 
-def get_chi2_distribution(colibri_fit):
+def get_training_chi2_distribution(colibri_fit):
     """
     Given a colibri fit, returns the list of chi2 values of the replicas.
     """

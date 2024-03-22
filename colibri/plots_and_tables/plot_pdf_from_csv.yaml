@@ -35,7 +35,7 @@ normalize_to: 1
 
 template_text: |
   # Chi2 distribution
-  {@plot_chi2_colibri@}
+  {@plot_training_chi2_colibri@}
 
   # PDF plots 
   {@with PDFscalespecs@}
