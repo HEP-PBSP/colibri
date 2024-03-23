@@ -90,9 +90,9 @@ def get_training_chi2_distribution(colibri_fit):
     for replica_folder in os.listdir(replicas_path):
         chi2_path = replicas_path + "/" + replica_folder + "/mc_loss.csv"
 
-        with open(chi2_path, "r") as file:
-            lines = file.readlines()
-            chi2 = float(lines[-1].split(",")[1])
-            chi2_list.append(chi2)
+        # Read the csv file, get the training loss and then append the last value
+        # to the chi2_list
+        df = pd.read_csv(chi2_path)
+        chi2_list.append(df["training_loss"].values[-1])
 
     return chi2_list
