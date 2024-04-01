@@ -20,7 +20,7 @@ from colibri.plots_and_tables.fit_reader import (
     get_pdf_model,
     get_training_chi2_distribution,
 )
-from colibri.constants import FLAVOUR_TO_ID_MAPPING, GRID_MAPPING
+from colibri.constants import FLAVOUR_TO_ID_MAPPING, GRID_MAPPING, XGRID
 
 log = logging.getLogger(__name__)
 
@@ -621,3 +621,42 @@ def plot_training_chi2_colibri(colibri_fits, underlyinglaw=None):
     ax.set_ylabel(f"Prob. distribution", fontsize=18)
 
     return fig
+
+
+def plot_data_chi2_colibri(colibri_fits, _chi2_with_positivity, ndof=1):
+    """
+    Plots the $\chi^2$ distribution of the fits in colibri_fits.
+    """
+
+    fig, ax = plt.subplots()
+    ax.grid(False)  # Light gray gridlines
+
+    for fit in colibri_fits:
+        colibri_plotter = ColibriFitsPlotter(
+            fit,
+        )
+
+        pdf_model = colibri_plotter.pdf_model
+
+        grid_values_func = pdf_model.grid_values_func(XGRID)
+
+        pdfs = [
+            grid_values_func(
+                params=colibri_plotter.posterior_from_csv.values[replica_index, :]
+            )
+            for replica_index in range(colibri_plotter.posterior_from_csv.shape[0])
+        ]
+
+        chi2s = [_chi2_with_positivity(pdf) / ndof for pdf in pdfs]
+
+        ax.hist(chi2s, bins=30, alpha=0.5, label=f"{fit['label']}", density=True)
+
+    ax.legend(frameon=False, fontsize=13)
+    ax.set_title(f"$\chi^2$ distribution", fontsize=18)
+    ax.set_xlabel("$\chi^2$", fontsize=18)
+    ax.set_ylabel(f"Prob. distribution", fontsize=18)
+
+    ax.set_xlim(0.95, 1.05)
+
+    plt.tight_layout()
+    plt.savefig("chi2_data_distribution.pdf")
