@@ -656,7 +656,5 @@ def plot_data_chi2_colibri(colibri_fits, _chi2_with_positivity, ndof=1):
     ax.set_xlabel("$\chi^2$", fontsize=18)
     ax.set_ylabel(f"Prob. distribution", fontsize=18)
 
-    ax.set_xlim(0.95, 1.05)
-
     plt.tight_layout()
     plt.savefig("chi2_data_distribution.pdf")
