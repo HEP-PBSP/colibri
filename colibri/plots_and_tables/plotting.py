@@ -260,6 +260,57 @@ class ColibriFitsPlotter:
 
         return interpolation_grid, upper_band, lower_band, mean
 
+    def gauss_stats_68_cl(self, flavour, interpolation_grid, stats_68_cl_settings=None):
+        """
+        TODO
+        """
+        pdf_values = self.pdf_values(flavour, interpolation_grid)
+
+        # Calculate variance along axis 0 of pdf_values
+        var = np.var(pdf_values, axis=0)
+        mean = pdf_values.mean(axis=0)
+
+        upper_band = mean + 1.0 * np.sqrt(var)
+        lower_band = mean - 1.0 * np.sqrt(var)
+
+        if stats_68_cl_settings and stats_68_cl_settings["spline_interpolation"]:
+            interp_ub = interp1d(
+                interpolation_grid,
+                upper_band,
+                **{"bounds_error": False, **stats_68_cl_settings["interp1d_settings"]},
+            )
+            interp_lb = interp1d(
+                interpolation_grid,
+                lower_band,
+                **{"bounds_error": False, **stats_68_cl_settings["interp1d_settings"]},
+            )
+            interp_mean = interp1d(
+                interpolation_grid,
+                mean,
+                **{"bounds_error": False, **stats_68_cl_settings["interp1d_settings"]},
+            )
+
+            if stats_68_cl_settings["type"] == "linear":
+                x_new = np.linspace(
+                    min(interpolation_grid),
+                    max(interpolation_grid),
+                    stats_68_cl_settings["n_new_points"],
+                )
+            elif stats_68_cl_settings["type"] == "log":
+                x_new = np.logspace(
+                    np.log10(min(interpolation_grid)),
+                    np.log10(max(interpolation_grid)),
+                    stats_68_cl_settings["n_new_points"],
+                )
+
+            upper_band = interp_ub(x_new)
+            lower_band = interp_lb(x_new)
+            mean = interp_mean(x_new)
+
+            return x_new, upper_band, lower_band, mean
+
+        return interpolation_grid, upper_band, lower_band, mean
+
 
 @figuregen
 def plot_pdf_from_csv_colibrifit(
@@ -377,6 +428,7 @@ def plot_pdf_ratio_from_csv_colibrifit(
     interpolation_grid=None,
     xscale="log",
     stats_68_cl_settings=None,
+    gauss_stats=False,
 ):
     """
 
@@ -483,6 +535,27 @@ def plot_pdf_ratio_from_csv_colibrifit(
                 label=f"{fit['label']}",
                 color=line.get_color(),
             )
+
+            if gauss_stats:
+                interp_grid_gauss, upper_band_gauss, lower_band_gauss, mean_gauss = (
+                    colibri_plotter.gauss_stats_68_cl(
+                        fl, interp_grid, stats_68_cl_settings
+                    )
+                )
+
+                ax.plot(
+                    interp_grid,
+                    lower_band_gauss / mean_normto,
+                    ls="--",
+                    color=line.get_color(),
+                )
+
+                ax.plot(
+                    interp_grid,
+                    upper_band_gauss / mean_normto,
+                    ls="--",
+                    color=line.get_color(),
+                )
 
             # plot the underlying law only once
             if underlyinglaw and (fit == colibri_fits[0]):
