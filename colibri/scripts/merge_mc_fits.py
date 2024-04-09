@@ -48,6 +48,9 @@ def main():
     # Copy the pdf_model.pkl file from the first fit
     shutil.copy(args.fit_names[0] + "/pdf_model.pkl", args.merged_fit_name)
 
+    # Copy input folder from first fit
+    shutil.copytree(args.fit_names[0] + "/input", args.merged_fit_name + "/input")
+
     # Create the directory for the replicas if it does not exist
     # else delete it and create it again
     if not os.path.exists(args.merged_fit_name + "/fit_replicas"):
@@ -77,5 +80,32 @@ def main():
             best_fit + "/fit_replicas/replica_" + str(i + 1),
             args.merged_fit_name + "/fit_replicas/replica_" + str(i + 1),
         )
+
+        # Change name of the file with format exportgrid in the replica folder
+        # Get the list of files in the directory
+        files = os.listdir(args.merged_fit_name + "/fit_replicas/replica_" + str(i + 1))
+
+        # Iterate over the files
+        for file_name in files:
+            if file_name.endswith(".exportgrid"):
+                # Construct the new file name
+                new_file_name = (
+                    args.merged_fit_name
+                    + "/fit_replicas/replica_"
+                    + str(i + 1)
+                    + "/"
+                    + args.merged_fit_name
+                    + ".exportgrid"
+                )
+
+                # Rename the file
+                shutil.move(
+                    args.merged_fit_name
+                    + "/fit_replicas/replica_"
+                    + str(i + 1)
+                    + "/"
+                    + file_name,
+                    new_file_name,
+                )
 
     log.info("Merge completed.")
