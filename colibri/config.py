@@ -50,30 +50,6 @@ class Environment(Environment):
             **super().ns_dump_description(),
         }
 
-    def init_output(self):
-        # Only master process creates the output folder
-        if rank == 0:
-            if self.output_path and self.output_path.is_dir():
-                log.warning(
-                    "Output folder exists: %s Overwriting contents" % self.output_path
-                )
-            else:
-                try:
-                    self.output_path.mkdir()
-                except OSError as e:
-                    raise EnvironmentError_(e) from e
-
-        self.input_folder = self.output_path / "input"
-
-        # Only master process creates the input folder
-        if rank == 0:
-            self.input_folder.mkdir(exist_ok=True)
-            if self.config_yml:
-                try:
-                    shutil.copy2(self.config_yml, self.input_folder / "runcard.yaml")
-                except shutil.SameFileError:
-                    pass
-
 
 class colibriConfig(Config):
     """
