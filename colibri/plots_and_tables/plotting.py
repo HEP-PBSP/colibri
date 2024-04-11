@@ -352,8 +352,24 @@ class ColibriFitsPlotter:
         fig, ax = plt.subplots()
         ax.grid(False)  # Light gray gridlines
         ax.set_title(f"{dataset.name}", fontsize=18)
-        import IPython; IPython.embed()
-        ax.plot(np.mean(theory_replicas))
+
+        upper_band = np.nanpercentile(theory_replicas, 84.13, axis=0)
+        lower_band = np.nanpercentile(theory_replicas, 15.87, axis=0)
+        yerr = np.abs(upper_band - lower_band)
+
+
+        ax.errorbar(
+                commondata.kinematics['kin1'].to_numpy(),
+                np.mean(theory_replicas, axis=0),
+                yerr=yerr,
+                fmt='-o',
+                label=f"{self.colibri_fit['id']}",
+            )
+
+        # ax.plot(commondata.kinematics['kin1'].to_numpy(), np.mean(theory_replicas, axis=0), '-o', label=f'{str(self.colibri_fit)}')
+        ax.plot(commondata.kinematics['kin1'].to_numpy(), commondata.central_values, '-o', label='Data')
+        ax.legend()
+        return fig
 
 
 @figuregen

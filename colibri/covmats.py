@@ -124,3 +124,26 @@ def dataset_inputs_t0_covmat_from_systematics(
         )
     )
     return covmat
+
+
+def covmat_from_systematics(
+    loaded_commondata_with_cuts,
+    dataset_input,
+    use_weights_in_covmat=False,
+    norm_threshold=None,
+    _central_values=None,
+):
+    """
+    Similar as `validphys.covmats.covmat_from_systematics`
+    but jax.numpy array.
+    """
+    covmat = jnp.array(
+        covmats.covmat_from_systematics(
+            loaded_commondata_with_cuts,
+            dataset_input,
+            use_weights_in_covmat=use_weights_in_covmat,
+            norm_threshold=norm_threshold,
+            _central_values=_central_values,
+        )
+    )
+    return covmat
