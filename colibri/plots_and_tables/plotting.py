@@ -344,6 +344,16 @@ class ColibriFitsPlotter:
             return x_new, upper_band, lower_band, mean
 
         return interpolation_grid, upper_band, lower_band, mean
+    
+    def plot_data_theory(self, dataset, commondata, theory_replicas):
+        """
+        TODO
+        """
+        fig, ax = plt.subplots()
+        ax.grid(False)  # Light gray gridlines
+        ax.set_title(f"{dataset.name}", fontsize=18)
+        import IPython; IPython.embed()
+        ax.plot(np.mean(theory_replicas))
 
 
 @figuregen
