@@ -27,6 +27,7 @@ colibri_providers = [
     "colibri.training_validation",
     "colibri.covmats",
     "colibri.plots_and_tables.plotting",
+    "colibri.plots_and_tables.dataplots",
     "colibri.provider_aliases",
     "colibri.mc_utils",
     "colibri.ultranest_fit",
