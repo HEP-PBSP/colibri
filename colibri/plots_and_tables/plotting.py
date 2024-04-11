@@ -729,7 +729,7 @@ def plot_training_chi2_colibri(colibri_fits, underlyinglaw=None):
 
     return fig
 
-
+@figure
 def plot_data_chi2_colibri(colibri_fits, _chi2_with_positivity, ndof=1):
     """
     Plots the $\chi^2$ distribution of the fits in colibri_fits.
@@ -763,5 +763,4 @@ def plot_data_chi2_colibri(colibri_fits, _chi2_with_positivity, ndof=1):
     ax.set_xlabel("$\chi^2$", fontsize=18)
     ax.set_ylabel(f"Prob. distribution", fontsize=18)
 
-    plt.tight_layout()
-    plt.savefig("chi2_data_distribution.pdf")
+    return fig
