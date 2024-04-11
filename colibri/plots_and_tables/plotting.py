@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from colibri.constants import FLAVOUR_TO_ID_MAPPING, GRID_MAPPING, XGRID
+from colibri.covmats import covmat_from_systematics
 from colibri.plots_and_tables.fit_reader import (
     get_csv_file_posterior,
     get_fit_path,
@@ -344,10 +345,22 @@ class ColibriFitsPlotter:
             return x_new, upper_band, lower_band, mean
 
         return interpolation_grid, upper_band, lower_band, mean
-    
+
     def plot_data_theory(self, dataset, commondata, theory_replicas):
         """
-        TODO
+        plot data and theory comparison
+
+        Parameters
+        ----------
+        dataset: validphys.core.DataSetSpec
+
+        commondata: validphys.coredata.CommonData
+
+        theory_replicas: np.array
+
+        Returns
+        -------
+        matplotlib figure
         """
         fig, ax = plt.subplots()
         ax.grid(False)  # Light gray gridlines
@@ -357,17 +370,25 @@ class ColibriFitsPlotter:
         lower_band = np.nanpercentile(theory_replicas, 15.87, axis=0)
         yerr = np.abs(upper_band - lower_band)
 
+        ax.errorbar(
+            commondata.kinematics["kin1"].to_numpy(),
+            np.mean(theory_replicas, axis=0),
+            yerr=yerr,
+            fmt="-o",
+            label=f"{self.colibri_fit['id']}",
+        )
+
+        covmat = covmat_from_systematics(commondata, dataset)
+        # plot only diagonal entries of experimental errors
+        diag_err = np.sqrt(np.diag(covmat))
 
         ax.errorbar(
-                commondata.kinematics['kin1'].to_numpy(),
-                np.mean(theory_replicas, axis=0),
-                yerr=yerr,
-                fmt='-o',
-                label=f"{self.colibri_fit['id']}",
-            )
-
-        # ax.plot(commondata.kinematics['kin1'].to_numpy(), np.mean(theory_replicas, axis=0), '-o', label=f'{str(self.colibri_fit)}')
-        ax.plot(commondata.kinematics['kin1'].to_numpy(), commondata.central_values, '-o', label='Data')
+            commondata.kinematics["kin1"].to_numpy(),
+            commondata.central_values,
+            yerr=diag_err,
+            fmt="-o",
+            label="Data",
+        )
         ax.legend()
         return fig
 
