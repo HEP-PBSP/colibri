@@ -1,26 +1,24 @@
 """Plotting utilities."""
 
-import os
 import json
-import numpy as np
-import pandas as pd
-from scipy.interpolate import interp1d
 import logging
+import os
 
 import corner
 import matplotlib.pyplot as plt
-from reportengine.figure import figure, figuregen
-
-from validphys import convolution
-from validphys.core import PDF
-
+import numpy as np
+import pandas as pd
+from colibri.constants import FLAVOUR_TO_ID_MAPPING, GRID_MAPPING, XGRID
 from colibri.plots_and_tables.fit_reader import (
-    get_fit_path,
     get_csv_file_posterior,
+    get_fit_path,
     get_pdf_model,
     get_training_chi2_distribution,
 )
-from colibri.constants import FLAVOUR_TO_ID_MAPPING, GRID_MAPPING, XGRID
+from reportengine.figure import figure, figuregen
+from scipy.interpolate import interp1d
+from validphys import convolution
+from validphys.core import PDF
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +28,9 @@ color_key = ["#66C2A5", "#FC8D62", "#8DA0CB"]
 current_directory = os.path.dirname(os.path.abspath(__file__))
 
 # Construct the path to the style file relative to the current directory
-style_file_path = os.path.join(current_directory, "ourstyle.mplstyle")
+style_file_path = os.path.join(
+    current_directory, "mplstyle/colibristyle_colorblind.mplstyle"
+)
 
 plt.style.use(style_file_path)
 
@@ -169,7 +169,17 @@ class ColibriFitsPlotter:
 
     def underlyinglaw_fl_grid(self, flavour, interp_grid):
         """
-        TODO
+        Returns the underlying law grid values at the interpolation grid for a given flavour.
+
+        Parameters
+        ----------
+        flavour: str
+
+        interp_grid: np.array
+
+        Returns
+        -------
+        list of underlying pdf grid values
         """
         # if interpolation grid is not empty return underlying law
         if len(interp_grid) != 0:
@@ -213,7 +223,19 @@ class ColibriFitsPlotter:
 
     def stats_68_cl(self, flavour, interpolation_grid, stats_68_cl_settings=None):
         """
-        TODO
+        Compute the 68% confidence level bands.
+
+        Parameters
+        ----------
+        flavour: str
+
+        interpolation_grid: np.array
+
+        stats_68_cl_settings: dict
+
+        Returns
+        -------
+        4-d tuple including interpolation grid, upper band, lower band, mean
         """
         pdf_values = self.pdf_values(flavour, interpolation_grid)
 
@@ -262,7 +284,19 @@ class ColibriFitsPlotter:
 
     def gauss_stats_68_cl(self, flavour, interpolation_grid, stats_68_cl_settings=None):
         """
-        TODO
+        Calculate the 68% confidence level bands using the Gaussian approximation.
+
+        Parameters
+        ----------
+        flavour: str
+
+        interpolation_grid: np.array
+
+        stats_68_cl_settings: dict
+
+        Returns
+        -------
+        4-d tuple including interpolation grid, upper band, lower band, mean
         """
         pdf_values = self.pdf_values(flavour, interpolation_grid)
 

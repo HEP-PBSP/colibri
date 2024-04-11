@@ -2,13 +2,14 @@
 Module to read the results of the fits
 """
 
-import pathlib
-import os, sys
-import pandas as pd
-import dill
 import glob
-
 import logging
+import os
+import pathlib
+import sys
+
+import dill
+import pandas as pd
 
 log = logging.getLogger(__name__)
 
@@ -89,6 +90,13 @@ def get_training_chi2_distribution(colibri_fit):
     chi2_list = []
     for replica_folder in os.listdir(replicas_path):
         chi2_path = replicas_path + "/" + replica_folder + "/mc_loss.csv"
+
+        if not os.path.exists(chi2_path):
+            raise FileNotFoundError(
+                "Could not find the mc_loss.csv file in "
+                + colibri_fit
+                + " perhaps this is not a Monte Carlo replica fit."
+            )
 
         # Read the csv file, get the training loss and then append the last value
         # to the chi2_list

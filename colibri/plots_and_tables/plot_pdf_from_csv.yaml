@@ -33,8 +33,6 @@ PDFscalespecs:
 
 
 template_text: |
-  # Chi2 distribution
-  {@plot_training_chi2_colibri@}
 
   # PDF plots 
   {@with PDFscalespecs@}
