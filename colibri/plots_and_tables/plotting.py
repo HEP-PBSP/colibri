@@ -729,6 +729,7 @@ def plot_training_chi2_colibri(colibri_fits, underlyinglaw=None):
 
     return fig
 
+
 @figure
 def plot_data_chi2_colibri(colibri_fits, _chi2_with_positivity, ndof=1):
     """
