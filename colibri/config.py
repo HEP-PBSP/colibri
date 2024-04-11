@@ -74,6 +74,13 @@ class Environment(Environment):
                 except shutil.SameFileError:
                     pass
 
+        # only master process creates the figures and tables folders
+        if rank == 0:
+            self.figures_folder = self.output_path / "figures"
+            self.figures_folder.mkdir(exist_ok=True)
+            self.tables_folder = self.output_path / "tables"
+            self.tables_folder.mkdir(exist_ok=True)
+
 
 class colibriConfig(Config):
     """
