@@ -8,22 +8,19 @@ Note: several functions are taken from validphys.config
 Date: 11.11.2023
 """
 
-from validphys.config import Config, Environment
-from validphys import covmats
-
-from colibri import covmats as colibri_covmats
-
-from reportengine.configparser import explicit_node, ConfigError
-
-from colibri import commondata_utils
-
-from colibri.constants import FLAVOUR_TO_ID_MAPPING
-
+import hashlib
 import logging
 import os
-
 import shutil
+
 from mpi4py import MPI
+from reportengine.configparser import ConfigError, explicit_node
+from validphys import covmats
+from validphys.config import Config, Environment
+
+from colibri import commondata_utils
+from colibri import covmats as colibri_covmats
+from colibri.constants import FLAVOUR_TO_ID_MAPPING
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -65,14 +62,24 @@ class Environment(Environment):
 
         self.input_folder = self.output_path / "input"
 
-        # Only master process creates the input folder
+        # Only master process creates the input folder and the root filter.yml file
         if rank == 0:
             self.input_folder.mkdir(exist_ok=True)
             if self.config_yml:
                 try:
                     shutil.copy2(self.config_yml, self.input_folder / "runcard.yaml")
+                    shutil.copy2(self.config_yml, self.output_path / "filter.yml")
                 except shutil.SameFileError:
                     pass
+
+                # Generate md5 hash of the filter.yml file
+                output_filename = self.output_path / "md5"
+                with open(self.output_path / "filter.yml", "rb") as f:
+                    hash_md5 = hashlib.md5(f.read()).hexdigest()
+                with open(output_filename, "w") as g:
+                    g.write(hash_md5)
+
+                log.info(f"md5 {hash_md5} stored in {output_filename}")
 
         # only master process creates the figures and tables folders
         if rank == 0:
