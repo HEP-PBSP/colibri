@@ -23,7 +23,7 @@ flax = "*"
 dill = "*"
 
 # nnpdf dependency
-nnpdf = { git = "https://github.com/NNPDF/nnpdf", rev = "8519989" }
+nnpdf = { git = "https://github.com/NNPDF/nnpdf" }
 
 
 [tool.poetry.extra]
