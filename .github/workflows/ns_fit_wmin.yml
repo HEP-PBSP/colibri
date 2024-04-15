@@ -58,7 +58,7 @@ jobs:
     - name: Copy theory to Conda environment
       shell: bash -l {0}
       run: |
-        mkdir $CONDA_PREFIX/share/NNPDF/theories
+        mkdir -p $CONDA_PREFIX/share/NNPDF/theories
         mkdir $CONDA_PREFIX/share/NNPDF/theories/theory_401
         cp -r colibri/tests/test_theoryID/theory_401/* $CONDA_PREFIX/share/NNPDF/theories/theory_401/
     
