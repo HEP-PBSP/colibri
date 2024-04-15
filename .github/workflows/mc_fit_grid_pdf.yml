@@ -51,11 +51,11 @@ jobs:
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
-        flit install --symlink
+        pip install .
         cd colibri/models/wmin
-        flit install --symlink
+        pip install .
         cd ../grid_pdf
-        flit install --symlink
+        pip install .
     - name: Copy theory to Conda environment
       shell: bash -l {0}
       run: |
