@@ -8,17 +8,22 @@ A reportengine app to perform PDF fits in a new parametrisation.
 ## colibri Installation
 Create a working environment with conda (or mamba):
 ```
-mamba create nnpdf=4.0.6 -n name_environment -y && conda activate name_environment
-mamba install -c conda-forge jax optax flax
-mamba install flit -c conda-forge -y
+conda create -n name_environment -y && conda activate name_environment
+conda install conda install mpich mpi4py lhapdf pandoc
 cd colibri
-flit install --symlink
+pip install -e .
 ```
 
 ## Installation of Various Models
 
 # Weight Minimization
 ```
-cd wmin
-flit install --symlink
+cd models/grid_pdf
+pip install -e .
+```
+
+# Weight Minimization
+```
+cd models/wmin
+pip install -e .
 ```
