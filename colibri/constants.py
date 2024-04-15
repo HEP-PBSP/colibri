@@ -412,3 +412,9 @@ for i in range(num_flav):
         j += 1
 
 evolution_to_export_matrix = np.linalg.inv(export_to_evolution_matrix)
+
+
+GRID_MAPPING = {
+    "xgrid": XGRID,
+    "lhapdf_grid": LHAPDF_XGRID,
+}
