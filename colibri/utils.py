@@ -28,7 +28,7 @@ def fill_dis_fkarr_with_zeros(fktable):
             len(XGRID),
         )
     )
-    indices = np.where(np.isclose(np.array(XGRID), fktable.xgrid[:, np.newaxis]))[0]
+    indices = np.where(np.isclose(np.array(XGRID), fktable.xgrid[:, np.newaxis]))[1]
     new_fkarr[:, :, indices] = fktable.get_np_fktable()
 
     return new_fkarr
@@ -49,7 +49,7 @@ def fill_had_fkarr_with_zeros(fktable):
         )
     )
 
-    indices = np.where(np.isclose(np.array(XGRID), fktable.xgrid[:, np.newaxis]))[0]
+    indices = np.where(np.isclose(np.array(XGRID), fktable.xgrid[:, np.newaxis]))[1]
     new_fkarr[:, :, indices[:, None], indices] = fktable.get_np_fktable()
 
     return new_fkarr
