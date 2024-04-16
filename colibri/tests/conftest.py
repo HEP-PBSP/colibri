@@ -3,20 +3,20 @@ Module
 """
 
 TEST_DATASET = {
-    "dataset_input": {"dataset": "NMC"},
-    "theoryid": 400,
+    "dataset_input": {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"},
+    "theoryid": 700,
     "use_cuts": "internal",
 }
 
 TEST_DATASET_HAD = {
-    "dataset_input": {"dataset": "ATLASWZRAP11CC"},
-    "theoryid": 400,
+    "dataset_input": {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
+    "theoryid": 700,
     "use_cuts": "internal",
 }
 
 TEST_DATASETS = {
-    "dataset_inputs": [{"dataset": "NMC"}],
-    "theoryid": 400,
+    "dataset_inputs": [{"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}],
+    "theoryid": 700,
     "use_cuts": "internal",
 }
 

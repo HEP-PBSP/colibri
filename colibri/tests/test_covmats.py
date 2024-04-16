@@ -1,14 +1,11 @@
 import pathlib
-import pandas as pd
-import numpy as np
-
-from colibri.covmats import sqrt_covmat_jax
-
-from colibri.api import API as colibriAPI
-from colibri.tests.conftest import TEST_DATASETS, T0_PDFSET
 
 import jax.numpy as jnp
-
+import numpy as np
+import pandas as pd
+from colibri.api import API as colibriAPI
+from colibri.covmats import sqrt_covmat_jax
+from colibri.tests.conftest import T0_PDFSET, TEST_DATASETS
 from numpy.testing import assert_allclose
 
 TEST_COVMATS_FOLDER = pathlib.Path(__file__).with_name("test_covmats")
@@ -64,8 +61,10 @@ def test_colibri_dataset_inputs_t0_predictions():
         assert isinstance(pred, np.ndarray)
 
     # Check that the result is correct for the given datasets
-    path = TEST_COVMATS_FOLDER / "NMC_t0_predictions.csv"
-    assert_allclose(result, pd.read_csv(path).to_numpy(dtype=float), rtol=1e-5)
+    path = TEST_COVMATS_FOLDER / "NMC_NC_NOTFIXED_P_EM-SIGMARED_t0_predictions.csv"
+    assert_allclose(
+        result[0], pd.read_csv(path)["data"].to_numpy(dtype=float), rtol=1e-5
+    )
 
 
 def test_dataset_inputs_t0_covmat_from_systematics():
@@ -88,6 +87,6 @@ def test_dataset_inputs_t0_covmat_from_systematics():
     path = TEST_COVMATS_FOLDER / "test_t0_covmat.csv"
     assert_allclose(
         result,
-        pd.read_csv(path).to_numpy(dtype=float),
+        pd.read_csv(path, header=None).to_numpy(dtype=float),
         rtol=1e-4,
     )
