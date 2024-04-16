@@ -15,7 +15,9 @@ TEST_DATASET_HAD = {
 }
 
 TEST_DATASETS = {
-    "dataset_inputs": [{"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}],
+    "dataset_inputs": [
+        {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}
+    ],
     "theoryid": 700,
     "use_cuts": "internal",
 }
