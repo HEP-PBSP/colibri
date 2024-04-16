@@ -12,3 +12,5 @@ dependencies:
   - pip
   - pip:
     - -e .
+    - colibri/models/wmin -e .
+    - colibri/models/grid_pdf -e .
