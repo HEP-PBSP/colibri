@@ -10,9 +10,9 @@ Date: 11.11.2023
 import jax
 import jax.numpy as jnp
 import numpy as np
+from validphys import convolution
 
 from colibri.constants import XGRID
-from validphys import convolution
 
 
 def fill_dis_fkarr_with_zeros(fktable):
@@ -28,9 +28,7 @@ def fill_dis_fkarr_with_zeros(fktable):
             len(XGRID),
         )
     )
-
-    indices = np.searchsorted(XGRID, fktable.xgrid)
-
+    indices = np.where(np.isclose(np.array(XGRID), fktable.xgrid[:, np.newaxis]))[0]
     new_fkarr[:, :, indices] = fktable.get_np_fktable()
 
     return new_fkarr
@@ -51,8 +49,7 @@ def fill_had_fkarr_with_zeros(fktable):
         )
     )
 
-    indices = np.searchsorted(XGRID, fktable.xgrid)
-
+    indices = np.where(np.isclose(np.array(XGRID), fktable.xgrid[:, np.newaxis]))[0]
     new_fkarr[:, :, indices[:, None], indices] = fktable.get_np_fktable()
 
     return new_fkarr
