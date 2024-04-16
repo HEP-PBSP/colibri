@@ -11,7 +11,10 @@ From your base conda environment run:
 ```
 conda env create -f environment.yml
 ```
-this will create a conda environment called `colibri-dev` that has a `colibri` executable and all the needed dependencies.
+this will create a conda environment called `colibri-dev` that has a `colibri` executable and all the needed dependencies. To use a different environment name, one should do
+```
+conda env create -n myenv -f environment.yml
+```
 
 - Option 2:
 From you base conda environment run:
