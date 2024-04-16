@@ -28,7 +28,7 @@ as the other subpackages such as `wmin` and `grid_pdf`.
 Create a working environment with conda (or mamba):
 ```
 conda create -n name_environment -y && conda activate name_environment
-conda install conda install mpich mpi4py lhapdf pandoc
+conda install mpich mpi4py lhapdf pandoc
 cd colibri
 pip install -e .
 ```
