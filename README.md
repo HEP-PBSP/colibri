@@ -6,6 +6,22 @@ A reportengine app to perform PDF fits in a new parametrisation.
 
 
 ## colibri Installation
+- Option 1:
+From your base conda environment run:
+```
+conda env create -f environment.yml
+```
+this will create a conda environment called `colibri-dev` that has a `colibri` executable and all the needed dependencies.
+
+- Option 2:
+From you base conda environment run:
+```
+conda env create -f full_environment.yml
+```
+this will create a conda environment called `colibri-dev` that has a `colibri` executable, all the needed dependencies as well
+as the other subpackages such as `wmin` and `grid_pdf`.
+
+- Option 3:
 Create a working environment with conda (or mamba):
 ```
 conda create -n name_environment -y && conda activate name_environment
@@ -15,7 +31,7 @@ pip install -e .
 ```
 
 ## Installation of Various Models
-
+In general if you are not using the `full_environment.yml` installation, it is possible to manually install the various models.
 # Weight Minimization
 ```
 cd models/grid_pdf
