@@ -51,10 +51,7 @@ jobs:
     - name: Install colibri and models
       shell: bash -l {0}
       run: |
-        pip install .
-        cd colibri/models/wmin
-        pip install .
-        cd ../grid_pdf
+        cd colibri/models/grid_pdf
         pip install .
     - name: Copy theory to Conda environment
       shell: bash -l {0}
