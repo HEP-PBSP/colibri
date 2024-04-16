@@ -1,20 +1,14 @@
 name: colibri-dev
 
 channels:
-  - https://packages.nnpdf.science/public
   - conda-forge
 
 dependencies:
-  - nnpdf
+  - python >= 3.11
+  - mpich
+  - lhapdf
+  - pandoc
   - mpi4py
   - pip
   - pip:
-    - flake8
-    - pytest
-    - ultranest
-    - flit
-    - dill
-    - jax
-    - optax
-    - flax
-    
+    - -e .
