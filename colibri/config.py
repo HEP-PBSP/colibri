@@ -12,11 +12,13 @@ import hashlib
 import logging
 import os
 import shutil
+import numpy as np
 
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
 from validphys.config import Config, Environment
+from validphys.fkparser import load_fktable
 
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
@@ -95,6 +97,34 @@ class colibriConfig(Config):
     Config class inherits from validphys
     Config class
     """
+
+    def produce_FIT_XGRID(self, data):
+        """
+        Produces the xgrid for the fit from the union of all xgrids
+
+        Parameters
+        ----------
+        data: validphys.core.DataGroupSpec
+            The data object containing all datasets
+
+        Returns
+        -------
+        FIT_XGRID: np.array
+            array from the set defined as the union of all xgrids
+        """
+
+        # compute union of all xgrids
+        xgrid_points = set()
+        for ds in data.datasets:
+
+            for fkspec in ds.fkspecs:
+                fk = load_fktable(fkspec)
+
+                # add fktable xgrid to a set
+                xgrid_points.update(fk.xgrid)
+
+        xgrid = np.array(sorted(xgrid_points))
+        return xgrid
 
     def parse_ns_settings(
         self,
