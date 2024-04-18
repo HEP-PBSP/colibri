@@ -190,7 +190,7 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
-    
+
     vectorized: bool, default is False
 
     Returns
@@ -204,7 +204,9 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(make_pred_dataset(ds, FIT_XGRID, vectorized, flavour_indices))
+        predictions.append(
+            make_pred_dataset(ds, FIT_XGRID, vectorized, flavour_indices)
+        )
 
     @jax.jit
     def eval_preds(pdf):
@@ -239,7 +241,9 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
 
     for ds in data.datasets:
         predictions.append(
-            make_pred_dataset(ds, FIT_XGRID, vectorized=False, flavour_indices=flavour_indices)
+            make_pred_dataset(
+                ds, FIT_XGRID, vectorized=False, flavour_indices=flavour_indices
+            )
         )
 
     @jax.jit
@@ -256,7 +260,9 @@ def make_pred_data_non_vectorized(data, FIT_XGRID):
     return make_pred_data(data, FIT_XGRID, vectorized=False)
 
 
-def make_penalty_posdataset(posdataset, FIT_XGRID, vectorized=False, flavour_indices=None):
+def make_penalty_posdataset(
+    posdataset, FIT_XGRID, vectorized=False, flavour_indices=None
+):
     """
     Given a PositivitySetSpec compute the positivity penalty
     as a lagrange multiplier times elu of minus the theory prediction

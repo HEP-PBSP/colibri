@@ -67,7 +67,7 @@ def analytic_fit(
 
     output_path: str
         Path to write the results to.
-    
+
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.

@@ -48,7 +48,9 @@ def closure_test_central_pdf_grid(
     """
 
     if not reduced_xgrid_data:
-        return colibri.utils.closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65)[0]
+        return colibri.utils.closure_test_pdf_grid(
+            closure_test_pdf, FIT_XGRID, Q0=1.65
+        )[0]
 
     # Obtain the PDF values as parameters, then use the model interpolation function
     interpolator = pdf_model.grid_values_func(FIT_XGRID)

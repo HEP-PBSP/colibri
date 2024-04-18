@@ -94,7 +94,7 @@ def monte_carlo_fit(
 
     max_epochs: int
         Number of maximum epochs.
-    
+
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.

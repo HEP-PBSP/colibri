@@ -83,7 +83,7 @@ def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
 
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
-        the sorted union of the xgrids of the datasets entering the fit.        
+        the sorted union of the xgrids of the datasets entering the fit.
 
     Q0: float, default is 1.65
 
