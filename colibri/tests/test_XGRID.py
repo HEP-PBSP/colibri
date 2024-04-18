@@ -6,7 +6,11 @@ DIS and Hadronic datasets are the the same as the XGRID stored in the constants.
 import numpy as np
 from colibri.api import API as cAPI
 from colibri.constants import XGRID
-from colibri.tests.conftest import TEST_FULL_DIS_DATASET, TEST_FULL_HAD_DATASET
+from colibri.tests.conftest import (
+    TEST_FULL_DIS_DATASET,
+    TEST_FULL_HAD_DATASET,
+    TEST_FULL_POS_DATASET,
+)
 from numpy.testing import assert_allclose
 
 
@@ -31,3 +35,14 @@ def test_had_xgrid():
 
     # note: the very low x values are not used for the hadronic datasets
     assert_allclose(FIT_XGRID, np.array(XGRID[6:]))
+
+
+def test_pos_xgrid():
+    """
+    Tests that the union of the xgrids of the Positivity datasets is the same as
+    the XGRID stored in constants.py
+    """
+
+    FIT_XGRID = cAPI.FIT_XGRID(**TEST_FULL_POS_DATASET)
+
+    assert_allclose(FIT_XGRID, np.array(XGRID))

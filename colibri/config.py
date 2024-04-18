@@ -98,7 +98,7 @@ class colibriConfig(Config):
     Config class
     """
 
-    def produce_FIT_XGRID(self, data):
+    def produce_FIT_XGRID(self, data=None, posdatasets=None):
         """
         Produces the xgrid for the fit from the union of all xgrids
 
@@ -106,6 +106,8 @@ class colibriConfig(Config):
         ----------
         data: validphys.core.DataGroupSpec
             The data object containing all datasets
+
+        posdatasets: validphys.core.PositivitySetSpec
 
         Returns
         -------
@@ -115,13 +117,23 @@ class colibriConfig(Config):
 
         # compute union of all xgrids
         xgrid_points = set()
-        for ds in data.datasets:
+        if data is not None:
+            for ds in data.datasets:
 
-            for fkspec in ds.fkspecs:
-                fk = load_fktable(fkspec)
+                for fkspec in ds.fkspecs:
+                    fk = load_fktable(fkspec)
 
-                # add fktable xgrid to a set
-                xgrid_points.update(fk.xgrid)
+                    # add fktable xgrid to a set
+                    xgrid_points.update(fk.xgrid)
+
+        # repeat the same for the positivity datasets if they are defined
+        if posdatasets is not None:
+            for posds in posdatasets:
+                for fkspec in posds.fkspecs:
+                    fk = load_fktable(fkspec)
+
+                    # add fktable xgrid to a set
+                    xgrid_points.update(fk.xgrid)
 
         xgrid = np.array(sorted(xgrid_points))
         return xgrid

@@ -147,3 +147,34 @@ TEST_FULL_HAD_DATASET = {
     "theoryid": 700,
     "use_cuts": "internal",
 }
+
+
+TEST_FULL_POS_DATASET = {
+    "positivity": {
+        "posdatasets": [
+            {
+                "dataset": "NNPDF_POS_2P24GEV_F2U",
+                "maxlambda": 1e6,
+            },  # Positivity Lagrange Multiplier
+            {"dataset": "NNPDF_POS_2P24GEV_F2D", "maxlambda": 1e6},
+            {"dataset": "NNPDF_POS_2P24GEV_F2S", "maxlambda": 1e6},
+            {"dataset": "NNPDF_POS_2P24GEV_FLL-19PTS", "maxlambda": 1e6},
+            {"dataset": "NNPDF_POS_2P24GEV_DYU", "maxlambda": 1e10},
+            {"dataset": "NNPDF_POS_2P24GEV_DYD", "maxlambda": 1e10},
+            {"dataset": "NNPDF_POS_2P24GEV_DYS", "maxlambda": 1e10},
+            {"dataset": "NNPDF_POS_2P24GEV_F2C-17PTS", "maxlambda": 1e6},
+            {
+                "dataset": "NNPDF_POS_2P24GEV_XUQ",
+                "maxlambda": 1e6,
+            },  # Positivity of MSbar PDFs
+            {"dataset": "NNPDF_POS_2P24GEV_XUB", "maxlambda": 1e6},
+            {"dataset": "NNPDF_POS_2P24GEV_XDQ", "maxlambda": 1e6},
+            {"dataset": "NNPDF_POS_2P24GEV_XDB", "maxlambda": 1e6},
+            {"dataset": "NNPDF_POS_2P24GEV_XSQ", "maxlambda": 1e6},
+            {"dataset": "NNPDF_POS_2P24GEV_XSB", "maxlambda": 1e6},
+            {"dataset": "NNPDF_POS_2P24GEV_XGL", "maxlambda": 1e6},
+        ]
+    },
+    "theoryid": 700,
+    "use_cuts": "internal",
+}
