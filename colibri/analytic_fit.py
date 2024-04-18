@@ -16,7 +16,6 @@ import jax.numpy.linalg as jla
 
 import pandas as pd
 
-from colibri.constants import XGRID
 from colibri.lhapdf import write_exportgrid
 
 import logging
@@ -47,6 +46,7 @@ def analytic_fit(
     pdf_model,
     analytic_settings,
     output_path,
+    FIT_XGRID,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -67,10 +67,14 @@ def analytic_fit(
 
     output_path: str
         Path to write the results to.
+    
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
     """
 
     parameters = pdf_model.param_names
-    fit_grid_values_func = pdf_model.grid_values_func(XGRID)
+    fit_grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))

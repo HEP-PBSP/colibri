@@ -14,7 +14,6 @@ import pandas as pd
 import os
 import time
 
-from colibri.constants import XGRID
 from colibri.data_batch import data_batches
 from colibri.lhapdf import write_exportgrid
 
@@ -53,6 +52,7 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
+    FIT_XGRID,
     batch_size=None,
     batch_seed=1,
     alpha=1e-7,
@@ -94,6 +94,10 @@ def monte_carlo_fit(
 
     max_epochs: int
         Number of maximum epochs.
+    
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     batch_size: int, default is None which sets it to the full size of data
         Size of batches during training.
@@ -115,7 +119,7 @@ def monte_carlo_fit(
         validation_loss: jnp.array
     """
 
-    fit_grid_values_func = pdf_model.grid_values_func(XGRID)
+    fit_grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
 
     @jax.jit
     def loss_training(parameters, batch_idx):

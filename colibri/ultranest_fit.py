@@ -15,7 +15,6 @@ import logging
 import sys
 import os
 
-from colibri.constants import XGRID
 from colibri.lhapdf import write_exportgrid
 from colibri.utils import resample_from_ns_posterior
 import numpy as np
@@ -65,6 +64,7 @@ def ultranest_fit(
     bayesian_prior,
     ns_settings,
     output_path,
+    FIT_XGRID,
 ):
     """
     The complete Nested Sampling fitting routine, for any PDF model.
@@ -86,6 +86,10 @@ def ultranest_fit(
     output_path: str
         Path to write the results to.
 
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
+
     Returns
     -------
     UltranestFit
@@ -99,7 +103,7 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
-    fit_grid_values_func = pdf_model.grid_values_func(XGRID)
+    fit_grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
 
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
         fit_grid_values_func = jnp.vectorize(
