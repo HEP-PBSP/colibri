@@ -8,16 +8,30 @@ TEST_DATASET = {
     "use_cuts": "internal",
 }
 
+"""
+This should contain the exact same info as TEST_DATASET, but with the use of
+the "dataset_inputs" key instead of "dataset_input"
+"""
+TEST_DATASETS = {
+    "dataset_inputs": [
+        {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}
+    ],
+    "theoryid": 700,
+    "use_cuts": "internal",
+}
+
 TEST_DATASET_HAD = {
     "dataset_input": {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
     "theoryid": 700,
     "use_cuts": "internal",
 }
 
-TEST_DATASETS = {
-    "dataset_inputs": [
-        {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}
-    ],
+"""
+This should contain the exact same info as TEST_DATASET_HAD, but with the use of
+the "dataset_inputs" key instead of "dataset_input"
+"""
+TEST_DATASETS_HAD = {
+    "dataset_inputs": [{"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"}],
     "theoryid": 700,
     "use_cuts": "internal",
 }

@@ -37,6 +37,7 @@ def level_0_commondata_tuple(
     data,
     experimental_commondata_tuple,
     closure_test_central_pdf_grid,
+    FIT_XGRID,
     flavour_indices=None,
 ):
     """
@@ -48,6 +49,10 @@ def level_0_commondata_tuple(
     Parameters
     ----------
     data: validphys.core.DataGroupSpec
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     experimental_commondata_tuple: tuple
         tuple of commondata with experimental central values
@@ -72,7 +77,7 @@ def level_0_commondata_tuple(
         fake_data.append(
             cd.with_central_value(
                 make_pred_dataset(
-                    ds, vectorized=False, flavour_indices=flavour_indices
+                    ds, FIT_XGRID, vectorized=False, flavour_indices=flavour_indices
                 )(closure_test_central_pdf_grid)
             )
         )
