@@ -261,7 +261,7 @@ def make_pred_data_non_vectorized(data, FIT_XGRID):
 
 
 def make_penalty_posdataset(
-    posdataset, FIT_XGRID, vectorized=False, flavour_indices=None
+    posdataset, FIT_XGRID, mask_lowx_pos=None, vectorized=False, flavour_indices=None
 ):
     """
     Given a PositivitySetSpec compute the positivity penalty
@@ -274,6 +274,9 @@ def make_penalty_posdataset(
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
+
+    mask_lowx_pos: float, default is None
+        if not None, the pdf will be set to zero for x values below mask_lowx_pos
 
     vectorized: bool, default is False
 
@@ -306,6 +309,12 @@ def make_penalty_posdataset(
 
     @jax.jit
     def pos_penalty(pdf, alpha, lambda_positivity):
+        if mask_lowx_pos is not None:
+            # Create mask of indices above mask_lowx
+            mask = FIT_XGRID > mask_lowx_pos
+            # Set the pdf to zero for the indices below the mask
+            pdf = pdf * mask
+
         return lambda_positivity * jax.nn.elu(
             -OP[posdataset.op](*[f(pdf) for f in pred_funcs]), alpha
         )
@@ -313,7 +322,7 @@ def make_penalty_posdataset(
     return pos_penalty
 
 
-def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
+def make_penalty_posdata(posdatasets, FIT_XGRID, mask_lowx_pos=None, vectorized=False):
     """
     Compute positivity penalty for list of PositivitySetSpec
 
@@ -326,6 +335,9 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
 
+    mask_lowx_pos: float, default is None
+        if not None, the pdf will be set to zero for x values below mask_lowx_pos
+
     vectorized: bool, default is False
 
     Returns
@@ -337,7 +349,9 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
     predictions = []
 
     for posdataset in posdatasets:
-        predictions.append(make_penalty_posdataset(posdataset, FIT_XGRID, vectorized))
+        predictions.append(
+            make_penalty_posdataset(posdataset, FIT_XGRID, mask_lowx_pos, vectorized)
+        )
 
     @jax.jit
     def pos_penalties(pdf, alpha, lambda_positivity):
