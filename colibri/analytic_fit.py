@@ -103,6 +103,11 @@ def analytic_fit(
     sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     sol_covmat = jla.inv(X.T @ Sigma @ X)
 
+    # Compute evidence logZ
+    extra = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
+    logZ = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat))) + extra
+    log.info(f"LogZ = {logZ}")
+
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
     samples = jax.random.multivariate_normal(
