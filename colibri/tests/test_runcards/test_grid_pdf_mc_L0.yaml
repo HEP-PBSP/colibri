@@ -6,11 +6,11 @@ meta: 'A runcard to test a monte carlo fit.'
 
 dataset_inputs:    
   # DIS                
-  - {'dataset': 'NMC'}
-  - {'dataset': 'SLACP_dwsh'}
-  - {'dataset': 'SLACD_dw_ite'}
+  - {'dataset': 'NMC_NC_NOTFIXED_P_EM-SIGMARED', 'variant': 'legacy'}
+  - {'dataset': 'SLAC_NC_NOTFIXED_P_DW_EM-F2', 'variant': 'legacy'}
+  - {'dataset': 'SLAC_NC_NOTFIXED_D_DW_EM-F2', 'variant': 'legacy'}
 
-theoryid: 401                          # The theory from which the predictions are drawn.
+theoryid: mini700                          # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
 closure_test_level: 0                  # The closure test level: False for experimental, level 0
@@ -26,7 +26,7 @@ reduced_xgrid_data: True               # An artefact of the old grid_pdf impleme
 
 positivity:                            # Positivity datasets, used in the positivity penalty.
   posdatasets:
-  - {dataset: POSF2U, maxlambda: 1e6}
+  - {dataset: NNPDF_POS_2P24GEV_F2U, maxlambda: 1e6}
 
 alpha: 1e-7                           
 lambda_positivity: 0                 
