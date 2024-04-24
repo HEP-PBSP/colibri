@@ -57,8 +57,8 @@ jobs:
       shell: bash -l {0}
       run: |
         mkdir -p $CONDA_PREFIX/share/NNPDF/theories
-        mkdir $CONDA_PREFIX/share/NNPDF/theories/theory_mini700
-        cp -r colibri/tests/test_theoryID/theory_mini700/* $CONDA_PREFIX/share/NNPDF/theories/theory_mini700/
+        mkdir $CONDA_PREFIX/share/NNPDF/theories/theory_1
+        cp -r colibri/tests/test_theoryID/theory_1/* $CONDA_PREFIX/share/NNPDF/theories/theory_1/
     
     - name: Run MC fit
       shell: bash -l {0}
