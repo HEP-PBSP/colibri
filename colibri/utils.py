@@ -16,7 +16,7 @@ from validphys import convolution
 def fill_dis_fkarr_with_zeros(fktable, FIT_XGRID):
     """
     Fills the FK array with zeros so as to get array of shape
-    (Ndat, Nfl, 50)
+    (Ndat, Nfl, N_FIT_XGRID)
 
     Parameters
     ----------
