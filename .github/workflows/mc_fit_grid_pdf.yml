@@ -44,15 +44,10 @@ jobs:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
             hashFiles('environment.yml') }}
     
-    - name: Update environment
-      run: mamba env update -n colibri-dev -f environment.yml
+    - name: Update environment (full includes colibri and models)
+      run: mamba env update -n colibri-dev -f full_environment.yml
       if: steps.cache.outputs.cache-hit != 'true'
 
-    - name: Install colibri and models
-      shell: bash -l {0}
-      run: |
-        cd colibri/models/grid_pdf
-        pip install .
     - name: Copy theory to Conda environment
       shell: bash -l {0}
       run: |
@@ -71,7 +66,11 @@ jobs:
       with:
         ref: main
         clean: false
-    
+
+    - name: Update environment again (on main)
+      run: mamba env update -n colibri-dev -f full_environment.yml
+      if: steps.cache.outputs.cache-hit != 'true'
+
     - name: Run MC fit in main
       shell: bash -l {0}
       run: |

@@ -5,7 +5,6 @@ Module containing util functions for grid PDF fits.
 """
 
 from validphys import convolution
-from colibri.constants import XGRID
 
 import jax.numpy as jnp
 
@@ -15,6 +14,7 @@ import colibri
 def closure_test_central_pdf_grid(
     closure_test_pdf,
     pdf_model,
+    FIT_XGRID,
     reduced_xgrid_data=False,
 ):
     """
@@ -28,6 +28,10 @@ def closure_test_central_pdf_grid(
     Parameters
     ----------
     closure_test_pdf: validphys.core.PDF
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     pdf_model: colibri.pdf_model.PDFModel
         Specifically, this is the GridPDFModel for this provider.
@@ -44,10 +48,12 @@ def closure_test_central_pdf_grid(
     """
 
     if not reduced_xgrid_data:
-        return colibri.utils.closure_test_pdf_grid(closure_test_pdf, Q0=1.65)[0]
+        return colibri.utils.closure_test_pdf_grid(
+            closure_test_pdf, FIT_XGRID, Q0=1.65
+        )[0]
 
     # Obtain the PDF values as parameters, then use the model interpolation function
-    interpolator = pdf_model.grid_values_func(XGRID)
+    interpolator = pdf_model.grid_values_func(FIT_XGRID)
 
     parameters = []
     for fl in pdf_model.xgrids.keys():

@@ -1,24 +1,17 @@
-import pandas as pd
 import pathlib
+
 import jax.numpy as jnp
-
+import pandas as pd
 from colibri.api import API as colibriAPI
-
-from colibri.commondata_utils import (
-    experimental_commondata_tuple,
-    CentralCovmatIndex,
-)
-
-from validphys.coredata import CommonData
-
+from colibri.commondata_utils import CentralCovmatIndex, experimental_commondata_tuple
 from colibri.tests.conftest import (
-    TEST_DATASETS,
-    T0_PDFSET,
     CLOSURE_TEST_PDFSET,
     PSEUDODATA_SEED,
+    T0_PDFSET,
+    TEST_DATASETS,
 )
-
 from numpy.testing import assert_allclose
+from validphys.coredata import CommonData
 
 TEST_COMMONDATA_FOLDER = pathlib.Path(__file__).with_name("test_commondata")
 
@@ -81,7 +74,8 @@ def test_level0_commondata_tuple():
     """
 
     reference_level0_commondata = pd.read_csv(
-        TEST_COMMONDATA_FOLDER / "NMC_level0_central_values.csv"
+        TEST_COMMONDATA_FOLDER
+        / "NMC_NC_NOTFIXED_P_EM-SIGMARED_level0_central_values.csv"
     )
 
     current_level0_commondata = colibriAPI.level_0_commondata_tuple(
@@ -89,7 +83,7 @@ def test_level0_commondata_tuple():
     )
 
     assert_allclose(
-        reference_level0_commondata["cv"].values,
+        reference_level0_commondata["data"].values,
         current_level0_commondata[0].central_values,
     )
 
@@ -101,7 +95,8 @@ def test_level1_commondata_tuple():
     Note that level1 data is generated using jax.config.update("jax_enable_x64", True)
     """
     reference_level1_central_values = pd.read_csv(
-        TEST_COMMONDATA_FOLDER / "NMC_level1_central_values.csv"
+        TEST_COMMONDATA_FOLDER
+        / "NMC_NC_NOTFIXED_P_EM-SIGMARED_level1_central_values.csv"
     )
 
     current_level1_central_values = colibriAPI.level_1_commondata_tuple(
@@ -109,6 +104,6 @@ def test_level1_commondata_tuple():
     )
 
     assert_allclose(
-        reference_level1_central_values["cv"].values,
+        reference_level1_central_values["data"].values,
         current_level1_central_values[0].central_values,
     )

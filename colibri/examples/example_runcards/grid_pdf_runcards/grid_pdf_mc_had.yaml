@@ -6,68 +6,71 @@ meta: 'An example fit using Colibri, hadronic dataset.'
 
 dataset_inputs:    
   # Hadronic
-  - {dataset: DYE886R_dw_ite, frac: 0.75, cfac: [QCD]}
-  - {dataset: DYE886P, frac: 0.75, cfac: [QCD]}
-  - {dataset: DYE605_dw_ite, frac: 0.75, cfac: [QCD]}
-  - {dataset: DYE906R_dw_ite, frac: 0.75, cfac: [ACC, QCD]}
-  - {dataset: CDFZRAP_NEW, frac: 0.75, cfac: [QCD]}
-  - {dataset: D0ZRAP_40, frac: 0.75, cfac: [QCD]}
-  - {dataset: D0WMASY, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLASWZRAP36PB, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLASZHIGHMASS49FB, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLASLOMASSDY11EXT, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLASWZRAP11CC, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLASWZRAP11CF, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLASDY2D8TEV, frac: 0.75, cfac: [QCDEWK]}
-  - {dataset: ATLAS_DY_2D_8TEV_LOWMASS, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_WZ_TOT_13TEV, frac: 0.75, cfac: [NRM, QCD]}
-  - {dataset: ATLAS_WP_JET_8TEV_PT, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_WM_JET_8TEV_PT, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLASZPT8TEVMDIST, frac: 0.75, cfac: [QCD], sys: 10}
-  - {dataset: ATLASZPT8TEVYDIST, frac: 0.75, cfac: [QCD], sys: 10}
-  - {dataset: ATLASTTBARTOT7TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLASTTBARTOT8TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_TTBARTOT_13TEV_FULLLUMI, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_TTB_DIFF_8TEV_LJ_TRAPNORM, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_TTB_DIFF_8TEV_LJ_TTRAPNORM, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_TOPDIFF_DILEPT_8TEV_TTRAPNORM, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLASPHT15_SF, frac: 0.75, cfac: [QCD, EWK]}
-  - {dataset: ATLAS_SINGLETOP_TCH_R_7TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_SINGLETOP_TCH_R_13TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_SINGLETOP_TCH_DIFF_7TEV_T_RAP_NORM, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_SINGLETOP_TCH_DIFF_7TEV_TBAR_RAP_NORM, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_SINGLETOP_TCH_DIFF_8TEV_T_RAP_NORM, frac: 0.75, cfac: [QCD]}
-  - {dataset: ATLAS_SINGLETOP_TCH_DIFF_8TEV_TBAR_RAP_NORM, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMSWEASY840PB, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMSWMASY47FB, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMSDY2D11, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMSWMU8TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMSZDIFF12, frac: 0.75, cfac: [QCD, NRM], sys: 10}
-  - {dataset: CMSTTBARTOT7TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMSTTBARTOT8TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMSTTBARTOT13TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMSTOPDIFF8TEVTTRAPNORM, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMSTTBARTOT5TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMS_TTBAR_2D_DIFF_MTT_TRAP_NORM, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMS_TTB_DIFF_13TEV_2016_2L_TRAP, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMS_TTB_DIFF_13TEV_2016_LJ_TRAP, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMS_SINGLETOP_TCH_TOT_7TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMS_SINGLETOP_TCH_R_8TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: CMS_SINGLETOP_TCH_R_13TEV, frac: 0.75, cfac: [QCD]}
-  - {dataset: LHCBZ940PB, frac: 0.75, cfac: [QCD]}
-  - {dataset: LHCBZEE2FB_40, frac: 0.75, cfac: [QCD]}
-  - {dataset: LHCBWZMU7TEV, frac: 0.75, cfac: [NRM, QCD]}
-  - {dataset: LHCBWZMU8TEV, frac: 0.75, cfac: [NRM, QCD]}
-  - {dataset: LHCB_Z_13TEV_DIMUON, frac: 0.75, cfac: [QCD]}
-  - {dataset: LHCB_Z_13TEV_DIELECTRON, frac: 0.75, cfac: [QCD]}
+  - {'dataset': 'DYE866_Z0_800GEV_DW_RATIO_PDXSECRATIO', 'variant': 'legacy'}
+  - {'dataset': 'DYE866_Z0_800GEV_PXSEC', 'variant': 'legacy'}
+  - {'dataset': 'DYE605_Z0_38P8GEV_DW_PXSEC', 'variant': 'legacy'}
+  - {'dataset': 'DYE906_Z0_120GEV_DW_PDXSECRATIO', 'variant': 'legacy', 'cfac': ['ACC']}
+  - {'dataset': 'CDF_Z0_1P96TEV_ZRAP', 'variant': 'legacy'}
+  - {'dataset': 'D0_Z0_1P96TEV_ZRAP', 'variant': 'legacy'}
+  - {'dataset': 'D0_WPWM_1P96TEV_ASY', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_DY_7TEV_36PB_ETA', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_Z0_7TEV_49FB_HIMASS', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_Z0_7TEV_LOMASS_M', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_DY_7TEV_46FB_CC', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_Z0_7TEV_46FB_CF-Y', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_Z0_8TEV_HIMASS_M-Y', 'variant': 'legacy'}
 
-theoryid: 400                          # The theory from which the predictions are drawn.
+  - {'dataset': 'ATLAS_Z0_8TEV_LOWMASS_M-Y', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_DY_13TEV_TOT', 'variant': 'legacy', 'cfac': ['NRM']}
+  - {'dataset': 'ATLAS_WJ_JET_8TEV_WP-PT', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_WJ_JET_8TEV_WM-PT', 'variant': 'legacy'}
+
+  - {'dataset': 'ATLAS_Z0J_8TEV_PT-M', 'variant': 'legacy_10'}
+  - {'dataset': 'ATLAS_Z0J_8TEV_PT-Y', 'variant': 'legacy_10'}
+  - {'dataset': 'ATLAS_TTBAR_7TEV_TOT_X-SEC', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_TTBAR_8TEV_TOT_X-SEC', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_TTBAR_13TEV_TOT_X-SEC', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_TTBAR_8TEV_LJ_DIF_YT-NORM', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_TTBAR_8TEV_LJ_DIF_YTTBAR-NORM', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_TTBAR_8TEV_2L_DIF_YTTBAR-NORM', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_PH_13TEV_XSEC', 'variant': 'legacy', 'cfac': ['EWK']}
+  - {'dataset': 'ATLAS_SINGLETOP_7TEV_TCHANNEL-XSEC', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_SINGLETOP_13TEV_TCHANNEL-XSEC', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_SINGLETOP_7TEV_T-Y-NORM', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_SINGLETOP_7TEV_TBAR-Y-NORM', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_SINGLETOP_8TEV_T-RAP-NORM', 'variant': 'legacy'}
+  - {'dataset': 'ATLAS_SINGLETOP_8TEV_TBAR-RAP-NORM', 'variant': 'legacy'}
+  - {'dataset': 'CMS_WPWM_7TEV_ELECTRON_ASY'}
+  - {'dataset': 'CMS_WPWM_7TEV_MUON_ASY', 'variant': 'legacy'}
+  - {'dataset': 'CMS_Z0_7TEV_DIMUON_2D'}
+  - {'dataset': 'CMS_WPWM_8TEV_MUON_Y', 'variant': 'legacy'}
+  - {'dataset': 'CMS_Z0J_8TEV_PT-Y', 'cfac': ['NRM'], 'variant': 'legacy_10'}
+  - {'dataset': 'CMS_TTBAR_7TEV_TOT_X-SEC', 'variant': 'legacy'}
+  - {'dataset': 'CMS_TTBAR_8TEV_TOT_X-SEC', 'variant': 'legacy'}
+  - {'dataset': 'CMS_TTBAR_13TEV_TOT_X-SEC', 'variant': 'legacy'}
+  - {'dataset': 'CMS_TTBAR_8TEV_LJ_DIF_YTTBAR-NORM', 'variant': 'legacy'}
+  - {'dataset': 'CMS_TTBAR_5TEV_TOT_X-SEC', 'variant': 'legacy'}
+  - {'dataset': 'CMS_TTBAR_8TEV_2L_DIF_MTTBAR-YT-NORM', 'variant': 'legacy'}
+  - {'dataset': 'CMS_TTBAR_13TEV_2L_DIF_YT', 'variant': 'legacy'}
+  - {'dataset': 'CMS_TTBAR_13TEV_LJ_2016_DIF_YTTBAR', 'variant': 'legacy'}
+  - {'dataset': 'CMS_SINGLETOP_7TEV_TCHANNEL-XSEC', 'variant': 'legacy'}
+  - {'dataset': 'CMS_SINGLETOP_8TEV_TCHANNEL-XSEC', 'variant': 'legacy'}
+  - {'dataset': 'CMS_SINGLETOP_13TEV_TCHANNEL-XSEC', 'variant': 'legacy'}
+  - {'dataset': 'LHCB_Z0_7TEV_DIELECTRON_Y'}
+  - {'dataset': 'LHCB_Z0_8TEV_DIELECTRON_Y'}
+  - {'dataset': 'LHCB_DY_7TEV_MUON_Y', 'cfac': ['NRM']}
+  - {'dataset': 'LHCB_DY_8TEV_MUON_Y', 'cfac': ['NRM']}
+  - {'dataset': 'LHCB_Z0_13TEV_DIMUON-Y'}
+  - {'dataset': 'LHCB_Z0_13TEV_DIELECTRON-Y'}
+
+
+theoryid: 700                          # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
 closure_test_level: 0                  # The closure test level: False for experimental, level 0
                                        # for pseudodata with no noise, level 1 for pseudodata with
                                        # noise.
-closure_test_pdf: NNPDF31_nnlo_as_0118 # The closure test PDF used if closure_level is not False
+closure_test_pdf: NNPDF40_nnlo_as_01180 # The closure test PDF used if closure_level is not False
 reduced_xgrid_data: True               # An artefact of the old grid_pdf implementation,
                                        # ensuring we generate closure test data using the model.
 
@@ -83,7 +86,7 @@ alpha: 1e-7
 lambda_positivity: 0                 
 
 use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
-t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
+t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
 
 
 #############
@@ -121,7 +124,7 @@ mc_validation_fraction: 0.0            # The fraction of the data used for valid
 
 mc_initialiser_settings:               # The initialiser for Monte Carlo training.
   type: pdf                        # This setting starts with all parameters equal to zero.
-  pdf_set: NNPDF31_nnlo_as_0118
+  pdf_set: NNPDF40_nnlo_as_01180
   init_type: uniform
   nsigma: 5
 

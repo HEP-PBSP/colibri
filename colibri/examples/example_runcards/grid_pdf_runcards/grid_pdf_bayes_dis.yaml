@@ -6,26 +6,26 @@ meta: 'An example fit using Colibri, reduced DIS dataset.'
 
 dataset_inputs:    
   # DIS                
-  - {'dataset': 'NMC'}
-  - {'dataset': 'SLACP_dwsh'}
-  - {'dataset': 'SLACD_dw_ite'}
-  - {'dataset': 'BCDMSP_dwsh'}
-  - {'dataset': 'BCDMSD_dw_ite'}
-  - {'dataset': 'CHORUSNUPb_dw_ite'}
-  - {'dataset': 'CHORUSNBPb_dw_ite'}
-  - {'dataset': 'HERACOMBNCEM'} 
-  - {'dataset': 'HERACOMBNCEP575'}
-  - {'dataset': 'HERACOMBNCEP820'}
-  - {'dataset': 'HERACOMBNCEP920'}
-  - {'dataset': 'HERACOMBNCEP460'}
+  - {'dataset': 'NMC_NC_NOTFIXED_P_EM-SIGMARED', 'variant': 'legacy'}
+  - {'dataset': 'SLAC_NC_NOTFIXED_P_DW_EM-F2', 'variant': 'legacy'}
+  - {'dataset': 'SLAC_NC_NOTFIXED_D_DW_EM-F2', 'variant': 'legacy'}
+  - {'dataset': 'BCDMS_NC_NOTFIXED_P_DW_EM-F2', 'variant': 'legacy'}
+  - {'dataset': 'BCDMS_NC_NOTFIXED_D_DW_EM-F2', 'variant': 'legacy'}
+  - {'dataset': 'CHORUS_CC_NOTFIXED_PB_DW_NU-SIGMARED', 'variant': 'legacy'}
+  - {'dataset': 'CHORUS_CC_NOTFIXED_PB_DW_NB-SIGMARED', 'variant': 'legacy'}
+  - {'dataset': 'HERA_NC_318GEV_EM-SIGMARED', 'variant': 'legacy'} 
+  - {'dataset': 'HERA_NC_251GEV_EP-SIGMARED', 'variant': 'legacy'}
+  - {'dataset': 'HERA_NC_300GEV_EP-SIGMARED', 'variant': 'legacy'}
+  - {'dataset': 'HERA_NC_318GEV_EP-SIGMARED', 'variant': 'legacy'}
+  - {'dataset': 'HERA_NC_225GEV_EP-SIGMARED', 'variant': 'legacy'}
 
-theoryid: 400                          # The theory from which the predictions are drawn.
+theoryid: 700                          # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
 closure_test_level: 0                  # The closure test level: False for experimental, level 0
                                        # for pseudodata with no noise, level 1 for pseudodata with
                                        # noise.
-closure_test_pdf: NNPDF31_nnlo_as_0118 # The closure test PDF used if closure_level is not False
+closure_test_pdf: NNPDF40_nnlo_as_01180 # The closure test PDF used if closure_level is not False
 reduced_xgrid_data: True               # An artefact of the old grid_pdf implementation,
                                        # ensuring we generate closure test data using the model.
 
@@ -41,7 +41,7 @@ alpha: 1e-7
 lambda_positivity: 0                 
 
 use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
-t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
+t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
 
 
 #############
@@ -84,7 +84,7 @@ ns_settings:
 
 prior_settings:
   type: 'uniform_pdf_prior'            # The type of prior used in Nested Sampling (model dependent)
-  pdf_prior: NNPDF31_nnlo_as_0118      # For this prior type, uniform band around this PDF
+  pdf_prior: NNPDF40_nnlo_as_01180      # For this prior type, uniform band around this PDF
   nsigma: 5                           # Size of the uniform band around the PDF
 
 actions_:

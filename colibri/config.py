@@ -13,14 +13,15 @@ import logging
 import os
 import shutil
 
+import jax.numpy as jnp
+from colibri import commondata_utils
+from colibri import covmats as colibri_covmats
+from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
 from validphys.config import Config, Environment
-
-from colibri import commondata_utils
-from colibri import covmats as colibri_covmats
-from colibri.constants import FLAVOUR_TO_ID_MAPPING
+from validphys.fkparser import load_fktable
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -95,6 +96,49 @@ class colibriConfig(Config):
     Config class inherits from validphys
     Config class
     """
+
+    def produce_FIT_XGRID(self, data=None, posdatasets=None):
+        """
+        Produces the xgrid for the fit from the union of all xgrids
+
+        Parameters
+        ----------
+        data: validphys.core.DataGroupSpec
+            The data object containing all datasets
+
+        posdatasets: validphys.core.PositivitySetSpec
+
+        Returns
+        -------
+        FIT_XGRID: np.array
+            array from the set defined as the union of all xgrids
+        """
+
+        # compute union of all xgrids
+        xgrid_points = set()
+        if data is not None:
+            for ds in data.datasets:
+
+                for fkspec in ds.fkspecs:
+                    fk = load_fktable(fkspec)
+
+                    # add fktable xgrid to a set
+                    xgrid_points.update(fk.xgrid)
+
+        # repeat the same for the positivity datasets if they are defined
+        if posdatasets is not None:
+            for posds in posdatasets:
+                for fkspec in posds.fkspecs:
+                    fk = load_fktable(fkspec)
+
+                    # add fktable xgrid to a set
+                    xgrid_points.update(fk.xgrid)
+
+        xgrid = jnp.array(sorted(xgrid_points))
+        log.info(
+            f"Fitting x-grid consists of {len(xgrid)} points, ranging from {xgrid[0]} to {xgrid[-1]}."
+        )
+        return xgrid
 
     def parse_ns_settings(
         self,

@@ -6,14 +6,13 @@ meta: 'An example of analytic fit using wmin paramterisation on reduced DIS data
 
 dataset_inputs:    
   # DIS                
- - {'dataset': 'NMC'}
- - {'dataset': 'HERACOMBNCEM'}
- - {'dataset': 'HERACOMBNCEP575'}
- - {'dataset': 'HERACOMBNCEP820'}
- - {'dataset': 'HERACOMBNCEP920'}
+  - {'dataset': 'NMC_NC_NOTFIXED_P_EM-SIGMARED', 'variant': 'legacy'}
+  - {'dataset': 'HERA_NC_318GEV_EM-SIGMARED', 'variant': 'legacy'} 
+  - {'dataset': 'HERA_NC_251GEV_EP-SIGMARED', 'variant': 'legacy'}
+  - {'dataset': 'HERA_NC_300GEV_EP-SIGMARED', 'variant': 'legacy'}
 
 
-theoryid: 400                          # The theory from which the predictions are drawn.
+theoryid: 700                          # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
 closure_test_level: 0                  # The closure test level: False for experimental, level 0

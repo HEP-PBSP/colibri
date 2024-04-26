@@ -14,12 +14,13 @@ import jax.numpy as jnp
 from validphys import convolution
 from validphys.fkparser import load_fktable
 
+from colibri.utils import fill_dis_fkarr_with_zeros, fill_had_fkarr_with_zeros
 
 # Is this needed? -> probably no need to jit compile
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
+def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=None):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -29,6 +30,10 @@ def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
     Parameters
     ----------
     fktable : validphys.coredata.FKTableData
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     vectorized: bool, default is False
         if True, the function will be compiled in a way
@@ -52,10 +57,11 @@ def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
         indices = fktable.luminosity_mapping
         mask = jnp.isin(indices, jnp.array(flavour_indices))
         indices = indices[mask]
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask, :]
+        fk_arr = jnp.array(fill_dis_fkarr_with_zeros(fktable, FIT_XGRID))[:, mask, :]
+
     else:
         indices = fktable.luminosity_mapping
-        fk_arr = jnp.array(fktable.get_np_fktable())
+        fk_arr = jnp.array(fill_dis_fkarr_with_zeros(fktable, FIT_XGRID))
 
     @jax.jit
     def dis_prediction(pdf):
@@ -66,7 +72,7 @@ def make_dis_prediction(fktable, vectorized=False, flavour_indices=None):
     return dis_prediction
 
 
-def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
+def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=None):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -76,6 +82,10 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
     Parameters
     ----------
     fktable : validphys.coredata.FKTableData
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     vectorized: bool, default is False
         if True, the function will be compiled in a way
@@ -107,7 +117,9 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
         first_indices = indices[0::2]
         second_indices = indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask_even * mask_odd, :, :]
+        fk_arr = jnp.array(fill_had_fkarr_with_zeros(fktable, FIT_XGRID))[
+            :, mask_even * mask_odd, :, :
+        ]
 
     else:
         indices = fktable.luminosity_mapping
@@ -115,7 +127,7 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
         first_indices = indices[0::2]
         second_indices = indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())
+        fk_arr = jnp.array(fill_had_fkarr_with_zeros(fktable, FIT_XGRID))
 
     @jax.jit
     def had_prediction(pdf):
@@ -128,13 +140,17 @@ def make_had_prediction(fktable, vectorized=False, flavour_indices=None):
     return had_prediction
 
 
-def make_pred_dataset(dataset, vectorized=False, flavour_indices=None):
+def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None):
     """
     Compute theory prediction for a DataSetSpec
 
     Parameters
     ----------
     dataset : validphys.core.DataSetSpec
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     vectorized: bool, default is False
 
@@ -151,9 +167,9 @@ def make_pred_dataset(dataset, vectorized=False, flavour_indices=None):
     for fkspec in dataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, vectorized, flavour_indices)
+            pred = make_had_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
         else:
-            pred = make_dis_prediction(fk, vectorized, flavour_indices)
+            pred = make_dis_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
         pred_funcs.append(pred)
 
     @jax.jit
@@ -163,13 +179,17 @@ def make_pred_dataset(dataset, vectorized=False, flavour_indices=None):
     return prediction
 
 
-def make_pred_data(data, vectorized=False, flavour_indices=None):
+def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
     """
     Compute theory prediction for entire DataGroupSpec
 
     Parameters
     ----------
     data: DataGroupSpec instance
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     vectorized: bool, default is False
 
@@ -184,7 +204,9 @@ def make_pred_data(data, vectorized=False, flavour_indices=None):
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(make_pred_dataset(ds, vectorized, flavour_indices))
+        predictions.append(
+            make_pred_dataset(ds, FIT_XGRID, vectorized, flavour_indices)
+        )
 
     @jax.jit
     def eval_preds(pdf):
@@ -193,7 +215,7 @@ def make_pred_data(data, vectorized=False, flavour_indices=None):
     return eval_preds
 
 
-def make_pred_t0data(data, flavour_indices=None):
+def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
     """
     Compute theory prediction for entire DataGroupSpec.
     It is specifically meant for t0 predictions, i.e. it
@@ -202,6 +224,10 @@ def make_pred_t0data(data, flavour_indices=None):
     Parameters
     ----------
     data: DataGroupSpec instance
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     Returns
     -------
@@ -215,7 +241,9 @@ def make_pred_t0data(data, flavour_indices=None):
 
     for ds in data.datasets:
         predictions.append(
-            make_pred_dataset(ds, vectorized=False, flavour_indices=flavour_indices)
+            make_pred_dataset(
+                ds, FIT_XGRID, vectorized=False, flavour_indices=flavour_indices
+            )
         )
 
     @jax.jit
@@ -225,14 +253,16 @@ def make_pred_t0data(data, flavour_indices=None):
     return eval_preds
 
 
-def make_pred_data_non_vectorized(data):
+def make_pred_data_non_vectorized(data, FIT_XGRID):
     """
     Same as make_pred_data but with vectorized=False
     """
-    return make_pred_data(data, vectorized=False)
+    return make_pred_data(data, FIT_XGRID, vectorized=False)
 
 
-def make_penalty_posdataset(posdataset, vectorized=False, flavour_indices=None):
+def make_penalty_posdataset(
+    posdataset, FIT_XGRID, vectorized=False, flavour_indices=None
+):
     """
     Given a PositivitySetSpec compute the positivity penalty
     as a lagrange multiplier times elu of minus the theory prediction
@@ -240,6 +270,10 @@ def make_penalty_posdataset(posdataset, vectorized=False, flavour_indices=None):
     Parameters
     ----------
     posdataset : validphys.core.PositivitySetSpec
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     vectorized: bool, default is False
 
@@ -265,9 +299,9 @@ def make_penalty_posdataset(posdataset, vectorized=False, flavour_indices=None):
     for fkspec in posdataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, vectorized, flavour_indices)
+            pred = make_had_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
         else:
-            pred = make_dis_prediction(fk, vectorized, flavour_indices)
+            pred = make_dis_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
         pred_funcs.append(pred)
 
     @jax.jit
@@ -279,7 +313,7 @@ def make_penalty_posdataset(posdataset, vectorized=False, flavour_indices=None):
     return pos_penalty
 
 
-def make_penalty_posdata(posdatasets, vectorized=False):
+def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
     """
     Compute positivity penalty for list of PositivitySetSpec
 
@@ -287,6 +321,10 @@ def make_penalty_posdata(posdatasets, vectorized=False):
     ----------
     posdatasets: list
             list of PositivitySetSpec
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     vectorized: bool, default is False
 
@@ -299,7 +337,7 @@ def make_penalty_posdata(posdatasets, vectorized=False):
     predictions = []
 
     for posdataset in posdatasets:
-        predictions.append(make_penalty_posdataset(posdataset, vectorized))
+        predictions.append(make_penalty_posdataset(posdataset, FIT_XGRID, vectorized))
 
     @jax.jit
     def pos_penalties(pdf, alpha, lambda_positivity):

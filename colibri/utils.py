@@ -9,18 +9,81 @@ Date: 11.11.2023
 
 import jax
 import jax.numpy as jnp
-
-from colibri.constants import XGRID
+import numpy as np
 from validphys import convolution
 
 
-def t0_pdf_grid(t0pdfset, Q0=1.65):
+def fill_dis_fkarr_with_zeros(fktable, FIT_XGRID):
+    """
+    Fills the FK array with zeros so as to get array of shape
+    (Ndat, Nfl, N_FIT_XGRID)
+
+    Parameters
+    ----------
+    fktable: validphys.coredata.FKTableData
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
+
+    Returns
+    -------
+    new_fkarr: np.ndarray
+    """
+
+    new_fkarr = np.zeros(
+        (
+            fktable.get_np_fktable().shape[0],
+            fktable.get_np_fktable().shape[1],
+            len(FIT_XGRID),
+        )
+    )
+    indices = np.where(np.isclose(FIT_XGRID, fktable.xgrid[:, np.newaxis]))[1]
+    new_fkarr[:, :, indices] = fktable.get_np_fktable()
+
+    return new_fkarr
+
+
+def fill_had_fkarr_with_zeros(fktable, FIT_XGRID):
+    """
+    Fills the FK array with zeros so as to get array of shape
+    (Ndat, Nfl, N_FIT_XGRID, N_FIT_XGRID)
+
+    Parameters
+    ----------
+    fktable: validphys.coredata.FKTableData
+
+    Returns
+    -------
+    new_fkarr: np.ndarray
+    """
+
+    new_fkarr = np.zeros(
+        (
+            fktable.get_np_fktable().shape[0],
+            fktable.get_np_fktable().shape[1],
+            len(FIT_XGRID),
+            len(FIT_XGRID),
+        )
+    )
+
+    indices = np.where(np.isclose(FIT_XGRID, fktable.xgrid[:, np.newaxis]))[1]
+    new_fkarr[:, :, indices[:, None], indices] = fktable.get_np_fktable()
+
+    return new_fkarr
+
+
+def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
     """
     Computes the t0 pdf grid in the evolution basis.
 
     Parameters
     ----------
     t0pdfset: validphys.core.PDF
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     Q0: float, default is 1.65
 
@@ -32,19 +95,23 @@ def t0_pdf_grid(t0pdfset, Q0=1.65):
 
     t0grid = jnp.array(
         convolution.evolution.grid_values(
-            t0pdfset, convolution.FK_FLAVOURS, XGRID, [Q0]
+            t0pdfset, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
         ).squeeze(-1)
     )
     return t0grid
 
 
-def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
+def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65):
     """
     Computes the closure_test_pdf grid in the evolution basis.
 
     Parameters
     ----------
     closure_test_pdf: validphys.core.PDF
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
 
     Q0: float, default is 1.65
 
@@ -56,7 +123,7 @@ def closure_test_pdf_grid(closure_test_pdf, Q0=1.65):
 
     grid = jnp.array(
         convolution.evolution.grid_values(
-            closure_test_pdf, convolution.FK_FLAVOURS, XGRID, [Q0]
+            closure_test_pdf, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
         ).squeeze(-1)
     )
     return grid
