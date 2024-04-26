@@ -1,0 +1,770 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contaminated fits &#8212; Colibri  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.1/css/all.min.css?digest=8d27b9dea8ad943066ae" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.1/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
+  <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/contaminated_fit';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SIMUnet closure test" href="simu_closure_test.html" />
+    <link rel="prev" title="Simultaneous fits" href="simu_fit.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a id="pst-skip-link" class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/PBSP_logo.png" class="logo__image only-light" alt="Colibri  documentation - Home"/>
+    <script>document.write(`<img src="../_static/PBSP_logo.png" class="logo__image only-dark" alt="Colibri  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../models/models_overview.html"><strong>Models</strong></a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="../methodology.html"><strong>Methodologies</strong></a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="tutorials_overview.html"><strong>Tutorials</strong></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Installation.html">Installing SIMUnet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simu_fit.html">Simultaneous fits</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Contaminated fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simu_closure_test.html">SIMUnet closure test</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/tutorials/contaminated_fit.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Contaminated fits</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. Preparing a fit runcard</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">2. Running the fitting code</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-of-the-fit">Output of the fit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#uploading-the-fit">3. Uploading the fit</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <div class="section" id="contaminated-fits">
+<span id="contfit"></span><h1>Contaminated fits<a class="headerlink" href="#contaminated-fits" title="Permalink to this heading">#</a></h1>
+<p>This is a basic tutorial to perform PDF fits contaminated with BSM physics with SIMUnet.
+The procedure consists of 3 steps:</p>
+<ol class="arabic simple">
+<li><p><a class="reference external" href="#preparing-a-fit-runcard">Preparing a fit runcard</a></p></li>
+<li><p><a class="reference external" href="#running-the-fitting-code">Running the fitting code</a></p></li>
+<li><p><a class="reference external" href="#upload-and-analyse-the-fit">Uploading and analysing the results of the fit</a></p></li>
+</ol>
+<div class="section" id="id1">
+<span id="id2"></span><h2>1. Preparing a fit runcard<a class="headerlink" href="#id1" title="Permalink to this heading">#</a></h2>
+<p>The runcard is written in YAML. The runcard is the unique identifier of a fit
+and contains all required information to perform a fit, which includes the
+experimental data, the theory setup and the fitting setup.</p>
+<p>We begin by showing the user an example of a complete runcard. We will go
+into the details of each part  later. Here is a complete SIMUnet runcard:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Runcard for contaminated PDF fit with SIMUnet</span>
+<span class="c1">#</span>
+<span class="c1">############################################################</span>
+<span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Runcard</span><span class="nv"> </span><span class="s">template</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">contaminated</span><span class="nv"> </span><span class="s">PDF</span><span class="nv"> </span><span class="s">fit</span><span class="nv"> </span><span class="s">with</span><span class="nv"> </span><span class="s">BSM</span><span class="nv"> </span><span class="s">physics</span><span class="nv"> </span><span class="s">injected</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">data,</span>
+<span class="s">defined</span><span class="nv"> </span><span class="s">as</span><span class="nv"> </span><span class="s">linear</span><span class="nv"> </span><span class="s">combinations</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">SMEFT</span><span class="nv"> </span><span class="s">Warsaw</span><span class="nv"> </span><span class="s">basis</span><span class="nv"> </span><span class="s">operators.&quot;</span>
+
+<span class="c1">############################################################</span>
+<span class="c1"># frac: training fraction of datapoints for the PDFs</span>
+<span class="c1"># QCD: apply QCD K-factors</span>
+<span class="c1"># EWK: apply electroweak K-factors</span>
+<span class="c1"># simu_fac: fit BSM coefficients using their K-factors in the dataset</span>
+<span class="c1"># use_fixed_predictions:  if set to True it removes the PDF dependence of the dataset</span>
+<span class="c1"># sys: systematics treatment (see systypes)</span>
+
+<span class="c1">############################################################</span>
+<span class="nt">dataset_inputs</span><span class="p">:</span>
+
+<span class="c1">### &#39;Standard&#39; datasets ###</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">NMCPD_dw_ite</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">NMC</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">SLACP_dwsh</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">HERACOMBCCEP</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">HERACOMB_SIGMARED_C</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">HERACOMB_SIGMARED_B</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">DYE886R_dw_ite</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">DYE886P</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">DYE605_dw_ite</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">DYE906R_dw_ite</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;ACC&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">CDFZRAP_NEW</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">D0ZRAP_40</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">D0WMASY</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">ATLASWZRAP36PB</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+
+<span class="c1">### &#39;Contaminated&#39; datasets ###</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">CMSDY1D12</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;EWK&#39;</span><span class="p p-Indicator">],</span><span class="nt"> contamination</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;EFT_LO&#39;</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">CMS_HMDY_13TEV</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;EWK&#39;</span><span class="p p-Indicator">],</span><span class="nt"> contamination</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;EFT_LO&#39;</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">ATLASDY2D8TEV</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCDEWK&#39;</span><span class="p p-Indicator">],</span><span class="nt"> contamination</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;EFT_LO&#39;</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">ATLASZHIGHMASS49FB</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">],</span><span class="nt"> contamination</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;EFT_LO&#39;</span><span class="p p-Indicator">}</span>
+
+<span class="nt">fixed_pdf_fit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="c1"># load_weights_from_fit: 221103-jmm-no_top_1000_iterated # If this is uncommented, training starts here.</span>
+
+<span class="c1">###########################################################</span>
+<span class="c1"># The closure test namespace tells us the settings for the</span>
+<span class="c1"># (possible contaminated) closure test.</span>
+<span class="c1">############################################################</span>
+<span class="nt">closuretest</span><span class="p">:</span>
+<span class="nt">filterseed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Random seed to be used in filtering data partitions</span>
+<span class="nt">fakedata</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">     </span><span class="c1"># true = to use FAKEPDF to generate pseudo-data</span>
+<span class="nt">fakepdf</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NNPDF40_nnlo_as_01180</span><span class="w">      </span><span class="c1"># Theory input for pseudo-data</span>
+<span class="nt">errorsize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">    </span><span class="c1"># uncertainties rescaling</span>
+<span class="nt">fakenoise</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">    </span><span class="c1"># true = to add random fluctuations to pseudo-data</span>
+<span class="nt">rancutprob</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">   </span><span class="c1"># Fraction of data to be included in the fit</span>
+<span class="nt">rancutmethod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">   </span><span class="c1"># Method to select rancutprob data fraction</span>
+<span class="nt">rancuttrnval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># 0(1) to output training(valiation) chi2 in report</span>
+<span class="nt">printpdf4gen</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># To print info on PDFs during minimization</span>
+<span class="nt">contamination_parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;W&#39;</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.00008</span>
+<span class="w">    </span><span class="nt">linear_combination</span><span class="p">:</span>
+<span class="w">        </span><span class="s">&#39;Olq3&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-15.94</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Y&#39;</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">linear_combination</span><span class="p">:</span>
+<span class="w">        </span><span class="s">&#39;Olq1&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.51606</span>
+<span class="w">        </span><span class="s">&#39;Oed&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-6.0606</span>
+<span class="w">        </span><span class="s">&#39;Oeu&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12.1394</span>
+<span class="w">        </span><span class="s">&#39;Olu&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6.0606</span>
+<span class="w">        </span><span class="s">&#39;Old&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-3.0394</span>
+<span class="w">        </span><span class="s">&#39;Oqe&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.0394</span>
+
+<span class="nt">seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="nt">rngalgo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="c1">############################################################</span>
+<span class="nt">datacuts</span><span class="p">:</span>
+<span class="nt">t0pdfset</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NNPDF40_nnlo_as_01180</span><span class="w"> </span><span class="c1"># PDF set to generate t0 covmat</span>
+<span class="nt">q2min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.49</span><span class="w">                        </span><span class="c1"># Q2 minimum</span>
+<span class="nt">w2min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12.5</span><span class="w">                        </span><span class="c1"># W2 minimum</span>
+
+<span class="c1">############################################################</span>
+<span class="nt">theory</span><span class="p">:</span>
+<span class="nt">theoryid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span><span class="w">     </span><span class="c1"># database id</span>
+
+<span class="c1">############################################################</span>
+<span class="nt">trvlseed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">475038818</span>
+<span class="nt">nnseed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2394641471</span>
+<span class="nt">mcseed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1831662593</span>
+<span class="nt">save</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;weights.h5&quot;</span>
+<span class="nt">genrep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">      </span><span class="c1"># true = generate MC replicas, false = use real data</span>
+
+<span class="c1">############################################################</span>
+
+
+<span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="c1"># This defines the parameter dictionary that is passed to the Model Trainer</span>
+<span class="nt">nodes_per_layer</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">8</span><span class="p p-Indicator">]</span>
+<span class="nt">activation_per_layer</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">tanh</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">tanh</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">linear</span><span class="p p-Indicator">]</span>
+<span class="nt">initializer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glorot_normal</span>
+<span class="nt">optimizer</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">clipnorm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6.073e-6</span>
+<span class="w">    </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.621e-3</span>
+<span class="w">    </span><span class="nt">optimizer_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Nadam</span>
+<span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30000</span>
+<span class="nt">positivity</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">initial</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">184.8</span>
+<span class="w">    </span><span class="nt">multiplier</span><span class="p">:</span>
+<span class="nt">integrability</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">initial</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">184.8</span>
+<span class="w">    </span><span class="nt">multiplier</span><span class="p">:</span>
+<span class="nt">stopping_patience</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+<span class="nt">layer_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dense</span>
+<span class="nt">dropout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="nt">threshold_chi2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.5</span>
+
+<span class="nt">fitting</span><span class="p">:</span>
+<span class="c1"># EVOL(QED) = sng=0,g=1,v=2,v3=3,v8=4,t3=5,t8=6,(pht=7)</span>
+<span class="c1"># EVOLS(QED)= sng=0,g=1,v=2,v8=4,t3=4,t8=5,ds=6,(pht=7)</span>
+<span class="c1"># FLVR(QED) = g=0, u=1, ubar=2, d=3, dbar=4, s=5, sbar=6, (pht=7)</span>
+<span class="nt">fitbasis</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EVOL</span><span class="w">  </span><span class="c1"># EVOL (7), EVOLQED (8), etc.</span>
+<span class="nt">basis</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fl</span><span class="p">:</span><span class="w"> </span><span class="nv">sng</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> trainable</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> mutsize</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> mutprob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.05</span><span class="p p-Indicator">],</span><span class="nt"> smallx</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">    </span><span class="nv">1.093</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.121</span><span class="p p-Indicator">],</span><span class="nt"> largex</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.486</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3.287</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fl</span><span class="p">:</span><span class="w"> </span><span class="nv">g</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> trainable</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> mutsize</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> mutprob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.05</span><span class="p p-Indicator">],</span><span class="nt"> smallx</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">    </span><span class="nv">0.8329</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.071</span><span class="p p-Indicator">],</span><span class="nt"> largex</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">3.084</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">6.767</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fl</span><span class="p">:</span><span class="w"> </span><span class="nv">v</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> trainable</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> mutsize</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> mutprob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.05</span><span class="p p-Indicator">],</span><span class="nt"> smallx</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">    </span><span class="nv">0.5202</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.7431</span><span class="p p-Indicator">],</span><span class="nt"> largex</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.556</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3.639</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fl</span><span class="p">:</span><span class="w"> </span><span class="nv">v3</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> trainable</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> mutsize</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> mutprob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.05</span><span class="p p-Indicator">],</span><span class="nt"> smallx</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">    </span><span class="nv">0.1205</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.4839</span><span class="p p-Indicator">],</span><span class="nt"> largex</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.736</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3.622</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fl</span><span class="p">:</span><span class="w"> </span><span class="nv">v8</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> trainable</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> mutsize</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> mutprob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.05</span><span class="p p-Indicator">],</span><span class="nt"> smallx</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">    </span><span class="nv">0.5864</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.7987</span><span class="p p-Indicator">],</span><span class="nt"> largex</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.559</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3.569</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fl</span><span class="p">:</span><span class="w"> </span><span class="nv">t3</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> trainable</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> mutsize</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> mutprob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.05</span><span class="p p-Indicator">],</span><span class="nt"> smallx</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">    </span><span class="nv">-0.5019</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.126</span><span class="p p-Indicator">],</span><span class="nt"> largex</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.754</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3.479</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fl</span><span class="p">:</span><span class="w"> </span><span class="nv">t8</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> trainable</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> mutsize</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> mutprob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.05</span><span class="p p-Indicator">],</span><span class="nt"> smallx</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">    </span><span class="nv">0.6305</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.8806</span><span class="p p-Indicator">],</span><span class="nt"> largex</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.544</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3.481</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fl</span><span class="p">:</span><span class="w"> </span><span class="nv">t15</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> trainable</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">,</span><span class="nt"> mutsize</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> mutprob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.05</span><span class="p p-Indicator">],</span><span class="nt"> smallx</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">    </span><span class="nv">1.087</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.139</span><span class="p p-Indicator">],</span><span class="nt"> largex</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.48</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3.365</span><span class="p p-Indicator">]}</span>
+
+<span class="c1">############################################################</span>
+<span class="nt">positivity</span><span class="p">:</span>
+<span class="nt">posdatasets</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSF2U</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span><span class="w">        </span><span class="c1"># Positivity Lagrange Multiplier</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSF2DW</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSF2S</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSFLL</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSDYU</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e10</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSDYD</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e10</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSDYS</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e10</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSF2C</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSXUQ</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span><span class="w">        </span><span class="c1"># Positivity of MSbar PDFs</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSXUB</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSXDQ</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSXDB</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSXSQ</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSXSB</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">POSXGL</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e6</span><span class="p p-Indicator">}</span>
+
+<span class="c1">############################################################</span>
+<span class="nt">integrability</span><span class="p">:</span>
+<span class="nt">integdatasets</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">INTEGXT8</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e2</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">INTEGXT3</span><span class="p p-Indicator">,</span><span class="nt"> maxlambda</span><span class="p">:</span><span class="w"> </span><span class="nv">1e2</span><span class="p p-Indicator">}</span>
+
+<span class="c1">############################################################</span>
+<span class="nt">debug</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">maxcores</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+</pre></div>
+</div>
+<p>The structure of the runcard is similar to the one that is used in the NNPDF methodology.
+So, in this tutorial we will mostly adress the new syntax and features of SIMUnet.</p>
+<p>We begin by looking at the following section of the runcard:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1">############################################################</span>
+<span class="nt">dataset_inputs</span><span class="p">:</span>
+
+<span class="c1">### &#39;Standard&#39; datasets ###</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">NMCPD_dw_ite</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">NMC</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">SLACP_dwsh</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">HERACOMBCCEP</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">HERACOMB_SIGMARED_C</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">HERACOMB_SIGMARED_B</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">DYE886R_dw_ite</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">DYE886P</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">DYE605_dw_ite</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">DYE906R_dw_ite</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;ACC&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">CDFZRAP_NEW</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">D0ZRAP_40</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">D0WMASY</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">ATLASWZRAP36PB</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">]}</span>
+
+<span class="c1">### &#39;Contaminated&#39; datasets ###</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">CMSDY1D12</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;EWK&#39;</span><span class="p p-Indicator">],</span><span class="nt"> contamination</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;EFT_LO&#39;</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">CMS_HMDY_13TEV</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;EWK&#39;</span><span class="p p-Indicator">],</span><span class="nt"> contamination</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;EFT_LO&#39;</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">ATLASDY2D8TEV</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCDEWK&#39;</span><span class="p p-Indicator">],</span><span class="nt"> contamination</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;EFT_LO&#39;</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="nv">ATLASZHIGHMASS49FB</span><span class="p p-Indicator">,</span><span class="nt"> frac</span><span class="p">:</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="nt"> cfac</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;QCD&#39;</span><span class="p p-Indicator">],</span><span class="nt"> contamination</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;EFT_LO&#39;</span><span class="p p-Indicator">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">dataset_inputs</span></code> key contains the datasets that will be used to peform the PDF fit.
+The <code class="docutils literal notranslate"><span class="pre">'Standard'</span> <span class="pre">datasets</span></code> are included in the same way as in a NNPDF fit. The <code class="docutils literal notranslate"><span class="pre">'Contaminated'</span> <span class="pre">datasets</span></code>
+are datasets that are contaminated with BSM physics. The contamination is activated by the <code class="docutils literal notranslate"><span class="pre">contamination_parameters</span></code> key.
+The actual BSM contamination is defined in the next section of the runcard:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1">###########################################################</span>
+<span class="c1"># The closure test namespace tells us the settings for the</span>
+<span class="c1"># (possible contaminated) closure test.</span>
+<span class="c1">############################################################</span>
+<span class="nt">closuretest</span><span class="p">:</span>
+<span class="nt">filterseed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Random seed to be used in filtering data partitions</span>
+<span class="nt">fakedata</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">     </span><span class="c1"># true = to use FAKEPDF to generate pseudo-data</span>
+<span class="nt">fakepdf</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NNPDF40_nnlo_as_01180</span><span class="w">      </span><span class="c1"># Theory input for pseudo-data</span>
+<span class="nt">errorsize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">    </span><span class="c1"># uncertainties rescaling</span>
+<span class="nt">fakenoise</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">    </span><span class="c1"># true = to add random fluctuations to pseudo-data</span>
+<span class="nt">rancutprob</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">   </span><span class="c1"># Fraction of data to be included in the fit</span>
+<span class="nt">rancutmethod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">   </span><span class="c1"># Method to select rancutprob data fraction</span>
+<span class="nt">rancuttrnval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># 0(1) to output training(valiation) chi2 in report</span>
+<span class="nt">printpdf4gen</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># To print info on PDFs during minimization</span>
+<span class="nt">contamination_parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;W&#39;</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.00008</span>
+<span class="w">    </span><span class="nt">linear_combination</span><span class="p">:</span>
+<span class="w">        </span><span class="s">&#39;Olq3&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-15.94</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Y&#39;</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">linear_combination</span><span class="p">:</span>
+<span class="w">        </span><span class="s">&#39;Olq1&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.51606</span>
+<span class="w">        </span><span class="s">&#39;Oed&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-6.0606</span>
+<span class="w">        </span><span class="s">&#39;Oeu&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12.1394</span>
+<span class="w">        </span><span class="s">&#39;Olu&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6.0606</span>
+<span class="w">        </span><span class="s">&#39;Old&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-3.0394</span>
+<span class="w">        </span><span class="s">&#39;Oqe&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.0394</span>
+
+<span class="nt">seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="nt">rngalgo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="c1">############################################################</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">contamination_parameters</span></code> key defines the BSM parameters that will be used to contaminate the datasets. In this case the <code class="docutils literal notranslate"><span class="pre">W</span></code>
+parameter encodes the 4-fermion interaction induced by a heavy W’ boson, while the <code class="docutils literal notranslate"><span class="pre">Y</span></code> parameter encodes the 4-fermion interaction
+induced by a heavy Z’ boson. In practice one needs to define the linear combination of the SMEFT Warsaw basis operators that will be
+describing the BSM physics.</p>
+</div>
+<div class="section" id="id3">
+<span id="id4"></span><h2>2. Running the fitting code<a class="headerlink" href="#id3" title="Permalink to this heading">#</a></h2>
+<p>After preparing a SIMUnet runcard <code class="docutils literal notranslate"><span class="pre">runcard.yml</span></code>, we are now ready to run a fit. The pipeline
+is similar to the NNPDF framework but some additional features can be included. In practice a contaminated
+fit can be run where the runcard is located by running the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>vp-setupfit<span class="w"> </span>runcard.yaml
+$<span class="w"> </span>vp-rebuild-data<span class="w"> </span>runcard_folder
+$<span class="w"> </span>n3fit<span class="w"> </span>runcard.yaml<span class="w"> </span>replica_number
+$<span class="w"> </span>evolven3fut<span class="w"> </span>runcard_folder<span class="w"> </span>replica_number
+$<span class="w"> </span>postfit<span class="w"> </span>final_replica_number<span class="w"> </span>runcard_folder
+</pre></div>
+</div>
+<p>Here is a breakdown of what each command does:</p>
+<ol class="arabic">
+<li><dl>
+<dt>Preparing the fit: <code class="docutils literal notranslate"><span class="pre">vp-setupfit</span> <span class="pre">runcard.yml</span></code></dt><dd><p>This command will generate a folder with the same name as the runcard (minus the file extension) in the
+current directory, which will contain a copy of the original YAML runcard.
+The required resources (such as the theory and t0 PDF set) will be
+downloaded automatically. Alternatively they can be obtained with the
+<code class="docutils literal notranslate"><span class="pre">vp-get</span></code> tool.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This step is not strictly necessary when producing a standard fit with
+<code class="docutils literal notranslate"><span class="pre">n3fit</span></code> but it is required by <span class="xref std std-ref">validphys</span>
+and it should therefore always be done. Note that <a class="reference internal" href="simu_fit.html#upload-fit"><span class="std std-ref">vp-upload</span></a>
+will fail unless this step has been followed. If necessary, this step can
+be done after the fit has been run.</p>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Creating the BSM pseudodata: <code class="docutils literal notranslate"><span class="pre">vp-rebuild-data</span> <span class="pre">runcard_folder</span></code></dt><dd><p>This command will take the generated folder as an argument and will create the BSM contaminated datasets, applying the BSM c-factors
+defined in the runcard to the experimental commondata. The contaminated data is stored in the runcard fit folder
+and will be used for the rest of the fit.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Running the fit: <code class="docutils literal notranslate"><span class="pre">n3fit</span> <span class="pre">runcard.yaml</span> <span class="pre">replica</span></code></dt><dd><p>The <code class="docutils literal notranslate"><span class="pre">n3fit</span></code> program takes a <code class="docutils literal notranslate"><span class="pre">runcard.yml</span></code> as input and a replica number, e.g.
+<code class="docutils literal notranslate"><span class="pre">n3fit</span> <span class="pre">runcard.yml</span> <span class="pre">replica</span></code> where <code class="docutils literal notranslate"><span class="pre">replica</span></code> goes from 1-n where n is the
+maximum number of desired replicas. Note that if you desire, for example, a 100
+replica fit you should launch more than 100 replicas (e.g. 130) because not
+all of the replicas will pass the checks in <code class="docutils literal notranslate"><span class="pre">postfit</span></code>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Evolving the replicas’ scale: <code class="docutils literal notranslate"><span class="pre">evolven3fit</span> <span class="pre">runcard_folder</span> <span class="pre">replica</span></code></dt><dd><p>Wait until you have fit results. Then
+run the <code class="docutils literal notranslate"><span class="pre">evolven3fit</span></code> program once to evolve all replicas using DGLAP. Remember
+to use the total number of replicas run (130 in the
+above example), rather than the number you desire in the final fit.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Selecting the replicas: <code class="docutils literal notranslate"><span class="pre">postfit</span> <span class="pre">final_replica_number</span> <span class="pre">runcard_folder</span></code></dt><dd><p>Wait until you have results, then run the command to finalize the PDF set by applying post selection criteria.
+This will produce a set of <code class="docutils literal notranslate"><span class="pre">final_replica_number</span> <span class="pre">+</span> <span class="pre">1</span></code> replicas. This time the
+number of replicas should be that which you desire in the final fit (100 in the
+above example). Note that the
+standard behaviour of <code class="docutils literal notranslate"><span class="pre">postfit</span></code> can be modified by using various flags.
+More information can be found at <a class="reference external" href="postfit">Processing a fit</a>.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+<div class="section" id="output-of-the-fit">
+<h2>Output of the fit<a class="headerlink" href="#output-of-the-fit" title="Permalink to this heading">#</a></h2>
+<p>The output of the fit is stored in the <code class="docutils literal notranslate"><span class="pre">runcard_folder</span></code>. It is identical to a normal NNPDF output.</p>
+</div>
+<div class="section" id="uploading-the-fit">
+<h2>3. Uploading the fit<a class="headerlink" href="#uploading-the-fit" title="Permalink to this heading">#</a></h2>
+<p>Once the fit is complete, the next steps involve uploading the results. This is particularly useful
+if, for example, you ran the fit on a cluster and want to make it avaiable to collaborators or download it
+from a different machine. You can upload the fit by using <code class="docutils literal notranslate"><span class="pre">vp-upload</span> <span class="pre">runcard_folder</span></code> and then fetch it
+with <code class="docutils literal notranslate"><span class="pre">vp-get</span> <span class="pre">fit</span> <span class="pre">fit_name</span></code>. Note that, to upload the fit, appropriate credentials are required.</p>
+</div>
+</div>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="simu_fit.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Simultaneous fits</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="simu_closure_test.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">SIMUnet closure test</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">1. Preparing a fit runcard</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">2. Running the fitting code</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-of-the-fit">Output of the fit</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#uploading-the-fit">3. Uploading the fit</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By PBSP
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, PBSP.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=8d27b9dea8ad943066ae"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
