@@ -59,7 +59,7 @@ class UltranestFit:
 
 
 def ultranest_fit(
-    _chi2,
+    _chi2_with_positivity,
     _pred_data,
     pdf_model,
     bayesian_prior,
@@ -72,8 +72,8 @@ def ultranest_fit(
 
     Parameters
     ----------
-    _chi2: @jax.jit CompiledFunction
-        The chi2 function of data.
+    _chi2_with_positivity: @jax.jit CompiledFunction
+        The chi2 function with positivity constraint.
 
     _pred_data: theory_predictions.make_pred_data
         The function to compute the theory predictions.
@@ -107,15 +107,20 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
+    fit_grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
     pred_func = pdf_model.predictions_func(FIT_XGRID, _pred_data)
 
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
+        fit_grid_values_func = jnp.vectorize(
+            fit_grid_values_func, signature="(n)->(m,k)"
+        )
         pred_func = jnp.vectorize(pred_func, signature="(n)->(m)")
 
     @jax.jit
     def log_likelihood(params):
+        pdf = fit_grid_values_func(params)
         predictions = pred_func(params)
-        return -0.5 * _chi2(predictions)
+        return -0.5 * _chi2_with_positivity(predictions, pdf)
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
