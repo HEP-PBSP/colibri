@@ -74,12 +74,11 @@ def analytic_fit(
     """
 
     parameters = pdf_model.param_names
-    fit_grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, _pred_data)
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
-    pdf_bases = [fit_grid_values_func(basis) for basis in bases]
-    predictions = jnp.array([_pred_data(pdf_basis) for pdf_basis in pdf_bases])
+    predictions = jnp.array([pred_and_pdf(basis)[0] for basis in bases])
 
     # Construct the analytic solution
     central_values = central_covmat_index.central_values
