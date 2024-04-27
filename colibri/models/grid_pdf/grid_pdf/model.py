@@ -83,7 +83,7 @@ class GridPDFModel(PDFModel):
         parameters, and produces the predictions for the data, as well as the
         PDF values on the grid.
 
-        The pdf_pred_func is a function that takes in the PDF defined on the
+        The forward_map is a function that takes in the PDF defined on the
         xgrid grid. They must therefore be compatible.
         """
 
