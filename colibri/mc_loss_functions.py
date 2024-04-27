@@ -14,7 +14,7 @@ import jax.scipy.linalg as jla
 from colibri.covmats import sqrt_covmat_jax
 
 
-def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
+def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on a training data batch.
@@ -31,9 +31,6 @@ def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
     fit_covariance_matrix: jnp.array
         covariance matrix of the fit (see config.produce_fit_covariance_matrix).
 
-    _pred_data: theory_predictions._pred_data
-        colibri provider for (fktable) theory predictions.
-
     Returns
     -------
     @jax.jit Callable
@@ -45,7 +42,7 @@ def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
     covmat = fit_covariance_matrix[tr_idx][:, tr_idx]
 
     @jax.jit
-    def chi2(pdf, batch_idx):
+    def chi2(predictions, batch_idx):
         """
         Parameters
         ----------
@@ -61,7 +58,7 @@ def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
             loss function value
 
         """
-        diff = _pred_data(pdf)[tr_idx][batch_idx] - central_values[batch_idx]
+        diff = predictions[tr_idx][batch_idx] - central_values[batch_idx]
 
         # batch covariance matrix before decomposing it
         batched_covmat = covmat[batch_idx][:, batch_idx]
@@ -77,7 +74,7 @@ def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
 
 
 def make_chi2_training_data_with_positivity(
-    mc_pseudodata, mc_posdata_split, fit_covariance_matrix, _pred_data, _penalty_posdata
+    mc_pseudodata, mc_posdata_split, fit_covariance_matrix, _penalty_posdata
 ):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -98,9 +95,6 @@ def make_chi2_training_data_with_positivity(
     fit_covariance_matrix: jnp.array
         covariance matrix of the fit (see config.produce_fit_covariance_matrix).
 
-    _pred_data: theory_predictions._pred_data
-        colibri provider for (fktable) theory predictions.
-
     _penalty_posdata: theory_predictions._penalty_posdata
         colibri provider used to compute positivity penalty.
 
@@ -117,7 +111,7 @@ def make_chi2_training_data_with_positivity(
     posdata_training_idx = mc_posdata_split.training
 
     @jax.jit
-    def chi2(pdf, batch_idx, alpha, lambda_positivity):
+    def chi2(predictions, pdf, batch_idx, alpha, lambda_positivity):
         """
         Parameters
         ----------
@@ -137,7 +131,7 @@ def make_chi2_training_data_with_positivity(
             loss function value
 
         """
-        diff = _pred_data(pdf)[tr_idx][batch_idx] - central_values[batch_idx]
+        diff = predictions[tr_idx][batch_idx] - central_values[batch_idx]
 
         # batch covariance matrix before decomposing it
         batched_covmat = covmat[batch_idx][:, batch_idx]
@@ -159,7 +153,7 @@ def make_chi2_training_data_with_positivity(
     return chi2
 
 
-def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
+def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix):
     """
     Returns a jax.jit compiled function that computes the chi2
     of a pdf grid on validation data.
@@ -176,9 +170,6 @@ def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
     fit_covariance_matrix: jnp.array
         covariance matrix of the fit (see config.produce_fit_covariance_matrix).
 
-    _pred_data: theory_predictions._pred_data
-        colibri provider for (fktable) theory predictions.
-
     Returns
     -------
     @jax.jit Callable
@@ -192,9 +183,9 @@ def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
     sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
 
     @jax.jit
-    def chi2(pdf):
+    def chi2(predictions):
         """ """
-        diff = _pred_data(pdf)[val_idx] - central_values
+        diff = predictions[val_idx] - central_values
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
@@ -205,7 +196,7 @@ def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix, _pred_data):
 
 
 def make_chi2_validation_data_with_positivity(
-    mc_pseudodata, mc_posdata_split, fit_covariance_matrix, _pred_data, _penalty_posdata
+    mc_pseudodata, mc_posdata_split, fit_covariance_matrix, _penalty_posdata
 ):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -225,9 +216,6 @@ def make_chi2_validation_data_with_positivity(
 
     fit_covariance_matrix: jnp.array
         covariance matrix of the fit (see config.produce_fit_covariance_matrix).
-
-    _pred_data: theory_predictions._pred_data
-        colibri provider for (fktable) theory predictions.
 
     _penalty_posdata: theory_predictions._penalty_posdata
         colibri provider used to compute positivity penalty.
@@ -249,9 +237,9 @@ def make_chi2_validation_data_with_positivity(
     sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
 
     @jax.jit
-    def chi2(pdf, alpha, lambda_positivity):
+    def chi2(predictions, pdf, alpha, lambda_positivity):
         """ """
-        diff = _pred_data(pdf)[val_idx] - central_values
+        diff = predictions[val_idx] - central_values
 
         # solve_triangular: solve the equation a x = b for x, assuming a is a triangular matrix.
         chi2_vec = jla.solve_triangular(sqrt_covmat, diff, lower=True)
