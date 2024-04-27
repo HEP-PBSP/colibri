@@ -123,7 +123,7 @@ def monte_carlo_fit(
         validation_loss: jnp.array
     """
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, _pred_data)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     @jax.jit
     def loss_training(parameters, batch_idx):
