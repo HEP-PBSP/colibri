@@ -74,7 +74,7 @@ def analytic_fit(
     """
 
     parameters = pdf_model.param_names
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, _pred_data)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
