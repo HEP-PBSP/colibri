@@ -5,13 +5,14 @@ This module implements an abstract class PDFModel which is filled by the various
 
 """
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 
 
 class PDFModel(ABC):
     """An abstract class describing the key features of a PDF."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def param_names(self):
         """This should return a list of names for the fitted parameters of the model."""
         pass
