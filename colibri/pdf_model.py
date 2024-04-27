@@ -6,6 +6,8 @@ This module implements an abstract class PDFModel which is filled by the various
 """
 
 from abc import ABC, abstractmethod, abstractproperty
+from typing import Callable, Tuple
+import jax.numpy as jnp
 
 
 class PDFModel(ABC):
@@ -24,7 +26,9 @@ class PDFModel(ABC):
         pass
 
     @abstractmethod
-    def pred_and_pdf_func(self, xgrid, forward_map):
+    def pred_and_pdf_func(
+        self, xgrid, forward_map
+    ) -> Callable[[jnp.array], Tuple[jnp.ndarray, jnp.ndarray]]:
         """This method should produce a function that returns a tuple of 2 arrays,
         taking the model parameters as input.
         The first array are the predictions for the data,
