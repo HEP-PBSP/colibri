@@ -107,19 +107,14 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
-    fit_grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
-    pred_func = pdf_model.predictions_func(FIT_XGRID, _pred_data)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, _pred_data)
 
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
-        fit_grid_values_func = jnp.vectorize(
-            fit_grid_values_func, signature="(n)->(m,k)"
-        )
-        pred_func = jnp.vectorize(pred_func, signature="(n)->(m)")
+        pred_and_pdf = jax.vmap(pred_and_pdf, in_axes=(0,), out_axes=(0, 0))
 
     @jax.jit
     def log_likelihood(params):
-        pdf = fit_grid_values_func(params)
-        predictions = pred_func(params)
+        predictions, pdf = pred_and_pdf(params)
         return -0.5 * _chi2_with_positivity(predictions, pdf)
 
     sampler = ultranest.ReactiveNestedSampler(
