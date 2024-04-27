@@ -8,6 +8,7 @@ This module implements an abstract class PDFModel which is filled by the various
 from abc import ABC, abstractmethod
 from typing import Callable, Tuple
 import jax.numpy as jnp
+import jax
 
 
 class PDFModel(ABC):
@@ -26,13 +27,22 @@ class PDFModel(ABC):
         """
         pass
 
-    @abstractmethod
     def pred_and_pdf_func(
         self, xgrid, forward_map
     ) -> Callable[[jnp.array], Tuple[jnp.ndarray, jnp.ndarray]]:
-        """This method should produce a function that returns a tuple of 2 arrays,
+        """This method produces a function that returns a tuple of 2 arrays,
         taking the model parameters as input.
         The first array are the predictions for the data,
         the second are the PDF values on the xgrid.
+
+        The forward_map is a function that takes in the PDF defined on the
+        xgrid grid. They must therefore be compatible.
         """
-        pass
+
+        @jax.jit
+        def pred_and_pdf(params):
+            pdf = self.grid_values_func(xgrid)(params)
+            predictions = forward_map(pdf)
+            return predictions, pdf
+
+        return pred_and_pdf

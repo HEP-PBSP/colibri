@@ -120,23 +120,6 @@ class WMinPDF(PDFModel):
 
         return wmin_param
 
-    def pred_and_pdf_func(self, xgrid, forward_map):
-        """This function should produce a function that takes in the model
-        parameters, and produces the predictions for the data, as well as the
-        PDF values on the grid.
-
-        The forward_map is a function that takes in the PDF defined on the
-        xgrid grid. They must therefore be compatible.
-        """
-
-        @jax.jit
-        def pred_and_pdf(params):
-            pdf = self.grid_values_func(xgrid)(params)
-            predictions = forward_map(pdf)
-            return predictions, pdf
-
-        return pred_and_pdf
-
 
 def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     """
