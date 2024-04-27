@@ -68,6 +68,7 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install pytest
+        pip install pytest-cov
         pytest
     
     - name: Upload coverage reports to Codecov
