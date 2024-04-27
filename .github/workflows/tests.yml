@@ -69,7 +69,7 @@ jobs:
       run: |
         pip install pytest
         pip install pytest-cov
-        pytest
+        pytest --cov=colibri --cov=models tests/
     
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.0.1
