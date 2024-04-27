@@ -107,7 +107,7 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, _pred_data)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
         pred_and_pdf = jax.vmap(pred_and_pdf, in_axes=(0,), out_axes=(0, 0))
