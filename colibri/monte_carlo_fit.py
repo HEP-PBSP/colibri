@@ -44,6 +44,7 @@ class MonteCarloFit:
 def monte_carlo_fit(
     _chi2_training_data_with_positivity,
     _chi2_validation_data_with_positivity,
+    _pred_data,
     len_trval_data,
     pdf_model,
     mc_initial_parameters,
@@ -69,6 +70,9 @@ def monte_carlo_fit(
 
     _chi2_validation_data_with_positivity: PjitFunction
         Function that computes the chi2 of the validation data.
+
+    _pred_data: theory_predictions.make_pred_data
+        The function to compute the theory predictions.
 
     len_trval_data: tuple
         Tuple containing the length of the training and validation data.
@@ -119,21 +123,23 @@ def monte_carlo_fit(
         validation_loss: jnp.array
     """
 
-    fit_grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     @jax.jit
     def loss_training(parameters, batch_idx):
-        pdf = fit_grid_values_func(parameters)
+        predictions, pdf = pred_and_pdf(parameters)
 
         return _chi2_training_data_with_positivity(
-            pdf, batch_idx, alpha, lambda_positivity
+            predictions, pdf, batch_idx, alpha, lambda_positivity
         )
 
     @jax.jit
     def loss_validation(parameters):
-        pdf = fit_grid_values_func(parameters)
+        predictions, pdf = pred_and_pdf(parameters)
 
-        return _chi2_validation_data_with_positivity(pdf, alpha, lambda_positivity)
+        return _chi2_validation_data_with_positivity(
+            predictions, pdf, alpha, lambda_positivity
+        )
 
     @jax.jit
     def step(params, opt_state, batch_idx):
