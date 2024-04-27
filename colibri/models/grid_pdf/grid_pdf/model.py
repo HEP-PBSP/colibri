@@ -78,6 +78,19 @@ class GridPDFModel(PDFModel):
 
         return interp_func
 
+    def predictions_func(self, interpolation_grid, pred_data):
+        """This function should produce a predictions function, which takes
+        in the model parameters, and produces the predictions for the data.
+        """
+
+        @jax.jit
+        def pred(params):
+            pdf = self.grid_values_func(interpolation_grid)(params)
+            predictions = pred_data(pdf)
+            return predictions
+
+        return pred
+
 
 def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     """
