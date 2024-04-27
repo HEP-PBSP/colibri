@@ -1,6 +1,7 @@
 # colibri
 ![Tests bagde](https://github.com/HEP-PBSP/colibri/actions/workflows/tests.yml/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![codecov](https://codecov.io/gh/HEP-PBSP/colibri/graph/badge.svg?token=BQ01FTYGZO)](https://codecov.io/gh/HEP-PBSP/colibri)
 
 A reportengine app to perform PDF fits in a new parametrisation.
 
