@@ -69,7 +69,6 @@ jobs:
       run: |
         pip install pytest
         pip install pytest-cov
-        pip install coverage
         pytest --cov=colibri --cov-report=xml
     
     - name: Upload coverage reports to Codecov
