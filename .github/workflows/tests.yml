@@ -67,8 +67,8 @@ jobs:
     - name: Run tests and collect coverage
       shell: bash -l {0}
       run: |
-        pip install pytest
-        pytest --cov app ${{ env.CODECOV_ATS_TESTS }}
+        pip install pytest-cov
+        pytest --cov ${{ env.CODECOV_ATS_TESTS }}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
