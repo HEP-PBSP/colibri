@@ -1,0 +1,11 @@
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  status:
+    project:
+      default:
+        target: 30% # Set your desired coverage threshold for the project
+    patch:
+      default:
+        target: 0% # Set your desired coverage threshold for the patch (PR)
