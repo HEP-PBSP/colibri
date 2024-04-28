@@ -12,17 +12,16 @@ import hashlib
 import logging
 import os
 import shutil
-import numpy as np
 
+import jax.numpy as jnp
+from colibri import commondata_utils
+from colibri import covmats as colibri_covmats
+from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
 from validphys.config import Config, Environment
 from validphys.fkparser import load_fktable
-
-from colibri import commondata_utils
-from colibri import covmats as colibri_covmats
-from colibri.constants import FLAVOUR_TO_ID_MAPPING
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -135,7 +134,10 @@ class colibriConfig(Config):
                     # add fktable xgrid to a set
                     xgrid_points.update(fk.xgrid)
 
-        xgrid = np.array(sorted(xgrid_points))
+        xgrid = jnp.array(sorted(xgrid_points))
+        log.info(
+            f"Fitting x-grid consists of {len(xgrid)} points, ranging from {xgrid[0]} to {xgrid[-1]}."
+        )
         return xgrid
 
     def parse_ns_settings(

@@ -51,6 +51,12 @@ def analytic_fit(
     """
     Analytic fits, for any *linear* PDF model.
 
+    The assumption is that the model is linear with an intercept:
+    T(w) = T(0) + X w.
+    The linear problem to solve is through minimisation of the chi2:
+    chi2 = (D - (T(0) + X w))^T Sigma^-1 (D - (T(0) + X w)) = (Y - X w)^T Sigma^-1 (Y - X w)
+    with Y = D - T(0).
+
     Parameters
     ----------
     central_covmat_index: commondata_utils.CentralCovmatIndex
@@ -74,12 +80,12 @@ def analytic_fit(
     """
 
     parameters = pdf_model.param_names
-    fit_grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
-    pdf_bases = [fit_grid_values_func(basis) for basis in bases]
-    predictions = jnp.array([_pred_data(pdf_basis) for pdf_basis in pdf_bases])
+    predictions = jnp.array([pred_and_pdf(basis)[0] for basis in bases])
+    intercept = pred_and_pdf(jnp.zeros(len(parameters)))[0]
 
     # Construct the analytic solution
     central_values = central_covmat_index.central_values
@@ -89,9 +95,9 @@ def analytic_fit(
     inv_covmat = jla.inv(covmat)
 
     # Solve chi2 analytically for the mean
-    Y = central_values
+    Y = central_values - intercept
     Sigma = inv_covmat
-    X = predictions.T
+    X = predictions.T - intercept[:, None]
 
     # * Check that cov mat is positive definite
     if jnp.any(jla.eigh(X.T @ Sigma @ X)[0] <= 0.0):
