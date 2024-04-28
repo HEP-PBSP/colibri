@@ -51,6 +51,12 @@ def analytic_fit(
     """
     Analytic fits, for any *linear* PDF model.
 
+    The assumption is that the model is linear with an intercept:
+    T(w) = T(0) + X w.
+    The linear problem to solve is through minimisation of the chi2:
+    chi2 = (D - (T(0) +X w))^T Sigma^-1 (D - (T(0) + X w)) = (Y - X w)^T Sigma^-1 (Y - X w)
+    with Y = D - T(0) and X = T - T(0).
+
     Parameters
     ----------
     central_covmat_index: commondata_utils.CentralCovmatIndex
