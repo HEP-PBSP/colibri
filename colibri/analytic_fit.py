@@ -79,6 +79,7 @@ def analytic_fit(
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
     predictions = jnp.array([pred_and_pdf(basis)[0] for basis in bases])
+    intercept = pred_and_pdf(jnp.zeros(len(parameters)))[0]
 
     # Construct the analytic solution
     central_values = central_covmat_index.central_values
@@ -88,9 +89,9 @@ def analytic_fit(
     inv_covmat = jla.inv(covmat)
 
     # Solve chi2 analytically for the mean
-    Y = central_values
+    Y = central_values - intercept
     Sigma = inv_covmat
-    X = predictions.T
+    X = predictions.T - intercept[:, None]
 
     # * Check that cov mat is positive definite
     if jnp.any(jla.eigh(X.T @ Sigma @ X)[0] <= 0.0):
