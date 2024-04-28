@@ -52,6 +52,8 @@ wmin_settings:                         # Settings for the weight minimisation mo
 analytic_settings:
   n_posterior_samples: 10
   sampling_seed: 123456
+  compute_evidence: True
+  prior_width: 20
 
 actions_:
 - analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit

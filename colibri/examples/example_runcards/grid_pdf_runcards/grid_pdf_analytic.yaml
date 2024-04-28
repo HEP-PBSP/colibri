@@ -75,6 +75,7 @@ grid_pdf_settings:
 analytic_settings:
   n_posterior_samples: 10
   sampling_seed: 123456
+  compute_evidence: False
 
 actions_:
 - analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
