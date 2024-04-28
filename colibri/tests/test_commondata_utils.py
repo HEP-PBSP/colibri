@@ -49,7 +49,6 @@ def test_central_covmat_index():
     """
 
     result = colibriAPI.central_covmat_index(**{**TEST_DATASETS, **T0_PDFSET})
-
     # Check that central_covmat_index produces a CentralCovmatIndex object
     assert isinstance(result, CentralCovmatIndex)
 
@@ -60,6 +59,10 @@ def test_central_covmat_index():
     assert isinstance(result.covmat, jnp.ndarray)
     assert hasattr(result, "central_values_idx")
     assert isinstance(result.central_values_idx, jnp.ndarray)
+
+    # Check that the to_dict method works as expected
+    result_dict = result.to_dict()
+    assert isinstance(result_dict, dict)
 
     # Check that dimensions of attributes are correct
     assert result.central_values.shape[0] == result.covmat.shape[0]
