@@ -51,6 +51,7 @@ wmin_settings:                         # Settings for the weight minimisation mo
 # Analytic settings
 analytic_settings:
   n_posterior_samples: 10
+  full_posterior_sample: 1000
   sampling_seed: 123456
 
 prior_settings:
