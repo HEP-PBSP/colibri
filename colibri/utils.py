@@ -14,7 +14,6 @@ from validphys import convolution
 import pathlib
 import sys
 import os
-import glob
 import pandas as pd
 
 
@@ -168,7 +167,7 @@ def get_fit_path(fit):
     return str(fit_path)
 
 
-def get_csv_file_posterior(colibri_fit):
+def get_full_posterior(colibri_fit):
     """
     Given a colibri fit, returns the pandas dataframe with the results of the fit
     at the parameterisation scale.
@@ -186,10 +185,13 @@ def get_csv_file_posterior(colibri_fit):
 
     fit_path = get_fit_path(colibri_fit)
 
-    if not glob.glob(fit_path + "/*result.csv"):
-        raise FileNotFoundError("Could not find the csv results of fit " + colibri_fit)
+    csv_path = fit_path + "/full_posterior_sample.csv"
+    # check that file exist
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(
+            "Could not find the full posterior sample for the fit " + colibri_fit
+        )
 
-    csv_path = glob.glob(fit_path + "/*result.csv")[0]
     df = pd.read_csv(csv_path, index_col=0)
 
     return df
