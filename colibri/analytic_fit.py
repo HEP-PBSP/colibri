@@ -45,6 +45,7 @@ def analytic_fit(
     _pred_data,
     pdf_model,
     analytic_settings,
+    bayesian_prior,
     output_path,
     FIT_XGRID,
 ):
@@ -79,6 +80,11 @@ def analytic_fit(
         the sorted union of the xgrids of the datasets entering the fit.
     """
 
+    log.warning("The prior is assumed to be flat in the parameters.")
+    log.warning(
+        "Assuming that the prior is wide enough to fully cover the gaussian likelihood."
+    )
+
     parameters = pdf_model.param_names
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
@@ -109,37 +115,29 @@ def analytic_fit(
     sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     sol_covmat = jla.inv(X.T @ Sigma @ X)
 
-    if analytic_settings["compute_evidence"]:
-        # Compute the evidence
-        # This is the log of the evidence, which is the log of the integral of the likelihood
-        # over the prior. The prior is a gaussian with width prior_width.
-        log.info("Computing the evidence...")
-        log.warning("Supporting only cubic priors.")
-        log.warning(
-            "Assuming that the prior is wide enough to fully cover the gaussian likelihood."
-        )
+    # Compute the evidence
+    # This is the log of the evidence, which is the log of the integral of the likelihood
+    # over the prior. The prior is a gaussian with width prior_width.
+    log.info("Computing the evidence...")
 
-        # Check if prior width is set, if not set to 1.0
-        if "prior_width" not in analytic_settings:
-            prior_width = 1.0
-            log.warning(
-                "No prior width specified, setting it to 1.0. This might not be desired."
-            )
-        else:
-            prior_width = analytic_settings["prior_width"]
+    prior_width = bayesian_prior(jnp.ones(len(parameters))) - bayesian_prior(
+        jnp.zeros(len(parameters))
+    )
 
-        gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
-        log_prior = len(sol_mean) * jnp.log(1 / prior_width)
-        # This is a factor in front of the gaussian likelihood
-        extra_term = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
+    print(prior_width)
 
-        logZ = gaussian_integral + extra_term + log_prior
+    gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
+    log_prior = jnp.log(1 / prior_width).sum()
+    # This is a factor in front of the gaussian likelihood
+    extra_term = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
 
-        log.info(f"LogZ = {logZ}")
+    logZ = gaussian_integral + extra_term + log_prior
 
-        # Write the evidence to file
-        with open(str(output_path) + "/evidence.csv", "w") as f:
-            f.write(f"LogZ\n{logZ}")
+    log.info(f"LogZ = {logZ}")
+
+    # Write the evidence to file
+    with open(str(output_path) + "/evidence.csv", "w") as f:
+        f.write(f"LogZ\n{logZ}")
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
