@@ -1,4 +1,7 @@
 import jax
+import jax.numpy as jnp
+
+from colibri.utils import get_fit_path, get_csv_file_posterior
 
 
 def bayesian_prior(prior_settings):
@@ -22,6 +25,32 @@ def bayesian_prior(prior_settings):
         @jax.jit
         def prior_transform(cube):
             return cube * (max_val - min_val) + min_val
+
+    elif prior_settings["type"] == "prior_from_gauss_posterior":
+        prior_fit = prior_settings["prior_fit"]
+
+        fit_path = get_fit_path(prior_fit)
+        df_fit = get_csv_file_posterior(prior_fit)
+
+        # Compute mean and covariance matrix of the posterior
+        mean_posterior = jnp.array(df_fit.mean().values)
+        cov_posterior = jnp.array(df_fit.cov().values)
+        inv_cov_posterior = jnp.linalg.inv(cov_posterior)
+
+        l, v = jnp.linalg.eigh(inv_cov_posterior)
+        rotation_matrix = jnp.dot(v, jnp.diag(1.0 / jnp.sqrt(l)))
+
+        @jax.jit
+        def prior_transform(cube):
+            """
+            NOTE: not working with vectorised cube for unclear reasons.
+            """
+            # generate independent gaussian with mean 0 and std 1
+            independent_gaussian = jax.scipy.stats.norm.ppf(cube)
+
+            return mean_posterior + jnp.einsum(
+                "ij,...j->...i", rotation_matrix, independent_gaussian
+            )
 
     else:
         raise ValueError("Invalid prior type.")
