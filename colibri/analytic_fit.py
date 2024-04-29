@@ -145,7 +145,7 @@ def analytic_fit(
         key,
         sol_mean,
         sol_covmat,
-        shape=(analytic_settings["full_posterior_sample"],),
+        shape=(analytic_settings["full_sample_size"],),
     )
     t1 = time.time()
     log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
