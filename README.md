@@ -3,7 +3,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![codecov](https://codecov.io/gh/HEP-PBSP/colibri/graph/badge.svg?token=BQ01FTYGZO)](https://codecov.io/gh/HEP-PBSP/colibri)
 
-A reportengine app to perform PDF fits in a new parametrisation.
+A reportengine app to perform PDF fits using arbitrary parametrisations.
 
 
 ## colibri Installation
@@ -36,7 +36,7 @@ pip install -e .
 
 ## Installation of Various Models
 In general if you are not using the `full_environment.yml` installation, it is possible to manually install the various models.
-# Weight Minimization
+# Grid PDF 
 ```
 cd models/grid_pdf
 pip install -e .
