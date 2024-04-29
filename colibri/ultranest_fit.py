@@ -168,6 +168,11 @@ def ultranest_fit(
         df = pd.DataFrame(resampled_posterior, columns=parameters)
         df.to_csv(str(output_path) + "/ns_result.csv")
 
+        # Write also full samples
+        full_samples = ultranest_result["samples"]
+        full_samples_df = pd.DataFrame(full_samples, columns=parameters)
+        full_samples_df.to_csv(str(output_path) + "/full_posterior_sample.csv")
+
         # create replicas folder if it does not exist
         replicas_path = str(output_path) + "/replicas"
         if not os.path.exists(replicas_path):
