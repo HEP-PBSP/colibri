@@ -2,6 +2,12 @@
 Module
 """
 
+from colibri.pdf_model import PDFModel
+import numpy as np
+
+
+CONFIG_YML_PATH = "test_runcards/test_config.yaml"
+
 TEST_DATASET = {
     "dataset_input": {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"},
     "theoryid": 700,
@@ -35,6 +41,33 @@ TEST_DATASETS_HAD = {
     "theoryid": 700,
     "use_cuts": "internal",
 }
+
+"""
+Mixed DIS and HAD dataset for testing purposes.
+"""
+TEST_DATASETS_DIS_HAD = {
+    "dataset_inputs": [
+        {"dataset": "HERA_NC_318GEV_EP-SIGMARED", "variant": "legacy"},
+        {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
+    ],
+    "theoryid": 700,
+    "use_cuts": "internal",
+}
+
+"""
+Positivity dataset for testing purposes.
+"""
+TEST_POS_DATASET = {
+    "positivity": {
+        "posdatasets": [
+            {
+                "dataset": "NNPDF_POS_2P24GEV_F2U",
+                "maxlambda": 1e6,
+            }
+        ]
+    }
+}
+
 
 T0_PDFSET = {"t0pdfset": "NNPDF40_nnlo_as_01180"}
 
@@ -178,3 +211,33 @@ TEST_FULL_POS_DATASET = {
     "theoryid": 700,
     "use_cuts": "internal",
 }
+
+
+"""
+Toy PDF model for testing purposes.
+"""
+N_PARAMS = 10
+
+
+class TestPDFModel(PDFModel):
+
+    def __init__(self, n_parameters):
+        self.n_basis = n_parameters
+
+    @property
+    def param_names(self):
+        return [f"w_{i+1}" for i in range(self.n_parameters)]
+
+    def grid_values_func(self, xgrid):
+        """
+        This function should produce a grid values function, which takes
+        in the model parameters, and produces the PDF values on the grid xgrid.
+        """
+
+        def wmin_param(params):
+            """
+            Returns random array of shape (14,len(params))
+            """
+            return np.random.rand(14, len(params))
+
+        return wmin_param
