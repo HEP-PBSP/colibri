@@ -11,6 +11,11 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from validphys import convolution
+import pathlib
+import sys
+import os
+import glob
+import pandas as pd
 
 
 def fill_dis_fkarr_with_zeros(fktable, FIT_XGRID):
@@ -152,3 +157,39 @@ def closure_test_central_pdf_grid(closure_test_pdf_grid):
     Returns the central replica of the closure test pdf grid.
     """
     return closure_test_pdf_grid[0]
+
+
+def get_fit_path(fit):
+    fit_path = pathlib.Path(sys.prefix) / "share/colibri/results" / fit
+    if not os.path.exists(fit_path):
+        raise FileNotFoundError(
+            "Could not find a fit " + fit + " in the colibri/results directory."
+        )
+    return str(fit_path)
+
+
+def get_csv_file_posterior(colibri_fit):
+    """
+    Given a colibri fit, returns the pandas dataframe with the results of the fit
+    at the parameterisation scale.
+
+    Parameters
+    ----------
+    colibri_fit : str
+        The name of the fit to read.
+
+
+    Returns
+    -------
+    pandas dataframe
+    """
+
+    fit_path = get_fit_path(colibri_fit)
+
+    if not glob.glob(fit_path + "/*result.csv"):
+        raise FileNotFoundError("Could not find the csv results of fit " + colibri_fit)
+
+    csv_path = glob.glob(fit_path + "/*result.csv")[0]
+    df = pd.read_csv(csv_path, index_col=0)
+
+    return df
