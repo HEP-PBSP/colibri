@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from colibri.utils import get_csv_file_posterior
+from colibri.utils import get_full_posterior
 
 
 def bayesian_prior(prior_settings):
@@ -28,7 +28,7 @@ def bayesian_prior(prior_settings):
 
     elif prior_settings["type"] == "prior_from_gauss_posterior":
         prior_fit = prior_settings["prior_fit"]
-        df_fit = get_csv_file_posterior(prior_fit)
+        df_fit = get_full_posterior(prior_fit)
 
         # Compute mean and covariance matrix of the posterior
         mean_posterior = jnp.array(df_fit.mean().values)
