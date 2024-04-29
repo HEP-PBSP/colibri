@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from colibri.utils import get_fit_path, get_csv_file_posterior
+from colibri.utils import get_csv_file_posterior
 
 
 def bayesian_prior(prior_settings):
