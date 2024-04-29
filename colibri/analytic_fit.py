@@ -124,8 +124,6 @@ def analytic_fit(
         jnp.zeros(len(parameters))
     )
 
-    print(prior_width)
-
     gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
     log_prior = jnp.log(1 / prior_width).sum()
     # This is a factor in front of the gaussian likelihood
