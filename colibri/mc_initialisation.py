@@ -35,9 +35,12 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     if mc_initialiser_settings["type"] == "zeros":
         return jnp.array([0.0] * len(pdf_model.param_names))
 
-    random_seed = jax.random.PRNGKey(
-        mc_initialiser_settings["random_seed"] + replica_index
-    )
+    if "random_seed" in mc_initialiser_settings:
+        random_seed = jax.random.PRNGKey(
+            mc_initialiser_settings["random_seed"] + replica_index
+        )
+    else:
+        random_seed = jax.random.PRNGKey(replica_index)
 
     if mc_initialiser_settings["type"] == "normal":
         # Currently, only one standard deviation around a zero mean is implemented
