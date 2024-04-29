@@ -28,8 +28,6 @@ def bayesian_prior(prior_settings):
 
     elif prior_settings["type"] == "prior_from_gauss_posterior":
         prior_fit = prior_settings["prior_fit"]
-
-        fit_path = get_fit_path(prior_fit)
         df_fit = get_csv_file_posterior(prior_fit)
 
         # Compute mean and covariance matrix of the posterior
