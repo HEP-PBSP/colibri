@@ -16,7 +16,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+import dill
 from validphys import convolution
+
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def fill_dis_fkarr_with_zeros(fktable, FIT_XGRID):
@@ -197,6 +202,78 @@ def get_full_posterior(colibri_fit):
     df = pd.read_csv(csv_path, index_col=0)
 
     return df
+
+
+def get_pdf_model(colibri_fit):
+    """
+    Given a colibri fit, returns the PDF model.
+
+    Parameters
+    ----------
+    colibri_fit : str
+        The name of the fit to read.
+
+
+    Returns
+    -------
+    PDFModel
+    """
+
+    fit_path = get_fit_path(colibri_fit)
+
+    pdf_model_path = fit_path + "/pdf_model.pkl"
+    # check that file exist
+    if not os.path.exists(pdf_model_path):
+        raise FileNotFoundError(
+            "Could not find the pdf model for the fit " + colibri_fit
+        )
+
+    with open(pdf_model_path, "rb") as file:
+        pdf_model = dill.load(file)
+
+    return pdf_model
+
+
+def pdf_models_equal(pdf_model_1, pdf_model_2):
+    """
+    Checks if two pdf models are equal.
+
+    Parameters
+    ----------
+    pdf_model_1 : PDFModel
+    pdf_model_2 : PDFModel
+
+    Returns
+    -------
+    bool
+    """
+
+    # Check that the two models have the same attributes
+    if vars(pdf_model_1) != vars(pdf_model_2):
+        # Check that keys are the same
+        if vars(pdf_model_1).keys() != vars(pdf_model_2).keys():
+            log.error("The two models do not have the same structure.")
+            log.error(
+                "The first model has attributes " f"{list(vars(pdf_model_1).keys())} "
+            )
+            log.error(
+                "The second model has attributes " f"{list(vars(pdf_model_2).keys())}."
+            )
+            return False
+
+        log.error("The two models do not have the same attributes.")
+        # Loop over the attributes and check which ones are different
+        for key, value in vars(pdf_model_1).items():
+            if value != vars(pdf_model_2)[key]:
+                log.error("The first model has attribute " f"{key} = {value} ")
+                log.error(
+                    "The second model has attribute "
+                    f"{key} = {vars(pdf_model_2)[key]}."
+                )
+
+        return False
+
+    return True
 
 
 def cast_to_numpy(func):
