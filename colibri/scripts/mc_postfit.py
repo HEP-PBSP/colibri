@@ -114,6 +114,6 @@ def main():
     postfit_df.index = [i + 1 for i in range(len(good_replicas))]
 
     # Save the postfit dataframe
-    postfit_df.to_csv(fit_path / "mc_result.csv")
+    postfit_df.to_csv(fit_path / "mc_result.csv", float_format="%.5e")
 
     log.info("Postfit completed")

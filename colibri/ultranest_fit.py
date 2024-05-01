@@ -166,12 +166,14 @@ def ultranest_fit(
             sampler.plot()
 
         df = pd.DataFrame(resampled_posterior, columns=parameters)
-        df.to_csv(str(output_path) + "/ns_result.csv")
+        df.to_csv(str(output_path) + "/ns_result.csv", float_format="%.5e")
 
         # Write also full samples
         full_samples = ultranest_result["samples"]
         full_samples_df = pd.DataFrame(full_samples, columns=parameters)
-        full_samples_df.to_csv(str(output_path) + "/full_posterior_sample.csv")
+        full_samples_df.to_csv(
+            str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
+        )
 
         # create replicas folder if it does not exist
         replicas_path = str(output_path) + "/replicas"

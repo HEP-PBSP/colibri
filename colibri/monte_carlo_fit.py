@@ -237,6 +237,7 @@ def monte_carlo_fit(
     df.to_csv(
         str(output_path) + f"/fit_replicas/replica_{replica_index}" + "/mc_loss.csv",
         index=False,
+        float_format="%.5e",
     )
 
     return MonteCarloFit(

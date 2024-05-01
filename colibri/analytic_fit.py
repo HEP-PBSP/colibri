@@ -157,13 +157,15 @@ def analytic_fit(
         )
     # Write full sample to csv
     full_samples_df = pd.DataFrame(full_samples, columns=parameters)
-    full_samples_df.to_csv(str(output_path) + "/full_posterior_sample.csv")
+    full_samples_df.to_csv(
+        str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
+    )
 
     # Resample the posterior for PDF set
     samples = full_samples[: analytic_settings["n_posterior_samples"]]
     # Save the results
     df = pd.DataFrame(samples, columns=parameters)
-    df.to_csv(str(output_path) + "/analytic_result.csv")
+    df.to_csv(str(output_path) + "/analytic_result.csv", float_format="%.5e")
 
     # create replicas folder if it does not exist
     replicas_path = str(output_path) + "/replicas"
