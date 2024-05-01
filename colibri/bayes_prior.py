@@ -41,9 +41,6 @@ def bayesian_prior(prior_settings):
         @cast_to_numpy
         @jax.jit
         def prior_transform(cube):
-            """
-            NOTE: not working with vectorised cube for unclear reasons.
-            """
             # generate independent gaussian with mean 0 and std 1
             independent_gaussian = jax.scipy.stats.norm.ppf(cube)
             return mean_posterior + jnp.einsum(
