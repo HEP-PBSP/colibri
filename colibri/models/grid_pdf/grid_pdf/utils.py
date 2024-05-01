@@ -176,7 +176,7 @@ def bayesian_prior(prior_settings, pdf_model):
             return prior
 
     else:
-        return colibri.bayes_prior.bayesian_prior(prior_settings)
+        return colibri.bayes_prior.bayesian_prior(prior_settings, pdf_model)
 
     return prior_transform
 
