@@ -33,6 +33,8 @@ colibri_providers = [
     "colibri.monte_carlo_fit",
     "colibri.analytic_fit",
     "colibri.pdf_model",
+    "colibri.bayes_prior",
+    "colibri.mc_initialisation",
     "reportengine.report",
 ]
 
