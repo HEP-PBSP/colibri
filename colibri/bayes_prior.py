@@ -31,7 +31,7 @@ def bayesian_prior(prior_settings):
         df_fit = get_full_posterior(prior_fit)
 
         # Compute mean and covariance matrix of the posterior
-        mean_posterior = df_fit.mean().values
+        mean_posterior = jnp.array(df_fit.mean().values)
         cov_posterior = jnp.array(df_fit.cov().values)
         inv_cov_posterior = jnp.linalg.inv(cov_posterior)
 
@@ -45,7 +45,6 @@ def bayesian_prior(prior_settings):
             NOTE: not working with vectorised cube for unclear reasons.
             """
             # generate independent gaussian with mean 0 and std 1
-            # Compute mean and covariance matrix of the posterior
             independent_gaussian = jax.scipy.stats.norm.ppf(cube)
             return mean_posterior + jnp.einsum(
                 "ij,...j->...i", rotation_matrix, independent_gaussian
