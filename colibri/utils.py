@@ -7,14 +7,16 @@ Author: Mark N. Costantini
 Date: 11.11.2023
 """
 
+import os
+import pathlib
+import sys
+from functools import wraps
+
 import jax
 import jax.numpy as jnp
 import numpy as np
-from validphys import convolution
-import pathlib
-import sys
-import os
 import pandas as pd
+from validphys import convolution
 
 
 def fill_dis_fkarr_with_zeros(fktable, FIT_XGRID):
@@ -195,3 +197,12 @@ def get_full_posterior(colibri_fit):
     df = pd.read_csv(csv_path, index_col=0)
 
     return df
+
+
+def cast_to_numpy(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        return np.array(result)
+
+    return wrapper
