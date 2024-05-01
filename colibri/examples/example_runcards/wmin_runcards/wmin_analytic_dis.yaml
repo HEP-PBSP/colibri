@@ -53,5 +53,10 @@ analytic_settings:
   n_posterior_samples: 10
   sampling_seed: 123456
 
+prior_settings:
+  type: 'uniform_parameter_prior'            # The type of prior used in Nested Sampling (model dependent)
+  max_val: 10.0
+  min_val: -10.0
+
 actions_:
 - analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit

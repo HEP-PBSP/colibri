@@ -45,6 +45,7 @@ def analytic_fit(
     _pred_data,
     pdf_model,
     analytic_settings,
+    bayesian_prior,
     output_path,
     FIT_XGRID,
 ):
@@ -79,8 +80,17 @@ def analytic_fit(
         the sorted union of the xgrids of the datasets entering the fit.
     """
 
+    log.warning("The prior is assumed to be flat in the parameters.")
+    log.warning(
+        "Assuming that the prior is wide enough to fully cover the gaussian likelihood."
+    )
+
     parameters = pdf_model.param_names
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
+
+    # Extract lower and upper bounds of the prior
+    prior_lower = bayesian_prior(jnp.zeros(len(parameters)))
+    prior_upper = bayesian_prior(jnp.ones(len(parameters)))
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
@@ -109,6 +119,26 @@ def analytic_fit(
     sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     sol_covmat = jla.inv(X.T @ Sigma @ X)
 
+    # Compute the evidence
+    # This is the log of the evidence, which is the log of the integral of the likelihood
+    # over the prior. The prior is a gaussian with width prior_width.
+    log.info("Computing the evidence...")
+
+    prior_width = prior_upper - prior_lower
+
+    gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
+    log_prior = jnp.log(1 / prior_width).sum()
+    # This is a factor in front of the gaussian likelihood
+    extra_term = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
+
+    logZ = gaussian_integral + extra_term + log_prior
+
+    log.info(f"LogZ = {logZ}")
+
+    # Write the evidence to file
+    with open(str(output_path) + "/evidence.csv", "w") as f:
+        f.write(f"LogZ\n{logZ}")
+
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
     samples = jax.random.multivariate_normal(
@@ -120,6 +150,11 @@ def analytic_fit(
     t1 = time.time()
     log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
 
+    # Check that the prior is wide enough
+    if jnp.any(samples < prior_lower) or jnp.any(samples > prior_upper):
+        log.error(
+            "The prior is not wide enough to cover the posterior samples. Increase the prior width."
+        )
     # Save the results
     df = pd.DataFrame(samples, columns=parameters)
     df.to_csv(str(output_path) + "/analytic_result.csv")
