@@ -110,7 +110,7 @@ def main():
         # overwrite old ns_result.csv with resampled posterior
         parameters = pdf_model.param_names
         df = pd.DataFrame(resampled_posterior, columns=parameters)
-        df.to_csv(str(resampled_fit_path) + "/ns_result.csv")
+        df.to_csv(str(resampled_fit_path) + "/ns_result.csv", float_format="%.5e")
 
     comm.Barrier()
 

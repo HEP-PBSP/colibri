@@ -141,23 +141,31 @@ def analytic_fit(
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
-    samples = jax.random.multivariate_normal(
+    full_samples = jax.random.multivariate_normal(
         key,
         sol_mean,
         sol_covmat,
-        shape=(analytic_settings["n_posterior_samples"],),
+        shape=(analytic_settings["full_sample_size"],),
     )
     t1 = time.time()
     log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
 
     # Check that the prior is wide enough
-    if jnp.any(samples < prior_lower) or jnp.any(samples > prior_upper):
+    if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
         log.error(
             "The prior is not wide enough to cover the posterior samples. Increase the prior width."
         )
+    # Write full sample to csv
+    full_samples_df = pd.DataFrame(full_samples, columns=parameters)
+    full_samples_df.to_csv(
+        str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
+    )
+
+    # Resample the posterior for PDF set
+    samples = full_samples[: analytic_settings["n_posterior_samples"]]
     # Save the results
     df = pd.DataFrame(samples, columns=parameters)
-    df.to_csv(str(output_path) + "/analytic_result.csv")
+    df.to_csv(str(output_path) + "/analytic_result.csv", float_format="%.5e")
 
     # create replicas folder if it does not exist
     replicas_path = str(output_path) + "/replicas"
