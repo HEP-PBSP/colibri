@@ -75,12 +75,16 @@ def main():
             log.info("The first model is strongly favored.")
         elif log_bayes_factor > 2.5:
             log.info("The first model is moderately favored.")
-        else:
+        elif log_bayes_factor > 1:
             log.info("The first model is weakly favored.")
+        else:
+            log.info("The evidence test is inconclusive.")
     else:
         if log_bayes_factor < -5:
             log.info("The second model is strongly favored.")
         elif log_bayes_factor < -2.5:
             log.info("The second model is moderately favored.")
-        else:
+        elif log_bayes_factor < -1:
             log.info("The second model is weakly favored.")
+        else:
+            log.info("The evidence test is inconclusive.")
