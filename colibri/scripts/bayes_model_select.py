@@ -139,26 +139,28 @@ def main():
     ]
 
     # Compute the bayesian complexity
-    Cb1 = avg_chi2[0] + 2 * max_logl[0]
-    Cb2 = avg_chi2[1] + 2 * max_logl[1]
+    chi2_min1 = -2 * max_logl[0]
+    chi2_min2 = -2 * max_logl[1]
+    Cb1 = avg_chi2[0] - chi2_min1
+    Cb2 = avg_chi2[1] - chi2_min2
 
     # Print out a table with the results
     max_fit_name_length = max(len(args.fit_names[0]), len(args.fit_names[1]))
     print("\n")
     print(
-        f"| {'-' * (max_fit_name_length + 2)} | {'-' * 15} | {'-' * 10} | {'-' * 20} |"
+        f"| {'-' * (max_fit_name_length + 2)} | {'-' * 15} | {'-' * 15} | {'-' * 10} | {'-' * 20} |"
     )
     print(
-        f"| {'Fit':<{max_fit_name_length + 2}} | {'Average chi2':<15} | {'LogZ':<10} | {'Bayesian complexity':<20} |"
+        f"| {'Fit':<{max_fit_name_length + 2}} | {'Average chi2':<15} | {'Minimum chi2':<15} | {'LogZ':<10} | {'Bayesian complexity':<20} |"
     )
     print(
-        f"| {args.fit_names[0]:<{max_fit_name_length + 2}} | {avg_chi2[0]:<15.3f} | {logz[0]:<10.3f} | {Cb1:<20.3f} |"
+        f"| {args.fit_names[0]:<{max_fit_name_length + 2}} | {avg_chi2[0]:<15.3f} | {chi2_min1:<15.3f} | {logz[0]:<10.3f} | {Cb1:<20.3f} |"
     )
     print(
-        f"| {args.fit_names[1]:<{max_fit_name_length + 2}} | {avg_chi2[1]:<15.3f} | {logz[1]:<10.3f} | {Cb2:<20.3f} |"
+        f"| {args.fit_names[1]:<{max_fit_name_length + 2}} | {avg_chi2[1]:<15.3f} | {chi2_min1:<15.3f} | {logz[1]:<10.3f} | {Cb2:<20.3f} |"
     )
     print(
-        f"| {'-' * (max_fit_name_length + 2)} | {'-' * 15} | {'-' * 10} | {'-' * 20} |"
+        f"| {'-' * (max_fit_name_length + 2)} | {'-' * 15} | {'-' * 15} | {'-' * 10} | {'-' * 20} |"
     )
     print("\n")
 
