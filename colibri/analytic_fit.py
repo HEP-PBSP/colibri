@@ -136,9 +136,9 @@ def analytic_fit(
     log.info(f"LogZ = {logZ}")
     log.info(f"Maximum log likelihood = {max_logl}")
 
-    # Write the results to file
-    with open(str(output_path) + "/results.csv", "w") as f:
-        f.write(f"logz,logl\n{logZ},{max_logl}")
+    # Compute minimum chi2
+    min_chi2 = -2 * max_logl
+    log.info(f"Minimum chi2 = {min_chi2}")
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
@@ -161,6 +161,20 @@ def analytic_fit(
     full_samples_df.to_csv(
         str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
     )
+
+    # Compute average chi2
+    avg_chi2 = jnp.array(
+        [(Y - X @ sample).T @ Sigma @ (Y - X @ sample) for sample in full_samples]
+    ).mean()
+    log.info(f"Average chi2 = {avg_chi2}")
+
+    # Compute the Bayesian complexity
+    Cb = avg_chi2 - min_chi2
+    log.info(f"Bayesian complexity = {Cb}")
+
+    # Write the results to file
+    with open(str(output_path) + "/bayes_metrics.csv", "w") as f:
+        f.write(f"logz,min_chi2,avg_chi2,Cb\n{logZ},{min_chi2},{avg_chi2},{Cb}\n")
 
     # Resample the posterior for PDF set
     samples = full_samples[: analytic_settings["n_posterior_samples"]]
