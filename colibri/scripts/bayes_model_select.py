@@ -19,20 +19,49 @@ log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
 
 
-def check_chi2_functions(
-    chi2_functions, pdf_model1, post_samples, FIT_XGRID, pred_data
-):
-    test_pred, _ = pdf_model1.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)(
-        post_samples[0].values[0]
+def produce_test_predictions(pdf_model, runcard, fit_path):
+    # Read full_posterior_sample.csv
+    post_sample = pd.read_csv(fit_path + "/full_posterior_sample.csv", index_col=0)
+    # Produce FIT_XGRID and pred_data
+    FIT_XGRID = colibri_api.FIT_XGRID(**runcard)
+    pred_data = colibri_api.make_pred_data(**runcard)
+
+    test_pred, _ = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)(
+        post_sample.values[0]
     )
 
-    chi2_1 = chi2_functions[0](test_pred)
-    chi2_2 = chi2_functions[1](test_pred)
+    return test_pred
+
+
+def check_chi2_functions(chi2_functions, predictions):
+
+    chi2_1 = chi2_functions[0](predictions)
+    chi2_2 = chi2_functions[1](predictions)
 
     if chi2_1 != chi2_2:
         return False
 
     return True
+
+
+def compute_average_chi2(chi2, fit_path, pdf_model, runcard):
+    # Read full_posterior_sample.csv
+    post_sample = pd.read_csv(fit_path + "/full_posterior_sample.csv", index_col=0)
+
+    # Produce FIT_XGRID and pred_data
+    FIT_XGRID = colibri_api.FIT_XGRID(**runcard)
+    pred_data = colibri_api.make_pred_data(**runcard)
+
+    # Compute predictions
+    pred_func = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)
+    pred_func = jax.vmap(pred_func, in_axes=(0,), out_axes=(0, 0))
+    pred = pred_func(post_sample.values)[0]
+
+    # Compute average chi2
+    chi2 = jax.vmap(chi2, in_axes=(0,), out_axes=0)
+    avg_chi2 = chi2(pred).mean()
+
+    return avg_chi2
 
 
 def main():
@@ -43,61 +72,29 @@ def main():
     args = parser.parse_args()
 
     # Load the pdf models
-    pdf_model1, pdf_model2 = [get_pdf_model(fit) for fit in args.fit_names]
+    pdf_models = [get_pdf_model(fit) for fit in args.fit_names]
 
     # Get fit paths
     fit_paths = [get_fit_path(fit) for fit in args.fit_names]
 
     # Read runcard.yaml in input folder
-    runcard_path = fit_paths[0] + "/input/runcard.yaml"
-    with open(runcard_path, "r") as file:
-        runcard_1 = yaml.safe_load(file)
+    runcards = []
+    for fit_path in fit_paths:
+        if not os.path.exists(fit_path + "/input/runcard.yaml"):
+            raise FileNotFoundError(
+                "Could not find the runcard.yaml file in the input folder of the fit "
+                + fit_path
+            )
 
-    runcard_path = fit_paths[1] + "/input/runcard.yaml"
-    with open(runcard_path, "r") as file:
-        runcard_2 = yaml.safe_load(file)
+        runcard_path = fit_paths[0] + "/input/runcard.yaml"
+        with open(runcard_path, "r") as file:
+            runcards.append(yaml.safe_load(file))
 
     # Check that the key dataset_inputs is the same
-    if runcard_1["dataset_inputs"] != runcard_2["dataset_inputs"]:
+    if runcards[0]["dataset_inputs"] != runcards[1]["dataset_inputs"]:
         raise ValueError(
             "The dataset_inputs are not the same. Model comparison would be meaningless."
         )
-
-    # Read full_posterior_sample.csv
-    post_samples = [
-        pd.read_csv(fit_path + "/full_posterior_sample.csv", index_col=0)
-        for fit_path in fit_paths
-    ]
-
-    # Produce chi2 functions
-    chi2_functions = [
-        colibri_api.make_chi2(**runcard) for runcard in [runcard_1, runcard_2]
-    ]
-
-    # Produce FIT_XGRID and pred_data
-    FIT_XGRID = colibri_api.FIT_XGRID(**runcard_1)
-    pred_data = colibri_api.make_pred_data(**runcard_1)
-
-    # Check that chi2 functions are the same, i.e. for the same pdf and predictions
-    # they produce the same chi2. This is important for the Bayes factor to be meaningful.
-    if not check_chi2_functions(
-        chi2_functions, pdf_model1, post_samples, FIT_XGRID, pred_data
-    ):
-        raise ValueError(
-            "The chi2 functions are not the same. Model comparison would be meaningless."
-        )
-
-    # Compute average chi2 for each fit
-    avg_chi2 = []
-    for pdf_model, chi2, post_sample in zip(
-        [pdf_model1, pdf_model2], chi2_functions, post_samples
-    ):
-        pred_func = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)
-        pred_func = jax.vmap(pred_func, in_axes=(0,), out_axes=(0, 0))
-        pred = pred_func(post_sample.values)[0]
-        avg_chi2.append(jax.vmap(chi2)(pred).mean())
-    log.info(f"Average chi2 for fit 1: {avg_chi2[0]}")
-    log.info(f"Average chi2 for fit 2: {avg_chi2[1]}")
 
     # Load results.json or evidence.csv for each fit
     logz = []
@@ -119,6 +116,34 @@ def main():
                 logz.append(results["logz"])
                 max_logl.append(results["maximum_likelihood"]["logl"])
 
+    # Produce chi2 functions
+    chi2_functions = [colibri_api.make_chi2(**runcard) for runcard in runcards]
+
+    # Check that chi2 functions are the same, i.e. for the same pdf and predictions
+    # they produce the same chi2. This is important for the Bayes factor to be meaningful.
+    if not check_chi2_functions(
+        chi2_functions,
+        produce_test_predictions(pdf_models[0], runcards[0], fit_paths[0]),
+    ):
+        raise ValueError(
+            "The chi2 functions are not the same. Model comparison would be meaningless."
+        )
+
+    avg_chi2 = [
+        compute_average_chi2(chi2, fit_path, pdf_model, runcard)
+        for chi2, fit_path, pdf_model, runcard in zip(
+            chi2_functions, fit_paths, pdf_models, runcards
+        )
+    ]
+
+    # Compute the bayesian complexity
+    Cb1 = avg_chi2[0] + 2 * max_logl[0]
+    Cb2 = avg_chi2[1] + 2 * max_logl[1]
+    # Print the results
+    log.info(f"Bayesian complexity for fit 1: {Cb1}")
+    log.info(f"Bayesian complexity for fit 2: {Cb2}")
+
+    # Print the logZ values
     log.info(f"LogZ for fit 1: {logz[0]}")
     log.info(f"LogZ for fit 2: {logz[1]}")
 
@@ -145,9 +170,3 @@ def main():
             log.info("The second model is weakly favored.")
         else:
             log.info("The evidence test is inconclusive.")
-
-    # Compute the bayesian complexity
-    Cb1 = avg_chi2[0] + 2 * max_logl[0]
-    Cb2 = avg_chi2[1] + 2 * max_logl[1]
-    log.info(f"Bayesian complexity for fit 1: {Cb1}")
-    log.info(f"Bayesian complexity for fit 2: {Cb2}")
