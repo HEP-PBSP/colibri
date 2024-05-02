@@ -9,9 +9,7 @@ from reportengine import colors
 import os
 from colibri.utils import get_pdf_model, get_fit_path
 from colibri.api import API as colibri_api
-import jax
 import yaml
-import json
 import pandas as pd
 
 log = logging.getLogger()
@@ -42,26 +40,6 @@ def check_chi2_functions(chi2_functions, predictions):
         return False
 
     return True
-
-
-def compute_average_chi2(chi2, fit_path, pdf_model, runcard):
-    # Read full_posterior_sample.csv
-    post_sample = pd.read_csv(fit_path + "/full_posterior_sample.csv", index_col=0)
-
-    # Produce FIT_XGRID and pred_data
-    FIT_XGRID = colibri_api.FIT_XGRID(**runcard)
-    pred_data = colibri_api.make_pred_data(**runcard)
-
-    # Compute predictions
-    pred_func = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)
-    pred_func = jax.vmap(pred_func, in_axes=(0,), out_axes=(0, 0))
-    pred = pred_func(post_sample.values)[0]
-
-    # Compute average chi2
-    chi2 = jax.vmap(chi2, in_axes=(0,), out_axes=0)
-    avg_chi2 = chi2(pred).mean()
-
-    return avg_chi2
 
 
 def main():
@@ -96,27 +74,25 @@ def main():
             "The dataset_inputs are not the same. Model comparison would be meaningless."
         )
 
-    # Load results.json or results.csv for each fit
+    # Load bayes_metrics.csv
     logz = []
-    max_logl = []
+    min_chi2 = []
+    avg_chi2 = []
+    Cb = []
     for fit_path in fit_paths:
-        if not os.path.exists(fit_path + "/ultranest_logs/info/results.json"):
-            if os.path.exists(fit_path + "/results.csv"):
-                with open(fit_path + "/results.csv", "r") as file:
-                    results = pd.read_csv(file)
-                    logz.append(results["logz"].values[0])
-                    max_logl.append(results["logl"].values[0])
-            else:
-                raise FileNotFoundError(
-                    "Could not find the results.json nor the results.csv file for the fit "
-                    + fit_path
-                )
+        if not os.path.exists(fit_path + "/bayes_metrics.csv"):
+            raise FileNotFoundError(
+                "Could not find the bayes_metrics.csv file in the output folder of the fit "
+                + fit_path
+            )
         else:
-            results_path = fit_path + "/ultranest_logs/info/results.json"
-            with open(results_path, "r") as file:
-                results = json.load(file)
-                logz.append(results["logz"])
-                max_logl.append(results["maximum_likelihood"]["logl"])
+            bayes_metric_path = fit_path + "/bayes_metrics.csv"
+            with open(bayes_metric_path, "r") as file:
+                results = pd.read_csv(file)
+                logz.append(results["logz"][0])
+                min_chi2.append(results["min_chi2"][0])
+                avg_chi2.append(results["avg_chi2"][0])
+                Cb.append(results["Cb"][0])
 
     # Produce chi2 functions
     chi2_functions = [colibri_api.make_chi2(**runcard) for runcard in runcards]
@@ -131,18 +107,8 @@ def main():
             "The chi2 functions are not the same. Model comparison would be meaningless."
         )
 
-    avg_chi2 = [
-        compute_average_chi2(chi2, fit_path, pdf_model, runcard)
-        for chi2, fit_path, pdf_model, runcard in zip(
-            chi2_functions, fit_paths, pdf_models, runcards
-        )
-    ]
-
-    # Compute the bayesian complexity
-    chi2_min1 = -2 * max_logl[0]
-    chi2_min2 = -2 * max_logl[1]
-    Cb1 = avg_chi2[0] - chi2_min1
-    Cb2 = avg_chi2[1] - chi2_min2
+    Cb1 = avg_chi2[0] - min_chi2[0]
+    Cb2 = avg_chi2[1] - min_chi2[1]
 
     # Print out a table with the results
     max_fit_name_length = max(len(args.fit_names[0]), len(args.fit_names[1]))
@@ -154,10 +120,10 @@ def main():
         f"| {'Fit':<{max_fit_name_length + 2}} | {'Average chi2':<15} | {'Minimum chi2':<15} | {'LogZ':<10} | {'Bayesian complexity':<20} |"
     )
     print(
-        f"| {args.fit_names[0]:<{max_fit_name_length + 2}} | {avg_chi2[0]:<15.3f} | {chi2_min1:<15.3f} | {logz[0]:<10.3f} | {Cb1:<20.3f} |"
+        f"| {args.fit_names[0]:<{max_fit_name_length + 2}} | {avg_chi2[0]:<15.3f} | {min_chi2[0]:<15.3f} | {logz[0]:<10.3f} | {Cb1:<20.3f} |"
     )
     print(
-        f"| {args.fit_names[1]:<{max_fit_name_length + 2}} | {avg_chi2[1]:<15.3f} | {chi2_min1:<15.3f} | {logz[1]:<10.3f} | {Cb2:<20.3f} |"
+        f"| {args.fit_names[1]:<{max_fit_name_length + 2}} | {avg_chi2[1]:<15.3f} | {min_chi2[0]:<15.3f} | {logz[1]:<10.3f} | {Cb2:<20.3f} |"
     )
     print(
         f"| {'-' * (max_fit_name_length + 2)} | {'-' * 15} | {'-' * 15} | {'-' * 10} | {'-' * 20} |"
