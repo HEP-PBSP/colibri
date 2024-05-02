@@ -138,20 +138,29 @@ def main():
         )
     ]
 
-    # Print average chi2
-    log.info(f"Average chi2 for fit 1: {avg_chi2[0]}")
-    log.info(f"Average chi2 for fit 2: {avg_chi2[1]}")
-
     # Compute the bayesian complexity
     Cb1 = avg_chi2[0] + 2 * max_logl[0]
     Cb2 = avg_chi2[1] + 2 * max_logl[1]
-    # Print the results
-    log.info(f"Bayesian complexity for fit 1: {Cb1}")
-    log.info(f"Bayesian complexity for fit 2: {Cb2}")
 
-    # Print the logZ values
-    log.info(f"LogZ for fit 1: {logz[0]}")
-    log.info(f"LogZ for fit 2: {logz[1]}")
+    # Print out a table with the results
+    max_fit_name_length = max(len(args.fit_names[0]), len(args.fit_names[1]))
+    print("\n")
+    print(
+        f"| {'-' * (max_fit_name_length + 2)} | {'-' * 15} | {'-' * 10} | {'-' * 20} |"
+    )
+    print(
+        f"| {'Fit':<{max_fit_name_length + 2}} | {'Average chi2':<15} | {'LogZ':<10} | {'Bayesian complexity':<20} |"
+    )
+    print(
+        f"| {args.fit_names[0]:<{max_fit_name_length + 2}} | {avg_chi2[0]:<15.3f} | {logz[0]:<10.3f} | {Cb1:<20.3f} |"
+    )
+    print(
+        f"| {args.fit_names[1]:<{max_fit_name_length + 2}} | {avg_chi2[1]:<15.3f} | {logz[1]:<10.3f} | {Cb2:<20.3f} |"
+    )
+    print(
+        f"| {'-' * (max_fit_name_length + 2)} | {'-' * 15} | {'-' * 10} | {'-' * 20} |"
+    )
+    print("\n")
 
     # Compute the Bayes factor
     log_bayes_factor = logz[0] - logz[1]
