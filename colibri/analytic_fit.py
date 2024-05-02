@@ -128,16 +128,17 @@ def analytic_fit(
 
     gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
     log_prior = jnp.log(1 / prior_width).sum()
-    # This is a factor in front of the gaussian likelihood
-    extra_term = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
+    # Compute maximum log likelihood
+    max_logl = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
 
-    logZ = gaussian_integral + extra_term + log_prior
+    logZ = gaussian_integral + max_logl + log_prior
 
     log.info(f"LogZ = {logZ}")
+    log.info(f"Maximum log likelihood = {max_logl}")
 
-    # Write the evidence to file
-    with open(str(output_path) + "/evidence.csv", "w") as f:
-        f.write(f"LogZ\n{logZ}")
+    # Write the results to file
+    with open(str(output_path) + "/results.csv", "w") as f:
+        f.write(f"logz,logl\n{logZ},{max_logl}")
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 

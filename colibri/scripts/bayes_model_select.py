@@ -86,7 +86,7 @@ def main():
                 + fit_path
             )
 
-        runcard_path = fit_paths[0] + "/input/runcard.yaml"
+        runcard_path = fit_path + "/input/runcard.yaml"
         with open(runcard_path, "r") as file:
             runcards.append(yaml.safe_load(file))
 
@@ -96,17 +96,19 @@ def main():
             "The dataset_inputs are not the same. Model comparison would be meaningless."
         )
 
-    # Load results.json or evidence.csv for each fit
+    # Load results.json or results.csv for each fit
     logz = []
     max_logl = []
     for fit_path in fit_paths:
         if not os.path.exists(fit_path + "/ultranest_logs/info/results.json"):
-            if os.path.exists(fit_path + "/evidence.csv"):
-                with open(fit_path + "/evidence.csv", "r") as file:
-                    logz.append(pd.read_csv(file)["LogZ"].values[0])
+            if os.path.exists(fit_path + "/results.csv"):
+                with open(fit_path + "/results.csv", "r") as file:
+                    results = pd.read_csv(file)
+                    logz.append(results["logz"].values[0])
+                    max_logl.append(results["logl"].values[0])
             else:
                 raise FileNotFoundError(
-                    "Could not find the results.json nor the evidence.csv file for the fit "
+                    "Could not find the results.json nor the results.csv file for the fit "
                     + fit_path
                 )
         else:
@@ -135,6 +137,10 @@ def main():
             chi2_functions, fit_paths, pdf_models, runcards
         )
     ]
+
+    # Print average chi2
+    log.info(f"Average chi2 for fit 1: {avg_chi2[0]}")
+    log.info(f"Average chi2 for fit 2: {avg_chi2[1]}")
 
     # Compute the bayesian complexity
     Cb1 = avg_chi2[0] + 2 * max_logl[0]
