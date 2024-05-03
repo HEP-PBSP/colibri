@@ -88,10 +88,6 @@ def analytic_fit(
     parameters = pdf_model.param_names
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
-    # Extract lower and upper bounds of the prior
-    prior_lower = bayesian_prior(jnp.zeros(len(parameters)))
-    prior_upper = bayesian_prior(jnp.ones(len(parameters)))
-
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
     predictions = jnp.array([pred_and_pdf(basis)[0] for basis in bases])
@@ -119,10 +115,30 @@ def analytic_fit(
     sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     sol_covmat = jla.inv(X.T @ Sigma @ X)
 
+    key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
+
+    full_samples = jax.random.multivariate_normal(
+        key,
+        sol_mean,
+        sol_covmat,
+        shape=(analytic_settings["full_sample_size"],),
+    )
+    t1 = time.time()
+    log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
+
     # Compute the evidence
     # This is the log of the evidence, which is the log of the integral of the likelihood
-    # over the prior. The prior is a gaussian with width prior_width.
+    # over the prior. The prior is uniform with width prior_width.
     log.info("Computing the evidence...")
+
+    if analytic_settings["optimal_prior"]:
+        log.info("Using optimal prior")
+        prior_lower = full_samples.min(axis=0)
+        prior_upper = full_samples.max(axis=0)
+    else:
+        # Extract lower and upper bounds of the prior
+        prior_lower = bayesian_prior(jnp.zeros(len(parameters)))
+        prior_upper = bayesian_prior(jnp.ones(len(parameters)))
 
     prior_width = prior_upper - prior_lower
 
@@ -139,17 +155,6 @@ def analytic_fit(
     # Compute minimum chi2
     min_chi2 = -2 * max_logl
     log.info(f"Minimum chi2 = {min_chi2}")
-
-    key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
-
-    full_samples = jax.random.multivariate_normal(
-        key,
-        sol_mean,
-        sol_covmat,
-        shape=(analytic_settings["full_sample_size"],),
-    )
-    t1 = time.time()
-    log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
 
     # Check that the prior is wide enough
     if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
