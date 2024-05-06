@@ -50,19 +50,20 @@ def bayesian_prior(prior_settings):
             return mean_posterior + jnp.einsum(
                 "ij,...j->...i", sqrt_cov_posterior, independent_gaussian
             )
-    
+
     elif prior_settings["type"] == "normalizing_flow_prior":
         import torch
+
         prior_fit = prior_settings["prior_fit"]
 
         flow_model = get_flow(prior_fit)
         forward = flow_model.bijector.forward
-        
+
         def prior_transform(cube):
             # generate independent gaussian with mean 0 and std 1
             independent_gaussian = torch.erfinv(2 * torch.tensor(cube) - 1)
             return forward(independent_gaussian).detach().numpy()
-        
+
     else:
         raise ValueError("Invalid prior type.")
     return prior_transform
