@@ -19,6 +19,7 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
 
+torch.set_default_dtype(torch.float64)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -31,6 +32,7 @@ def main():
     parser.add_argument("--nepochs", type=int, default=3001)
     parser.add_argument("--hidden_dim", type=int, default=32)
     parser.add_argument("--learning_rate", "-lr", type=float, default=5e-3)
+    parser.add_argument("--verbose", type=int, default=500, help="Print loss every n epochs, default 500")
 
     args = parser.parse_args()
 
@@ -49,6 +51,12 @@ def main():
     )
 
     data_dim = target_dist.shape[1]
+
+    # test that hidden_dim is larger or equal to data_dim
+    if args.hidden_dim < data_dim:
+        raise ValueError(
+            f"hidden_dim must be larger or equal to data_dim. Got hidden_dim={args.hidden_dim} and data_dim={data_dim}"
+        )
 
     # Lazily instantiated flow plus base and target distributions
     nn_params = params.DenseAutoregressive(hidden_dims=(args.hidden_dim,))
@@ -72,7 +80,7 @@ def main():
         # Minimize KL(p || q)
         loss = -flow.log_prob(target_dist).mean()
 
-        if idx % 500 == 0:
+        if idx % args.verbose == 0:
             log.info(f"epoch, {idx}, loss, {loss / data_dim:.4f}")
 
         loss.backward()
