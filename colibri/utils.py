@@ -221,7 +221,7 @@ def get_pdf_model(colibri_fit):
 
     fit_path = get_fit_path(colibri_fit)
 
-    pdf_model_path = fit_path + "/pdf_model.pkl"
+    pdf_model_path = fit_path / "pdf_model.pkl"
     # check that file exist
     if not os.path.exists(pdf_model_path):
         raise FileNotFoundError(
