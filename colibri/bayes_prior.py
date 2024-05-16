@@ -44,10 +44,8 @@ def bayesian_prior(prior_settings, pdf_model):
         # Compute mean and covariance matrix of the posterior
         mean_posterior = jnp.array(df_fit.mean().values)
         cov_posterior = jnp.array(df_fit.cov().values)
-        inv_cov_posterior = jnp.linalg.inv(cov_posterior)
 
-        l, v = jnp.linalg.eigh(inv_cov_posterior)
-        rotation_matrix = jnp.dot(v, jnp.diag(1.0 / jnp.sqrt(l)))
+        rotation_matrix = jnp.linalg.cholesky(cov_posterior)
 
         @cast_to_numpy
         @jax.jit
