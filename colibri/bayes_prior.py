@@ -45,7 +45,7 @@ def bayesian_prior(prior_settings, pdf_model):
         mean_posterior = jnp.array(df_fit.mean().values)
         cov_posterior = jnp.array(df_fit.cov().values)
 
-        rotation_matrix = jnp.linalg.cholesky(cov_posterior)
+        sqrt_cov_posterior = jnp.linalg.cholesky(cov_posterior)
 
         @cast_to_numpy
         @jax.jit
@@ -53,7 +53,7 @@ def bayesian_prior(prior_settings, pdf_model):
             # generate independent gaussian with mean 0 and std 1
             independent_gaussian = jax.scipy.stats.norm.ppf(cube)
             return mean_posterior + jnp.einsum(
-                "ij,...j->...i", rotation_matrix, independent_gaussian
+                "ij,...j->...i", sqrt_cov_posterior, independent_gaussian
             )
 
     else:
