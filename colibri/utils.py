@@ -171,7 +171,7 @@ def get_fit_path(fit):
         raise FileNotFoundError(
             "Could not find a fit " + fit + " in the colibri/results directory."
         )
-    return str(fit_path)
+    return pathlib.Path(fit_path)
 
 
 def get_full_posterior(colibri_fit):
