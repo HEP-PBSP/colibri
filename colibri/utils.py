@@ -192,7 +192,7 @@ def get_full_posterior(colibri_fit):
 
     fit_path = get_fit_path(colibri_fit)
 
-    csv_path = fit_path + "/full_posterior_sample.csv"
+    csv_path = fit_path / "full_posterior_sample.csv"
     # check that file exist
     if not os.path.exists(csv_path):
         raise FileNotFoundError(
