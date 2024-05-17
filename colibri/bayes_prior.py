@@ -4,11 +4,11 @@ import jax.numpy as jnp
 from colibri.utils import (
     cast_to_numpy,
     get_full_posterior,
-    get_pdf_model,
-    pdf_models_equal,
 )
+from colibri.checks import check_pdf_models_equal
 
 
+@check_pdf_models_equal
 def bayesian_prior(prior_settings, pdf_model):
     """
     Produces a prior transform function.
@@ -33,11 +33,6 @@ def bayesian_prior(prior_settings, pdf_model):
 
     elif prior_settings["type"] == "prior_from_gauss_posterior":
         prior_fit = prior_settings["prior_fit"]
-
-        # Check that the prior model is the same as the model
-        prior_pdf_model = get_pdf_model(prior_fit)
-        if not pdf_models_equal(pdf_model, prior_pdf_model):
-            raise ValueError("The prior model is not the same as the model.")
 
         df_fit = get_full_posterior(prior_fit)
 
