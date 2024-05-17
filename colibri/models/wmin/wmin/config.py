@@ -5,7 +5,11 @@ Config module of wmin
 
 """
 
-from colibri.config import colibriConfig, Environment
+import dill
+from validphys.core import PDF
+from wmin.model import WMinPDF
+
+from colibri.config import Environment, colibriConfig
 
 
 class Environment(Environment):
@@ -32,3 +36,25 @@ class WminConfig(colibriConfig):
                 settings["max_val"] = 1
 
         return settings
+
+    def produce_pdf_model(self, wmin_settings, output_path):
+        """
+        Weight minimization grid is in the evolution basis.
+        The following parametrization is used:
+
+        f_{j,wm} = f_j + sum_i(w_i * (f_i - f_j))
+
+        this has the advantage of automatically satisfying the sum rules.
+
+        Notes:
+            - the central replica of the wminpdfset is always included in the
+            wmin parametrization
+        """
+
+        model = WMinPDF(PDF(wmin_settings["wminpdfset"]), wmin_settings["n_basis"])
+
+        # dump model to output_path using dill
+        # this is mainly needed by scripts/ns_resampler.py
+        with open(output_path / "pdf_model.pkl", "wb") as file:
+            dill.dump(model, file)
+        return model

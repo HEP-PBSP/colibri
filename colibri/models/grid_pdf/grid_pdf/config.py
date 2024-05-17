@@ -5,7 +5,10 @@ Config module of grid_pdf
 
 """
 
-from colibri.config import colibriConfig, Environment
+import dill
+from grid_pdf.model import GridPDFModel
+
+from colibri.config import Environment, colibriConfig
 
 
 class Environment(Environment):
@@ -31,3 +34,14 @@ class GridPdfConfig(colibriConfig):
                 settings["nsigma"] = 2
 
         return settings
+
+    def produce_pdf_model(self, flavour_xgrids, output_path):
+        """
+        Produce the PDF model for the grid_pdf fit.
+        """
+        model = GridPDFModel(flavour_xgrids)
+        # dump model to output_path using dill
+        # this is mainly needed by scripts/ns_resampler.py
+        with open(output_path / "pdf_model.pkl", "wb") as file:
+            dill.dump(model, file)
+        return model
