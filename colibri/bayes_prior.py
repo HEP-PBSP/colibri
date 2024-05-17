@@ -9,7 +9,7 @@ from colibri.checks import check_pdf_models_equal
 
 
 @check_pdf_models_equal
-def bayesian_prior(prior_settings, pdf_model):
+def bayesian_prior(prior_settings):
     """
     Produces a prior transform function.
 
