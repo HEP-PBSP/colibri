@@ -31,6 +31,8 @@ class WMinPDF(PDFModel):
 
     """
 
+    name = "weight mininisation PDF model"
+
     def __init__(self, wminpdfset, n_basis):
         self.wminpdfset = wminpdfset
         self.n_basis = n_basis

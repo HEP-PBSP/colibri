@@ -20,6 +20,8 @@ class GridPDFModel(PDFModel):
     xgrids: dict
     param_names: list
 
+    name = "grid_pdf PDF model"
+
     def __init__(self, flavour_xgrids):
         self.xgrids = flavour_xgrids
 

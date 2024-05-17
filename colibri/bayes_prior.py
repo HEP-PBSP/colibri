@@ -18,6 +18,10 @@ def bayesian_prior(prior_settings, pdf_model):
     prior_settings: dict
         The settings for the prior transform.
 
+    pdf_model: model.PDFModel
+        The PDF model to fit. It is used to check that the prior model
+        matches the PDF model used in the fit.
+
     Returns
     -------
     prior_transform: @jax.jit CompiledFunction
