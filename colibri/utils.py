@@ -3,8 +3,6 @@ colibri.utils.py
 
 Module containing several utils for PDF fits.
 
-Author: Mark N. Costantini
-Date: 11.11.2023
 """
 
 import os
