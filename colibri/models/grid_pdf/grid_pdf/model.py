@@ -6,10 +6,8 @@ The grid_pdf model.
 
 import jax
 import jax.numpy as jnp
-import dill
 
 from validphys import convolution
-from validphys.core import PDF
 
 from colibri.pdf_model import PDFModel
 
