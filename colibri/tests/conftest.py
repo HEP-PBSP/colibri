@@ -10,7 +10,7 @@ CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
 TEST_DATASET = {
     "dataset_input": {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"},
-    "theoryid": 700,
+    "theoryid": 708,
     "use_cuts": "internal",
 }
 
@@ -22,13 +22,13 @@ TEST_DATASETS = {
     "dataset_inputs": [
         {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}
     ],
-    "theoryid": 700,
+    "theoryid": 708,
     "use_cuts": "internal",
 }
 
 TEST_DATASET_HAD = {
     "dataset_input": {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
-    "theoryid": 700,
+    "theoryid": 708,
     "use_cuts": "internal",
 }
 
@@ -38,7 +38,7 @@ the "dataset_inputs" key instead of "dataset_input"
 """
 TEST_DATASETS_HAD = {
     "dataset_inputs": [{"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"}],
-    "theoryid": 700,
+    "theoryid": 708,
     "use_cuts": "internal",
 }
 
@@ -50,7 +50,7 @@ TEST_DATASETS_DIS_HAD = {
         {"dataset": "HERA_NC_318GEV_EP-SIGMARED", "variant": "legacy"},
         {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
     ],
-    "theoryid": 700,
+    "theoryid": 708,
     "use_cuts": "internal",
 }
 
@@ -110,7 +110,7 @@ TEST_FULL_DIS_DATASET = {
         {"dataset": "HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED", "variant": "legacy"},
         {"dataset": "HERA_NC_318GEV_EAVG_CHARM-SIGMARED", "variant": "legacy"},
     ],
-    "theoryid": 700,
+    "theoryid": 708,
     "use_cuts": "internal",
 }
 
@@ -177,7 +177,7 @@ TEST_FULL_HAD_DATASET = {
         {"dataset": "LHCB_Z0_13TEV_DIMUON-Y"},
         {"dataset": "LHCB_Z0_13TEV_DIELECTRON-Y"},
     ],
-    "theoryid": 700,
+    "theoryid": 708,
     "use_cuts": "internal",
 }
 
@@ -208,7 +208,7 @@ TEST_FULL_POS_DATASET = {
             {"dataset": "NNPDF_POS_2P24GEV_XGL", "maxlambda": 1e6},
         ]
     },
-    "theoryid": 700,
+    "theoryid": 708,
     "use_cuts": "internal",
 }
 
