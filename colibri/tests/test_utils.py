@@ -4,6 +4,7 @@ Module for testing the utils module.
 
 import os
 import pathlib
+import shutil
 
 import jax
 import numpy as np
@@ -35,32 +36,50 @@ def test_get_path_fit():
     and checks if the function returns the correct path.
     Finally, it removes the copied directory.
     """
-    # copy regression/wmin_bayes_dis temporarily to sys.prefix  / "share/colibri/results"
-    if not os.path.exists(f"$CONDA_PREFIX/share/colibri/results"):
-        os.system(f"mkdir $CONDA_PREFIX/share/colibri/results")
+    conda_prefix = os.getenv("CONDA_PREFIX")
+    if not conda_prefix:
+        raise EnvironmentError("CONDA_PREFIX environment variable is not set")
 
-    os.system(f"cp -r regression/{SIMPLE_WMIN_FIT} $CONDA_PREFIX/share/colibri/results")
+    destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
+    source_dir = pathlib.Path("regression") / SIMPLE_WMIN_FIT
 
+    # Ensure the destination directory exists
+    destination_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy the source directory to the destination
+    dest_path = destination_dir / SIMPLE_WMIN_FIT
+    shutil.copytree(source_dir, dest_path)
+
+    # Get the fit path using the function to be tested
     fit_path = get_fit_path(SIMPLE_WMIN_FIT)
 
+    # Check if the path exists and is of the correct type
     assert fit_path.exists()
     assert isinstance(fit_path, pathlib.Path)
 
-    # remove the copied directory
-    os.system(f"rm -r $CONDA_PREFIX/share/colibri/results/{SIMPLE_WMIN_FIT}")
+    # Clean up the copied directory
+    shutil.rmtree(dest_path)
 
 
 def test_get_pdf_model():
     """
     Tests that get_pdf_model works correctly.
     """
-    # copy regression/wmin_bayes_dis temporarily to sys.prefix  / "share/colibri/results"
-    if not os.path.exists(f"$CONDA_PREFIX/share/colibri/results"):
-        os.system(f"mkdir $CONDA_PREFIX/share/colibri/results")
+    conda_prefix = os.getenv("CONDA_PREFIX")
+    if not conda_prefix:
+        raise EnvironmentError("CONDA_PREFIX environment variable is not set")
 
-    os.system(f"cp -r regression/{SIMPLE_WMIN_FIT} $CONDA_PREFIX/share/colibri/results")
+    destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
+    source_dir = pathlib.Path("regression") / SIMPLE_WMIN_FIT
 
-    # checks that loading pdf model from .pkl file works
+    # Ensure the destination directory exists
+    destination_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy the source directory to the destination
+    dest_path = destination_dir / SIMPLE_WMIN_FIT
+    shutil.copytree(source_dir, dest_path)
+
+    # Check that loading pdf model from .pkl file works
     pdf_model = get_pdf_model(SIMPLE_WMIN_FIT)
 
     # check trivial stuff assotiated with the pdf model stored in SINGLE_WMIN_FIT
@@ -80,24 +99,32 @@ def test_get_pdf_model():
     ]
     assert pdf_model.name == "weight mininisation PDF model"
 
-    # remove the copied directory
-    os.system(f"rm -r $CONDA_PREFIX/share/colibri/results/{SIMPLE_WMIN_FIT}")
+    # Clean up the copied directory
+    shutil.rmtree(dest_path)
 
 
 def test_get_full_posterior():
     """
     Test that get_full_posterior works correctly.
     """
-    # copy regression/wmin_bayes_dis temporarily to sys.prefix  / "share/colibri/results"
-    if not os.path.exists(f"$CONDA_PREFIX/share/colibri/results"):
-        os.system(f"mkdir $CONDA_PREFIX/share/colibri/results")
+    conda_prefix = os.getenv("CONDA_PREFIX")
+    if not conda_prefix:
+        raise EnvironmentError("CONDA_PREFIX environment variable is not set")
 
-    os.system(f"cp -r regression/{SIMPLE_WMIN_FIT} $CONDA_PREFIX/share/colibri/results")
+    destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
+    source_dir = pathlib.Path("regression") / SIMPLE_WMIN_FIT
+
+    # Ensure the destination directory exists
+    destination_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy the source directory to the destination
+    dest_path = destination_dir / SIMPLE_WMIN_FIT
+    shutil.copytree(source_dir, dest_path)
 
     df = get_full_posterior(SIMPLE_WMIN_FIT)
 
     assert df is not None
     assert type(df) == pandas.core.frame.DataFrame
 
-    # remove the copied directory
-    os.system(f"rm -r $CONDA_PREFIX/share/colibri/results/{SIMPLE_WMIN_FIT}")
+    # Clean up the copied directory
+    shutil.rmtree(dest_path)
