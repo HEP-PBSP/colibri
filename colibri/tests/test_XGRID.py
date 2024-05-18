@@ -19,7 +19,6 @@ def test_dis_xgrid():
     Tests that the union of the xgrids of the DIS datasets in the theory specified
     in conftest is the same as the XGRID stored in constants.py
     """
-
     FIT_XGRID = cAPI.FIT_XGRID(**TEST_FULL_DIS_DATASET)
 
     assert_allclose(FIT_XGRID, np.array(XGRID))
@@ -30,7 +29,6 @@ def test_had_xgrid():
     Tests that the union of the xgrids of the Hadronic datasets in the theory specified
     in conftest is the same as the XGRID stored in constants.py
     """
-
     FIT_XGRID = cAPI.FIT_XGRID(**TEST_FULL_HAD_DATASET)
 
     # note: the very low x values are not used for the hadronic datasets
@@ -42,7 +40,6 @@ def test_pos_xgrid():
     Tests that the union of the xgrids of the Positivity datasets is the same as
     the XGRID stored in constants.py
     """
-
     FIT_XGRID = cAPI.FIT_XGRID(**TEST_FULL_POS_DATASET)
 
     assert_allclose(FIT_XGRID, np.array(XGRID))
