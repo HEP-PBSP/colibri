@@ -31,7 +31,7 @@ def test_cast_to_numpy():
 def test_get_path_fit():
     """
     Tests the get_fit_path function.
-    Copies the wmin_bayes_dis directory to sys.prefix/share/colibri/results
+    Copies the wmin_bayes_dis directory to $CONDA_PREFIX/share/colibri/results
     and checks if the function returns the correct path.
     Finally, it removes the copied directory.
     """
