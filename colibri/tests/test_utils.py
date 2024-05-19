@@ -41,7 +41,7 @@ def test_get_path_fit():
         raise EnvironmentError("CONDA_PREFIX environment variable is not set")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
-    source_dir = pathlib.Path("regression") / SIMPLE_WMIN_FIT
+    source_dir = pathlib.Path("colibri/tests/regression") / SIMPLE_WMIN_FIT
 
     # Ensure the destination directory exists
     destination_dir.mkdir(parents=True, exist_ok=True)
@@ -70,7 +70,7 @@ def test_get_pdf_model():
         raise EnvironmentError("CONDA_PREFIX environment variable is not set")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
-    source_dir = pathlib.Path("regression") / SIMPLE_WMIN_FIT
+    source_dir = pathlib.Path("colibri/tests/regression") / SIMPLE_WMIN_FIT
 
     # Ensure the destination directory exists
     destination_dir.mkdir(parents=True, exist_ok=True)
@@ -112,7 +112,7 @@ def test_get_full_posterior():
         raise EnvironmentError("CONDA_PREFIX environment variable is not set")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
-    source_dir = pathlib.Path("regression") / SIMPLE_WMIN_FIT
+    source_dir = pathlib.Path("colibri/tests/regression") / SIMPLE_WMIN_FIT
 
     # Ensure the destination directory exists
     destination_dir.mkdir(parents=True, exist_ok=True)
