@@ -178,16 +178,15 @@ def ultranest_fit(
         # Compute bayesian metrics
         min_chi2 = -2 * ultranest_result["maximum_likelihood"]["logl"]
         avg_chi2 = jnp.array(
-            [
-                -2 * log_likelihood(jnp.array(sample)).item()
-                for sample in full_samples
-            ]
+            [-2 * log_likelihood(jnp.array(sample)).item() for sample in full_samples]
         ).mean()
         Cb = avg_chi2 - min_chi2
 
         # Write the results to file
         with open(str(output_path) + "/bayes_metrics.csv", "w") as f:
-            f.write(f"logz,min_chi2,avg_chi2,Cb\n{ultranest_result["logz"]},{min_chi2},{avg_chi2},{Cb}\n")
+            f.write(
+                f"logz,min_chi2,avg_chi2,Cb\n{ultranest_result["logz"]},{min_chi2},{avg_chi2},{Cb}\n"
+            )
 
         # create replicas folder if it does not exist
         replicas_path = str(output_path) + "/replicas"
