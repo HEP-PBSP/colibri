@@ -124,7 +124,7 @@ def test_get_full_posterior():
     df = get_full_posterior(SIMPLE_WMIN_FIT)
 
     assert df is not None
-    assert type(df) == pandas.core.frame.DataFrame
+    assert isinstance(df, pandas.core.frame.DataFrame)
 
     # Clean up the copied directory
     shutil.rmtree(dest_path)
