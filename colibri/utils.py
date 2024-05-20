@@ -3,8 +3,6 @@ colibri.utils.py
 
 Module containing several utils for PDF fits.
 
-Author: Mark N. Costantini
-Date: 11.11.2023
 """
 
 import os
@@ -171,7 +169,7 @@ def get_fit_path(fit):
         raise FileNotFoundError(
             "Could not find a fit " + fit + " in the colibri/results directory."
         )
-    return str(fit_path)
+    return pathlib.Path(fit_path)
 
 
 def get_full_posterior(colibri_fit):
@@ -192,7 +190,7 @@ def get_full_posterior(colibri_fit):
 
     fit_path = get_fit_path(colibri_fit)
 
-    csv_path = fit_path + "/full_posterior_sample.csv"
+    csv_path = fit_path / "full_posterior_sample.csv"
     # check that file exist
     if not os.path.exists(csv_path):
         raise FileNotFoundError(
@@ -221,7 +219,7 @@ def get_pdf_model(colibri_fit):
 
     fit_path = get_fit_path(colibri_fit)
 
-    pdf_model_path = fit_path + "/pdf_model.pkl"
+    pdf_model_path = fit_path / "pdf_model.pkl"
     # check that file exist
     if not os.path.exists(pdf_model_path):
         raise FileNotFoundError(

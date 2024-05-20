@@ -14,6 +14,8 @@ import jax
 class PDFModel(ABC):
     """An abstract class describing the key features of a PDF."""
 
+    name = "Abstract PDFModel"
+
     @property
     @abstractmethod
     def param_names(self):

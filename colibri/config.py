@@ -322,3 +322,9 @@ class colibriConfig(Config):
             return indices
 
         return None
+
+    def produce_pdf_model(self):
+        """
+        Returns None as the pdf_model is not used in the colibri module.
+        """
+        return None

@@ -9,36 +9,12 @@ import jax
 import jax.numpy as jnp
 
 from validphys import convolution
-from validphys.core import PDF
 
 from colibri.pdf_model import PDFModel
 
-import dill
 import logging
 
 log = logging.getLogger(__name__)
-
-
-def pdf_model(wmin_settings, output_path):
-    """
-    Weight minimization grid is in the evolution basis.
-    The following parametrization is used:
-
-    f_{j,wm} = f_j + sum_i(w_i * (f_i - f_j))
-
-    this has the advantage of automatically satisfying the sum rules.
-
-    Notes:
-        - the central replica of the wminpdfset is always included in the
-          wmin parametrization
-    """
-    model = WMinPDF(PDF(wmin_settings["wminpdfset"]), wmin_settings["n_basis"])
-
-    # dump model to output_path using dill
-    # this is mainly needed by scripts/ns_resampler.py
-    with open(output_path / "pdf_model.pkl", "wb") as file:
-        dill.dump(model, file)
-    return model
 
 
 class WMinPDF(PDFModel):
@@ -54,6 +30,8 @@ class WMinPDF(PDFModel):
         The number of basis functions to use for the wmin parameterisation.
 
     """
+
+    name = "weight mininisation PDF model"
 
     def __init__(self, wminpdfset, n_basis):
         self.wminpdfset = wminpdfset
