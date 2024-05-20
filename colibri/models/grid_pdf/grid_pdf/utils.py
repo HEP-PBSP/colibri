@@ -103,7 +103,7 @@ def bayesian_prior(prior_settings, pdf_model):
     prior are given in prior_settings, which is a dictionary with required
     key 'type'. The 'type' is one of 'uniform_pdf_prior', 'gaussian_pdf_prior'.
 
-    NOTE: this function overridest the one in colibri.bayes_prior.
+    NOTE: this function overrides the one in colibri.bayes_prior.
 
     Parameters
     ----------
@@ -185,7 +185,7 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     """
     The initial parameters for the Monte Carlo fit.
 
-    NOTE: this function overridest the one in colibri.mc_initialisation.
+    NOTE: this function overrides the one in colibri.mc_initialisation.
 
     Parameters
     ----------

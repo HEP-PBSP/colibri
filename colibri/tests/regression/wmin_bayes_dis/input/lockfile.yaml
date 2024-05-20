@@ -1,0 +1,43 @@
+meta: An example of a bayesian fit using wmin parameterisation on a reduced DIS dataset
+dataset_inputs:
+  # DIS                
+- {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
+
+
+theoryid: 700
+use_cuts: internal
+closure_test_level: 0
+closure_test_pdf: NNPDF40_nnlo_as_01180
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: POSF2U, maxlambda: 1e6}
+
+alpha: 1e-7
+lambda_positivity: 0
+use_fit_t0: true
+t0pdfset: NNPDF40_nnlo_as_01180
+wmin_settings:
+  wminpdfset: NNPDF40_nnlo_as_01180
+  n_basis: 10
+ns_settings:
+  sampler_plot: true
+  n_posterior_samples: 10
+  ReactiveNS_settings:
+    vectorized: false
+    ndraw_max: 500
+    log_dir: 
+      /Users/markcostantini/codes/colibri/colibri/examples/example_runcards/wmin_runcards/wmin_bayes_dis/ultranest_logs
+    resume: overwrite
+  Run_settings:
+    min_num_live_points: 500
+    min_ess: 50
+    frac_remain: 0.01
+prior_settings:
+  type: uniform_parameter_prior
+  max_val: 10.0
+  min_val: -10.0
+actions_:
+- ultranest_fit
