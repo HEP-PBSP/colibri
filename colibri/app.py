@@ -9,12 +9,6 @@ from validphys.app import App
 from colibri.config import colibriConfig, Environment
 import pathlib
 
-import jax
-
-# enable double precision globally, this is needed so as to avoid numerical
-# instabilities in the generation of pseudodata (colibri effect)
-jax.config.update("jax_enable_x64", True)
-
 
 colibri_providers = [
     "colibri.theory_predictions",
@@ -68,6 +62,13 @@ class colibriApp(App):
             nargs="?",
             default=None,
             help="Name of the output directory.",
+        )
+
+        parser.add_argument(
+            "-f32",
+            "--float32",
+            action="store_true",
+            help="Use float32 precision for the computation",
         )
 
         return parser
