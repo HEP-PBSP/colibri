@@ -23,12 +23,18 @@ from wmin.tests.wmin_conftest import (
 )
 
 N_LOOP_ITERATIONS = 100
-THRESHOLD_TIME_DIS = 4e-3
-THRESHOLD_TIME_DIS_POS = 4e-3
-THRESHOLD_TIME_HAD = 5e-3
-THRESHOLD_TIME_HAD_POS = 5e-3
-THRESHOLD_TIME_GLOBAL = 5e-3
-THRESHOLD_TIME_GLOBAL_POS = 5e-3
+
+"""
+Threshold times are chosen > 1 order of magnitude higher than the expected time since 
+the time can vary depending on the machine and github actions runners are usually slower 
+than local machines.
+"""
+THRESHOLD_TIME_DIS = 5e-4
+THRESHOLD_TIME_DIS_POS = 7e-4
+THRESHOLD_TIME_HAD = 7e-3
+THRESHOLD_TIME_HAD_POS = 1e-2
+THRESHOLD_TIME_GLOBAL = 5e-2
+THRESHOLD_TIME_GLOBAL_POS = 6e-2
 
 RNG_KEY = 0
 
@@ -78,6 +84,9 @@ def test_likelihood_dis_wmin(wmin_model_settings):
     # Sample params from the prior
     prior_list = prior_samples(prior, wmin_model_settings)
 
+    # compile likelihood
+    log_likelihood(prior_list[0])
+
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(N_LOOP_ITERATIONS):
@@ -85,6 +94,7 @@ def test_likelihood_dis_wmin(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
+    print(f"Likelihood time per evaluation for DIS: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_DIS
 
@@ -126,6 +136,9 @@ def test_likelihood_dis_wmin_with_pos(wmin_model_settings):
     # Sample params from the prior
     prior_list = prior_samples(prior, wmin_model_settings)
 
+    # compile likelihood
+    log_likelihood(prior_list[0])
+
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(N_LOOP_ITERATIONS):
@@ -133,6 +146,7 @@ def test_likelihood_dis_wmin_with_pos(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
+    print(f"Likelihood time per evaluation for DIS w/ POS: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_DIS_POS
 
@@ -172,6 +186,9 @@ def test_likelihood_had_wmin(wmin_model_settings):
     # Sample params from the prior
     prior_list = prior_samples(prior, wmin_model_settings)
 
+    # compile likelihood
+    log_likelihood(prior_list[0])
+
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(N_LOOP_ITERATIONS):
@@ -179,6 +196,7 @@ def test_likelihood_had_wmin(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
+    print(f"Likelihood time per evaluation for HAD: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_HAD
 
@@ -220,6 +238,9 @@ def test_likelihood_had_wmin_with_pos(wmin_model_settings):
     # Sample params from the prior
     prior_list = prior_samples(prior, wmin_model_settings)
 
+    # compile likelihood
+    log_likelihood(prior_list[0])
+
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(N_LOOP_ITERATIONS):
@@ -227,6 +248,7 @@ def test_likelihood_had_wmin_with_pos(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
+    print(f"Likelihood time per evaluation for HAD w/ POS: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_HAD_POS
 
@@ -266,6 +288,9 @@ def test_likelihood_global_wmin(wmin_model_settings):
     # Sample params from the prior
     prior_list = prior_samples(prior, wmin_model_settings)
 
+    # compile likelihood
+    log_likelihood(prior_list[0])
+
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(N_LOOP_ITERATIONS):
@@ -273,6 +298,7 @@ def test_likelihood_global_wmin(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
+    print(f"Likelihood time per evaluation for HAD and DIS: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_GLOBAL
 
@@ -316,6 +342,9 @@ def test_likelihood_global_wmin_with_pos(wmin_model_settings):
     # Sample params from the prior
     prior_list = prior_samples(prior, wmin_model_settings)
 
+    # compile likelihood
+    log_likelihood(prior_list[0])
+
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(N_LOOP_ITERATIONS):
@@ -323,5 +352,6 @@ def test_likelihood_global_wmin_with_pos(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
+    print(f"Likelihood time per evaluation for HAD and DIS w/ POS: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_GLOBAL_POS
