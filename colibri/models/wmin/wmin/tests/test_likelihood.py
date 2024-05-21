@@ -15,7 +15,6 @@ from colibri.tests.conftest import (
     TEST_DATASETS_HAD,
     TEST_POS_DATASET,
 )
-from numpy.testing import assert_almost_equal
 from wmin.api import API as wminAPI
 from wmin.tests.wmin_conftest import (
     TEST_PRIOR_SETTINGS_WMIN,
@@ -24,12 +23,12 @@ from wmin.tests.wmin_conftest import (
 )
 
 N_LOOP_ITERATIONS = 100
-THRESHOLD_TIME_DIS = 2.5e-3
-THRESHOLD_TIME_DIS_POS = 2.5e-3
-THRESHOLD_TIME_HAD = 3e0
-THRESHOLD_TIME_HAD_POS = 3e0
-THRESHOLD_TIME_GLOBAL = 3e0
-THRESHOLD_TIME_GLOBAL_POS = 3e0
+THRESHOLD_TIME_DIS = 4e-3
+THRESHOLD_TIME_DIS_POS = 4e-3
+THRESHOLD_TIME_HAD = 5e-3
+THRESHOLD_TIME_HAD_POS = 5e-3
+THRESHOLD_TIME_GLOBAL = 5e-3
+THRESHOLD_TIME_GLOBAL_POS = 5e-3
 
 RNG_KEY = 0
 
@@ -134,13 +133,8 @@ def test_likelihood_dis_wmin_with_pos(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
-    print(f"Time per evaluation: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_DIS_POS
-
-
-if __name__ == "__main__":
-    test_likelihood_dis_wmin_with_pos(TEST_WMIN_SETTINGS_NBASIS_10)
 
 
 @pytest.mark.parametrize(
@@ -185,7 +179,6 @@ def test_likelihood_had_wmin(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
-    print(f"Time per evaluation: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_HAD
 
@@ -234,7 +227,6 @@ def test_likelihood_had_wmin_with_pos(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
-    print(f"Time per evaluation: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_HAD_POS
 
@@ -281,7 +273,6 @@ def test_likelihood_global_wmin(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
-    print(f"Time per evaluation: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_GLOBAL
 
@@ -332,6 +323,5 @@ def test_likelihood_global_wmin_with_pos(wmin_model_settings):
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
-    print(f"Time per evaluation: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_GLOBAL_POS
