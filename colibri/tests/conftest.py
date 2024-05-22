@@ -1,5 +1,5 @@
 """
-Module
+Module containing standard pytest data configurations for testing purposes.
 """
 
 from colibri.pdf_model import PDFModel

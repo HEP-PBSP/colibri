@@ -1,5 +1,5 @@
 """
-TODO
+Module containing standard pytest data configurations for testing purposes.
 """
 
 from colibri.tests.conftest import TEST_PDFSET
