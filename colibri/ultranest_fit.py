@@ -212,6 +212,7 @@ def ultranest_fit(
         return UltranestFit(
             ultranest_specs=ns_settings,
             ultranest_result=ultranest_result,
+            param_names=parameters,
             resampled_posterior=resampled_posterior,
             full_posterior_samples=full_samples,
             bayes_complexity=Cb,

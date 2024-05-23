@@ -61,4 +61,4 @@ prior_settings:
   min_val: -10.0
 
 actions_:
-- analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- run_analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit

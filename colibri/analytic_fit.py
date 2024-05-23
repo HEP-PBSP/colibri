@@ -8,16 +8,12 @@ model.
 
 from dataclasses import dataclass
 import time
-import os
 
 import jax
 import jax.numpy as jnp
 import jax.numpy.linalg as jla
 
-import pandas as pd
-
-from colibri.lhapdf import write_exportgrid
-from colibri.export_results import BayesianFit
+from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 
 import logging
 
@@ -46,7 +42,6 @@ def analytic_fit(
     pdf_model,
     analytic_settings,
     bayesian_prior,
-    output_path,
     FIT_XGRID,
 ):
     """
@@ -71,9 +66,6 @@ def analytic_fit(
 
     analytic_settings: dict
         Settings for the analytic fit.
-
-    output_path: str
-        Path to write the results to.
 
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
@@ -161,11 +153,6 @@ def analytic_fit(
         log.error(
             "The prior is not wide enough to cover the posterior samples. Increase the prior width."
         )
-    # Write full sample to csv
-    full_samples_df = pd.DataFrame(full_samples, columns=parameters)
-    full_samples_df.to_csv(
-        str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
-    )
 
     # Compute average chi2
     avg_chi2 = jnp.array(
@@ -177,34 +164,23 @@ def analytic_fit(
     Cb = avg_chi2 - min_chi2
     log.info(f"Bayesian complexity = {Cb}")
 
-    # Write the results to file
-    with open(str(output_path) + "/bayes_metrics.csv", "w") as f:
-        f.write(f"logz,min_chi2,avg_chi2,Cb\n{logZ},{min_chi2},{avg_chi2},{Cb}\n")
-
     # Resample the posterior for PDF set
     samples = full_samples[: analytic_settings["n_posterior_samples"]]
-    # Save the results
-    df = pd.DataFrame(samples, columns=parameters)
-    df.to_csv(str(output_path) + "/analytic_result.csv", float_format="%.5e")
-
-    # create replicas folder if it does not exist
-    replicas_path = str(output_path) + "/replicas"
-    if not os.path.exists(replicas_path):
-        os.mkdir(replicas_path)
-
-    # Finish by writing the replicas to export grids, ready for evolution
-    for i in range(analytic_settings["n_posterior_samples"]):
-        log.info(f"Writing exportgrid for replica {i+1}")
-        write_exportgrid(
-            jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path
-        )
 
     return AnalyticFit(
         analytic_specs=analytic_settings,
         resampled_posterior=samples,
+        param_names=parameters,
         full_posterior_samples=full_samples,
         bayes_complexity=Cb,
         avg_chi2=avg_chi2,
         min_chi2=min_chi2,
         logz=logZ,
     )
+
+
+def run_analytic_fit(analytic_fit, output_path, pdf_model):
+
+    export_bayes_results(analytic_fit, output_path, "analytic_result")
+
+    write_replicas(analytic_fit, output_path, pdf_model)
