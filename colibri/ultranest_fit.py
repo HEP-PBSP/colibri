@@ -59,7 +59,6 @@ def ultranest_fit(
     pdf_model,
     bayesian_prior,
     ns_settings,
-    output_path,
     FIT_XGRID,
 ):
     """
@@ -81,9 +80,6 @@ def ultranest_fit(
 
     ns_settings: dict
         Settings for the Nested Sampling fit.
-
-    output_path: str
-        Path to write the results to.
 
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
