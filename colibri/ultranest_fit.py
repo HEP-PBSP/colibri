@@ -8,16 +8,13 @@ This module contains the main Bayesian fitting routine of colibri.
 from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
-import pandas as pd
 import ultranest
 import time
 import logging
 import sys
-import os
 
-from colibri.lhapdf import write_exportgrid
 from colibri.utils import resample_from_ns_posterior
-from colibri.export_results import BayesianFit
+from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 import numpy as np
 from mpi4py import MPI
 
@@ -139,8 +136,8 @@ def ultranest_fit(
 
     n_posterior_samples = ns_settings["n_posterior_samples"]
 
-    # Initialize df outside the if block to avoid UnboundLocalError
-    df = None
+    # Initialize fit_result to avoid UnboundLocalError
+    fit_result = None
 
     # The following block is only executed by the master process
     if rank == 0:
@@ -163,15 +160,8 @@ def ultranest_fit(
             # Store run plots to ultranest_logs folder (within output_path folder)
             sampler.plot()
 
-        df = pd.DataFrame(resampled_posterior, columns=parameters)
-        df.to_csv(str(output_path) + "/ns_result.csv", float_format="%.5e")
-
-        # Write also full samples
+        # Get the full samples
         full_samples = ultranest_result["samples"]
-        full_samples_df = pd.DataFrame(full_samples, columns=parameters)
-        full_samples_df.to_csv(
-            str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
-        )
 
         # Compute bayesian metrics
         min_chi2 = -2 * ultranest_result["maximum_likelihood"]["logl"]
@@ -180,36 +170,7 @@ def ultranest_fit(
         ).mean()
         Cb = avg_chi2 - min_chi2
 
-        # Write the results to file
-        with open(str(output_path) + "/bayes_metrics.csv", "w") as f:
-            f.write(
-                f"logz,min_chi2,avg_chi2,Cb\n{ultranest_result["logz"]},{min_chi2},{avg_chi2},{Cb}\n"
-            )
-
-        # create replicas folder if it does not exist
-        replicas_path = str(output_path) + "/replicas"
-        if not os.path.exists(replicas_path):
-            os.mkdir(replicas_path)
-
-    # Synchronize to ensure all processes have finished
-    comm.Barrier()
-
-    # Broadcast the result to all processes
-    df = comm.bcast(df, root=0)
-
-    # Distribute indices among processes using scatter
-    indices_per_process = list(range(rank, n_posterior_samples, size))
-
-    # Finish by writing the replicas to export grids, ready for evolution
-    for i in indices_per_process:
-        log.info(f"Writing exportgrid for replica {i+1}")
-        write_exportgrid(
-            jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path
-        )
-
-    # Return the UltranestFit dataclass, only by the master process
-    if rank == 0:
-        return UltranestFit(
+        fit_result = UltranestFit(
             ultranest_specs=ns_settings,
             ultranest_result=ultranest_result,
             param_names=parameters,
@@ -220,3 +181,19 @@ def ultranest_fit(
             min_chi2=min_chi2,
             logz=ultranest_result["logz"],
         )
+
+    # Synchronize to ensure all processes have finished
+    comm.Barrier()
+
+    # Broadcast the result to all processes
+    fit_result = comm.bcast(fit_result, root=0)
+
+    return fit_result
+
+
+def run_ultranest_fit(ultranest_fit, output_path, pdf_model):
+
+    if rank == 0:
+        export_bayes_results(ultranest_fit, output_path, "ns_result")
+
+    write_replicas(ultranest_fit, output_path, pdf_model)

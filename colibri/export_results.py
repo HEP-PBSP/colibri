@@ -11,6 +11,12 @@ import pandas as pd
 import os
 from colibri.lhapdf import write_exportgrid
 
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
 import logging
 
 log = logging.getLogger(__name__)
@@ -74,7 +80,7 @@ def export_bayes_results(
 
     # Save the resampled results
     df = pd.DataFrame(bayes_fit.resampled_posterior, columns=bayes_fit.param_names)
-    df.to_csv(str(output_path) + "/{results_name}.csv", float_format="%.5e")
+    df.to_csv(str(output_path) + f"/{results_name}.csv", float_format="%.5e")
 
     # Write the results to file
     with open(str(output_path) + "/bayes_metrics.csv", "w") as f:
@@ -84,13 +90,22 @@ def export_bayes_results(
 
 
 def write_replicas(bayes_fit, output_path, pdf_model):
-    # create replicas folder if it does not exist
-    replicas_path = str(output_path) + "/replicas"
-    if not os.path.exists(replicas_path):
-        os.mkdir(replicas_path)
+    if rank == 0:
+        # create replicas folder if it does not exist
+        replicas_path = str(output_path) + "/replicas"
+        if not os.path.exists(replicas_path):
+            os.mkdir(replicas_path)
+
+    # Synchronize to ensure all processes are ready to write replicas
+    comm.Barrier()
+
+    n_posterior_samples = bayes_fit.resampled_posterior.shape[0]
+
+    # Distribute indices among processes using scatter
+    indices_per_process = list(range(rank, n_posterior_samples, size))
 
     # Finish by writing the replicas to export grids, ready for evolution
-    for i in range(bayes_fit.resampled_posterior.shape[0]):
+    for i in indices_per_process:
         log.info(f"Writing exportgrid for replica {i+1}")
         write_exportgrid(
             jnp.array(bayes_fit.resampled_posterior[i, :]),
