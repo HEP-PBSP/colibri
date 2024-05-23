@@ -2,6 +2,8 @@
 Module for testing that the time per evaluation of the likelihood is below a certain threshold.
 """
 
+import pathlib
+import subprocess as sp
 import time
 
 import jax
@@ -17,11 +19,11 @@ from colibri.tests.conftest import (
 )
 from wmin.api import API as wminAPI
 from wmin.tests.wmin_conftest import (
+    EXE,
+    RUNCARD_WMIN_LIKELIHOOD_TYPE,
     TEST_PRIOR_SETTINGS_WMIN,
     TEST_WMIN_SETTINGS_NBASIS_10,
     TEST_WMIN_SETTINGS_NBASIS_100,
-    RUNCARD_WMIN_LIKELIHOOD_TYPE,
-    EXE,
 )
 
 N_LOOP_ITERATIONS = 100
@@ -361,8 +363,9 @@ def test_likelihood_global_wmin_with_pos(wmin_model_settings):
 
 @pytest.mark.parametrize("float_type", [64, 32])
 def test_likelihood_is_correct_type(float_type):
-    import subprocess as sp
-    import pathlib
+    """
+    Tests that the likelihood is compiled with the correct float type.
+    """
 
     regression_path = pathlib.Path("colibri/models/wmin/wmin/tests/regression")
     dir_path = (
