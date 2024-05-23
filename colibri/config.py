@@ -12,6 +12,7 @@ import hashlib
 import logging
 import os
 import shutil
+import jax
 
 import jax.numpy as jnp
 from colibri import commondata_utils
@@ -34,11 +35,24 @@ class EnvironmentError_(Exception):
 
 
 class Environment(Environment):
-    def __init__(self, replica_index=None, trval_index=0, *args, **kwargs):
+    def __init__(
+        self, replica_index=None, trval_index=0, float32=False, *args, **kwargs
+    ):
         super().__init__(*args, **kwargs)
 
         self.replica_index = replica_index
         self.trval_index = trval_index
+        self.float32 = float32
+
+        if self.float32:
+            log.info("Using float32 precision")
+            log.warning(
+                "If running with ultranest, only SliceSampler is supported with float32 precision."
+            )
+            jax.config.update("jax_enable_x64", False)
+        else:
+            log.info("Using float64 precision")
+            jax.config.update("jax_enable_x64", True)
 
     @classmethod
     def ns_dump_description(cls):

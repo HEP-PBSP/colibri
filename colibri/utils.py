@@ -281,3 +281,28 @@ def cast_to_numpy(func):
         return np.array(result)
 
     return wrapper
+
+
+def likelihood_float_type(
+    _chi2, _pred_data, pdf_model, FIT_XGRID, bayesian_prior, output_path
+):
+    """
+    Writes the dtype of the likelihood function to a file.
+    Mainly used for testing purposes.
+    """
+
+    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
+
+    @jax.jit
+    def log_likelihood(params):
+        predictions, _ = pred_and_pdf(params)
+        return -0.5 * _chi2(predictions)
+
+    params = bayesian_prior(
+        jax.random.uniform(jax.random.PRNGKey(0), shape=(len(pdf_model.param_names),))
+    )
+    dtype = log_likelihood(params).dtype
+
+    # save the dtype to the output path
+    with open(output_path / "dtype.txt", "w") as file:
+        file.write(str(dtype))

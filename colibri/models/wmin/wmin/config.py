@@ -37,7 +37,7 @@ class WminConfig(colibriConfig):
 
         return settings
 
-    def produce_pdf_model(self, wmin_settings, output_path):
+    def produce_pdf_model(self, wmin_settings, output_path, dump_model=True):
         """
         Weight minimization grid is in the evolution basis.
         The following parametrization is used:
@@ -55,6 +55,7 @@ class WminConfig(colibriConfig):
 
         # dump model to output_path using dill
         # this is mainly needed by scripts/ns_resampler.py
-        with open(output_path / "pdf_model.pkl", "wb") as file:
-            dill.dump(model, file)
+        if dump_model:
+            with open(output_path / "pdf_model.pkl", "wb") as file:
+                dill.dump(model, file)
         return model

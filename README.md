@@ -34,6 +34,17 @@ cd colibri
 pip install -e .
 ```
 
+## Using float32 with Ultranest
+
+If using float32 is of interest, one needs to apply a patch to ultranest so that the json.dump is compatible. To do that, follow the instructions:
+
+```
+git clone git@github.com:LucaMantani/UltraNest.git
+cd UltraNest
+git switch add-numpy-encoder
+pip install .
+```
+
 ## Installation of Various Models
 In general if you are not using the `full_environment.yml` installation, it is possible to manually install the various models.
 # Grid PDF 
