@@ -20,6 +20,8 @@ from wmin.tests.wmin_conftest import (
     TEST_PRIOR_SETTINGS_WMIN,
     TEST_WMIN_SETTINGS_NBASIS_10,
     TEST_WMIN_SETTINGS_NBASIS_100,
+    RUNCARD_WMIN_LIKELIHOOD_TYPE,
+    EXE,
 )
 
 N_LOOP_ITERATIONS = 100
@@ -355,3 +357,36 @@ def test_likelihood_global_wmin_with_pos(wmin_model_settings):
     print(f"Likelihood time per evaluation for HAD and DIS w/ POS: {time_per_eval}")
 
     assert time_per_eval < THRESHOLD_TIME_GLOBAL_POS
+
+
+@pytest.mark.parametrize("float_type", [64, 32])
+def test_likelihood_is_correct_type(float_type):
+    import subprocess as sp
+    import pathlib
+
+    regression_path = pathlib.Path("colibri/models/wmin/wmin/tests/regression")
+    dir_path = (
+        pathlib.Path("colibri/models/wmin/wmin/tests/regression")
+        / RUNCARD_WMIN_LIKELIHOOD_TYPE.split(".")[0]
+    )
+
+    if float_type == 64:
+        sp.run(
+            f"{EXE} {RUNCARD_WMIN_LIKELIHOOD_TYPE}".split(),
+            cwd=regression_path,
+            check=True,
+        )
+    elif float_type == 32:
+        sp.run(
+            f"{EXE} {RUNCARD_WMIN_LIKELIHOOD_TYPE} --float32".split(),
+            cwd=regression_path,
+            check=True,
+        )
+
+    # read dtype from file and assert it is the corret one
+    with open(dir_path / "dtype.txt", "r") as f:
+        dtype = f.read().strip()
+        assert dtype == f"float{float_type}"
+
+    # remove directory with results
+    sp.run(f"rm -r {dir_path}".split(), check=True)
