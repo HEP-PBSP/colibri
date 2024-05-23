@@ -17,6 +17,7 @@ import jax.numpy.linalg as jla
 import pandas as pd
 
 from colibri.lhapdf import write_exportgrid
+from colibri.export_results import BayesianFit
 
 import logging
 
@@ -24,7 +25,7 @@ log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class AnalyticFit:
+class AnalyticFit(BayesianFit):
     """
     Dataclass containing the results and specs of an analytic fit.
 
@@ -37,7 +38,6 @@ class AnalyticFit:
     """
 
     analytic_specs: dict
-    resampled_posterior: jnp.array
 
 
 def analytic_fit(
@@ -202,4 +202,9 @@ def analytic_fit(
     return AnalyticFit(
         analytic_specs=analytic_settings,
         resampled_posterior=samples,
+        full_posterior_samples=full_samples,
+        bayes_complexity=Cb,
+        avg_chi2=avg_chi2,
+        min_chi2=min_chi2,
+        logz=logZ,
     )

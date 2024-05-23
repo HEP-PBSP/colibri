@@ -17,6 +17,7 @@ import os
 
 from colibri.lhapdf import write_exportgrid
 from colibri.utils import resample_from_ns_posterior
+from colibri.export_results import BayesianFit
 import numpy as np
 from mpi4py import MPI
 
@@ -39,7 +40,7 @@ ultranest_logger.addHandler(handler)
 
 
 @dataclass(frozen=True)
-class UltranestFit:
+class UltranestFit(BayesianFit):
     """
     Dataclass containing the results and specs of an Ultranest fit.
 
@@ -47,14 +48,11 @@ class UltranestFit:
     ----------
     ultranest_specs: dict
         Dictionary containing the settings of the Ultranest fit.
-    resampled_posterior: jnp.array
-        Array containing the resampled posterior samples.
     ultranest_result: dict
         result from ultranest, can be used eg for corner plots
     """
 
     ultranest_specs: dict
-    resampled_posterior: jnp.array
     ultranest_result: dict
 
 
@@ -213,6 +211,11 @@ def ultranest_fit(
     if rank == 0:
         return UltranestFit(
             ultranest_specs=ns_settings,
-            resampled_posterior=resampled_posterior,
             ultranest_result=ultranest_result,
+            resampled_posterior=resampled_posterior,
+            full_posterior_samples=full_samples,
+            bayes_complexity=Cb,
+            avg_chi2=avg_chi2,
+            min_chi2=min_chi2,
+            logz=ultranest_result["logz"],
         )
