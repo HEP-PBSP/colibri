@@ -367,9 +367,9 @@ def test_likelihood_is_correct_type(float_type):
     Tests that the likelihood is compiled with the correct float type.
     """
 
-    regression_path = pathlib.Path("colibri/models/wmin/wmin/tests/regression")
+    regression_path = pathlib.Path("colibri/models/wmin/wmin/tests/regression_runcards")
     dir_path = (
-        pathlib.Path("colibri/models/wmin/wmin/tests/regression")
+        pathlib.Path("colibri/models/wmin/wmin/tests/regression_runcards")
         / RUNCARD_WMIN_LIKELIHOOD_TYPE.split(".")[0]
     )
 
