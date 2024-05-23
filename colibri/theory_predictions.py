@@ -65,7 +65,7 @@ def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
     fk_xgrid = fktable.xgrid
     fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
-    # @jax.jit
+    @jax.jit
     def dis_prediction(pdf):
         return jnp.einsum("ijk, jk ->i", fk_arr, pdf[indices, :][:, fk_xgrid_indices])
 
