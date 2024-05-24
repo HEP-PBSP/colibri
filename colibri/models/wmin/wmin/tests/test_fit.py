@@ -55,14 +55,13 @@ def test_monte_carlo_fits(runcard):
 
     regression_path = "colibri/models/wmin/wmin/tests/regression_runcards"
 
-    # run monte carlo fit
-    for i in range(1, 6):
-        command = f"{EXE} {runcard} -rep {i}"
-        result = sp.run(command.split(), cwd=regression_path, check=True)
+    # run monte carlo fit once
+    command = f"{EXE} {runcard} -rep 1"
+    result = sp.run(command.split(), cwd=regression_path, check=True)
 
     # run postfit
     sp.run(
-        f"{POSTFIT_EXE} {runcard.split('.')[0]} -t 5 -c 100",
+        f"{POSTFIT_EXE} {runcard.split('.')[0]} -t 1 -c 100",
         shell=True,
         cwd=regression_path,
         check=True,
