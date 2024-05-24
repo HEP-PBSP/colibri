@@ -3,19 +3,11 @@ import jax.numpy as jnp
 import jax.random
 from unittest.mock import Mock, patch
 from colibri.analytic_fit import analytic_fit, run_analytic_fit
-
-mock_pdf_model = Mock()
-mock_pdf_model.param_names = ["param1", "param2"]
-mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-    (14, len(xgrid))
-)
-mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-    lambda params: (params, jnp.ones((14, len(xgrid))))
-)
+import logging
 
 mock_central_covmat_index = Mock()
 mock_central_covmat_index.central_values = jnp.ones(2)
-mock_central_covmat_index.covmat = jnp.eye(2)
+mock_central_covmat_index.covmat = 10 * jnp.eye(2)
 
 analytic_settings = {
     "sampling_seed": 123,
@@ -47,7 +39,12 @@ FIT_XGRID = np.linspace(0, 1, 50)
 
 
 def test_analytic_fit_flat_direction():
-    # Check that a ValueError is raised if covmat in parameter space is not positive definite
+    # Create mock pdf model
+    mock_pdf_model = Mock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
+        (14, len(xgrid))
+    )
     mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
         lambda params: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
     )
@@ -66,7 +63,16 @@ def test_analytic_fit_flat_direction():
         raise AssertionError("ValueError not raised")
 
 
-def test_analytic_fit():
+def test_analytic_fit(caplog):
+    # Create mock pdf model
+    mock_pdf_model = Mock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
+        (14, len(xgrid))
+    )
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params: (params, jnp.ones((14, len(xgrid))))
+    )
 
     # Run the analytic fit
     result = analytic_fit(
@@ -85,9 +91,46 @@ def test_analytic_fit():
     )
     assert len(result.param_names) == len(mock_pdf_model.param_names)
 
+    # Check that it works if optimal_prior is False
+    analytic_settings["optimal_prior"] = False
+    # Run the analytic fit
+    with caplog.at_level(logging.ERROR):  # Set the log level to ERROR
+        result_2 = analytic_fit(
+            mock_central_covmat_index,
+            _pred_data,
+            mock_pdf_model,
+            analytic_settings,
+            bayesian_prior,
+            FIT_XGRID,
+        )
+
+    # Check if the error message is logged
+    assert (
+        "The prior is not wide enough to cover the posterior samples. Increase the prior width."
+        in caplog.text
+    )
+
+    # Assertions
+    assert result_2.analytic_specs == analytic_settings
+    assert (
+        result_2.resampled_posterior.shape[0]
+        == analytic_settings["n_posterior_samples"]
+    )
+    assert len(result_2.param_names) == len(mock_pdf_model.param_names)
+
 
 @patch("colibri.export_results.write_exportgrid")
 def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
+
+    # Create mock pdf model
+    mock_pdf_model = Mock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
+        (14, len(xgrid))
+    )
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params: (params, jnp.ones((14, len(xgrid))))
+    )
 
     # Run the run_analytic_fit function
     output_path = str(tmp_path)
