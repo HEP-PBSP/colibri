@@ -62,6 +62,8 @@ def test_analytic_fit(caplog):
         lambda params: (params, jnp.ones((14, len(xgrid))))
     )
 
+    _pred_data = None
+
     # Run the analytic fit
     result = analytic_fit(
         mock_central_covmat_index,
