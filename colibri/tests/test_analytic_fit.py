@@ -125,12 +125,6 @@ def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-        (14, len(xgrid))
-    )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params: (params, jnp.ones((14, len(xgrid))))
-    )
 
     # Run the run_analytic_fit function
     output_path = str(tmp_path)
