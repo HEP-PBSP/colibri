@@ -1,5 +1,4 @@
 from unittest.mock import Mock, patch
-import numpy as np
 import jax.numpy as jnp
 import jax
 
