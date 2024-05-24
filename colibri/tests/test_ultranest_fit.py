@@ -14,12 +14,12 @@ bayesian_prior = lambda x: x
 FIT_XGRID = jnp.logspace(-7, 0, 50)
 _chi2_with_positivity_mock = lambda pred, pdf: 1.0
 
-ns_settings_mock = {
+ns_settings = {
     "ultranest_seed": 42,
     "ReactiveNS_settings": {"vectorized": False},
     "SliceSampler_settings": None,
     "Run_settings": {"frac_remain": 0.5, "min_num_live_points": 5},
-    "n_posterior_samples": 1000,
+    "n_posterior_samples": 10,
     "posterior_resampling_seed": 123,
     "sampler_plot": False,
 }
@@ -42,11 +42,18 @@ def test_ultranest_fit():
         _pred_data,
         mock_pdf_model,
         bayesian_prior,
-        ns_settings_mock,
+        ns_settings,
         FIT_XGRID,
     )
 
     assert isinstance(fit_result, UltranestFit)
+    assert fit_result.resampled_posterior.shape == (
+        ns_settings["n_posterior_samples"],
+        len(mock_pdf_model.param_names),
+    )
+    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.ultranest_specs == ns_settings
+    assert isinstance(fit_result.ultranest_result, dict)
 
 
 @patch("colibri.export_results.write_exportgrid")
