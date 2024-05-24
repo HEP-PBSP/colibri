@@ -41,11 +41,32 @@ mock_analytic_fit.avg_chi2 = 1.0
 mock_analytic_fit.min_chi2 = 1.0
 mock_analytic_fit.logz = 1.0
 
+# Define mock input parameters
+bayesian_prior = lambda x: x
+FIT_XGRID = np.linspace(0, 1, 50)
+
+
+def test_analytic_fit_flat_direction():
+    # Check that a ValueError is raised if covmat in parameter space is not positive definite
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
+    )
+    try:
+        analytic_fit(
+            mock_central_covmat_index,
+            _pred_data,
+            mock_pdf_model,
+            analytic_settings,
+            bayesian_prior,
+            FIT_XGRID,
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("ValueError not raised")
+
 
 def test_analytic_fit():
-    # Define mock input parameters
-    bayesian_prior = lambda x: jnp.ones_like(x)  # Mock flat prior
-    FIT_XGRID = np.linspace(0, 1, 50)  # Example FIT_XGRID
 
     # Run the analytic fit
     result = analytic_fit(
