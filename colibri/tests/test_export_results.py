@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 
 # Mock the objects and functions used in tests
+# Mock the BayesianFit object
 bayes_fit = Mock()
 bayes_fit.resampled_posterior = jax.random.uniform(jax.random.PRNGKey(0), shape=(10, 2))
 bayes_fit.full_posterior_samples = jax.random.uniform(
@@ -16,7 +17,10 @@ bayes_fit.avg_chi2 = 1.0
 bayes_fit.min_chi2 = 1.0
 bayes_fit.logz = 1.0
 bayes_fit.param_names = ["param1", "param2"]
+
+# Mock the pdf_model object
 pdf_model = Mock()
+
 rank = 0
 size = 1
 results_name = "results"
