@@ -31,3 +31,5 @@ RUNCARD_TEST_FIT_WMIN_BAYES_DIS = "test_fit_wmin_bayes_dis_L0.yaml"
 RUNCARD_TEST_FIT_WMIN_BAYES_HAD = "test_fit_wmin_bayes_had_L0.yaml"
 
 RUNCARD_TEST_FIT_WMIN_MC_DIS = "test_fit_wmin_mc_dis_L0.yaml"
+
+RUNCARD_TEST_FIT_WMIN_MC_HAD = "test_fit_wmin_mc_had_L0.yaml"
