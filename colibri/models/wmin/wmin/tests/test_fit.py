@@ -44,9 +44,7 @@ def test_bayesian_fits(runcard):
 
 @pytest.mark.parametrize(
     "runcard",
-    [
-        RUNCARD_TEST_FIT_WMIN_MC_DIS, RUNCARD_TEST_FIT_WMIN_MC_HAD
-    ],
+    [RUNCARD_TEST_FIT_WMIN_MC_DIS, RUNCARD_TEST_FIT_WMIN_MC_HAD],
 )
 def test_monte_carlo_fits(runcard):
     """
