@@ -16,15 +16,15 @@ bayes_fit.avg_chi2 = 1.0
 bayes_fit.min_chi2 = 1.0
 bayes_fit.logz = 1.0
 bayes_fit.param_names = ["param1", "param2"]
-output_path = "."
 pdf_model = Mock()
 rank = 0
 size = 1
 results_name = "results"
 
 
-def test_export_bayes_results():
+def test_export_bayes_results(tmp_path):
 
+    output_path = str(tmp_path)
     export_bayes_results(bayes_fit, output_path, results_name)
 
     # Load full_posterior_sample.csv with pandas and check that the values are the correct ones
@@ -57,23 +57,15 @@ def test_export_bayes_results():
         == f"logz,min_chi2,avg_chi2,Cb\n{bayes_fit.logz},{bayes_fit.min_chi2},{bayes_fit.avg_chi2},{bayes_fit.bayes_complexity}\n"
     )
 
-    # clean files
-    os.remove(str(output_path) + "/full_posterior_sample.csv")
-    os.remove(str(output_path) + f"/{results_name}.csv")
-    os.remove(str(output_path) + "/bayes_metrics.csv")
-
 
 @patch("colibri.export_results.os.path.exists", return_value=False)
 @patch("colibri.export_results.os.mkdir")
 @patch("colibri.export_results.write_exportgrid")
 @patch("colibri.export_results.log.info")
 def test_write_replicas(
-    mock_log_info,
-    mock_write_exportgrid,
-    mock_os_mkdir,
-    mock_os_path_exists,
+    mock_log_info, mock_write_exportgrid, mock_os_mkdir, mock_os_path_exists, tmp_path
 ):
-
+    output_path = str(tmp_path)
     write_replicas(bayes_fit, output_path, pdf_model)
 
     # Check if the replicas directory was created
