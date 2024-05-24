@@ -2,7 +2,7 @@ import numpy as np
 import jax.numpy as jnp
 import jax.random
 from unittest.mock import Mock, patch
-from colibri.analytic_fit import analytic_fit, run_analytic_fit
+from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 import logging
 
 mock_central_covmat_index = Mock()
@@ -87,7 +87,8 @@ def test_analytic_fit(caplog):
         FIT_XGRID,
     )
 
-    # Assertions
+    assert isinstance(result, AnalyticFit)
+
     assert result.analytic_specs == analytic_settings
     assert (
         result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]

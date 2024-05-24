@@ -54,7 +54,6 @@ mock_ultranest_fit.logz = 1.0
 
 def test_ultranest_fit():
 
-    # Call the function to be tested
     fit_result = ultranest_fit(
         _chi2_with_positivity_mock,
         _pred_data,
@@ -64,7 +63,6 @@ def test_ultranest_fit():
         FIT_XGRID,
     )
 
-    # Assertions
     assert isinstance(fit_result, UltranestFit)
 
 
