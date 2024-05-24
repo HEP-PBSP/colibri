@@ -1,7 +1,7 @@
 import numpy as np
 import jax.numpy as jnp
 import jax.random
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from colibri.analytic_fit import analytic_fit, run_analytic_fit
 
 mock_pdf_model = Mock()
@@ -65,16 +65,20 @@ def test_analytic_fit():
     assert len(result.param_names) == len(mock_pdf_model.param_names)
 
 
-def test_run_analytic_fit(tmp_path):
+@patch("colibri.export_results.write_exportgrid")
+def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
 
     # Run the run_analytic_fit function
     output_path = str(tmp_path)
     run_analytic_fit(mock_analytic_fit, output_path, mock_pdf_model)
 
+    # Check if the write_exportgrid function was called for each sample
+    assert (
+        mock_write_exportgrid.call_count
+        == mock_analytic_fit.resampled_posterior.shape[0]
+    )
+
     # Assertions - check if files are created in the output path
     assert (tmp_path / "analytic_result.csv").exists()
     assert (tmp_path / "bayes_metrics.csv").exists()
     assert (tmp_path / "full_posterior_sample.csv").exists()
-    assert (tmp_path / "replicas").exists()
-    # check that 10 replicas are created
-    assert len(list((tmp_path / "replicas").iterdir())) == 10
