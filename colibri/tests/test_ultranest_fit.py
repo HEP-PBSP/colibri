@@ -18,7 +18,7 @@ mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
     (14, len(xgrid))
 )
 mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-    lambda params: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
+    lambda params: (params, jnp.ones((14, len(xgrid))))
 )
 _pred_data = None
 
