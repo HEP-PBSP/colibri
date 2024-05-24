@@ -18,7 +18,7 @@ analytic_settings = {
 
 # Define mock input parameters
 bayesian_prior = lambda x: x
-FIT_XGRID = np.linspace(0, 1, 50)
+FIT_XGRID = jnp.logspace(-7, 0, 50)
 
 
 def test_analytic_fit_flat_direction():

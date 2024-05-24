@@ -11,7 +11,7 @@ from colibri.ultranest_fit import (
 
 # Define mock input parameters
 bayesian_prior = lambda x: x
-FIT_XGRID = np.linspace(0, 1, 50)
+FIT_XGRID = jnp.logspace(-7, 0, 50)
 _chi2_with_positivity_mock = lambda pred, pdf: 1.0
 
 ns_settings_mock = {
