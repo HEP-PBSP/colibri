@@ -2,6 +2,8 @@ from unittest.mock import Mock, patch
 from colibri.export_results import write_replicas, export_bayes_results
 import jax
 import os
+import pandas as pd
+import numpy as np
 
 # Mock the objects and functions used in tests
 bayes_fit = Mock()
@@ -14,24 +16,37 @@ bayes_fit.avg_chi2 = 1.0
 bayes_fit.min_chi2 = 1.0
 bayes_fit.logz = 1.0
 bayes_fit.param_names = ["param1", "param2"]
-output_path = "./"
+output_path = "."
 pdf_model = Mock()
 rank = 0
 size = 1
 results_name = "results"
 
 
-@patch("colibri.export_results.pd.DataFrame.to_csv")
-def test_export_bayes_results(mock_to_csv):
+def test_export_bayes_results():
+
     export_bayes_results(bayes_fit, output_path, results_name)
 
-    # Check if the to_csv method was called with the correct arguments
-    assert mock_to_csv.call_count == 2
-    mock_to_csv.assert_any_call(
-        str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
+    # Load full_posterior_sample.csv with pandas and check that the values are the correct ones
+    full_posterior_samples = pd.read_csv(
+        str(output_path) + "/full_posterior_sample.csv", sep=",", index_col=0
     )
-    mock_to_csv.assert_any_call(
-        str(output_path) + f"/{results_name}.csv", float_format="%.5e"
+    assert full_posterior_samples.shape == (100, 2)
+    assert full_posterior_samples.columns.tolist() == bayes_fit.param_names
+    assert (
+        np.round(full_posterior_samples.values).tolist()
+        == np.round(bayes_fit.full_posterior_samples).tolist()
+    )
+
+    # Load resampled_posterior.csv with pandas and check that the values are the correct ones
+    resampled_posterior = pd.read_csv(
+        str(output_path) + f"/{results_name}.csv", sep=",", index_col=0
+    )
+    assert resampled_posterior.shape == (10, 2)
+    assert resampled_posterior.columns.tolist() == bayes_fit.param_names
+    assert (
+        np.round(resampled_posterior.values).tolist()
+        == np.round(bayes_fit.resampled_posterior).tolist()
     )
 
     # Check if the bayes_metrics.csv file was created and contains the correct data
@@ -42,7 +57,9 @@ def test_export_bayes_results(mock_to_csv):
         == f"logz,min_chi2,avg_chi2,Cb\n{bayes_fit.logz},{bayes_fit.min_chi2},{bayes_fit.avg_chi2},{bayes_fit.bayes_complexity}\n"
     )
 
-    # clean bayes_metrics.csv file
+    # clean files
+    os.remove(str(output_path) + "/full_posterior_sample.csv")
+    os.remove(str(output_path) + f"/{results_name}.csv")
     os.remove(str(output_path) + "/bayes_metrics.csv")
 
 
