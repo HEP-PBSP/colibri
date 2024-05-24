@@ -1,26 +1,13 @@
 from unittest.mock import Mock, patch
 import numpy as np
-from mpi4py import MPI
 import jax.numpy as jnp
 import jax
 
-# Importing functions to test
 from colibri.ultranest_fit import (
     UltranestFit,
     ultranest_fit,
     run_ultranest_fit,
 )
-
-# Create mock pdf model
-mock_pdf_model = Mock()
-mock_pdf_model.param_names = ["param1", "param2"]
-mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-    (14, len(xgrid))
-)
-mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-    lambda params: (params, jnp.ones((14, len(xgrid))))
-)
-_pred_data = None
 
 # Define mock input parameters
 bayesian_prior = lambda x: x
@@ -37,22 +24,18 @@ ns_settings_mock = {
     "sampler_plot": False,
 }
 
-# Define mock ultranest fit
-mock_ultranest_fit = Mock()
-mock_ultranest_fit.resampled_posterior = jax.random.normal(
-    jax.random.PRNGKey(0), (10, 2)
-)
-mock_ultranest_fit.param_names = ["param1", "param2"]
-mock_ultranest_fit.full_posterior_samples = jax.random.normal(
-    jax.random.PRNGKey(0), (100, 2)
-)
-mock_ultranest_fit.bayes_complexity = 1.0
-mock_ultranest_fit.avg_chi2 = 1.0
-mock_ultranest_fit.min_chi2 = 1.0
-mock_ultranest_fit.logz = 1.0
-
 
 def test_ultranest_fit():
+    # Create mock pdf model
+    mock_pdf_model = Mock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
+        (14, len(xgrid))
+    )
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params: (params, jnp.ones((14, len(xgrid))))
+    )
+    _pred_data = None
 
     fit_result = ultranest_fit(
         _chi2_with_positivity_mock,
@@ -68,6 +51,20 @@ def test_ultranest_fit():
 
 @patch("colibri.export_results.write_exportgrid")
 def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
+
+    # Define mock ultranest fit
+    mock_ultranest_fit = Mock()
+    mock_ultranest_fit.resampled_posterior = jax.random.normal(
+        jax.random.PRNGKey(0), (10, 2)
+    )
+    mock_ultranest_fit.param_names = ["param1", "param2"]
+    mock_ultranest_fit.full_posterior_samples = jax.random.normal(
+        jax.random.PRNGKey(0), (100, 2)
+    )
+    mock_ultranest_fit.bayes_complexity = 1.0
+    mock_ultranest_fit.avg_chi2 = 1.0
+    mock_ultranest_fit.min_chi2 = 1.0
+    mock_ultranest_fit.logz = 1.0
 
     # Create mock pdf model
     mock_pdf_model = Mock()

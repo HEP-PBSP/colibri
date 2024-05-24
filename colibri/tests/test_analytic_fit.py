@@ -16,23 +16,6 @@ analytic_settings = {
     "optimal_prior": True,
 }
 
-_pred_data = None
-
-# Define mock analytic fit
-mock_analytic_fit = Mock()
-mock_analytic_fit.analytic_specs = analytic_settings
-mock_analytic_fit.resampled_posterior = jax.random.normal(
-    jax.random.PRNGKey(0), (10, 2)
-)
-mock_analytic_fit.param_names = ["param1", "param2"]
-mock_analytic_fit.full_posterior_samples = jax.random.normal(
-    jax.random.PRNGKey(0), (100, 2)
-)
-mock_analytic_fit.bayes_complexity = 1.0
-mock_analytic_fit.avg_chi2 = 1.0
-mock_analytic_fit.min_chi2 = 1.0
-mock_analytic_fit.logz = 1.0
-
 # Define mock input parameters
 bayesian_prior = lambda x: x
 FIT_XGRID = np.linspace(0, 1, 50)
@@ -48,6 +31,8 @@ def test_analytic_fit_flat_direction():
     mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
         lambda params: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
     )
+
+    _pred_data = None
 
     # Run the analytic fit and make sure that the Value Error is raised
     try:
@@ -125,6 +110,21 @@ def test_analytic_fit(caplog):
 
 @patch("colibri.export_results.write_exportgrid")
 def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
+
+    # Define mock analytic fit
+    mock_analytic_fit = Mock()
+    mock_analytic_fit.analytic_specs = analytic_settings
+    mock_analytic_fit.resampled_posterior = jax.random.normal(
+        jax.random.PRNGKey(0), (10, 2)
+    )
+    mock_analytic_fit.param_names = ["param1", "param2"]
+    mock_analytic_fit.full_posterior_samples = jax.random.normal(
+        jax.random.PRNGKey(0), (100, 2)
+    )
+    mock_analytic_fit.bayes_complexity = 1.0
+    mock_analytic_fit.avg_chi2 = 1.0
+    mock_analytic_fit.min_chi2 = 1.0
+    mock_analytic_fit.logz = 1.0
 
     # Create mock pdf model
     mock_pdf_model = Mock()
