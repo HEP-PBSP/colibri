@@ -67,10 +67,10 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
     mock_ultranest_fit.full_posterior_samples = jax.random.normal(
         jax.random.PRNGKey(0), (100, 2)
     )
-    mock_ultranest_fit.bayes_complexity = 1.0
-    mock_ultranest_fit.avg_chi2 = 1.0
-    mock_ultranest_fit.min_chi2 = 1.0
-    mock_ultranest_fit.logz = 1.0
+    mock_ultranest_fit.bayes_complexity = 2.0
+    mock_ultranest_fit.avg_chi2 = 0.3
+    mock_ultranest_fit.min_chi2 = 0.1
+    mock_ultranest_fit.logz = 7.0
 
     # Create mock pdf model
     mock_pdf_model = Mock()

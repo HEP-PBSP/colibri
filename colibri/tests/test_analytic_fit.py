@@ -6,7 +6,7 @@ import logging
 
 mock_central_covmat_index = Mock()
 mock_central_covmat_index.central_values = jnp.ones(2)
-mock_central_covmat_index.covmat = 10 * jnp.eye(2)
+mock_central_covmat_index.covmat = jnp.eye(2)
 
 analytic_settings = {
     "sampling_seed": 123,
@@ -100,7 +100,6 @@ def test_analytic_fit(caplog):
         in caplog.text
     )
 
-    # Assertions
     assert result_2.analytic_specs == analytic_settings
     assert (
         result_2.resampled_posterior.shape[0]
@@ -122,10 +121,10 @@ def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
     mock_analytic_fit.full_posterior_samples = jax.random.normal(
         jax.random.PRNGKey(0), (100, 2)
     )
-    mock_analytic_fit.bayes_complexity = 1.0
-    mock_analytic_fit.avg_chi2 = 1.0
-    mock_analytic_fit.min_chi2 = 1.0
-    mock_analytic_fit.logz = 1.0
+    mock_analytic_fit.bayes_complexity = 2.0
+    mock_analytic_fit.avg_chi2 = 0.3
+    mock_analytic_fit.min_chi2 = 0.1
+    mock_analytic_fit.logz = 7.0
 
     # Create mock pdf model
     mock_pdf_model = Mock()
