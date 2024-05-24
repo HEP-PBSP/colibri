@@ -67,7 +67,7 @@ jobs:
       run: |
         pip install pytest
         pip install pytest-cov
-        pytest colibri/models/wmin/wmin/tests --cov=colibri/models/wmin --cov-report=xml
+        pytest -p no:warnings colibri/models/wmin/wmin/tests --cov=colibri/models/wmin --cov-report=xml
     
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.2.0
