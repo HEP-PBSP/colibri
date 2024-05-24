@@ -48,6 +48,8 @@ def test_analytic_fit_flat_direction():
     mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
         lambda params: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
     )
+
+    # Run the analytic fit and make sure that the Value Error is raised
     try:
         analytic_fit(
             mock_central_covmat_index,
@@ -57,10 +59,11 @@ def test_analytic_fit_flat_direction():
             bayesian_prior,
             FIT_XGRID,
         )
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("ValueError not raised")
+    except ValueError as e:
+        assert (
+            str(e)
+            == "The obtained covariance matrix for the analytic solution is not positive definite."
+        )
 
 
 def test_analytic_fit(caplog):
