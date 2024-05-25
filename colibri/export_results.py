@@ -5,13 +5,14 @@ This module contains the functions to export the results of the fit.
 
 """
 
+import os
 from dataclasses import dataclass
+
 import jax.numpy as jnp
 import pandas as pd
-import os
-from colibri.lhapdf import write_exportgrid
-
 from mpi4py import MPI
+
+from colibri.lhapdf import write_exportgrid
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
