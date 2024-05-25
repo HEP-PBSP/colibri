@@ -248,7 +248,6 @@ class colibriConfig(Config):
     def parse_analytic_settings(
         self,
         settings,
-        output_path,
     ):
         """For an analytic fit, parses the analytic_settings namespace from the runcard,
         and ensures the choice of settings is valid.
