@@ -14,8 +14,6 @@ import jax.numpy as jnp
 from validphys import convolution
 from validphys.fkparser import load_fktable
 
-from colibri.utils import fill_dis_fkarr_with_zeros, fill_had_fkarr_with_zeros
-
 # Is this needed? -> probably no need to jit compile
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
@@ -54,18 +52,24 @@ def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
     """
 
     if flavour_indices is not None:
-        indices = fktable.luminosity_mapping
-        mask = jnp.isin(indices, jnp.array(flavour_indices))
-        indices = indices[mask]
-        fk_arr = jnp.array(fill_dis_fkarr_with_zeros(fktable, FIT_XGRID))[:, mask, :]
+        lumi_indices = fktable.luminosity_mapping
+        mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
+        lumi_indices = lumi_indices[mask]
+        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask, :]
 
     else:
-        indices = fktable.luminosity_mapping
-        fk_arr = jnp.array(fill_dis_fkarr_with_zeros(fktable, FIT_XGRID))
+        lumi_indices = fktable.luminosity_mapping
+        fk_arr = jnp.array(fktable.get_np_fktable())
+
+    # Extract xgrid of the FK table and find the indices
+    fk_xgrid = fktable.xgrid
+    fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
     @jax.jit
     def dis_prediction(pdf):
-        return jnp.einsum("ijk, jk ->i", fk_arr, pdf[indices, :])
+        return jnp.einsum(
+            "ijk, jk ->i", fk_arr, pdf[lumi_indices, :][:, fk_xgrid_indices]
+        )
 
     if vectorized:
         return jnp.vectorize(dis_prediction, signature="(m,n)->(k)")
@@ -105,34 +109,39 @@ def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
     """
 
     if flavour_indices is not None:
-        indices = fktable.luminosity_mapping
-        mask_even = jnp.isin(indices[0::2], jnp.array(flavour_indices))
-        mask_odd = jnp.isin(indices[1::2], jnp.array(flavour_indices))
+        lumi_indices = fktable.luminosity_mapping
+        mask_even = jnp.isin(lumi_indices[0::2], jnp.array(flavour_indices))
+        mask_odd = jnp.isin(lumi_indices[1::2], jnp.array(flavour_indices))
 
         # for hadronic predictions pdfs enter in pair, hence product of two
         # boolean arrays and repeat by 2
         mask = jnp.repeat(mask_even * mask_odd, repeats=2)
-        indices = indices[mask]
+        lumi_indices = lumi_indices[mask]
 
-        first_indices = indices[0::2]
-        second_indices = indices[1::2]
+        first_lumi_indices = lumi_indices[0::2]
+        second_lumi_indices = lumi_indices[1::2]
 
-        fk_arr = jnp.array(fill_had_fkarr_with_zeros(fktable, FIT_XGRID))[
-            :, mask_even * mask_odd, :, :
-        ]
+        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask_even * mask_odd, :, :]
 
     else:
-        indices = fktable.luminosity_mapping
+        lumi_indices = fktable.luminosity_mapping
 
-        first_indices = indices[0::2]
-        second_indices = indices[1::2]
+        first_lumi_indices = lumi_indices[0::2]
+        second_lumi_indices = lumi_indices[1::2]
 
-        fk_arr = jnp.array(fill_had_fkarr_with_zeros(fktable, FIT_XGRID))
+        fk_arr = jnp.array(fktable.get_np_fktable())
+
+    # Extract xgrid of the FK table and find the indices
+    fk_xgrid = fktable.xgrid
+    fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
     @jax.jit
     def had_prediction(pdf):
         return jnp.einsum(
-            "ijkl,jk,jl->i", fk_arr, pdf[first_indices, :], pdf[second_indices, :]
+            "ijkl,jk,jl->i",
+            fk_arr,
+            pdf[first_lumi_indices, :][:, fk_xgrid_indices],
+            pdf[second_lumi_indices, :][:, fk_xgrid_indices],
         )
 
     if vectorized:
