@@ -3,6 +3,7 @@ import jax.random
 from unittest.mock import Mock, patch
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 import logging
+import pytest
 
 mock_central_covmat_index = Mock()
 mock_central_covmat_index.central_values = jnp.ones(2)
@@ -33,8 +34,8 @@ def test_analytic_fit_flat_direction():
 
     _pred_data = None
 
-    # Run the analytic fit and make sure that the Value Error is raised
-    try:
+    with pytest.raises(ValueError):
+        # Run the analytic fit and make sure that the Value Error is raised
         analytic_fit(
             mock_central_covmat_index,
             _pred_data,
@@ -43,10 +44,6 @@ def test_analytic_fit_flat_direction():
             bayesian_prior,
             FIT_XGRID,
         )
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("ValueError not raised")
 
 
 def test_analytic_fit(caplog):
