@@ -188,6 +188,18 @@ def ultranest_fit(
 
 
 def run_ultranest_fit(ultranest_fit, output_path, pdf_model):
+    """
+    Export the results of an Ultranest fit.
+
+    Parameters
+    ----------
+    ultranest_fit: UltranestFit
+        The results of the Ultranest fit.
+    output_path: pathlib.PosixPath
+        Path to the output folder.
+    pdf_model: pdf_model.PDFModel
+        The PDF model used in the fit.
+    """
 
     if rank == 0:
         export_bayes_results(ultranest_fit, output_path, "ns_result")
