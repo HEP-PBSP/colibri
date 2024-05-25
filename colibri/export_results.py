@@ -69,6 +69,8 @@ def export_bayes_results(
         The results of the Bayesian fit.
     output_path: pathlib.PosixPath
         Path to the output folder.
+    results_name: str
+        Name of the results file.
     """
 
     # Write full sample to csv
@@ -91,6 +93,18 @@ def export_bayes_results(
 
 
 def write_replicas(bayes_fit, output_path, pdf_model):
+    """
+    Write the replicas of the Bayesian fit to export grids.
+
+    Parameters
+    ----------
+    bayes_fit: BayesianFit
+        The results of the Bayesian fit.
+    output_path: pathlib.PosixPath
+        Path to the output folder.
+    pdf_model: PDFModel
+        The PDF model used in the fit.
+    """
     if rank == 0:
         # create replicas folder if it does not exist
         replicas_path = str(output_path) + "/replicas"
