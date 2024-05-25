@@ -1,8 +1,27 @@
 from unittest.mock import MagicMock, patch
-
 from reportengine.configparser import ConfigError
+from colibri.config import colibriConfig, Environment
+import unittest.mock as mock
 
-from colibri.config import colibriConfig
+
+def test_float32_precision_enabled():
+    with mock.patch("colibri.config.jax") as mock_jax:
+        env = Environment(float32=True)
+        assert env.float32
+        mock_jax.config.update.assert_called_once_with("jax_enable_x64", False)
+
+
+def test_float64_precision_enabled():
+    with mock.patch("colibri.config.jax") as mock_jax:
+        env = Environment(float32=False)
+        assert not env.float32
+        mock_jax.config.update.assert_called_once_with("jax_enable_x64", True)
+
+
+def test_ns_dump_description():
+    description = Environment.ns_dump_description()
+    assert "replica_index" in description
+    assert "trval_index" in description
 
 
 @patch("colibri.config.log.warning")
