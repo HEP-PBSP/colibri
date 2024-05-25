@@ -22,66 +22,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def fill_dis_fkarr_with_zeros(fktable, FIT_XGRID):
-    """
-    Fills the FK array with zeros so as to get array of shape
-    (Ndat, Nfl, N_FIT_XGRID)
-
-    Parameters
-    ----------
-    fktable: validphys.coredata.FKTableData
-
-    FIT_XGRID: np.ndarray
-        xgrid of the theory, computed by a production rule by taking
-        the sorted union of the xgrids of the datasets entering the fit.
-
-    Returns
-    -------
-    new_fkarr: np.ndarray
-    """
-
-    new_fkarr = np.zeros(
-        (
-            fktable.get_np_fktable().shape[0],
-            fktable.get_np_fktable().shape[1],
-            len(FIT_XGRID),
-        )
-    )
-    indices = np.where(np.isclose(FIT_XGRID, fktable.xgrid[:, np.newaxis]))[1]
-    new_fkarr[:, :, indices] = fktable.get_np_fktable()
-
-    return new_fkarr
-
-
-def fill_had_fkarr_with_zeros(fktable, FIT_XGRID):
-    """
-    Fills the FK array with zeros so as to get array of shape
-    (Ndat, Nfl, N_FIT_XGRID, N_FIT_XGRID)
-
-    Parameters
-    ----------
-    fktable: validphys.coredata.FKTableData
-
-    Returns
-    -------
-    new_fkarr: np.ndarray
-    """
-
-    new_fkarr = np.zeros(
-        (
-            fktable.get_np_fktable().shape[0],
-            fktable.get_np_fktable().shape[1],
-            len(FIT_XGRID),
-            len(FIT_XGRID),
-        )
-    )
-
-    indices = np.where(np.isclose(FIT_XGRID, fktable.xgrid[:, np.newaxis]))[1]
-    new_fkarr[:, :, indices[:, None], indices] = fktable.get_np_fktable()
-
-    return new_fkarr
-
-
 def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
     """
     Computes the t0 pdf grid in the evolution basis.
