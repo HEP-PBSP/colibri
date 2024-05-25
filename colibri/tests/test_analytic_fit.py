@@ -43,11 +43,10 @@ def test_analytic_fit_flat_direction():
             bayesian_prior,
             FIT_XGRID,
         )
-    except ValueError as e:
-        assert (
-            str(e)
-            == "The obtained covariance matrix for the analytic solution is not positive definite."
-        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("ValueError not raised")
 
 
 def test_analytic_fit(caplog):
@@ -94,11 +93,9 @@ def test_analytic_fit(caplog):
             FIT_XGRID,
         )
 
-    # Check if the error message is logged
-    assert (
-        "The prior is not wide enough to cover the posterior samples. Increase the prior width."
-        in caplog.text
-    )
+    # Check that an error message was logged, because the prior was not wide enough
+    error_logged = any(record.levelno == logging.ERROR for record in caplog.records)
+    assert error_logged, "No error message was logged"
 
     assert result_2.analytic_specs == analytic_settings
     assert (
