@@ -180,6 +180,18 @@ def analytic_fit(
 
 
 def run_analytic_fit(analytic_fit, output_path, pdf_model):
+    """
+    Export the results of an analytic fit.
+
+    Parameters
+    ----------
+    analytic_fit: AnalyticFit
+        The results of the analytic fit.
+    output_path: pathlib.PosixPath
+        Path to the output folder.
+    pdf_model: pdf_model.PDFModel
+        The PDF model used in the fit.
+    """
 
     export_bayes_results(analytic_fit, output_path, "analytic_result")
 

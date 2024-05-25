@@ -102,7 +102,7 @@ def write_replicas(bayes_fit, output_path, pdf_model):
         The results of the Bayesian fit.
     output_path: pathlib.PosixPath
         Path to the output folder.
-    pdf_model: PDFModel
+    pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
     """
     if rank == 0:
