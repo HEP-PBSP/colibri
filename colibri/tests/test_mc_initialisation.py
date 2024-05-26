@@ -37,6 +37,15 @@ def test_normal_initializer(mock_normal, mock_PRNGKey):
     )
     np.testing.assert_array_equal(result, jnp.array([0.1, -0.1, 0.2]))
 
+    # Now test the case where the random_seed is not provided
+    settings = {"type": "normal"}
+    replica_index = 1
+    mock_normal.return_value = jnp.array([0.5, -0.5, 0.0])
+
+    result = mc_initial_parameters(pdf_model, settings, replica_index)
+
+    mock_PRNGKey.assert_called_with(1)
+
 
 @patch("jax.random.PRNGKey")
 @patch("jax.random.uniform")
