@@ -1,2 +1,4 @@
 [run]
-omit = colibri/models/*
+omit = 
+    colibri/models/*
+    colibri/plots_and_tables/*
