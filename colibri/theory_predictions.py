@@ -18,7 +18,9 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=None):
+def make_dis_prediction(
+    fktable, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
+):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -45,6 +47,7 @@ def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
         The indices correspond to the flavours in convolution.FK_FLAVOURS
         e.g.: [1,2] -> ['\\Sigma', 'g']
 
+    float_type: str, default is "float32"
 
     Returns
     -------
@@ -55,11 +58,11 @@ def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
         lumi_indices = fktable.luminosity_mapping
         mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
         lumi_indices = lumi_indices[mask]
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask, :]
+        fk_arr = jnp.array(fktable.get_np_fktable(), dtype=float_type)[:, mask, :]
 
     else:
         lumi_indices = fktable.luminosity_mapping
-        fk_arr = jnp.array(fktable.get_np_fktable())
+        fk_arr = jnp.array(fktable.get_np_fktable(), dtype=float_type)
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
@@ -76,7 +79,9 @@ def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
     return dis_prediction
 
 
-def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=None):
+def make_had_prediction(
+    fktable, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
+):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -103,6 +108,8 @@ def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
         The indices correspond to the flavours in convolution.FK_FLAVOURS
         e.g.: [1,2] -> ['\\Sigma', 'g']
 
+    float_type: str, default is "float32"
+
     Returns
     -------
     @jax.jit CompiledFunction
@@ -121,7 +128,9 @@ def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask_even * mask_odd, :, :]
+        fk_arr = jnp.array(fktable.get_np_fktable(), dtype=float_type)[
+            :, mask_even * mask_odd, :, :
+        ]
 
     else:
         lumi_indices = fktable.luminosity_mapping
@@ -129,7 +138,7 @@ def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())
+        fk_arr = jnp.array(fktable.get_np_fktable(), dtype=float_type)
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
@@ -149,7 +158,9 @@ def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
     return had_prediction
 
 
-def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None):
+def make_pred_dataset(
+    dataset, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
+):
     """
     Compute theory prediction for a DataSetSpec
 
@@ -176,9 +187,13 @@ def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None
     for fkspec in dataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
+            pred = make_had_prediction(
+                fk, FIT_XGRID, vectorized, flavour_indices, float_type=float_type
+            )
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
+            pred = make_dis_prediction(
+                fk, FIT_XGRID, vectorized, flavour_indices, float_type=float_type
+            )
         pred_funcs.append(pred)
 
     @jax.jit
@@ -188,7 +203,9 @@ def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None
     return prediction
 
 
-def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
+def make_pred_data(
+    data, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
+):
     """
     Compute theory prediction for entire DataGroupSpec
 
@@ -214,7 +231,9 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
 
     for ds in data.datasets:
         predictions.append(
-            make_pred_dataset(ds, FIT_XGRID, vectorized, flavour_indices)
+            make_pred_dataset(
+                ds, FIT_XGRID, vectorized, flavour_indices, float_type=float_type
+            )
         )
 
     @jax.jit
@@ -224,7 +243,7 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
     return eval_preds
 
 
-def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
+def make_pred_t0data(data, FIT_XGRID, flavour_indices=None, float_type="float32"):
     """
     Compute theory prediction for entire DataGroupSpec.
     It is specifically meant for t0 predictions, i.e. it
@@ -251,7 +270,11 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
     for ds in data.datasets:
         predictions.append(
             make_pred_dataset(
-                ds, FIT_XGRID, vectorized=False, flavour_indices=flavour_indices
+                ds,
+                FIT_XGRID,
+                vectorized=False,
+                flavour_indices=flavour_indices,
+                float_type=float_type,
             )
         )
 
@@ -262,15 +285,15 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
     return eval_preds
 
 
-def make_pred_data_non_vectorized(data, FIT_XGRID):
+def make_pred_data_non_vectorized(data, FIT_XGRID, float_type="float32"):
     """
     Same as make_pred_data but with vectorized=False
     """
-    return make_pred_data(data, FIT_XGRID, vectorized=False)
+    return make_pred_data(data, FIT_XGRID, vectorized=False, float_type=float_type)
 
 
 def make_penalty_posdataset(
-    posdataset, FIT_XGRID, vectorized=False, flavour_indices=None
+    posdataset, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
 ):
     """
     Given a PositivitySetSpec compute the positivity penalty
@@ -285,6 +308,10 @@ def make_penalty_posdataset(
         the sorted union of the xgrids of the datasets entering the fit.
 
     vectorized: bool, default is False
+
+    flavour_indices: list, default is None
+
+    float_type: str, default is "float32"
 
     Returns
     -------
@@ -308,9 +335,13 @@ def make_penalty_posdataset(
     for fkspec in posdataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
+            pred = make_had_prediction(
+                fk, FIT_XGRID, vectorized, flavour_indices, float_type=float_type
+            )
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
+            pred = make_dis_prediction(
+                fk, FIT_XGRID, vectorized, flavour_indices, float_type=float_type
+            )
         pred_funcs.append(pred)
 
     @jax.jit
@@ -322,7 +353,9 @@ def make_penalty_posdataset(
     return pos_penalty
 
 
-def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
+def make_penalty_posdata(
+    posdatasets, FIT_XGRID, vectorized=False, float_type="float32"
+):
     """
     Compute positivity penalty for list of PositivitySetSpec
 
@@ -337,6 +370,8 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
 
     vectorized: bool, default is False
 
+    float_type: str, default is "float32"
+
     Returns
     -------
     @jax.jit CompiledFunction
@@ -346,7 +381,11 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
     predictions = []
 
     for posdataset in posdatasets:
-        predictions.append(make_penalty_posdataset(posdataset, FIT_XGRID, vectorized))
+        predictions.append(
+            make_penalty_posdataset(
+                posdataset, FIT_XGRID, vectorized, float_type=float_type
+            )
+        )
 
     @jax.jit
     def pos_penalties(pdf, alpha, lambda_positivity):

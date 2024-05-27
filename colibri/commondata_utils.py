@@ -39,6 +39,7 @@ def level_0_commondata_tuple(
     closure_test_central_pdf_grid,
     FIT_XGRID,
     flavour_indices=None,
+    float_type="float32",
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -63,6 +64,8 @@ def level_0_commondata_tuple(
     flavour_indices: list, default is None
         Subset of flavour (evolution basis) indices to be used.
 
+    float_type: str, default is "float32"
+
     Returns
     -------
     tuple
@@ -77,7 +80,11 @@ def level_0_commondata_tuple(
         fake_data.append(
             cd.with_central_value(
                 make_pred_dataset(
-                    ds, FIT_XGRID, vectorized=False, flavour_indices=flavour_indices
+                    ds,
+                    FIT_XGRID,
+                    vectorized=False,
+                    flavour_indices=flavour_indices,
+                    float_type=float_type,
                 )(closure_test_central_pdf_grid)
             )
         )
