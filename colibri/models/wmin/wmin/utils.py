@@ -17,6 +17,7 @@ def likelihood_time(
     pdf_model,
     bayesian_prior,
     data,
+    theoryid,
     n_prior_samples=1000,
 ):
     """
@@ -51,6 +52,11 @@ def likelihood_time(
     time_per_eval = (end_time - start_time) / n_prior_samples
 
     df = pd.DataFrame(
-        {"Ndata": [ndata], "Likelihood eval time (s)": [time_per_eval]}, index=["wmin"]
+        {
+            "Ndata": [ndata],
+            "Theory": [theoryid],
+            "Likelihood eval time (s)": [time_per_eval],
+        },
+        index=["wmin"],
     )
     return df
