@@ -57,7 +57,9 @@ def likelihood_time(
 
     ndata = sum([ds.load_commondata().ndata for ds in data.datasets])
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data, float_type=float_type)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(
+        FIT_XGRID, forward_map=_pred_data, float_type=float_type
+    )
 
     @jax.jit
     def log_likelihood(params):
@@ -69,12 +71,14 @@ def likelihood_time(
     prior_samples = []
     for i in range(n_prior_samples):
         prior_samples.append(
-            bayesian_prior(jax.random.uniform(rng, shape=(pdf_model.n_basis,), dtype=float_type))
+            bayesian_prior(
+                jax.random.uniform(rng, shape=(pdf_model.n_basis,), dtype=float_type)
+            )
         )
 
     # compile likelihood
     log_likelihood(prior_samples[0])
-    
+
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(n_prior_samples):
