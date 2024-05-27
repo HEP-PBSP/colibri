@@ -172,6 +172,7 @@ class colibriConfig(Config):
             "SliceSampler_settings",
             "ultranest_seed",
             "sampler_plot",
+            "popstepsampler",
         }
 
         kdiff = settings.keys() - known_keys
@@ -200,6 +201,9 @@ class colibriConfig(Config):
 
         # set sampler plot to True by default
         ns_settings["sampler_plot"] = settings.get("sampler_plot", True)
+
+        # set popstepsampler to False by default
+        ns_settings["popstepsampler"] = settings.get("popstepsampler", False)
 
         # Check that the ReactiveNS_settings key was provided, if not set to default
         if ns_settings["ReactiveNS_settings"]:
