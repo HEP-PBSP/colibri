@@ -76,6 +76,7 @@ analytic_settings:
   n_posterior_samples: 10
   full_sample_size: 1000
   sampling_seed: 123456
+  optimal_prior: True
 
 prior_settings:
   type: 'uniform_pdf_prior'            # The type of prior used in Nested Sampling (model dependent)
@@ -83,4 +84,4 @@ prior_settings:
   nsigma: 5                           # Size of the uniform band around the PDF
 
 actions_:
-- analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- run_analytic_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit

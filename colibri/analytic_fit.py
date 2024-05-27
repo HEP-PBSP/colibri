@@ -8,15 +8,12 @@ model.
 
 from dataclasses import dataclass
 import time
-import os
 
 import jax
 import jax.numpy as jnp
 import jax.numpy.linalg as jla
 
-import pandas as pd
-
-from colibri.lhapdf import write_exportgrid
+from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 
 import logging
 
@@ -24,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class AnalyticFit:
+class AnalyticFit(BayesianFit):
     """
     Dataclass containing the results and specs of an analytic fit.
 
@@ -37,7 +34,6 @@ class AnalyticFit:
     """
 
     analytic_specs: dict
-    resampled_posterior: jnp.array
 
 
 def analytic_fit(
@@ -46,7 +42,6 @@ def analytic_fit(
     pdf_model,
     analytic_settings,
     bayesian_prior,
-    output_path,
     FIT_XGRID,
 ):
     """
@@ -72,9 +67,6 @@ def analytic_fit(
     analytic_settings: dict
         Settings for the analytic fit.
 
-    output_path: str
-        Path to write the results to.
-
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
@@ -87,10 +79,6 @@ def analytic_fit(
 
     parameters = pdf_model.param_names
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
-
-    # Extract lower and upper bounds of the prior
-    prior_lower = bayesian_prior(jnp.zeros(len(parameters)))
-    prior_upper = bayesian_prior(jnp.ones(len(parameters)))
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
@@ -119,26 +107,6 @@ def analytic_fit(
     sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     sol_covmat = jla.inv(X.T @ Sigma @ X)
 
-    # Compute the evidence
-    # This is the log of the evidence, which is the log of the integral of the likelihood
-    # over the prior. The prior is a gaussian with width prior_width.
-    log.info("Computing the evidence...")
-
-    prior_width = prior_upper - prior_lower
-
-    gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
-    log_prior = jnp.log(1 / prior_width).sum()
-    # This is a factor in front of the gaussian likelihood
-    extra_term = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
-
-    logZ = gaussian_integral + extra_term + log_prior
-
-    log.info(f"LogZ = {logZ}")
-
-    # Write the evidence to file
-    with open(str(output_path) + "/evidence.csv", "w") as f:
-        f.write(f"LogZ\n{logZ}")
-
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
     full_samples = jax.random.multivariate_normal(
@@ -150,36 +118,81 @@ def analytic_fit(
     t1 = time.time()
     log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
 
+    # Compute the evidence
+    # This is the log of the evidence, which is the log of the integral of the likelihood
+    # over the prior. The prior is uniform with width prior_width.
+    log.info("Computing the evidence...")
+
+    if analytic_settings["optimal_prior"]:
+        log.info("Using optimal prior")
+        prior_lower = full_samples.min(axis=0)
+        prior_upper = full_samples.max(axis=0)
+    else:
+        # Extract lower and upper bounds of the prior
+        prior_lower = bayesian_prior(jnp.zeros(len(parameters)))
+        prior_upper = bayesian_prior(jnp.ones(len(parameters)))
+
+    prior_width = prior_upper - prior_lower
+
+    gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
+    log_prior = jnp.log(1 / prior_width).sum()
+    # Compute maximum log likelihood
+    max_logl = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
+
+    logZ = gaussian_integral + max_logl + log_prior
+
+    log.info(f"LogZ = {logZ}")
+    log.info(f"Maximum log likelihood = {max_logl}")
+
+    # Compute minimum chi2
+    min_chi2 = -2 * max_logl
+    log.info(f"Minimum chi2 = {min_chi2}")
+
     # Check that the prior is wide enough
     if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
         log.error(
             "The prior is not wide enough to cover the posterior samples. Increase the prior width."
         )
-    # Write full sample to csv
-    full_samples_df = pd.DataFrame(full_samples, columns=parameters)
-    full_samples_df.to_csv(
-        str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
-    )
+
+    # Compute average chi2
+    avg_chi2 = jnp.array(
+        [(Y - X @ sample).T @ Sigma @ (Y - X @ sample) for sample in full_samples]
+    ).mean()
+    log.info(f"Average chi2 = {avg_chi2}")
+
+    # Compute the Bayesian complexity
+    Cb = avg_chi2 - min_chi2
+    log.info(f"Bayesian complexity = {Cb}")
 
     # Resample the posterior for PDF set
     samples = full_samples[: analytic_settings["n_posterior_samples"]]
-    # Save the results
-    df = pd.DataFrame(samples, columns=parameters)
-    df.to_csv(str(output_path) + "/analytic_result.csv", float_format="%.5e")
-
-    # create replicas folder if it does not exist
-    replicas_path = str(output_path) + "/replicas"
-    if not os.path.exists(replicas_path):
-        os.mkdir(replicas_path)
-
-    # Finish by writing the replicas to export grids, ready for evolution
-    for i in range(analytic_settings["n_posterior_samples"]):
-        log.info(f"Writing exportgrid for replica {i+1}")
-        write_exportgrid(
-            jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path
-        )
 
     return AnalyticFit(
         analytic_specs=analytic_settings,
         resampled_posterior=samples,
+        param_names=parameters,
+        full_posterior_samples=full_samples,
+        bayes_complexity=Cb,
+        avg_chi2=avg_chi2,
+        min_chi2=min_chi2,
+        logz=logZ,
     )
+
+
+def run_analytic_fit(analytic_fit, output_path, pdf_model):
+    """
+    Export the results of an analytic fit.
+
+    Parameters
+    ----------
+    analytic_fit: AnalyticFit
+        The results of the analytic fit.
+    output_path: pathlib.PosixPath
+        Path to the output folder.
+    pdf_model: pdf_model.PDFModel
+        The PDF model used in the fit.
+    """
+
+    export_bayes_results(analytic_fit, output_path, "analytic_result")
+
+    write_replicas(analytic_fit, output_path, pdf_model)

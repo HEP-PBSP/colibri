@@ -69,4 +69,4 @@ prior_settings:
   min_val: -10.0
 
 actions_:
-- ultranest_fit                       
+- run_ultranest_fit                       

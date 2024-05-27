@@ -132,4 +132,4 @@ prior_settings:
   nsigma: 5                           # Size of the uniform band around the PDF
 
 actions_:
-- ultranest_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- run_ultranest_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit

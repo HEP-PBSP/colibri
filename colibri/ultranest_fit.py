@@ -8,15 +8,13 @@ This module contains the main Bayesian fitting routine of colibri.
 from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
-import pandas as pd
 import ultranest
 import time
 import logging
 import sys
-import os
 
-from colibri.lhapdf import write_exportgrid
 from colibri.utils import resample_from_ns_posterior
+from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 import numpy as np
 from mpi4py import MPI
 
@@ -39,7 +37,7 @@ ultranest_logger.addHandler(handler)
 
 
 @dataclass(frozen=True)
-class UltranestFit:
+class UltranestFit(BayesianFit):
     """
     Dataclass containing the results and specs of an Ultranest fit.
 
@@ -47,14 +45,11 @@ class UltranestFit:
     ----------
     ultranest_specs: dict
         Dictionary containing the settings of the Ultranest fit.
-    resampled_posterior: jnp.array
-        Array containing the resampled posterior samples.
     ultranest_result: dict
         result from ultranest, can be used eg for corner plots
     """
 
     ultranest_specs: dict
-    resampled_posterior: jnp.array
     ultranest_result: dict
 
 
@@ -64,7 +59,6 @@ def ultranest_fit(
     pdf_model,
     bayesian_prior,
     ns_settings,
-    output_path,
     FIT_XGRID,
 ):
     """
@@ -86,9 +80,6 @@ def ultranest_fit(
 
     ns_settings: dict
         Settings for the Nested Sampling fit.
-
-    output_path: str
-        Path to write the results to.
 
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
@@ -141,8 +132,8 @@ def ultranest_fit(
 
     n_posterior_samples = ns_settings["n_posterior_samples"]
 
-    # Initialize df outside the if block to avoid UnboundLocalError
-    df = None
+    # Initialize fit_result to avoid UnboundLocalError
+    fit_result = None
 
     # The following block is only executed by the master process
     if rank == 0:
@@ -165,41 +156,52 @@ def ultranest_fit(
             # Store run plots to ultranest_logs folder (within output_path folder)
             sampler.plot()
 
-        df = pd.DataFrame(resampled_posterior, columns=parameters)
-        df.to_csv(str(output_path) + "/ns_result.csv", float_format="%.5e")
-
-        # Write also full samples
+        # Get the full samples
         full_samples = ultranest_result["samples"]
-        full_samples_df = pd.DataFrame(full_samples, columns=parameters)
-        full_samples_df.to_csv(
-            str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
-        )
 
-        # create replicas folder if it does not exist
-        replicas_path = str(output_path) + "/replicas"
-        if not os.path.exists(replicas_path):
-            os.mkdir(replicas_path)
+        # Compute bayesian metrics
+        min_chi2 = -2 * ultranest_result["maximum_likelihood"]["logl"]
+        avg_chi2 = jnp.array(
+            [-2 * log_likelihood(jnp.array(sample)).item() for sample in full_samples]
+        ).mean()
+        Cb = avg_chi2 - min_chi2
+
+        fit_result = UltranestFit(
+            ultranest_specs=ns_settings,
+            ultranest_result=ultranest_result,
+            param_names=parameters,
+            resampled_posterior=resampled_posterior,
+            full_posterior_samples=full_samples,
+            bayes_complexity=Cb,
+            avg_chi2=avg_chi2,
+            min_chi2=min_chi2,
+            logz=ultranest_result["logz"],
+        )
 
     # Synchronize to ensure all processes have finished
     comm.Barrier()
 
     # Broadcast the result to all processes
-    df = comm.bcast(df, root=0)
+    fit_result = comm.bcast(fit_result, root=0)
 
-    # Distribute indices among processes using scatter
-    indices_per_process = list(range(rank, n_posterior_samples, size))
+    return fit_result
 
-    # Finish by writing the replicas to export grids, ready for evolution
-    for i in indices_per_process:
-        log.info(f"Writing exportgrid for replica {i+1}")
-        write_exportgrid(
-            jnp.array(df.iloc[i, :].tolist()), pdf_model, i + 1, output_path
-        )
 
-    # Return the UltranestFit dataclass, only by the master process
+def run_ultranest_fit(ultranest_fit, output_path, pdf_model):
+    """
+    Export the results of an Ultranest fit.
+
+    Parameters
+    ----------
+    ultranest_fit: UltranestFit
+        The results of the Ultranest fit.
+    output_path: pathlib.PosixPath
+        Path to the output folder.
+    pdf_model: pdf_model.PDFModel
+        The PDF model used in the fit.
+    """
+
     if rank == 0:
-        return UltranestFit(
-            ultranest_specs=ns_settings,
-            resampled_posterior=resampled_posterior,
-            ultranest_result=ultranest_result,
-        )
+        export_bayes_results(ultranest_fit, output_path, "ns_result")
+
+    write_replicas(ultranest_fit, output_path, pdf_model)

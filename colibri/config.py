@@ -245,6 +245,48 @@ class colibriConfig(Config):
 
         return ns_settings
 
+    def parse_analytic_settings(
+        self,
+        settings,
+    ):
+        """For an analytic fit, parses the analytic_settings namespace from the runcard,
+        and ensures the choice of settings is valid.
+        """
+
+        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
+        known_keys = {
+            "n_posterior_samples",
+            "sampling_seed",
+            "full_sample_size",
+            "optimal_prior",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in analytic_settings not known.", k, known_keys)
+            )
+
+        # Now construct the analytic_settings dictionary, checking the parameter combinations are
+        # valid
+        analytic_settings = {}
+
+        # Set the sampling seed
+        analytic_settings["sampling_seed"] = settings.get("sampling_seed", 123456)
+
+        # Set the posterior resampling parameters
+        analytic_settings["n_posterior_samples"] = settings.get(
+            "n_posterior_samples", 100
+        )
+
+        # Set the full sample size
+        analytic_settings["full_sample_size"] = settings.get("full_sample_size", 1000)
+
+        # Set the optimal prior flag
+        analytic_settings["optimal_prior"] = settings.get("optimal_prior", False)
+
+        return analytic_settings
+
     def produce_vectorized(self, ns_settings):
         """Returns True if the fit is vectorized, False otherwise.
         This is required for the predictions functions, which do not take ns_settings as an argument.
