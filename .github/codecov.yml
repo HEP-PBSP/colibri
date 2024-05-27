@@ -5,7 +5,7 @@ coverage:
   status:
     project:
       default:
-        target: 30% # Set your desired coverage threshold for the project
+        target: 80% # Set your desired coverage threshold for the project
     patch:
       default:
-        target: 0% # Set your desired coverage threshold for the patch (PR)
+        target: 100% # Set your desired coverage threshold for the patch (PR)
