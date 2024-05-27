@@ -80,14 +80,13 @@ def test_likelihood_time_values(setup):
     assert isinstance(result.loc["wmin", "Likelihood eval time (s)"], float)
 
 
-def test_likelihood_time_samples():
+def test_likelihood_time_samples(setup):
     """
     test the number of samples in the output of likelihood_time
     """
-    setupp = setup()
-    setupp["n_prior_samples"] = 5
-    result = likelihood_time(**setupp)
 
+    setup["n_prior_samples"] = 5
+    result = likelihood_time(**setup)
     assert len(result) == 1
     assert result.loc["wmin", "Ndata"] == N_MOCK_DATA
     assert result.loc["wmin", "Theory"] == MOCK_NAME_THEORY
