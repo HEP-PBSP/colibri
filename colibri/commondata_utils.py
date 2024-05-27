@@ -37,7 +37,6 @@ def level_0_commondata_tuple(
     closure_test_central_pdf_grid,
     FIT_XGRID,
     flavour_indices=None,
-    float_type=None,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -62,8 +61,6 @@ def level_0_commondata_tuple(
     flavour_indices: list, default is None
         Subset of flavour (evolution basis) indices to be used.
 
-    float_type: str, default is "float32"
-
     Returns
     -------
     tuple
@@ -82,7 +79,6 @@ def level_0_commondata_tuple(
                     FIT_XGRID,
                     vectorized=False,
                     flavour_indices=flavour_indices,
-                    float_type=float_type,
                 )(closure_test_central_pdf_grid)
             )
         )
@@ -93,7 +89,6 @@ def level_1_commondata_tuple(
     level_0_commondata_tuple,
     data_generation_covariance_matrix,
     level_1_seed=123456,
-    float_type=None,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -112,8 +107,6 @@ def level_1_commondata_tuple(
     level_1_seed: int
         The random seed from which the level_1 data is drawn.
 
-    float_type: str, default is "float32"
-
     Returns
     -------
     tuple
@@ -123,7 +116,6 @@ def level_1_commondata_tuple(
     # First, construct a jax array from the level_0_commondata_tuple
     central_values = jnp.array(
         pd.concat([cd.central_values for cd in level_0_commondata_tuple], axis=0),
-        dtype=float_type,
     )
 
     # Now, sample from the multivariate Gaussian with central values central_values
@@ -131,7 +123,9 @@ def level_1_commondata_tuple(
     # level_1 data.
     rng = jax.random.PRNGKey(level_1_seed)
     sample = jax.random.multivariate_normal(
-        rng, central_values, data_generation_covariance_matrix, float_type=float_type
+        rng,
+        central_values,
+        data_generation_covariance_matrix,
     )
 
     # Now, reconstruct the commondata tuple, by modifying the original commondata
@@ -154,7 +148,7 @@ class CentralCovmatIndex:
         return asdict(self)
 
 
-def central_covmat_index(commondata_tuple, fit_covariance_matrix, float_type=None):
+def central_covmat_index(commondata_tuple, fit_covariance_matrix):
     """
     Given a commondata_tuple and a covariance_matrix, generated
     according to respective explicit node in config.py, store
@@ -173,8 +167,6 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix, float_type=Non
         or t0 covariance matrix depending on whether `use_fit_t0` is
         True or False
 
-    float_type: str, default is "float32"
-
     Returns
     -------
     CentralCovmatIndex dataclass
@@ -183,7 +175,6 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix, float_type=Non
     """
     central_values = jnp.array(
         pd.concat([cd.central_values for cd in commondata_tuple], axis=0),
-        dtype=float_type,
     )
     central_values_idx = jnp.arange(central_values.shape[0])
 
@@ -195,11 +186,9 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix, float_type=Non
 
 
 def pseudodata_central_covmat_index(
-    commondata_tuple, data_generation_covariance_matrix, float_type=None
+    commondata_tuple, data_generation_covariance_matrix
 ):
     """Same as central_covmat_index, but with the pseudodata generation
     covariance matrix for a Monte Carlo fit.
     """
-    return central_covmat_index(
-        commondata_tuple, data_generation_covariance_matrix, float_type
-    )
+    return central_covmat_index(commondata_tuple, data_generation_covariance_matrix)
