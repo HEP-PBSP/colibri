@@ -9,7 +9,6 @@ import pandas as pd
 from reportengine.table import table
 
 
-
 @table
 def likelihood_time(
     _chi2_with_positivity,
@@ -51,5 +50,7 @@ def likelihood_time(
 
     time_per_eval = (end_time - start_time) / n_prior_samples
 
-    df = pd.DataFrame({"Ndata": [ndata], "Likelihood eval time (s)": [time_per_eval]}, index=["wmin"])
+    df = pd.DataFrame(
+        {"Ndata": [ndata], "Likelihood eval time (s)": [time_per_eval]}, index=["wmin"]
+    )
     return df
