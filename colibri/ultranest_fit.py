@@ -9,6 +9,8 @@ from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 import ultranest
+import ultranest.popstepsampler as popstepsampler
+import ultranest.stepsampler as ustepsampler
 import time
 import logging
 import sys
@@ -116,12 +118,18 @@ def ultranest_fit(
     )
 
     if ns_settings["SliceSampler_settings"]:
-        import ultranest.stepsampler as ustepsampler
+        if ns_settings["popstepsampler"]:
 
-        sampler.stepsampler = ustepsampler.SliceSampler(
-            generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
-            **ns_settings["SliceSampler_settings"],
-        )
+            sampler.stepsampler = popstepsampler.PopulationSliceSampler(
+                generate_direction=ultranest.popstepsampler.generate_mixture_random_direction,
+                **ns_settings["SliceSampler_settings"],
+            )
+        else:
+
+            sampler.stepsampler = ustepsampler.SliceSampler(
+                generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
+                **ns_settings["SliceSampler_settings"],
+            )
 
     t0 = time.time()
     ultranest_result = sampler.run(**ns_settings["Run_settings"])

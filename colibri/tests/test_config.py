@@ -1,10 +1,9 @@
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 from reportengine.configparser import ConfigError
 from colibri.config import colibriConfig, Environment
 import unittest.mock as mock
 from pathlib import Path
-from validphys.core import DataGroupSpec, PositivitySetSpec
-import jax.numpy as jnp
+import unittest
 
 
 def test_float32_precision_enabled():
@@ -109,3 +108,143 @@ def test_parse_analytic_settings_defaults():
         "optimal_prior": False,
     }
     assert result == expected
+
+
+@patch("colibri.config.os.path.exists")
+@patch("colibri.config.log.warning")
+@patch("colibri.config.log.info")
+def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test known key settings
+    settings = {
+        "n_posterior_samples": 500,
+        "posterior_resampling_seed": 78910,
+        "ReactiveNS_settings": {
+            "log_dir": str(tmp_path / "mock_log_dir"),
+            "resume": True,
+            "vectorized": True,
+        },
+        "ultranest_seed": 654321,
+        "sampler_plot": False,
+        "popstepsampler": True,
+    }
+
+    # Mock the existence of the log directory
+    mock_exists.return_value = True
+
+    # Call the function
+    ns_settings = config.parse_ns_settings(settings, tmp_path)
+
+    # Check that the settings were parsed correctly
+    expected_settings = {
+        "n_posterior_samples": 500,
+        "posterior_resampling_seed": 78910,
+        "ReactiveNS_settings": {
+            "log_dir": str(tmp_path / "mock_log_dir"),
+            "resume": True,
+            "vectorized": True,
+        },
+        "Run_settings": {},
+        "SliceSampler_settings": {},
+        "ultranest_seed": 654321,
+        "sampler_plot": False,
+        "popstepsampler": True,
+    }
+
+    assert ns_settings == expected_settings
+    assert mock_info.called
+
+
+@patch("colibri.config.os.path.exists")
+@patch("colibri.config.log.warning")
+def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test with unknown keys in settings
+    settings = {
+        "unknown_key": "value",
+        "n_posterior_samples": 500,
+        "posterior_resampling_seed": 78910,
+    }
+
+    # Mock the existence of the log directory
+    mock_exists.return_value = False
+
+    # Call the function
+    ns_settings = config.parse_ns_settings(settings, tmp_path)
+
+    # Check that the settings were parsed correctly
+    expected_settings = {
+        "n_posterior_samples": 500,
+        "posterior_resampling_seed": 78910,
+        "ReactiveNS_settings": {
+            "log_dir": str(tmp_path / "ultranest_logs"),
+            "resume": "overwrite",
+            "vectorized": False,
+        },
+        "Run_settings": {},
+        "SliceSampler_settings": {},
+        "ultranest_seed": 123456,
+        "sampler_plot": True,
+        "popstepsampler": False,
+    }
+
+    assert ns_settings == expected_settings
+    assert mock_warning.called
+
+
+@patch("colibri.config.os.path.exists")
+@patch("colibri.config.log.info")
+def test_parse_ns_settings_with_missing_log_dir(mock_info, mock_exists, tmp_path):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test missing log directory
+    settings = {
+        "ReactiveNS_settings": {
+            "log_dir": str(tmp_path / "mock_log_dir"),
+            "resume": True,
+        },
+    }
+
+    # Mock the existence of the log directory to False
+    mock_exists.return_value = False
+
+    with unittest.TestCase.assertRaises(unittest.TestCase(), FileNotFoundError):
+        config.parse_ns_settings(settings, tmp_path)
+
+
+def test_parse_ns_settings_with_defaults(tmp_path):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {}
+
+    # Call the function
+    ns_settings = config.parse_ns_settings(settings, tmp_path)
+
+    # Check that the settings were parsed correctly
+    expected_settings = {
+        "n_posterior_samples": 1000,
+        "posterior_resampling_seed": 123456,
+        "ReactiveNS_settings": {
+            "log_dir": str(tmp_path / "ultranest_logs"),
+            "resume": "overwrite",
+            "vectorized": False,
+        },
+        "Run_settings": {},
+        "SliceSampler_settings": {},
+        "ultranest_seed": 123456,
+        "sampler_plot": True,
+        "popstepsampler": False,
+    }
+
+    assert ns_settings == expected_settings
