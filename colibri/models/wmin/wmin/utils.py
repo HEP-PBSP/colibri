@@ -21,8 +21,39 @@ def likelihood_time(
     n_prior_samples=1000,
 ):
     """
-    TODO
+    This function calculates the time it takes to evaluate the likelihood
+    function.
+
+    Parameters
+    ----------
+    _chi2_with_positivity: function
+        The chi2 function to use.
+
+    _pred_data: function
+        The prediction function to use.
+
+    FIT_XGRID: array
+        The xgrid to use.
+
+    pdf_model: PDFModel
+        The PDF model to use.
+
+    bayesian_prior: function
+        The prior function to use.
+
+    data: validphys.core.DataGroupSpec
+
+    theoryid: str
+
+    n_prior_samples: int
+        The number of prior samples to use.
+
+    Returns
+    -------
+    df: pd.DataFrame
+        The DataFrame containing the results.
     """
+
     ndata = sum([ds.load_commondata().ndata for ds in data.datasets])
 
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
