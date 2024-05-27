@@ -184,7 +184,7 @@ def get_flow(colibri_fit):
 
     Returns
     -------
-    TODO
+    flowtorch.distributions.flow.Flow
     """
 
     fit_path = get_fit_path(colibri_fit)
