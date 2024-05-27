@@ -189,7 +189,7 @@ def get_flow(colibri_fit):
 
     fit_path = get_fit_path(colibri_fit)
 
-    norm_flow_path = fit_path + "/norm_flow.pkl"
+    norm_flow_path = fit_path / "norm_flow.pkl"
 
     # check that file exist
     if not os.path.exists(norm_flow_path):
