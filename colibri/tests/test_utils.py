@@ -165,3 +165,25 @@ def test_get_flow(mock_get_fit_path, mock_dill_load, mock_open, mock_exists):
     mock_open.assert_called_once_with(norm_flow_path, "rb")
     mock_dill_load.assert_called_once()
     assert result == expected_flow
+
+
+@patch("colibri.utils.os.path.exists")
+@patch("colibri.utils.get_fit_path")
+def test_get_flow_file_not_found(mock_get_fit_path, mock_exists):
+    """
+    Test that get_flow raises FileNotFoundError when the file is not found.
+    """
+    colibri_fit = "test_fit"
+    fit_path = MagicMock()
+    norm_flow_path = fit_path / "norm_flow.pkl"
+
+    mock_get_fit_path.return_value = fit_path
+    mock_exists.return_value = False
+
+    # Act and Assert
+    with pytest.raises(FileNotFoundError) as excinfo:
+        get_flow(colibri_fit)
+
+    assert str(excinfo.typename) == "FileNotFoundError"
+    mock_get_fit_path.assert_called_once_with(colibri_fit)
+    mock_exists.assert_called_once_with(norm_flow_path)
