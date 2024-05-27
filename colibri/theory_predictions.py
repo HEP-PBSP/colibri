@@ -241,7 +241,7 @@ def make_pred_data(
     return eval_preds
 
 
-def make_pred_t0data(data, FIT_XGRID, flavour_indices=None, float_type=None):
+def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
     """
     Compute theory prediction for entire DataGroupSpec.
     It is specifically meant for t0 predictions, i.e. it
@@ -272,7 +272,6 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None, float_type=None):
                 FIT_XGRID,
                 vectorized=False,
                 flavour_indices=flavour_indices,
-                float_type=float_type,
             )
         )
 

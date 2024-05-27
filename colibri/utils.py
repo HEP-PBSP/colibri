@@ -22,7 +22,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65, float_type=None):
+def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
     """
     Computes the t0 pdf grid in the evolution basis.
 
@@ -46,7 +46,6 @@ def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65, float_type=None):
         convolution.evolution.grid_values(
             t0pdfset, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
         ).squeeze(-1),
-        dtype=float_type,
     )
     return t0grid
 

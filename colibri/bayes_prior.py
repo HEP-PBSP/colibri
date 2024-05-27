@@ -47,9 +47,11 @@ def bayesian_prior(prior_settings, float_type=None):
         def prior_transform(cube):
             # generate independent gaussian with mean 0 and std 1
             independent_gaussian = jax.scipy.stats.norm.ppf(cube)
-            return jnp.array(mean_posterior + jnp.einsum(
-                "ij,...j->...i", sqrt_cov_posterior, independent_gaussian
-            ), dtype=float_type)
+            return jnp.array(
+                mean_posterior
+                + jnp.einsum("ij,...j->...i", sqrt_cov_posterior, independent_gaussian),
+                dtype=float_type,
+            )
 
     else:
         raise ValueError("Invalid prior type.")

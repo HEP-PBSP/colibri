@@ -41,6 +41,9 @@ class Environment(Environment):
         self.replica_index = replica_index
         self.trval_index = trval_index
 
+        # per default we use float64, can be changed to float32 or float16 within config class
+        jax.config.update("jax_enable_x64", True)
+
     @classmethod
     def ns_dump_description(cls):
         return {
@@ -98,28 +101,28 @@ class colibriConfig(Config):
     Config class
     """
 
-    def parse_float_type(self, float_dtype=None):
+    def parse_float_type(self, float_type=None):
         """
         Parse the float type from the runcard, perform
         checks and if needed update the jax configuration.
         """
 
-        if float_dtype not in [None, "float32", "float16"]:
+        if float_type not in [None, "float32", "float16"]:
             raise ValueError(
-                f"float_type must be either 'float32' or 'float16', got {float_dtype}"
+                f"float_type must be either 'float32' or 'float16', got {float_type}"
             )
 
-        if float_dtype in ["float32", "float16"]:
-            log.info(f"Using {float_dtype} precision")
+        if float_type in ["float32", "float16"]:
+            log.info(f"Using {float_type} precision")
             log.warning(
-                f"If running with ultranest, only SliceSampler is supported with {float_dtype} precision."
+                f"If running with ultranest, only SliceSampler is supported with {float_type} precision."
             )
 
         else:
             log.info("Using float64 precision")
             jax.config.update("jax_enable_x64", True)
 
-        return float_dtype
+        return float_type
 
     def produce_FIT_XGRID(self, data=None, posdatasets=None):
         """
