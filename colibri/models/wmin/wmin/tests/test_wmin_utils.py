@@ -90,6 +90,6 @@ def test_likelihood_time_samples():
 
     assert len(result) == 1
     assert result.loc["wmin", "Ndata"] == N_MOCK_DATA
-    assert result.loc["wmin", "Theory"] == "test_theory"
+    assert result.loc["wmin", "Theory"] == MOCK_NAME_THEORY
     assert isinstance(result.loc["wmin", "Likelihood eval time (s)"], float)
     assert result.loc["wmin", "Likelihood eval time (s)"] > 0
