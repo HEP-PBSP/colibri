@@ -22,7 +22,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
+def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65, float_type=None):
     """
     Computes the t0 pdf grid in the evolution basis.
 
@@ -45,12 +45,13 @@ def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
     t0grid = jnp.array(
         convolution.evolution.grid_values(
             t0pdfset, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
-        ).squeeze(-1)
+        ).squeeze(-1),
+        dtype=float_type,
     )
     return t0grid
 
 
-def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65):
+def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65, float_type=None):
     """
     Computes the closure_test_pdf grid in the evolution basis.
 
@@ -73,7 +74,8 @@ def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65):
     grid = jnp.array(
         convolution.evolution.grid_values(
             closure_test_pdf, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
-        ).squeeze(-1)
+        ).squeeze(-1),
+        dtype=float_type,
     )
     return grid
 

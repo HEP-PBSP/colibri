@@ -3,8 +3,6 @@ colibri.commondata_utils.py
 
 Module containing commondata and central covmat index functions.
 
-Author: Mark N. Costantini
-Date: 11.11.2023
 """
 
 import pandas as pd
@@ -39,7 +37,7 @@ def level_0_commondata_tuple(
     closure_test_central_pdf_grid,
     FIT_XGRID,
     flavour_indices=None,
-    float_type="float32",
+    float_type=None,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -95,6 +93,7 @@ def level_1_commondata_tuple(
     level_0_commondata_tuple,
     data_generation_covariance_matrix,
     level_1_seed=123456,
+    float_type=None,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -113,6 +112,8 @@ def level_1_commondata_tuple(
     level_1_seed: int
         The random seed from which the level_1 data is drawn.
 
+    float_type: str, default is "float32"
+
     Returns
     -------
     tuple
@@ -121,7 +122,8 @@ def level_1_commondata_tuple(
 
     # First, construct a jax array from the level_0_commondata_tuple
     central_values = jnp.array(
-        pd.concat([cd.central_values for cd in level_0_commondata_tuple], axis=0)
+        pd.concat([cd.central_values for cd in level_0_commondata_tuple], axis=0),
+        dtype=float_type,
     )
 
     # Now, sample from the multivariate Gaussian with central values central_values
@@ -129,7 +131,7 @@ def level_1_commondata_tuple(
     # level_1 data.
     rng = jax.random.PRNGKey(level_1_seed)
     sample = jax.random.multivariate_normal(
-        rng, central_values, data_generation_covariance_matrix
+        rng, central_values, data_generation_covariance_matrix, float_type=float_type
     )
 
     # Now, reconstruct the commondata tuple, by modifying the original commondata
@@ -152,7 +154,7 @@ class CentralCovmatIndex:
         return asdict(self)
 
 
-def central_covmat_index(commondata_tuple, fit_covariance_matrix):
+def central_covmat_index(commondata_tuple, fit_covariance_matrix, float_type=None):
     """
     Given a commondata_tuple and a covariance_matrix, generated
     according to respective explicit node in config.py, store
@@ -171,6 +173,8 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
         or t0 covariance matrix depending on whether `use_fit_t0` is
         True or False
 
+    float_type: str, default is "float32"
+
     Returns
     -------
     CentralCovmatIndex dataclass
@@ -178,7 +182,8 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
         index of central values
     """
     central_values = jnp.array(
-        pd.concat([cd.central_values for cd in commondata_tuple], axis=0)
+        pd.concat([cd.central_values for cd in commondata_tuple], axis=0),
+        dtype=float_type,
     )
     central_values_idx = jnp.arange(central_values.shape[0])
 
@@ -190,9 +195,11 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
 
 
 def pseudodata_central_covmat_index(
-    commondata_tuple, data_generation_covariance_matrix
+    commondata_tuple, data_generation_covariance_matrix, float_type=None
 ):
     """Same as central_covmat_index, but with the pseudodata generation
     covariance matrix for a Monte Carlo fit.
     """
-    return central_covmat_index(commondata_tuple, data_generation_covariance_matrix)
+    return central_covmat_index(
+        commondata_tuple, data_generation_covariance_matrix, float_type
+    )

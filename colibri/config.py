@@ -36,20 +36,25 @@ class EnvironmentError_(Exception):
 
 class Environment(Environment):
     def __init__(
-        self, replica_index=None, trval_index=0, float32=False, *args, **kwargs
+        self, replica_index=None, trval_index=0, float_type=None, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
         self.replica_index = replica_index
         self.trval_index = trval_index
-        self.float32 = float32
+        self.float_type = float_type
 
-        if self.float32:
-            log.info("Using float32 precision")
-            log.warning(
-                "If running with ultranest, only SliceSampler is supported with float32 precision."
+        if self.float_type not in [None, "float32", "float16", "float8"]:
+            raise ValueError(
+                f"float_type must be either 'float32' or 'float16', got {self.float_type}"
             )
-            jax.config.update("jax_enable_x64", False)
+
+        if self.float_type is not None:
+            log.info(f"Using {float_type} precision")
+            log.warning(
+                f"If running with ultranest, only SliceSampler is supported with {float_type} precision."
+            )
+
         else:
             log.info("Using float64 precision")
             jax.config.update("jax_enable_x64", True)

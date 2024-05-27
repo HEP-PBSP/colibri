@@ -58,6 +58,7 @@ def sqrt_covmat_jax(covariance_matrix):
 def dataset_inputs_covmat_from_systematics(
     data,
     experimental_commondata_tuple,
+    float_type=None,
 ):
     """
     Similar to validphys.covmats.dataset_inputs_covmat_from_systematics
@@ -74,7 +75,8 @@ def dataset_inputs_covmat_from_systematics(
             norm_threshold=None,
             _list_of_central_values=None,
             _only_additive=False,
-        )
+        ),
+        dtype=float_type,
     )
     return covmat
 
@@ -107,6 +109,7 @@ def dataset_inputs_t0_covmat_from_systematics(
     data,
     experimental_commondata_tuple,
     colibri_dataset_inputs_t0_predictions,
+    float_type=None,
 ):
     """
     Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
@@ -121,6 +124,7 @@ def dataset_inputs_t0_covmat_from_systematics(
             use_weights_in_covmat=False,
             norm_threshold=None,
             dataset_inputs_t0_predictions=colibri_dataset_inputs_t0_predictions,
-        )
+        ),
+        dtype=float_type,
     )
     return covmat

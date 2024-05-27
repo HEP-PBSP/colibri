@@ -9,7 +9,7 @@ from colibri.checks import check_pdf_models_equal
 
 
 @check_pdf_models_equal
-def bayesian_prior(prior_settings):
+def bayesian_prior(prior_settings, float_type=None):
     """
     Produces a prior transform function.
 
@@ -37,8 +37,8 @@ def bayesian_prior(prior_settings):
         df_fit = get_full_posterior(prior_fit)
 
         # Compute mean and covariance matrix of the posterior
-        mean_posterior = jnp.array(df_fit.mean().values)
-        cov_posterior = jnp.array(df_fit.cov().values)
+        mean_posterior = jnp.array(df_fit.mean().values, dtype=float_type)
+        cov_posterior = jnp.array(df_fit.cov().values, dtype=float_type)
 
         sqrt_cov_posterior = jnp.linalg.cholesky(cov_posterior)
 

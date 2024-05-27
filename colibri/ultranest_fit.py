@@ -60,6 +60,7 @@ def ultranest_fit(
     bayesian_prior,
     ns_settings,
     FIT_XGRID,
+    float_type=None,
 ):
     """
     The complete Nested Sampling fitting routine, for any PDF model.
@@ -158,11 +159,14 @@ def ultranest_fit(
 
         # Get the full samples
         full_samples = ultranest_result["samples"]
+        import IPython
 
+        IPython.embed()
         # Compute bayesian metrics
         min_chi2 = -2 * ultranest_result["maximum_likelihood"]["logl"]
         avg_chi2 = jnp.array(
-            [-2 * log_likelihood(jnp.array(sample)).item() for sample in full_samples]
+            [-2 * log_likelihood(jnp.array(sample)).item() for sample in full_samples],
+            dtype=float_type,
         ).mean()
         Cb = avg_chi2 - min_chi2
 

@@ -4,8 +4,6 @@ colibri.theory_predictions.py
 This module contains the functions necessary for the computation of
 theory predictions by means of fast-kernel (FK) tables.
 
-Author: Mark N. Costantini
-Date: 11.11.2023
 """
 
 import jax
@@ -19,7 +17,7 @@ OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
 def make_dis_prediction(
-    fktable, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
+    fktable, FIT_XGRID, vectorized=False, flavour_indices=None, float_type=None
 ):
     """
     Given an FKTableData instance returns a jax.jit
@@ -80,7 +78,7 @@ def make_dis_prediction(
 
 
 def make_had_prediction(
-    fktable, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
+    fktable, FIT_XGRID, vectorized=False, flavour_indices=None, float_type=None
 ):
     """
     Given an FKTableData instance returns a jax.jit
@@ -159,7 +157,7 @@ def make_had_prediction(
 
 
 def make_pred_dataset(
-    dataset, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
+    dataset, FIT_XGRID, vectorized=False, flavour_indices=None, float_type=None
 ):
     """
     Compute theory prediction for a DataSetSpec
@@ -204,7 +202,7 @@ def make_pred_dataset(
 
 
 def make_pred_data(
-    data, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
+    data, FIT_XGRID, vectorized=False, flavour_indices=None, float_type=None
 ):
     """
     Compute theory prediction for entire DataGroupSpec
@@ -243,7 +241,7 @@ def make_pred_data(
     return eval_preds
 
 
-def make_pred_t0data(data, FIT_XGRID, flavour_indices=None, float_type="float32"):
+def make_pred_t0data(data, FIT_XGRID, flavour_indices=None, float_type=None):
     """
     Compute theory prediction for entire DataGroupSpec.
     It is specifically meant for t0 predictions, i.e. it
@@ -285,7 +283,7 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None, float_type="float32"
     return eval_preds
 
 
-def make_pred_data_non_vectorized(data, FIT_XGRID, float_type="float32"):
+def make_pred_data_non_vectorized(data, FIT_XGRID, float_type=None):
     """
     Same as make_pred_data but with vectorized=False
     """
@@ -293,7 +291,7 @@ def make_pred_data_non_vectorized(data, FIT_XGRID, float_type="float32"):
 
 
 def make_penalty_posdataset(
-    posdataset, FIT_XGRID, vectorized=False, flavour_indices=None, float_type="float32"
+    posdataset, FIT_XGRID, vectorized=False, flavour_indices=None, float_type=None
 ):
     """
     Given a PositivitySetSpec compute the positivity penalty
@@ -353,9 +351,7 @@ def make_penalty_posdataset(
     return pos_penalty
 
 
-def make_penalty_posdata(
-    posdatasets, FIT_XGRID, vectorized=False, float_type="float32"
-):
+def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False, float_type=None):
     """
     Compute positivity penalty for list of PositivitySetSpec
 
