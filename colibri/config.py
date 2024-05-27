@@ -35,29 +35,11 @@ class EnvironmentError_(Exception):
 
 
 class Environment(Environment):
-    def __init__(
-        self, replica_index=None, trval_index=0, float_type=None, *args, **kwargs
-    ):
+    def __init__(self, replica_index=None, trval_index=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.replica_index = replica_index
         self.trval_index = trval_index
-        self.float_type = float_type
-
-        if self.float_type not in [None, "float32", "float16", "float8"]:
-            raise ValueError(
-                f"float_type must be either 'float32' or 'float16', got {self.float_type}"
-            )
-
-        if self.float_type is not None:
-            log.info(f"Using {float_type} precision")
-            log.warning(
-                f"If running with ultranest, only SliceSampler is supported with {float_type} precision."
-            )
-
-        else:
-            log.info("Using float64 precision")
-            jax.config.update("jax_enable_x64", True)
 
     @classmethod
     def ns_dump_description(cls):
@@ -115,6 +97,29 @@ class colibriConfig(Config):
     Config class inherits from validphys
     Config class
     """
+
+    def parse_float_type(self, float_dtype=None):
+        """
+        Parse the float type from the runcard, perform
+        checks and if needed update the jax configuration.
+        """
+
+        if float_dtype not in [None, "float32", "float16"]:
+            raise ValueError(
+                f"float_type must be either 'float32' or 'float16', got {float_dtype}"
+            )
+
+        if float_dtype in ["float32", "float16"]:
+            log.info(f"Using {float_dtype} precision")
+            log.warning(
+                f"If running with ultranest, only SliceSampler is supported with {float_dtype} precision."
+            )
+
+        else:
+            log.info("Using float64 precision")
+            jax.config.update("jax_enable_x64", True)
+
+        return float_dtype
 
     def produce_FIT_XGRID(self, data=None, posdatasets=None):
         """
