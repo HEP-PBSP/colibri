@@ -41,7 +41,7 @@ class WMinPDF(PDFModel):
     def param_names(self):
         return [f"w_{i+1}" for i in range(self.n_basis)]
 
-    def grid_values_func(self, interpolation_grid):
+    def grid_values_func(self, interpolation_grid, float_type=None):
         """
         This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
@@ -65,7 +65,8 @@ class WMinPDF(PDFModel):
                 convolution.FK_FLAVOURS,
                 interpolation_grid,
                 [1.65],
-            ).squeeze(-1)
+            ).squeeze(-1),
+            dtype=float_type,
         )
 
         if self.n_basis + 1 > input_grid.shape[0]:
@@ -92,7 +93,12 @@ class WMinPDF(PDFModel):
 
         @jax.jit
         def wmin_param(weights):
-            weights = jnp.concatenate((jnp.array([1.0]), jnp.array(weights)))
+            weights = jnp.concatenate(
+                (
+                    jnp.array([1.0], dtype=float_type),
+                    jnp.array(weights, dtype=float_type),
+                )
+            )
             pdf = jnp.einsum("i,ijk", weights, wmin_input_grid)
             return pdf
 

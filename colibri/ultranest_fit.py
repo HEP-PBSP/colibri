@@ -159,9 +159,6 @@ def ultranest_fit(
 
         # Get the full samples
         full_samples = ultranest_result["samples"]
-        import IPython
-
-        IPython.embed()
         # Compute bayesian metrics
         min_chi2 = -2 * ultranest_result["maximum_likelihood"]["logl"]
         avg_chi2 = jnp.array(

@@ -344,8 +344,10 @@ def make_penalty_posdataset(
 
     @jax.jit
     def pos_penalty(pdf, alpha, lambda_positivity):
-        return lambda_positivity * jax.nn.elu(
-            -OP[posdataset.op](*[f(pdf) for f in pred_funcs]), alpha
+        return jnp.array(
+            lambda_positivity
+            * jax.nn.elu(-OP[posdataset.op](*[f(pdf) for f in pred_funcs]), alpha),
+            dtype=float_type,
         )
 
     return pos_penalty

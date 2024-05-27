@@ -62,6 +62,7 @@ def make_chi2_with_positivity(
     alpha=1e-7,
     lambda_positivity=1000,
     vectorized=False,
+    float_type=None,
 ):
     """
     Returns a jax.jit compiled function that computes the chi2
@@ -84,17 +85,19 @@ def make_chi2_with_positivity(
 
     vectorized: bool, default is False
 
+    float_type: type, default is None
+
     Returns
     -------
     @jax.jit Callable
         function to compute chi2 of a pdf grid.
 
     """
-    central_values = central_covmat_index.central_values
+    central_values = jnp.array(central_covmat_index.central_values, dtype=float_type)
     covmat = central_covmat_index.covmat
 
     # Invert the covmat
-    inv_covmat = jla.inv(covmat)
+    inv_covmat = jnp.array(jla.inv(covmat), dtype=float_type)
 
     @jax.jit
     def chi2(predictions, pdf):
@@ -107,7 +110,6 @@ def make_chi2_with_positivity(
         pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)
 
         loss += jnp.sum(pos_penalty)
-
         return loss
 
     if vectorized:
