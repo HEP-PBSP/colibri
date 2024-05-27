@@ -37,8 +37,6 @@ def test_get_path_fit():
     Finally, it removes the copied directory.
     """
     conda_prefix = os.getenv("CONDA_PREFIX")
-    if not conda_prefix:
-        raise EnvironmentError("CONDA_PREFIX environment variable is not set")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
     source_dir = pathlib.Path("colibri/tests/regression") / SIMPLE_WMIN_FIT
@@ -66,8 +64,6 @@ def test_get_pdf_model():
     Tests that get_pdf_model works correctly.
     """
     conda_prefix = os.getenv("CONDA_PREFIX")
-    if not conda_prefix:
-        raise EnvironmentError("CONDA_PREFIX environment variable is not set")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
     source_dir = pathlib.Path("colibri/tests/regression") / SIMPLE_WMIN_FIT
@@ -108,8 +104,6 @@ def test_get_full_posterior():
     Test that get_full_posterior works correctly.
     """
     conda_prefix = os.getenv("CONDA_PREFIX")
-    if not conda_prefix:
-        raise EnvironmentError("CONDA_PREFIX environment variable is not set")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
     source_dir = pathlib.Path("colibri/tests/regression") / SIMPLE_WMIN_FIT
