@@ -4,6 +4,7 @@ import jax.numpy as jnp
 from colibri.utils import (
     cast_to_numpy,
     get_full_posterior,
+    get_flow,
 )
 from colibri.checks import check_pdf_models_equal
 
