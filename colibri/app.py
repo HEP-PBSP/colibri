@@ -65,14 +65,6 @@ class colibriApp(App):
             help="Name of the output directory.",
         )
 
-        parser.add_argument(
-            "-float",
-            "--float_type",
-            help="Takes the following values ['float16', 'float32']. If not specified, float_type is set to None and defaults to float64",
-            type=str,
-            default=None,
-        )
-
         return parser
 
     def get_commandline_arguments(self, cmdline=None):
