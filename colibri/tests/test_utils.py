@@ -5,11 +5,19 @@ Module for testing the utils module.
 import os
 import pathlib
 import shutil
+from unittest.mock import MagicMock, mock_open, patch
 
 import jax
 import numpy as np
 import pandas
-from colibri.utils import cast_to_numpy, get_fit_path, get_full_posterior, get_pdf_model
+import pytest
+from colibri.utils import (
+    cast_to_numpy,
+    get_fit_path,
+    get_flow,
+    get_full_posterior,
+    get_pdf_model,
+)
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
@@ -128,3 +136,32 @@ def test_get_full_posterior():
 
     # Clean up the copied directory
     shutil.rmtree(dest_path)
+
+
+@patch("colibri.utils.os.path.exists")
+@patch("colibri.utils.open", new_callable=mock_open)
+@patch("colibri.utils.dill.load")
+@patch("colibri.utils.get_fit_path")
+def test_get_flow(mock_get_fit_path, mock_dill_load, mock_open, mock_exists):
+    """
+    Test that get_flow works correctly.
+    """
+    # Arrange
+    colibri_fit = "test_fit"
+    fit_path = MagicMock()
+    norm_flow_path = fit_path / "norm_flow.pkl"
+
+    mock_get_fit_path.return_value = fit_path
+    mock_exists.return_value = True
+    expected_flow = MagicMock()
+    mock_dill_load.return_value = expected_flow
+
+    # Act
+    result = get_flow(colibri_fit)
+
+    # Assert
+    mock_get_fit_path.assert_called_once_with(colibri_fit)
+    mock_exists.assert_called_once_with(norm_flow_path)
+    mock_open.assert_called_once_with(norm_flow_path, "rb")
+    mock_dill_load.assert_called_once()
+    assert result == expected_flow
