@@ -107,16 +107,17 @@ class colibriConfig(Config):
         checks and if needed update the jax configuration.
         """
 
-        if float_type not in [None, "float32", "float16"]:
+        if float_type not in [None, "float32", "float16", "bfloat16"]:
             raise ValueError(
-                f"float_type must be either 'float32' or 'float16', got {float_type}"
+                f"float_type must be either 'float32', 'float16', or 'bfloat16', got {float_type}"
             )
 
-        if float_type in ["float32", "float16"]:
+        if float_type in ["float32", "float16", "bfloat16"]:
             log.info(f"Using {float_type} precision")
             log.warning(
                 f"If running with ultranest, only SliceSampler is supported with {float_type} precision."
             )
+            jax.config.update("jax_enable_x64", False)
 
         else:
             log.info("Using float64 precision")

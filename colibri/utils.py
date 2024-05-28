@@ -74,7 +74,6 @@ def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65, float_type=None)
         convolution.evolution.grid_values(
             closure_test_pdf, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
         ).squeeze(-1),
-        dtype=float_type,
     )
     return grid
 
