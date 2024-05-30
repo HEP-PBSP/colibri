@@ -89,7 +89,7 @@ dataset_inputs:
 - {dataset: LHCB_Z0_13TEV_DIELECTRON-Y}
 
 
-theoryid: 700                          # The theory from which the predictions are drawn.
+theoryid: 40001000                          # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
 closure_test_level: 0                  # The closure test level: False for experimental, level 0
