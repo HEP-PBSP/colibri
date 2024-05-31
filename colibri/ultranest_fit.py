@@ -16,6 +16,7 @@ import time
 import logging
 import sys
 from functools import partial
+from validphys.fkparser import load_fktable
 
 from colibri.utils import resample_from_ns_posterior
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
@@ -60,20 +61,25 @@ class UltranestFit(BayesianFit):
 
 
 class ut_loglike(object):
-    def __init__(self, data, fit_xgrid, central_covmat_index, grid_values_func):
+    def __init__(self, fk_tables, fit_xgrid, central_covmat_index, grid_values_func):
         self.central_values = central_covmat_index.central_values
         self.inv_covmat = jla.inv(central_covmat_index.covmat)
         self.grid_values_func = grid_values_func
-        self.data = data
+        self.fk_tables = fk_tables
         self.fit_xgrid = fit_xgrid
 
     def __call__(self, params):
+        print(params)
+        print(self.central_values)
+        print(self.inv_covmat)
+        print(self.fit_xgrid)
+        print(self.fk_tables)
         return self.log_likelihood(
             params,
             self.central_values,
             self.inv_covmat,
             self.fit_xgrid,
-            self.data,
+            self.fk_tables,
         )
 
     @partial(jax.jit, static_argnums=(0,))
@@ -83,10 +89,10 @@ class ut_loglike(object):
         central_values,
         inv_covmat,
         fit_xgrid,
-        data,
+        fk_tables,
     ):
         pdf = self.grid_values_func(params)
-        predictions = pred_data(pdf, data, fit_xgrid)
+        predictions = pred_data(pdf, fk_tables, fit_xgrid)
         return -0.5 * chi2(central_values, predictions, inv_covmat)
 
 
@@ -142,8 +148,19 @@ def ultranest_fit(
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
         pred_and_pdf = jax.vmap(pred_and_pdf, in_axes=(0,), out_axes=(0, 0))
 
+    fk_tables = []
+    for ds in data.datasets:
+        fk_data = []
+        for fkspec in ds.fkspecs:
+            fk = load_fktable(fkspec).with_cuts(ds.cuts)
+            fk_arr = jnp.array(fk.get_np_fktable())
+            fk_data.append(fk_arr)
+        fk_tables.append((fk_data, ds.op))
+
     # Initialize the log likelihood function
-    log_likelihood = ut_loglike(data, FIT_XGRID, central_covmat_index, grid_values_func)
+    log_likelihood = ut_loglike(
+        fk_tables, FIT_XGRID, central_covmat_index, grid_values_func
+    )
     # Compile the log likelihood function by calling it once
     log_likelihood(jnp.ones(len(parameters)))
 

@@ -220,14 +220,34 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
     return eval_preds
 
 
-def pred_data(pdf, data, FIT_XGRID, flavour_indices=None):
+def pred_data(pdf, fk_tables, FIT_XGRID, flavour_indices=None):
 
     predictions = []
 
-    for ds in data.datasets:
-        predictions.append(pred_dataset(pdf, ds, FIT_XGRID, flavour_indices))
+    for fk_data in fk_tables:
+        dataset_predictions = []
+        for fk, op in fk_data:
+            if fk.ndim == 3:
+                pred = dis_prediction(pdf, fk, FIT_XGRID, flavour_indices)
+            elif fk.ndim == 4:
+                pred = had_prediction(pdf, fk, FIT_XGRID, flavour_indices)
+            else:
+                raise ValueError("Invalid FKTableData shape")
+            dataset_predictions.append(pred)
+        prediction = OP[op](*dataset_predictions)
+        predictions.append(prediction)
 
     return jnp.concatenate(predictions, axis=-1)
+
+
+# def pred_data(pdf, data, FIT_XGRID, flavour_indices=None):
+
+#     predictions = []
+
+#     for ds in data.datasets:
+#         predictions.append(pred_dataset(pdf, ds, FIT_XGRID, flavour_indices))
+
+#     return jnp.concatenate(predictions, axis=-1)
 
 
 def pred_dataset(pdf, dataset, FIT_XGRID, flavour_indices=None):
