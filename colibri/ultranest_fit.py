@@ -20,6 +20,7 @@ from functools import partial
 from colibri.utils import resample_from_ns_posterior
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 from colibri.loss_functions import chi2
+from colibri.theory_predictions import pred_data
 import numpy as np
 from mpi4py import MPI
 
@@ -59,23 +60,39 @@ class UltranestFit(BayesianFit):
 
 
 class ut_loglike(object):
-    def __init__(self, central_covmat_index, pred_and_pdf):
+    def __init__(self, data, fit_xgrid, central_covmat_index, grid_values_func):
         self.central_values = central_covmat_index.central_values
         self.inv_covmat = jla.inv(central_covmat_index.covmat)
-        self.pred_and_pdf = pred_and_pdf
+        self.grid_values_func = grid_values_func
+        self.data = data
+        self.fit_xgrid = fit_xgrid
 
     def __call__(self, params):
-        return self.log_likelihood(params, self.central_values, self.inv_covmat)
+        return self.log_likelihood(
+            params,
+            self.central_values,
+            self.inv_covmat,
+            self.fit_xgrid,
+            self.data,
+        )
 
     @partial(jax.jit, static_argnums=(0,))
-    def log_likelihood(self, params, central_values, inv_covmat):
-        predictions, pdf = self.pred_and_pdf(params)
+    def log_likelihood(
+        self,
+        params,
+        central_values,
+        inv_covmat,
+        fit_xgrid,
+        data,
+    ):
+        pdf = self.grid_values_func(params)
+        predictions = pred_data(pdf, data, fit_xgrid)
         return -0.5 * chi2(central_values, predictions, inv_covmat)
 
 
 def ultranest_fit(
     central_covmat_index,
-    _pred_data,
+    data,
     pdf_model,
     bayesian_prior,
     ns_settings,
@@ -118,13 +135,15 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
+    # pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)
+
+    grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
 
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
         pred_and_pdf = jax.vmap(pred_and_pdf, in_axes=(0,), out_axes=(0, 0))
 
     # Initialize the log likelihood function
-    log_likelihood = ut_loglike(central_covmat_index, pred_and_pdf)
+    log_likelihood = ut_loglike(data, FIT_XGRID, central_covmat_index, grid_values_func)
     # Compile the log likelihood function by calling it once
     log_likelihood(jnp.ones(len(parameters)))
 
