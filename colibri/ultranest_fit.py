@@ -8,15 +8,18 @@ This module contains the main Bayesian fitting routine of colibri.
 from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
+import jax.scipy.linalg as jla
 import ultranest
 import ultranest.popstepsampler as popstepsampler
 import ultranest.stepsampler as ustepsampler
 import time
 import logging
 import sys
+from functools import partial
 
 from colibri.utils import resample_from_ns_posterior
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
+from colibri.loss_functions import chi2
 import numpy as np
 from mpi4py import MPI
 
@@ -55,8 +58,23 @@ class UltranestFit(BayesianFit):
     ultranest_result: dict
 
 
+class ut_loglike(object):
+    def __init__(self, central_covmat_index, pred_and_pdf):
+        self.central_values = central_covmat_index.central_values
+        self.inv_covmat = jla.inv(central_covmat_index.covmat)
+        self.pred_and_pdf = pred_and_pdf
+
+    def __call__(self, params):
+        return self.log_likelihood(params, self.central_values, self.inv_covmat)
+
+    @partial(jax.jit, static_argnums=(0,))
+    def log_likelihood(self, params, central_values, inv_covmat):
+        predictions, pdf = self.pred_and_pdf(params)
+        return -0.5 * chi2(central_values, predictions, inv_covmat)
+
+
 def ultranest_fit(
-    _chi2_with_positivity,
+    central_covmat_index,
     _pred_data,
     pdf_model,
     bayesian_prior,
@@ -105,10 +123,10 @@ def ultranest_fit(
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
         pred_and_pdf = jax.vmap(pred_and_pdf, in_axes=(0,), out_axes=(0, 0))
 
-    @jax.jit
-    def log_likelihood(params):
-        predictions, pdf = pred_and_pdf(params)
-        return -0.5 * _chi2_with_positivity(predictions, pdf)
+    # Initialize the log likelihood function
+    log_likelihood = ut_loglike(central_covmat_index, pred_and_pdf)
+    # Compile the log likelihood function by calling it once
+    log_likelihood(jnp.ones(len(parameters)))
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
