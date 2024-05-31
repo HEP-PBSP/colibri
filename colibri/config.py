@@ -388,3 +388,23 @@ class colibriConfig(Config):
         Returns None as the pdf_model is not used in the colibri module.
         """
         return None
+
+    def produce_data_ops(self, data):
+
+        data_ops = []
+        for ds in data.datasets:
+            data_ops.append(ds.op)
+        return tuple(data_ops)
+
+    def produce_fk_tables(self, data):
+
+        fk_tables = []
+        for ds in data.datasets:
+            fk_data = []
+            for fkspec in ds.fkspecs:
+                fk = load_fktable(fkspec).with_cuts(ds.cuts)
+                fk_arr = jnp.array(fk.get_np_fktable())
+                fk_data.append((fk_arr, fk.luminosity_mapping, fk.xgrid))
+            fk_tables.append(fk_data)
+
+        return fk_tables
