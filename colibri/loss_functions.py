@@ -31,7 +31,7 @@ def make_chi2(central_covmat_index, vectorized=False):
 
     Returns
     -------
-    @jax.jit Callable
+    Callable
         function to compute chi2 of a pdf grid.
 
     """
@@ -43,7 +43,6 @@ def make_chi2(central_covmat_index, vectorized=False):
     # since we do it only once and for all at the beginning
     inv_covmat = jla.inv(covmat)
 
-    @jax.jit
     def chi2(predictions):
         """ """
         diff = predictions - central_values
@@ -88,7 +87,7 @@ def make_chi2_with_positivity(
 
     Returns
     -------
-    @jax.jit Callable
+    Callable
         function to compute chi2 of a pdf grid.
 
     """
@@ -98,7 +97,6 @@ def make_chi2_with_positivity(
     # Invert the covmat
     inv_covmat = jla.inv(covmat)
 
-    @jax.jit
     def chi2(predictions, pdf):
         """ """
         diff = predictions - central_values

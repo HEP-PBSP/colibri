@@ -15,7 +15,7 @@ from validphys import convolution
 from validphys.fkparser import load_fktable
 
 # Is this needed? -> probably no need to jit compile
-OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
+OP = {key: val for key, val in convolution.OP.items()}
 
 
 def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=None):
@@ -48,7 +48,7 @@ def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
 
     Returns
     -------
-    @jax.jit CompiledFunction
+    CompiledFunction
     """
 
     if flavour_indices is not None:
@@ -65,7 +65,6 @@ def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
     fk_xgrid = fktable.xgrid
     fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
-    @jax.jit
     def dis_prediction(pdf):
         return jnp.einsum(
             "ijk, jk ->i", fk_arr, pdf[lumi_indices, :][:, fk_xgrid_indices]
@@ -105,7 +104,7 @@ def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
 
     Returns
     -------
-    @jax.jit CompiledFunction
+    CompiledFunction
     """
 
     if flavour_indices is not None:
@@ -135,7 +134,6 @@ def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
     fk_xgrid = fktable.xgrid
     fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
-    @jax.jit
     def had_prediction(pdf):
         return jnp.einsum(
             "ijkl,jk,jl->i",
@@ -165,8 +163,8 @@ def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None
 
     Returns
     -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid in input
+    Function
+        Function taking pdf grid in input
         and returning theory prediction for one
         dataset
     """
@@ -181,7 +179,6 @@ def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None
             pred = make_dis_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
         pred_funcs.append(pred)
 
-    @jax.jit
     def prediction(pdf):
         return OP[dataset.op](*[f(pdf) for f in pred_funcs])
 
@@ -204,8 +201,8 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
 
     Returns
     -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid in input
+    Function
+        Function taking pdf grid in input
         and returning theory prediction for one
         data group
     """
@@ -217,7 +214,6 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
             make_pred_dataset(ds, FIT_XGRID, vectorized, flavour_indices)
         )
 
-    @jax.jit
     def eval_preds(pdf):
         return jnp.concatenate([f(pdf) for f in predictions], axis=-1)
 
@@ -240,8 +236,8 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
 
     Returns
     -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid in input
+    Function
+        Function taking pdf grid in input
         and returning theory prediction for one
         data group
     """
@@ -255,7 +251,6 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
             )
         )
 
-    @jax.jit
     def eval_preds(pdf):
         return [f(pdf) for f in predictions]
 
@@ -288,8 +283,8 @@ def make_penalty_posdataset(
 
     Returns
     -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid and alpha parameter
+    Function
+        Function taking pdf grid and alpha parameter
         of jax.nn.elu function in input and returning
         elu function evaluated on minus the theory prediction
 
@@ -313,7 +308,6 @@ def make_penalty_posdataset(
             pred = make_dis_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
         pred_funcs.append(pred)
 
-    @jax.jit
     def pos_penalty(pdf, alpha, lambda_positivity):
         return lambda_positivity * jax.nn.elu(
             -OP[posdataset.op](*[f(pdf) for f in pred_funcs]), alpha
@@ -339,7 +333,7 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
 
     Returns
     -------
-    @jax.jit CompiledFunction
+    Function
 
     """
 
@@ -348,7 +342,6 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
     for posdataset in posdatasets:
         predictions.append(make_penalty_posdataset(posdataset, FIT_XGRID, vectorized))
 
-    @jax.jit
     def pos_penalties(pdf, alpha, lambda_positivity):
         return jnp.concatenate(
             [f(pdf, alpha, lambda_positivity) for f in predictions], axis=-1
