@@ -41,7 +41,6 @@ class PDFModel(ABC):
         xgrid grid. They must therefore be compatible.
         """
 
-        @jax.jit
         def pred_and_pdf(params):
             pdf = self.grid_values_func(xgrid)(params)
             predictions = forward_map(pdf)
