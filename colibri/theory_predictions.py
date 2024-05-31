@@ -220,74 +220,59 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
     return eval_preds
 
 
-def pred_data(pdf, fk_tables, FIT_XGRID, flavour_indices=None):
+def pred_data(pdf, fk_tables, ops, FIT_XGRID, flavour_indices=None):
 
     predictions = []
 
-    for fk_data in fk_tables:
-        dataset_predictions = []
-        for fk, op in fk_data:
-            if fk.ndim == 3:
-                pred = dis_prediction(pdf, fk, FIT_XGRID, flavour_indices)
-            elif fk.ndim == 4:
-                pred = had_prediction(pdf, fk, FIT_XGRID, flavour_indices)
-            else:
-                raise ValueError("Invalid FKTableData shape")
-            dataset_predictions.append(pred)
-        prediction = OP[op](*dataset_predictions)
+    for fk_data, op in zip(fk_tables, ops):
+        prediction = pred_dataset(pdf, fk_data, op, FIT_XGRID, flavour_indices)
         predictions.append(prediction)
 
     return jnp.concatenate(predictions, axis=-1)
 
 
-# def pred_data(pdf, data, FIT_XGRID, flavour_indices=None):
+def pred_dataset(pdf, fk_data, op, FIT_XGRID, flavour_indices=None):
 
-#     predictions = []
-
-#     for ds in data.datasets:
-#         predictions.append(pred_dataset(pdf, ds, FIT_XGRID, flavour_indices))
-
-#     return jnp.concatenate(predictions, axis=-1)
-
-
-def pred_dataset(pdf, dataset, FIT_XGRID, flavour_indices=None):
-
-    predictions = []
-
-    for fkspec in dataset.fkspecs:
-        fk = load_fktable(fkspec).with_cuts(dataset.cuts)
-        if fk.hadronic:
-            pred = had_prediction(pdf, fk, FIT_XGRID, flavour_indices)
+    dataset_predictions = []
+    for fk, lumi_indices, fk_xgrid in fk_data:
+        if fk.ndim == 3:
+            pred = dis_prediction(
+                pdf, fk, lumi_indices, fk_xgrid, FIT_XGRID, flavour_indices
+            )
+        elif fk.ndim == 4:
+            pred = had_prediction(
+                pdf, fk, lumi_indices, fk_xgrid, FIT_XGRID, flavour_indices
+            )
         else:
-            pred = dis_prediction(pdf, fk, FIT_XGRID, flavour_indices)
-        predictions.append(pred)
+            raise ValueError("Invalid FKTableData shape")
+        dataset_predictions.append(pred)
 
-    return OP[dataset.op](*predictions)
+    return OP[op](*dataset_predictions)
 
 
-def dis_prediction(pdf, fktable, FIT_XGRID, flavour_indices=None):
+def dis_prediction(
+    pdf, fktable, lumi_indices, fk_xgrid, FIT_XGRID, flavour_indices=None
+):
 
     if flavour_indices is not None:
-        lumi_indices = fktable.luminosity_mapping
         mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
         lumi_indices = lumi_indices[mask]
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask, :]
+        fk_arr = fktable[:, mask, :]
 
     else:
-        lumi_indices = fktable.luminosity_mapping
-        fk_arr = jnp.array(fktable.get_np_fktable())
+        fk_arr = fktable
 
     # Extract xgrid of the FK table and find the indices
-    fk_xgrid = fktable.xgrid
     fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
     return jnp.einsum("ijk, jk ->i", fk_arr, pdf[lumi_indices, :][:, fk_xgrid_indices])
 
 
-def had_prediction(pdf, fktable, FIT_XGRID, flavour_indices=None):
+def had_prediction(
+    pdf, fktable, lumi_indices, fk_xgrid, FIT_XGRID, flavour_indices=None
+):
 
     if flavour_indices is not None:
-        lumi_indices = fktable.luminosity_mapping
         mask_even = jnp.isin(lumi_indices[0::2], jnp.array(flavour_indices))
         mask_odd = jnp.isin(lumi_indices[1::2], jnp.array(flavour_indices))
 
@@ -299,18 +284,16 @@ def had_prediction(pdf, fktable, FIT_XGRID, flavour_indices=None):
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask_even * mask_odd, :, :]
+        fk_arr = fktable[:, mask_even * mask_odd, :, :]
 
     else:
-        lumi_indices = fktable.luminosity_mapping
 
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())
+        fk_arr = fktable
 
     # Extract xgrid of the FK table and find the indices
-    fk_xgrid = fktable.xgrid
     fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
     return jnp.einsum(

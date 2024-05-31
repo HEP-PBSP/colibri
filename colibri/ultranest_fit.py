@@ -61,28 +61,27 @@ class UltranestFit(BayesianFit):
 
 
 class ut_loglike(object):
-    def __init__(self, fk_tables, fit_xgrid, central_covmat_index, grid_values_func):
+    def __init__(
+        self, fk_tables, ops, fit_xgrid, central_covmat_index, grid_values_func
+    ):
         self.central_values = central_covmat_index.central_values
         self.inv_covmat = jla.inv(central_covmat_index.covmat)
         self.grid_values_func = grid_values_func
         self.fk_tables = fk_tables
         self.fit_xgrid = fit_xgrid
+        self.ops = ops
 
     def __call__(self, params):
-        print(params)
-        print(self.central_values)
-        print(self.inv_covmat)
-        print(self.fit_xgrid)
-        print(self.fk_tables)
         return self.log_likelihood(
             params,
             self.central_values,
             self.inv_covmat,
             self.fit_xgrid,
             self.fk_tables,
+            self.ops,
         )
 
-    @partial(jax.jit, static_argnums=(0,))
+    @partial(jax.jit, static_argnums=(0, 6))
     def log_likelihood(
         self,
         params,
@@ -90,9 +89,10 @@ class ut_loglike(object):
         inv_covmat,
         fit_xgrid,
         fk_tables,
+        ops,
     ):
         pdf = self.grid_values_func(params)
-        predictions = pred_data(pdf, fk_tables, fit_xgrid)
+        predictions = pred_data(pdf, fk_tables, ops, fit_xgrid)
         return -0.5 * chi2(central_values, predictions, inv_covmat)
 
 
@@ -149,17 +149,20 @@ def ultranest_fit(
         pred_and_pdf = jax.vmap(pred_and_pdf, in_axes=(0,), out_axes=(0, 0))
 
     fk_tables = []
+    ops = []
     for ds in data.datasets:
         fk_data = []
         for fkspec in ds.fkspecs:
             fk = load_fktable(fkspec).with_cuts(ds.cuts)
             fk_arr = jnp.array(fk.get_np_fktable())
-            fk_data.append(fk_arr)
-        fk_tables.append((fk_data, ds.op))
+            fk_data.append((fk_arr, fk.luminosity_mapping, fk.xgrid))
+        fk_tables.append(fk_data)
+        ops.append(ds.op)
+    ops = tuple(ops)
 
     # Initialize the log likelihood function
     log_likelihood = ut_loglike(
-        fk_tables, FIT_XGRID, central_covmat_index, grid_values_func
+        fk_tables, ops, FIT_XGRID, central_covmat_index, grid_values_func
     )
     # Compile the log likelihood function by calling it once
     log_likelihood(jnp.ones(len(parameters)))
