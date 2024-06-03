@@ -78,10 +78,3 @@ def _chi2_validation_data_with_positivity(make_chi2_validation_data_with_positiv
     Internal alias function for make_chi2_validation_data_with_positivity.
     """
     return make_chi2_validation_data_with_positivity
-
-
-def _pos_penalty(make_pos_penalty):
-    """
-    Internal alias function for make_pos_penalty.
-    """
-    return make_pos_penalty

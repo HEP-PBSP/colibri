@@ -17,16 +17,3 @@ def chi2(central_values, predictions, inv_covmat):
     loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
     return loss
-
-
-def make_pos_penalty(
-    alpha,
-    lambda_positivity,
-    _penalty_posdata,
-):
-    """ """
-
-    def pos_penalty(pdf, pos_fk_tables):
-        return jnp.sum(_penalty_posdata(pdf, alpha, lambda_positivity, pos_fk_tables))
-
-    return pos_penalty
