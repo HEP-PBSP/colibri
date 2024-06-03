@@ -90,7 +90,6 @@ class ut_loglike(object):
         data_ops,
     ):
         predictions, pdf = self.pred_and_pdf(params, fk_tables, data_ops, fit_xgrid)
-        # predictions = pred_data(pdf, fk_tables, data_ops, fit_xgrid)
         return -0.5 * chi2(central_values, predictions, inv_covmat)
 
 
