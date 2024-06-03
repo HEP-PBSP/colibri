@@ -1,4 +1,5 @@
 from numpy.testing import assert_allclose
+import jax.numpy as jnp
 
 from colibri.api import API as colibriAPI
 from colibri.theory_predictions import make_dis_prediction, make_had_prediction
@@ -25,14 +26,15 @@ def test_make_dis_prediction():
     )
 
     fktable = load_fktable(ds.fkspecs[0])
+    fk_arr = jnp.array(fktable.get_np_fktable())
     FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS)
-    pred1 = make_dis_prediction(
-        fktable, FIT_XGRID, vectorized=False, flavour_indices=None
-    )(pdf_grid[0])
+    pred1 = make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None)(
+        pdf_grid[0], fk_arr
+    )
 
     pred2 = make_dis_prediction(
-        fktable, FIT_XGRID, vectorized=False, flavour_indices=fktable.luminosity_mapping
-    )(pdf_grid[0])
+        fktable, FIT_XGRID, flavour_indices=fktable.luminosity_mapping
+    )(pdf_grid[0], fk_arr)
 
     assert_allclose(pred1, pred2)
 
@@ -48,14 +50,15 @@ def test_make_had_prediction():
     )
 
     fktable = load_fktable(ds.fkspecs[0])
+    fk_arr = jnp.array(fktable.get_np_fktable())
 
     FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS_HAD)
-    pred1 = make_had_prediction(
-        fktable, FIT_XGRID, vectorized=False, flavour_indices=None
-    )(pdf_grid[0])
+    pred1 = make_had_prediction(fktable, FIT_XGRID, flavour_indices=None)(
+        pdf_grid[0], fk_arr
+    )
 
     pred2 = make_had_prediction(
-        fktable, FIT_XGRID, vectorized=False, flavour_indices=fktable.luminosity_mapping
-    )(pdf_grid[0])
+        fktable, FIT_XGRID, flavour_indices=fktable.luminosity_mapping
+    )(pdf_grid[0], fk_arr)
 
     assert_allclose(pred1, pred2)
