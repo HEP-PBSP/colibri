@@ -33,13 +33,6 @@ def _pred_t0data(make_pred_t0data):
     return make_pred_t0data
 
 
-def _pred_data_non_vectorized(make_pred_data_non_vectorized):
-    """
-    Internal alias function for make_pred_data_non_vectorized.
-    """
-    return make_pred_data_non_vectorized
-
-
 def _penalty_posdataset(make_penalty_posdataset):
     """
     Internal alias function for make_penalty_posdataset.
@@ -85,20 +78,6 @@ def _chi2_validation_data_with_positivity(make_chi2_validation_data_with_positiv
     Internal alias function for make_chi2_validation_data_with_positivity.
     """
     return make_chi2_validation_data_with_positivity
-
-
-def _chi2(make_chi2):
-    """
-    Internal alias function for make_chi2.
-    """
-    return make_chi2
-
-
-def _chi2_with_positivity(make_chi2_with_positivity):
-    """
-    Internal alias function for make_chi2_with_positivity.
-    """
-    return make_chi2_with_positivity
 
 
 def _pos_penalty(make_pos_penalty):

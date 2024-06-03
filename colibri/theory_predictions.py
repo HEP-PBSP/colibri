@@ -248,13 +248,6 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
     return eval_preds
 
 
-def make_pred_data_non_vectorized(data, FIT_XGRID):
-    """
-    Same as make_pred_data but with vectorized=False
-    """
-    return make_pred_data(data, FIT_XGRID, vectorized=False)
-
-
 def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
     """
     Given a PositivitySetSpec compute the positivity penalty
