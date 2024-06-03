@@ -355,3 +355,87 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
         )
 
     return pos_penalties
+
+
+def pred_data(pdf, fk_tables, data_ops, FIT_XGRID, flavour_indices=None):
+
+    predictions = []
+
+    for fk_data, op in zip(fk_tables, data_ops):
+        prediction = pred_dataset(pdf, fk_data, op, FIT_XGRID, flavour_indices)
+        predictions.append(prediction)
+
+    return jnp.concatenate(predictions, axis=-1)
+
+
+def pred_dataset(pdf, fk_data, data_op, FIT_XGRID, flavour_indices=None):
+
+    dataset_predictions = []
+    for fk, lumi_indices, fk_xgrid in fk_data:
+        if fk.ndim == 3:
+            pred = dis_prediction(
+                pdf, fk, lumi_indices, fk_xgrid, FIT_XGRID, flavour_indices
+            )
+        elif fk.ndim == 4:
+            pred = had_prediction(
+                pdf, fk, lumi_indices, fk_xgrid, FIT_XGRID, flavour_indices
+            )
+        else:
+            raise ValueError("Invalid FKTableData shape")
+        dataset_predictions.append(pred)
+
+    return OP[data_op](*dataset_predictions)
+
+
+def dis_prediction(
+    pdf, fktable, lumi_indices, fk_xgrid, FIT_XGRID, flavour_indices=None
+):
+
+    if flavour_indices is not None:
+        mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
+        lumi_indices = lumi_indices[mask]
+        fk_arr = fktable[:, mask, :]
+
+    else:
+        fk_arr = fktable
+
+    # Extract xgrid of the FK table and find the indices
+    fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
+
+    return jnp.einsum("ijk, jk ->i", fk_arr, pdf[lumi_indices, :][:, fk_xgrid_indices])
+
+
+def had_prediction(
+    pdf, fktable, lumi_indices, fk_xgrid, FIT_XGRID, flavour_indices=None
+):
+
+    if flavour_indices is not None:
+        mask_even = jnp.isin(lumi_indices[0::2], jnp.array(flavour_indices))
+        mask_odd = jnp.isin(lumi_indices[1::2], jnp.array(flavour_indices))
+
+        # for hadronic predictions pdfs enter in pair, hence product of two
+        # boolean arrays and repeat by 2
+        mask = jnp.repeat(mask_even * mask_odd, repeats=2)
+        lumi_indices = lumi_indices[mask]
+
+        first_lumi_indices = lumi_indices[0::2]
+        second_lumi_indices = lumi_indices[1::2]
+
+        fk_arr = fktable[:, mask_even * mask_odd, :, :]
+
+    else:
+
+        first_lumi_indices = lumi_indices[0::2]
+        second_lumi_indices = lumi_indices[1::2]
+
+        fk_arr = fktable
+
+    # Extract xgrid of the FK table and find the indices
+    fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
+
+    return jnp.einsum(
+        "ijkl,jk,jl->i",
+        fk_arr,
+        pdf[first_lumi_indices, :][:, fk_xgrid_indices],
+        pdf[second_lumi_indices, :][:, fk_xgrid_indices],
+    )
