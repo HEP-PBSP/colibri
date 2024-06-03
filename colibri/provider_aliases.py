@@ -99,3 +99,10 @@ def _chi2_with_positivity(make_chi2_with_positivity):
     Internal alias function for make_chi2_with_positivity.
     """
     return make_chi2_with_positivity
+
+
+def _pos_penalty(make_pos_penalty):
+    """
+    Internal alias function for make_pos_penalty.
+    """
+    return make_pos_penalty

@@ -255,9 +255,7 @@ def make_pred_data_non_vectorized(data, FIT_XGRID):
     return make_pred_data(data, FIT_XGRID, vectorized=False)
 
 
-def make_penalty_posdataset(
-    posdataset, FIT_XGRID, vectorized=False, flavour_indices=None
-):
+def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
     """
     Given a PositivitySetSpec compute the positivity penalty
     as a lagrange multiplier times elu of minus the theory prediction
@@ -294,20 +292,23 @@ def make_penalty_posdataset(
     for fkspec in posdataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
+            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices)
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
+            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices)
         pred_funcs.append(pred)
 
-    def pos_penalty(pdf, alpha, lambda_positivity):
+    def pos_penalty(pdf, alpha, lambda_positivity, fk_dataset):
         return lambda_positivity * jax.nn.elu(
-            -OP[posdataset.op](*[f(pdf) for f in pred_funcs]), alpha
+            -OP[posdataset.op](
+                *[f(pdf, fk_arr) for (f, fk_arr) in zip(pred_funcs, fk_dataset)]
+            ),
+            alpha,
         )
 
     return pos_penalty
 
 
-def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
+def make_penalty_posdata(posdatasets, FIT_XGRID):
     """
     Compute positivity penalty for list of PositivitySetSpec
 
@@ -331,11 +332,15 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, vectorized=False):
     predictions = []
 
     for posdataset in posdatasets:
-        predictions.append(make_penalty_posdataset(posdataset, FIT_XGRID, vectorized))
+        predictions.append(make_penalty_posdataset(posdataset, FIT_XGRID))
 
-    def pos_penalties(pdf, alpha, lambda_positivity):
+    def pos_penalties(pdf, alpha, lambda_positivity, fk_tables):
         return jnp.concatenate(
-            [f(pdf, alpha, lambda_positivity) for f in predictions], axis=-1
+            [
+                f(pdf, alpha, lambda_positivity, fk_dataset)
+                for (f, fk_dataset) in zip(predictions, fk_tables)
+            ],
+            axis=-1,
         )
 
     return pos_penalties

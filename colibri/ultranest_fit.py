@@ -49,13 +49,16 @@ class ut_loglike(object):
         fit_xgrid,
         forward_map,
         fk_tables,
+        pos_fk_tables,
         ns_settings,
         chi2,
+        pos_penalty,
     ):
         self.central_values = central_covmat_index.central_values
         self.inv_covmat = jla.inv(central_covmat_index.covmat)
         self.pdf_model = pdf_model
         self.chi2 = chi2
+        self.pos_penalty = pos_penalty
         self.pred_and_pdf = pdf_model.pred_and_pdf_func(
             fit_xgrid, forward_map=forward_map
         )
@@ -65,8 +68,10 @@ class ut_loglike(object):
             )
 
             self.chi2 = jax.vmap(self.chi2, in_axes=(None, 0, None), out_axes=0)
+            self.pos_penalty = jax.vmap(self.pos_penalty, in_axes=(0, None), out_axes=0)
 
         self.fk_tables = fk_tables
+        self.pos_fk_tables = pos_fk_tables
 
     def __call__(self, params):
         return self.log_likelihood(
@@ -82,7 +87,10 @@ class ut_loglike(object):
         fk_tables,
     ):
         predictions, pdf = self.pred_and_pdf(params, fk_tables)
-        return -0.5 * self.chi2(central_values, predictions, inv_covmat)
+        return -0.5 * (
+            self.chi2(central_values, predictions, inv_covmat)
+            + self.pos_penalty(pdf, self.pos_fk_tables)
+        )
 
 
 @dataclass(frozen=True)
@@ -105,7 +113,9 @@ class UltranestFit(BayesianFit):
 def ultranest_fit(
     central_covmat_index,
     _pred_data,
+    _pos_penalty,
     fk_tables,
+    pos_fk_tables,
     pdf_model,
     bayesian_prior,
     ns_settings,
@@ -155,8 +165,10 @@ def ultranest_fit(
         FIT_XGRID,
         _pred_data,
         fk_tables,
+        pos_fk_tables,
         ns_settings,
         chi2,
+        _pos_penalty,
     )
 
     sampler = ultranest.ReactiveNestedSampler(
