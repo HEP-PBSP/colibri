@@ -117,3 +117,12 @@ def make_chi2_with_positivity(
         return jax.vmap(chi2, in_axes=(0, 0), out_axes=0)
 
     return chi2
+
+
+def chi2(central_values, predictions, inv_covmat):
+    """ """
+    diff = predictions - central_values
+
+    loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
+
+    return loss

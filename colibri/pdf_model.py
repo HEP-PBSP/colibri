@@ -40,9 +40,10 @@ class PDFModel(ABC):
         The forward_map is a function that takes in the PDF defined on the
         xgrid grid. They must therefore be compatible.
         """
+        pdf_func = self.grid_values_func(xgrid)
 
         def pred_and_pdf(params):
-            pdf = self.grid_values_func(xgrid)(params)
+            pdf = pdf_func(params)
             predictions = forward_map(pdf)
             return predictions, pdf
 
