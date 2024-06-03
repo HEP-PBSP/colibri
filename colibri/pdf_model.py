@@ -41,9 +41,11 @@ class PDFModel(ABC):
         xgrid grid. They must therefore be compatible.
         """
 
-        def pred_and_pdf(params):
-            pdf = self.grid_values_func(xgrid)(params)
-            predictions = forward_map(pdf)
+        pdf_func = self.grid_values_func(xgrid)
+
+        def pred_and_pdf(params, fk_tables, data_ops, fit_xgrid):
+            pdf = pdf_func(params)
+            predictions = forward_map(pdf, fk_tables, data_ops, fit_xgrid)
             return predictions, pdf
 
         return pred_and_pdf

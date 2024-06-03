@@ -16,7 +16,6 @@ import time
 import logging
 import sys
 from functools import partial
-from memory_profiler import profile
 
 from colibri.utils import resample_from_ns_posterior
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
@@ -61,15 +60,14 @@ class UltranestFit(BayesianFit):
 
 
 class ut_loglike(object):
-    def __init__(
-        self, fk_tables, data_ops, fit_xgrid, central_covmat_index, grid_values_func
-    ):
+    def __init__(self, fk_tables, data_ops, fit_xgrid, central_covmat_index, pdf_model):
         self.central_values = central_covmat_index.central_values
         self.inv_covmat = jla.inv(central_covmat_index.covmat)
-        self.grid_values_func = grid_values_func
+        self.pdf_model = pdf_model
         self.fk_tables = fk_tables
         self.fit_xgrid = fit_xgrid
         self.data_ops = data_ops
+        self.pred_and_pdf = pdf_model.pred_and_pdf_func(fit_xgrid, pred_data)
 
     def __call__(self, params):
         return self.log_likelihood(
@@ -91,12 +89,11 @@ class ut_loglike(object):
         fk_tables,
         data_ops,
     ):
-        pdf = self.grid_values_func(params)
-        predictions = pred_data(pdf, fk_tables, data_ops, fit_xgrid)
+        predictions, pdf = self.pred_and_pdf(params, fk_tables, data_ops, fit_xgrid)
+        # predictions = pred_data(pdf, fk_tables, data_ops, fit_xgrid)
         return -0.5 * chi2(central_values, predictions, inv_covmat)
 
 
-@profile
 def ultranest_fit(
     central_covmat_index,
     fk_tables,
@@ -143,14 +140,12 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
-    grid_values_func = pdf_model.grid_values_func(FIT_XGRID)
-
     if ns_settings["ReactiveNS_settings"]["vectorized"]:
         pred_and_pdf = jax.vmap(pred_and_pdf, in_axes=(0,), out_axes=(0, 0))
 
     # Initialize the log likelihood function
     log_likelihood = ut_loglike(
-        fk_tables, data_ops, FIT_XGRID, central_covmat_index, grid_values_func
+        fk_tables, data_ops, FIT_XGRID, central_covmat_index, pdf_model
     )
     # Compile the log likelihood function by calling it once
     log_likelihood(jnp.ones(len(parameters)))

@@ -220,18 +220,18 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
     return eval_preds
 
 
-def pred_data(pdf, fk_tables, ops, FIT_XGRID, flavour_indices=None):
+def pred_data(pdf, fk_tables, data_ops, FIT_XGRID, flavour_indices=None):
 
     predictions = []
 
-    for fk_data, op in zip(fk_tables, ops):
+    for fk_data, op in zip(fk_tables, data_ops):
         prediction = pred_dataset(pdf, fk_data, op, FIT_XGRID, flavour_indices)
         predictions.append(prediction)
 
     return jnp.concatenate(predictions, axis=-1)
 
 
-def pred_dataset(pdf, fk_data, op, FIT_XGRID, flavour_indices=None):
+def pred_dataset(pdf, fk_data, data_op, FIT_XGRID, flavour_indices=None):
 
     dataset_predictions = []
     for fk, lumi_indices, fk_xgrid in fk_data:
@@ -247,7 +247,7 @@ def pred_dataset(pdf, fk_data, op, FIT_XGRID, flavour_indices=None):
             raise ValueError("Invalid FKTableData shape")
         dataset_predictions.append(pred)
 
-    return OP[op](*dataset_predictions)
+    return OP[data_op](*dataset_predictions)
 
 
 def dis_prediction(
