@@ -12,12 +12,14 @@ from functools import wraps
 
 import jax
 import jax.numpy as jnp
+import jax.scipy.linalg as jla
 import numpy as np
 import pandas as pd
 import dill
 from validphys import convolution
 
 import logging
+from colibri.loss_functions import chi2
 
 log = logging.getLogger(__name__)
 
@@ -224,24 +226,35 @@ def cast_to_numpy(func):
 
 
 def likelihood_float_type(
-    _chi2, _pred_data, pdf_model, FIT_XGRID, bayesian_prior, output_path
+    _pred_data,
+    pdf_model,
+    FIT_XGRID,
+    bayesian_prior,
+    output_path,
+    central_covmat_index,
+    fk_tables,
 ):
     """
     Writes the dtype of the likelihood function to a file.
     Mainly used for testing purposes.
     """
 
+    loss_function = chi2
+
+    central_values = central_covmat_index.central_values
+    inv_covmat = jla.inv(central_covmat_index.covmat)
+
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     @jax.jit
-    def log_likelihood(params):
-        predictions, _ = pred_and_pdf(params)
-        return -0.5 * _chi2(predictions)
+    def log_likelihood(params, central_values, inv_covmat, fk_tables):
+        predictions, _ = pred_and_pdf(params, fk_tables)
+        return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     params = bayesian_prior(
         jax.random.uniform(jax.random.PRNGKey(0), shape=(len(pdf_model.param_names),))
     )
-    dtype = log_likelihood(params).dtype
+    dtype = log_likelihood(params, central_values, inv_covmat, fk_tables).dtype
 
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:
