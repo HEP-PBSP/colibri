@@ -79,7 +79,7 @@ def dataset_inputs_covmat_from_systematics(
     return covmat
 
 
-def colibri_dataset_inputs_t0_predictions(_pred_t0data, t0_pdf_grid):
+def colibri_dataset_inputs_t0_predictions(_pred_t0data, t0_pdf_grid, fk_tables):
     """
     Similar to validphys.covmats.dataset_inputs_t0_predictions.
 
@@ -97,7 +97,7 @@ def colibri_dataset_inputs_t0_predictions(_pred_t0data, t0_pdf_grid):
         list of theory predictions for each dataset
     """
     # central PDF member for t0 predictions
-    pred = _pred_t0data(t0_pdf_grid[0])
+    pred = _pred_t0data(t0_pdf_grid[0], fk_tables)
     t0predictions = [np.array(pred[i]) for i in range(len(pred))]
 
     return t0predictions

@@ -55,17 +55,15 @@ def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
         lumi_indices = fktable.luminosity_mapping
         mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
         lumi_indices = lumi_indices[mask]
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask, :]
 
     else:
         lumi_indices = fktable.luminosity_mapping
-        fk_arr = jnp.array(fktable.get_np_fktable())
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
     fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
-    def dis_prediction(pdf):
+    def dis_prediction(pdf, fk_arr):
         return jnp.einsum(
             "ijk, jk ->i", fk_arr, pdf[lumi_indices, :][:, fk_xgrid_indices]
         )
@@ -120,21 +118,17 @@ def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())[:, mask_even * mask_odd, :, :]
-
     else:
         lumi_indices = fktable.luminosity_mapping
 
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
 
-        fk_arr = jnp.array(fktable.get_np_fktable())
-
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
     fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
-    def had_prediction(pdf):
+    def had_prediction(pdf, fk_arr):
         return jnp.einsum(
             "ijkl,jk,jl->i",
             fk_arr,
@@ -179,8 +173,10 @@ def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None
             pred = make_dis_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
         pred_funcs.append(pred)
 
-    def prediction(pdf):
-        return OP[dataset.op](*[f(pdf) for f in pred_funcs])
+    def prediction(pdf, fk_dataset):
+        return OP[dataset.op](
+            *[f(pdf, fk_arr) for (f, fk_arr) in zip(pred_funcs, fk_dataset)]
+        )
 
     return prediction
 
@@ -214,8 +210,11 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
             make_pred_dataset(ds, FIT_XGRID, vectorized, flavour_indices)
         )
 
-    def eval_preds(pdf):
-        return jnp.concatenate([f(pdf) for f in predictions], axis=-1)
+    def eval_preds(pdf, fk_tables):
+        return jnp.concatenate(
+            [f(pdf, fk_dataset) for f, fk_dataset in zip(predictions, fk_tables)],
+            axis=-1,
+        )
 
     return eval_preds
 
@@ -251,8 +250,8 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
             )
         )
 
-    def eval_preds(pdf):
-        return [f(pdf) for f in predictions]
+    def eval_preds(pdf, fk_tables):
+        return [f(pdf, fk_dataset) for f, fk_dataset in zip(predictions, fk_tables)]
 
     return eval_preds
 

@@ -42,19 +42,20 @@ ultranest_logger.addHandler(handler)
 
 
 class ut_loglike(object):
-    def __init__(self, central_covmat_index, pdf_model, fit_xgrid, forward_map):
+    def __init__(
+        self, central_covmat_index, pdf_model, fit_xgrid, forward_map, fk_tables
+    ):
         self.central_values = central_covmat_index.central_values
         self.inv_covmat = jla.inv(central_covmat_index.covmat)
         self.pdf_model = pdf_model
         self.pred_and_pdf = pdf_model.pred_and_pdf_func(
             fit_xgrid, forward_map=forward_map
         )
+        self.fk_tables = fk_tables
 
     def __call__(self, params):
         return self.log_likelihood(
-            params,
-            self.central_values,
-            self.inv_covmat,
+            params, self.central_values, self.inv_covmat, self.fk_tables
         )
 
     @partial(jax.jit, static_argnames=("self",))
@@ -63,8 +64,9 @@ class ut_loglike(object):
         params,
         central_values,
         inv_covmat,
+        fk_tables,
     ):
-        predictions, pdf = self.pred_and_pdf(params)
+        predictions, pdf = self.pred_and_pdf(params, fk_tables)
         return -0.5 * chi2(central_values, predictions, inv_covmat)
 
 
@@ -88,6 +90,7 @@ class UltranestFit(BayesianFit):
 def ultranest_fit(
     central_covmat_index,
     _pred_data,
+    fk_tables,
     pdf_model,
     bayesian_prior,
     ns_settings,
@@ -136,7 +139,9 @@ def ultranest_fit(
         pred_and_pdf = jax.vmap(pred_and_pdf, in_axes=(0,), out_axes=(0, 0))
 
     # Initialize the log likelihood function
-    log_likelihood = ut_loglike(central_covmat_index, pdf_model, FIT_XGRID, _pred_data)
+    log_likelihood = ut_loglike(
+        central_covmat_index, pdf_model, FIT_XGRID, _pred_data, fk_tables
+    )
     # Compile the log likelihood function by calling it once
     log_likelihood(jnp.ones(len(parameters)))
 

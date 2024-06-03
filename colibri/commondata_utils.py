@@ -12,6 +12,7 @@ from dataclasses import dataclass, asdict
 
 import jax
 import jax.numpy as jnp
+from validphys.fkparser import load_fktable
 
 from colibri.theory_predictions import make_pred_dataset
 
@@ -73,12 +74,17 @@ def level_0_commondata_tuple(
     for cd, ds in zip(experimental_commondata_tuple, data.datasets):
         if cd.setname != ds.name:
             raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
+        fk_dataset = []
+        for fkspec in ds.fkspecs:
+            fk = load_fktable(fkspec).with_cuts(ds.cuts)
+            fk_arr = jnp.array(fk.get_np_fktable())
+            fk_dataset.append(fk_arr)
         # replace central values with theory prediction from `closure_test_pdf`
         fake_data.append(
             cd.with_central_value(
                 make_pred_dataset(
                     ds, FIT_XGRID, vectorized=False, flavour_indices=flavour_indices
-                )(closure_test_central_pdf_grid)
+                )(closure_test_central_pdf_grid, fk_dataset)
             )
         )
     return tuple(fake_data)
