@@ -18,7 +18,7 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=None):
+def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -68,12 +68,10 @@ def make_dis_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
             "ijk, jk ->i", fk_arr, pdf[lumi_indices, :][:, fk_xgrid_indices]
         )
 
-    if vectorized:
-        return jnp.vectorize(dis_prediction, signature="(m,n)->(k)")
     return dis_prediction
 
 
-def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=None):
+def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -136,12 +134,10 @@ def make_had_prediction(fktable, FIT_XGRID, vectorized=False, flavour_indices=No
             pdf[second_lumi_indices, :][:, fk_xgrid_indices],
         )
 
-    if vectorized:
-        return jnp.vectorize(had_prediction, signature="(m,n)->(k)")
     return had_prediction
 
 
-def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None):
+def make_pred_dataset(dataset, FIT_XGRID, flavour_indices=None):
     """
     Compute theory prediction for a DataSetSpec
 
@@ -168,9 +164,9 @@ def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None
     for fkspec in dataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
+            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices)
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, vectorized, flavour_indices)
+            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices)
         pred_funcs.append(pred)
 
     def prediction(pdf, fk_dataset):
@@ -181,7 +177,7 @@ def make_pred_dataset(dataset, FIT_XGRID, vectorized=False, flavour_indices=None
     return prediction
 
 
-def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
+def make_pred_data(data, FIT_XGRID, flavour_indices=None):
     """
     Compute theory prediction for entire DataGroupSpec
 
@@ -206,9 +202,7 @@ def make_pred_data(data, FIT_XGRID, vectorized=False, flavour_indices=None):
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(
-            make_pred_dataset(ds, FIT_XGRID, vectorized, flavour_indices)
-        )
+        predictions.append(make_pred_dataset(ds, FIT_XGRID, flavour_indices))
 
     def eval_preds(pdf, fk_tables):
         return jnp.concatenate(
@@ -245,9 +239,7 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
 
     for ds in data.datasets:
         predictions.append(
-            make_pred_dataset(
-                ds, FIT_XGRID, vectorized=False, flavour_indices=flavour_indices
-            )
+            make_pred_dataset(ds, FIT_XGRID, flavour_indices=flavour_indices)
         )
 
     def eval_preds(pdf, fk_tables):
