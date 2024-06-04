@@ -47,7 +47,7 @@ def monte_carlo_fit(
     _chi2_training_data_with_positivity,
     _chi2_validation_data_with_positivity,
     _pred_data,
-    fk_tables,
+    fast_kernel_arrays,
     pos_fk_tables,
     len_trval_data,
     pdf_model,
@@ -123,17 +123,24 @@ def monte_carlo_fit(
 
     @jax.jit
     def loss_training(
-        parameters, batch_idx, fk_tables, pos_fk_tables, alpha, lambda_positivity
+        parameters,
+        batch_idx,
+        fast_kernel_arrays,
+        pos_fk_tables,
+        alpha,
+        lambda_positivity,
     ):
-        predictions, pdf = pred_and_pdf(parameters, fk_tables)
+        predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
 
         return _chi2_training_data_with_positivity(
             predictions, pdf, batch_idx, alpha, lambda_positivity, pos_fk_tables
         )
 
     @jax.jit
-    def loss_validation(parameters, fk_tables, pos_fk_tables, alpha, lambda_positivity):
-        predictions, pdf = pred_and_pdf(parameters, fk_tables)
+    def loss_validation(
+        parameters, fast_kernel_arrays, pos_fk_tables, alpha, lambda_positivity
+    ):
+        predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
 
         return _chi2_validation_data_with_positivity(
             predictions, pdf, alpha, lambda_positivity, pos_fk_tables
@@ -141,10 +148,21 @@ def monte_carlo_fit(
 
     @jax.jit
     def step(
-        params, opt_state, batch_idx, fk_tables, pos_fk_tables, alpha, lambda_positivity
+        params,
+        opt_state,
+        batch_idx,
+        fast_kernel_arrays,
+        pos_fk_tables,
+        alpha,
+        lambda_positivity,
     ):
         loss_value, grads = jax.value_and_grad(loss_training)(
-            params, batch_idx, fk_tables, pos_fk_tables, alpha, lambda_positivity
+            params,
+            batch_idx,
+            fast_kernel_arrays,
+            pos_fk_tables,
+            alpha,
+            lambda_positivity,
         )
         updates, opt_state = optimizer_provider.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
@@ -181,7 +199,7 @@ def monte_carlo_fit(
                 parameters,
                 opt_state,
                 batch,
-                fk_tables,
+                fast_kernel_arrays,
                 pos_fk_tables,
                 alpha,
                 lambda_positivity,
@@ -191,7 +209,7 @@ def monte_carlo_fit(
                 loss_training(
                     parameters,
                     batch,
-                    fk_tables,
+                    fast_kernel_arrays,
                     pos_fk_tables,
                     alpha,
                     lambda_positivity,
@@ -201,7 +219,7 @@ def monte_carlo_fit(
 
         epoch_val_loss += (
             loss_validation(
-                parameters, fk_tables, pos_fk_tables, alpha, lambda_positivity
+                parameters, fast_kernel_arrays, pos_fk_tables, alpha, lambda_positivity
             )
             / len_val_idx
         )

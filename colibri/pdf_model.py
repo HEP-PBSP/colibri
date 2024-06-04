@@ -42,9 +42,9 @@ class PDFModel(ABC):
         """
         pdf_func = self.grid_values_func(xgrid)
 
-        def pred_and_pdf(params, fk_tables):
+        def pred_and_pdf(params, fast_kernel_arrays):
             pdf = pdf_func(params)
-            predictions = forward_map(pdf, fk_tables)
+            predictions = forward_map(pdf, fast_kernel_arrays)
             return predictions, pdf
 
         return pred_and_pdf

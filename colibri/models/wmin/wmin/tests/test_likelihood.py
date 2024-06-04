@@ -73,8 +73,8 @@ def test_likelihood_dis_wmin(wmin_model_settings):
     forward_map = colibriAPI.make_pred_data(**TEST_DATASETS)
     # get FIT_XGRID
     FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS)
-    # get fk_tables
-    fk_tables = colibriAPI.fk_tables(**TEST_DATASETS)
+    # get fast_kernel_arrays
+    fast_kernel_arrays = colibriAPI.fast_kernel_arrays(**TEST_DATASETS)
     # get centralconvat_index
     central_covmat_index = colibriAPI.central_covmat_index(
         **{**TEST_DATASETS, **T0_PDFSET}
@@ -91,20 +91,20 @@ def test_likelihood_dis_wmin(wmin_model_settings):
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=forward_map)
 
     @jax.jit
-    def log_likelihood(params, central_values, inv_covmat, fk_tables):
-        predictions, _ = pred_and_pdf(params, fk_tables)
+    def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
+        predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     # Sample params from the prior
     prior_list = prior_samples(prior, wmin_model_settings)
 
     # compile likelihood
-    log_likelihood(prior_list[0], central_values, inv_covmat, fk_tables)
+    log_likelihood(prior_list[0], central_values, inv_covmat, fast_kernel_arrays)
 
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(N_LOOP_ITERATIONS):
-        log_likelihood(prior_list[i], central_values, inv_covmat, fk_tables)
+        log_likelihood(prior_list[i], central_values, inv_covmat, fast_kernel_arrays)
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
@@ -130,8 +130,8 @@ def test_likelihood_had_wmin(wmin_model_settings):
     # get FIT_XGRID
     FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS_HAD)
 
-    # get fk_tables
-    fk_tables = colibriAPI.fk_tables(**TEST_DATASETS_HAD)
+    # get fast_kernel_arrays
+    fast_kernel_arrays = colibriAPI.fast_kernel_arrays(**TEST_DATASETS_HAD)
     # get centralconvat_index
     central_covmat_index = colibriAPI.central_covmat_index(
         **{**TEST_DATASETS_HAD, **T0_PDFSET}
@@ -150,20 +150,20 @@ def test_likelihood_had_wmin(wmin_model_settings):
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=forward_map)
 
     @jax.jit
-    def log_likelihood(params, central_values, inv_covmat, fk_tables):
-        predictions, _ = pred_and_pdf(params, fk_tables)
+    def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
+        predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     # Sample params from the prior
     prior_list = prior_samples(prior, wmin_model_settings)
 
     # compile likelihood
-    log_likelihood(prior_list[0], central_values, inv_covmat, fk_tables)
+    log_likelihood(prior_list[0], central_values, inv_covmat, fast_kernel_arrays)
 
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(N_LOOP_ITERATIONS):
-        log_likelihood(prior_list[i], central_values, inv_covmat, fk_tables)
+        log_likelihood(prior_list[i], central_values, inv_covmat, fast_kernel_arrays)
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS
@@ -189,8 +189,8 @@ def test_likelihood_global_wmin(wmin_model_settings):
     # get FIT_XGRID
     FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS_DIS_HAD)
 
-    # get fk_tables
-    fk_tables = colibriAPI.fk_tables(**TEST_DATASETS_DIS_HAD)
+    # get fast_kernel_arrays
+    fast_kernel_arrays = colibriAPI.fast_kernel_arrays(**TEST_DATASETS_DIS_HAD)
     # get centralconvat_index
     central_covmat_index = colibriAPI.central_covmat_index(
         **{**TEST_DATASETS_DIS_HAD, **T0_PDFSET}
@@ -209,20 +209,20 @@ def test_likelihood_global_wmin(wmin_model_settings):
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=forward_map)
 
     @jax.jit
-    def log_likelihood(params, central_values, inv_covmat, fk_tables):
-        predictions, _ = pred_and_pdf(params, fk_tables)
+    def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
+        predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     # Sample params from the prior
     prior_list = prior_samples(prior, wmin_model_settings)
 
     # compile likelihood
-    log_likelihood(prior_list[0], central_values, inv_covmat, fk_tables)
+    log_likelihood(prior_list[0], central_values, inv_covmat, fast_kernel_arrays)
 
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(N_LOOP_ITERATIONS):
-        log_likelihood(prior_list[i], central_values, inv_covmat, fk_tables)
+        log_likelihood(prior_list[i], central_values, inv_covmat, fast_kernel_arrays)
     end_time = time.perf_counter()
 
     time_per_eval = (end_time - start_time) / N_LOOP_ITERATIONS

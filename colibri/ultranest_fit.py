@@ -41,14 +41,14 @@ handler = logging.StreamHandler(sys.stdout)
 ultranest_logger.addHandler(handler)
 
 
-class ut_loglike(object):
+class UltraNestLogLikelihood(object):
     def __init__(
         self,
         central_inv_covmat_index,
         pdf_model,
         fit_xgrid,
         forward_map,
-        fk_tables,
+        fast_kernel_arrays,
         pos_fk_tables,
         ns_settings,
         chi2,
@@ -76,12 +76,12 @@ class ut_loglike(object):
                 self.penalty_posdata, in_axes=(0, None, None, None), out_axes=0
             )
 
-        self.fk_tables = fk_tables
+        self.fast_kernel_arrays = fast_kernel_arrays
         self.pos_fk_tables = pos_fk_tables
 
     def __call__(self, params):
         return self.log_likelihood(
-            params, self.central_values, self.inv_covmat, self.fk_tables
+            params, self.central_values, self.inv_covmat, self.fast_kernel_arrays
         )
 
     @partial(jax.jit, static_argnames=("self",))
@@ -90,9 +90,9 @@ class ut_loglike(object):
         params,
         central_values,
         inv_covmat,
-        fk_tables,
+        fast_kernel_arrays,
     ):
-        predictions, pdf = self.pred_and_pdf(params, fk_tables)
+        predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * (
             self.chi2(central_values, predictions, inv_covmat)
             + jnp.sum(
@@ -124,7 +124,7 @@ def ultranest_fit(
     central_inv_covmat_index,
     _pred_data,
     _penalty_posdata,
-    fk_tables,
+    fast_kernel_arrays,
     pos_fk_tables,
     pdf_model,
     bayesian_prior,
@@ -171,12 +171,12 @@ def ultranest_fit(
     parameters = pdf_model.param_names
 
     # Initialize the log likelihood function
-    log_likelihood = ut_loglike(
+    log_likelihood = UltraNestLogLikelihood(
         central_inv_covmat_index,
         pdf_model,
         FIT_XGRID,
         _pred_data,
-        fk_tables,
+        fast_kernel_arrays,
         pos_fk_tables,
         ns_settings,
         chi2,

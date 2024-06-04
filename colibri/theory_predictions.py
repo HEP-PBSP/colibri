@@ -15,6 +15,56 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
+def fast_kernel_data(data):
+    """
+    Given a DataGroupSpec instance returns a tuple of tuples
+    of FKTableData instances.
+
+    Parameters
+    ----------
+    data : validphys.coredata.DataGroupSpec
+
+    Returns
+    -------
+    tuple
+        tuple of tuples of FKTableData instances
+    """
+    fk_data = []
+    for ds in data.datasets:
+        fk_dataset = []
+        for fkspec in ds.fkspecs:
+            fk = load_fktable(fkspec).with_cuts(ds.cuts)
+            fk_dataset.append(fk)
+        fk_data.append(tuple(fk_dataset))
+
+    return tuple(fk_data)
+
+
+def fast_kernel_arrays(fast_kernel_data):
+    """
+    Given a tuple of tuples of FKTableData instances returns
+    a tuple of tuples of jax.numpy arrays.
+
+    Parameters
+    ----------
+    fast_kernel_data : tuple
+
+    Returns
+    -------
+    tuple
+        tuple of tuples of jax.numpy arrays
+    """
+    fk_arrays = []
+
+    for fk_dataset in fast_kernel_data:
+        fk_dataset_arr = []
+        for fk in fk_dataset:
+            fk_dataset_arr.append(jnp.array(fk.get_np_fktable()))
+        fk_arrays.append(tuple(fk_dataset_arr))
+
+    return tuple(fk_arrays)
+
+
 def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
     """
     Given an FKTableData instance returns a jax.jit
@@ -201,9 +251,12 @@ def make_pred_data(data, FIT_XGRID, flavour_indices=None):
     for ds in data.datasets:
         predictions.append(make_pred_dataset(ds, FIT_XGRID, flavour_indices))
 
-    def eval_preds(pdf, fk_tables):
+    def eval_preds(pdf, fast_kernel_arrays):
         return jnp.concatenate(
-            [f(pdf, fk_dataset) for f, fk_dataset in zip(predictions, fk_tables)],
+            [
+                f(pdf, fk_dataset)
+                for f, fk_dataset in zip(predictions, fast_kernel_arrays)
+            ],
             axis=-1,
         )
 
@@ -239,8 +292,10 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
             make_pred_dataset(ds, FIT_XGRID, flavour_indices=flavour_indices)
         )
 
-    def eval_preds(pdf, fk_tables):
-        return [f(pdf, fk_dataset) for f, fk_dataset in zip(predictions, fk_tables)]
+    def eval_preds(pdf, fast_kernel_arrays):
+        return [
+            f(pdf, fk_dataset) for f, fk_dataset in zip(predictions, fast_kernel_arrays)
+        ]
 
     return eval_preds
 
@@ -324,11 +379,11 @@ def make_penalty_posdata(posdatasets, FIT_XGRID):
     for posdataset in posdatasets:
         predictions.append(make_penalty_posdataset(posdataset, FIT_XGRID))
 
-    def pos_penalties(pdf, alpha, lambda_positivity, fk_tables):
+    def pos_penalties(pdf, alpha, lambda_positivity, fast_kernel_arrays):
         return jnp.concatenate(
             [
                 f(pdf, alpha, lambda_positivity, fk_dataset)
-                for (f, fk_dataset) in zip(predictions, fk_tables)
+                for (f, fk_dataset) in zip(predictions, fast_kernel_arrays)
             ],
             axis=-1,
         )

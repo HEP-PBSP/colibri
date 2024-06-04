@@ -232,7 +232,7 @@ def likelihood_float_type(
     bayesian_prior,
     output_path,
     central_inv_covmat_index,
-    fk_tables,
+    fast_kernel_arrays,
 ):
     """
     Writes the dtype of the likelihood function to a file.
@@ -247,14 +247,14 @@ def likelihood_float_type(
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     @jax.jit
-    def log_likelihood(params, central_values, inv_covmat, fk_tables):
-        predictions, _ = pred_and_pdf(params, fk_tables)
+    def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
+        predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     params = bayesian_prior(
         jax.random.uniform(jax.random.PRNGKey(0), shape=(len(pdf_model.param_names),))
     )
-    dtype = log_likelihood(params, central_values, inv_covmat, fk_tables).dtype
+    dtype = log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays).dtype
 
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:

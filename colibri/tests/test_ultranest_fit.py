@@ -12,7 +12,7 @@ FIT_XGRID = jnp.logspace(-7, 0, 50)
 central_inv_covmat_index_mock = Mock()
 central_inv_covmat_index_mock.central_values = jnp.ones(2)
 central_inv_covmat_index_mock.inv_covmat = jnp.eye(2)
-fk_tables = [jnp.eye(2)]
+fast_kernel_arrays = [jnp.eye(2)]
 pos_fk_tables = [jnp.eye(2)]
 
 _penalty_posdata = lambda pdf, alpha, lambda_positivity, pos_fk_tables: jnp.array(
@@ -38,7 +38,7 @@ def test_ultranest_fit():
         (14, len(xgrid))
     )
     mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fk_tables: (params, jnp.ones((14, len(xgrid))))
+        lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
     )
     _pred_data = None
 
@@ -46,7 +46,7 @@ def test_ultranest_fit():
         central_inv_covmat_index_mock,
         _pred_data,
         _penalty_posdata,
-        fk_tables,
+        fast_kernel_arrays,
         pos_fk_tables,
         mock_pdf_model,
         bayesian_prior,
@@ -82,7 +82,7 @@ def test_ultranest_fit_with_SliceSampler():
         (14, len(xgrid))
     )
     mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fk_tables: (params, jnp.ones((14, len(xgrid))))
+        lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
     )
     _pred_data = None
 
@@ -90,7 +90,7 @@ def test_ultranest_fit_with_SliceSampler():
         central_inv_covmat_index_mock,
         _pred_data,
         _penalty_posdata,
-        fk_tables,
+        fast_kernel_arrays,
         pos_fk_tables,
         mock_pdf_model,
         bayesian_prior,
@@ -126,7 +126,7 @@ def test_ultranest_fit_with_popSliceSampler():
         (14, len(xgrid))
     )
     mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fk_tables: (params, jnp.ones((14, len(xgrid))))
+        lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
     )
     _pred_data = None
 
@@ -134,7 +134,7 @@ def test_ultranest_fit_with_popSliceSampler():
         central_inv_covmat_index_mock,
         _pred_data,
         _penalty_posdata,
-        fk_tables,
+        fast_kernel_arrays,
         pos_fk_tables,
         mock_pdf_model,
         bayesian_prior,

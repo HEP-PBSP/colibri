@@ -10,7 +10,7 @@ import logging
 import jax
 import pandas as pd
 from colibri.loss_functions import chi2
-from colibri.ultranest_fit import ut_loglike
+from colibri.ultranest_fit import UltraNestLogLikelihood
 from reportengine.table import table
 
 
@@ -28,7 +28,7 @@ init = RSS_MB()
 def likelihood_time(
     _penalty_posdata,
     central_inv_covmat_index,
-    fk_tables,
+    fast_kernel_arrays,
     pos_fk_tables,
     _pred_data,
     FIT_XGRID,
@@ -51,7 +51,7 @@ def likelihood_time(
 
     central_inv_covmat_index: colibri.commondata_utils.CentralInvCovmatIndex
 
-    fk_tables: list
+    fast_kernel_arrays: tuple
         The FK tables to use.
 
     pos_fk_tables: list
@@ -90,12 +90,12 @@ def likelihood_time(
     central_values = central_inv_covmat_index.central_values
     ndata = len(central_values)
 
-    log_likelihood = ut_loglike(
+    log_likelihood = UltraNestLogLikelihood(
         central_inv_covmat_index,
         pdf_model,
         FIT_XGRID,
         _pred_data,
-        fk_tables,
+        fast_kernel_arrays,
         pos_fk_tables,
         ns_settings,
         chi2,
