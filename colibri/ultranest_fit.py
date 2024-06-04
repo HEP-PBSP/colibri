@@ -72,7 +72,9 @@ class ut_loglike(object):
             )
 
             self.chi2 = jax.vmap(self.chi2, in_axes=(None, 0, None), out_axes=0)
-            self.pos_penalty = jax.vmap(self.pos_penalty, in_axes=(0, None), out_axes=0)
+            self.penalty_posdata = jax.vmap(
+                self.penalty_posdata, in_axes=(0, None, None, None), out_axes=0
+            )
 
         self.fk_tables = fk_tables
         self.pos_fk_tables = pos_fk_tables
