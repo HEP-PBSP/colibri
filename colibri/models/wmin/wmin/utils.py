@@ -4,12 +4,24 @@ the wmin parameterization.
 """
 
 import time
+import resource
+import logging
 
 import jax
 import pandas as pd
 from colibri.loss_functions import chi2
 from colibri.ultranest_fit import ut_loglike
 from reportengine.table import table
+
+
+log = logging.getLogger(__name__)
+
+
+"""
+Memory usage before loading of resources
+"""
+RSS_MB = lambda: resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024**2
+init = RSS_MB()
 
 
 @table
@@ -37,7 +49,7 @@ def likelihood_time(
     _penalty_posdata: function
         The positivity penalty function to use.
 
-    central_inv_covmat_index: coliibri.commondata_utils.CentralInvCovmatIndex
+    central_inv_covmat_index: colibri.commondata_utils.CentralInvCovmatIndex
 
     fk_tables: list
         The FK tables to use.
@@ -71,6 +83,9 @@ def likelihood_time(
     df: pd.DataFrame
         The DataFrame containing the results.
     """
+    log.info(f"Memory usage after loading of resources")
+    res = RSS_MB()
+    log.info(f"RSS: {res - init:.2f}MB")
 
     central_values = central_inv_covmat_index.central_values
     ndata = len(central_values)
@@ -100,6 +115,8 @@ def likelihood_time(
     # compile likelihood
     log_likelihood(prior_samples[0])
 
+    log.info(f"Memory usage after initialization of log_likelihood")
+    log.info(f"RSS: {RSS_MB() - res:.2f}MB")
     # evaluate likelihood time
     start_time = time.perf_counter()
     for i in range(n_prior_samples):
