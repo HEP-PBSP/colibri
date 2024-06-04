@@ -65,6 +65,14 @@ class colibriApp(App):
             help="Name of the output directory.",
         )
 
+        parser.add_argument(
+            "-dtype",
+            "--float_type",
+            type=str,
+            default=None,
+            help="The float type to use for the computations.",
+        )
+
         return parser
 
     def get_commandline_arguments(self, cmdline=None):

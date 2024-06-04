@@ -35,20 +35,37 @@ class EnvironmentError_(Exception):
 
 
 class Environment(Environment):
-    def __init__(self, replica_index=None, trval_index=0, *args, **kwargs):
+    def __init__(
+        self, replica_index=None, trval_index=0, float_type=None, *args, **kwargs
+    ):
         super().__init__(*args, **kwargs)
 
         self.replica_index = replica_index
         self.trval_index = trval_index
+        self.float_type = float_type
 
-        # per default we use float64, can be changed to float32 or float16 within config class
-        jax.config.update("jax_enable_x64", True)
+        if self.float_type not in [None, "float64", "float32", "bfloat16"]:
+            raise ValueError(
+                f"float_type must be either 'float64', 'float32' or 'bfloat16', got {float_type}"
+            )
+
+        if self.float_type in ["float32", "bfloat16"]:
+            log.info(f"Using {float_type} precision")
+            log.warning(
+                f"If running with ultranest, only SliceSampler is supported with {float_type} precision."
+            )
+            jax.config.update("jax_enable_x64", False)
+
+        else:
+            log.info("Using float64 precision")
+            jax.config.update("jax_enable_x64", True)
 
     @classmethod
     def ns_dump_description(cls):
         return {
             "replica_index": "The MC replica index",
             "trval_index": "The Training/Validation split index",
+            "float_type": "The float precision used in the fit",
             **super().ns_dump_description(),
         }
 
@@ -100,30 +117,6 @@ class colibriConfig(Config):
     Config class inherits from validphys
     Config class
     """
-
-    def parse_float_type(self, float_type=None):
-        """
-        Parse the float type from the runcard, perform
-        checks and if needed update the jax configuration.
-        """
-
-        if float_type not in [None, "float32", "float16", "bfloat16"]:
-            raise ValueError(
-                f"float_type must be either 'float32', 'float16', or 'bfloat16', got {float_type}"
-            )
-
-        if float_type in ["float32", "float16", "bfloat16"]:
-            log.info(f"Using {float_type} precision")
-            log.warning(
-                f"If running with ultranest, only SliceSampler is supported with {float_type} precision."
-            )
-            jax.config.update("jax_enable_x64", False)
-
-        else:
-            log.info("Using float64 precision")
-            jax.config.update("jax_enable_x64", True)
-
-        return float_type
 
     def produce_FIT_XGRID(self, data=None, posdatasets=None):
         """
