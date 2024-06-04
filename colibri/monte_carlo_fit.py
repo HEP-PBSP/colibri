@@ -48,7 +48,7 @@ def monte_carlo_fit(
     _chi2_validation_data_with_positivity,
     _pred_data,
     fast_kernel_arrays,
-    pos_fk_tables,
+    positivity_fast_kernel_arrays,
     len_trval_data,
     pdf_model,
     mc_initial_parameters,
@@ -126,24 +126,33 @@ def monte_carlo_fit(
         parameters,
         batch_idx,
         fast_kernel_arrays,
-        pos_fk_tables,
+        positivity_fast_kernel_arrays,
         alpha,
         lambda_positivity,
     ):
         predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
 
         return _chi2_training_data_with_positivity(
-            predictions, pdf, batch_idx, alpha, lambda_positivity, pos_fk_tables
+            predictions,
+            pdf,
+            batch_idx,
+            alpha,
+            lambda_positivity,
+            positivity_fast_kernel_arrays,
         )
 
     @jax.jit
     def loss_validation(
-        parameters, fast_kernel_arrays, pos_fk_tables, alpha, lambda_positivity
+        parameters,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        alpha,
+        lambda_positivity,
     ):
         predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
 
         return _chi2_validation_data_with_positivity(
-            predictions, pdf, alpha, lambda_positivity, pos_fk_tables
+            predictions, pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
         )
 
     @jax.jit
@@ -152,7 +161,7 @@ def monte_carlo_fit(
         opt_state,
         batch_idx,
         fast_kernel_arrays,
-        pos_fk_tables,
+        positivity_fast_kernel_arrays,
         alpha,
         lambda_positivity,
     ):
@@ -160,7 +169,7 @@ def monte_carlo_fit(
             params,
             batch_idx,
             fast_kernel_arrays,
-            pos_fk_tables,
+            positivity_fast_kernel_arrays,
             alpha,
             lambda_positivity,
         )
@@ -200,7 +209,7 @@ def monte_carlo_fit(
                 opt_state,
                 batch,
                 fast_kernel_arrays,
-                pos_fk_tables,
+                positivity_fast_kernel_arrays,
                 alpha,
                 lambda_positivity,
             )
@@ -210,7 +219,7 @@ def monte_carlo_fit(
                     parameters,
                     batch,
                     fast_kernel_arrays,
-                    pos_fk_tables,
+                    positivity_fast_kernel_arrays,
                     alpha,
                     lambda_positivity,
                 )
@@ -219,7 +228,11 @@ def monte_carlo_fit(
 
         epoch_val_loss += (
             loss_validation(
-                parameters, fast_kernel_arrays, pos_fk_tables, alpha, lambda_positivity
+                parameters,
+                fast_kernel_arrays,
+                positivity_fast_kernel_arrays,
+                alpha,
+                lambda_positivity,
             )
             / len_val_idx
         )

@@ -108,7 +108,14 @@ def make_chi2_training_data_with_positivity(
 
     posdata_training_idx = mc_posdata_split.training
 
-    def chi2(predictions, pdf, batch_idx, alpha, lambda_positivity, pos_fk_tables):
+    def chi2(
+        predictions,
+        pdf,
+        batch_idx,
+        alpha,
+        lambda_positivity,
+        positivity_fast_kernel_arrays,
+    ):
         """
         Parameters
         ----------
@@ -140,9 +147,9 @@ def make_chi2_training_data_with_positivity(
         loss = jnp.sum(chi2_vec**2)
 
         # add penalty term due to positivity
-        pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity, pos_fk_tables)[
-            posdata_training_idx
-        ]
+        pos_penalty = _penalty_posdata(
+            pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
+        )[posdata_training_idx]
         loss += jnp.sum(pos_penalty)
 
         return loss
@@ -222,7 +229,9 @@ def make_chi2_validation_data_with_positivity(
         function to compute chi2 of a pdf grid on validation data.
     """
     if not mc_pseudodata.trval_split:
-        return lambda predictions, pdf, alpha, lambda_positivity, pos_fk_tables: jnp.nan
+        return (
+            lambda predictions, pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays: jnp.nan
+        )
 
     val_idx = mc_pseudodata.validation_indices
     central_values = mc_pseudodata.pseudodata[val_idx]
@@ -232,7 +241,7 @@ def make_chi2_validation_data_with_positivity(
     # decompose covmat
     sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
 
-    def chi2(predictions, pdf, alpha, lambda_positivity, pos_fk_tables):
+    def chi2(predictions, pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays):
         """ """
         diff = predictions[val_idx] - central_values
 
@@ -241,9 +250,9 @@ def make_chi2_validation_data_with_positivity(
         loss = jnp.sum(chi2_vec**2)
 
         # add penalty term due to positivity
-        pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity, pos_fk_tables)[
-            posdata_validation_idx
-        ]
+        pos_penalty = _penalty_posdata(
+            pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
+        )[posdata_validation_idx]
         loss += jnp.sum(pos_penalty)
 
         return loss

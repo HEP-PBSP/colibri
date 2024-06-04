@@ -65,6 +65,37 @@ def fast_kernel_arrays(fast_kernel_data):
     return tuple(fk_arrays)
 
 
+def positivity_fast_kernel_data(posdatasets):
+    """
+    Similar to fast_kernel_data but for Positivity datasets.
+    """
+    pos_fk_data = []
+    for posdataset in posdatasets:
+        fk_dataset = []
+        for fkspec in posdataset.fkspecs:
+            fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
+            fk_dataset.append(fk)
+        pos_fk_data.append(tuple(fk_dataset))
+
+    return tuple(pos_fk_data)
+
+
+def positivity_fast_kernel_arrays(positivity_fast_kernel_data):
+    """
+    Similar to fast_kernel_arrays but for Positivity datasets.
+
+    """
+    pos_fk_arrays = []
+
+    for fk_dataset in positivity_fast_kernel_data:
+        fk_dataset_arr = []
+        for fk in fk_dataset:
+            fk_dataset_arr.append(jnp.array(fk.get_np_fktable()))
+        pos_fk_arrays.append(tuple(fk_dataset_arr))
+
+    return tuple(pos_fk_arrays)
+
+
 def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
     """
     Given an FKTableData instance returns a jax.jit

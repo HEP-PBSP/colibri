@@ -49,7 +49,7 @@ class UltraNestLogLikelihood(object):
         fit_xgrid,
         forward_map,
         fast_kernel_arrays,
-        pos_fk_tables,
+        positivity_fast_kernel_arrays,
         ns_settings,
         chi2,
         penalty_posdata,
@@ -77,7 +77,7 @@ class UltraNestLogLikelihood(object):
             )
 
         self.fast_kernel_arrays = fast_kernel_arrays
-        self.pos_fk_tables = pos_fk_tables
+        self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
 
     def __call__(self, params):
         return self.log_likelihood(
@@ -97,7 +97,10 @@ class UltraNestLogLikelihood(object):
             self.chi2(central_values, predictions, inv_covmat)
             + jnp.sum(
                 self.penalty_posdata(
-                    pdf, self.alpha, self.lambda_positivity, self.pos_fk_tables
+                    pdf,
+                    self.alpha,
+                    self.lambda_positivity,
+                    self.positivity_fast_kernel_arrays,
                 )
             )
         )
@@ -125,7 +128,7 @@ def ultranest_fit(
     _pred_data,
     _penalty_posdata,
     fast_kernel_arrays,
-    pos_fk_tables,
+    positivity_fast_kernel_arrays,
     pdf_model,
     bayesian_prior,
     ns_settings,
@@ -177,7 +180,7 @@ def ultranest_fit(
         FIT_XGRID,
         _pred_data,
         fast_kernel_arrays,
-        pos_fk_tables,
+        positivity_fast_kernel_arrays,
         ns_settings,
         chi2,
         _penalty_posdata,

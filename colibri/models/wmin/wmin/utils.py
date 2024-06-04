@@ -29,7 +29,7 @@ def likelihood_time(
     _penalty_posdata,
     central_inv_covmat_index,
     fast_kernel_arrays,
-    pos_fk_tables,
+    positivity_fast_kernel_arrays,
     _pred_data,
     FIT_XGRID,
     pdf_model,
@@ -54,7 +54,7 @@ def likelihood_time(
     fast_kernel_arrays: tuple
         The FK tables to use.
 
-    pos_fk_tables: list
+    positivity_fast_kernel_arrays: tuple
         The POS FK tables to use.
 
     _pred_data: function
@@ -96,7 +96,7 @@ def likelihood_time(
         FIT_XGRID,
         _pred_data,
         fast_kernel_arrays,
-        pos_fk_tables,
+        positivity_fast_kernel_arrays,
         ns_settings,
         chi2,
         _penalty_posdata,

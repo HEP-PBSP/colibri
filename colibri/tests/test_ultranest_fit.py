@@ -13,10 +13,12 @@ central_inv_covmat_index_mock = Mock()
 central_inv_covmat_index_mock.central_values = jnp.ones(2)
 central_inv_covmat_index_mock.inv_covmat = jnp.eye(2)
 fast_kernel_arrays = [jnp.eye(2)]
-pos_fk_tables = [jnp.eye(2)]
+positivity_fast_kernel_arrays = [jnp.eye(2)]
 
-_penalty_posdata = lambda pdf, alpha, lambda_positivity, pos_fk_tables: jnp.array(
-    [1.0, 1.0]
+_penalty_posdata = (
+    lambda pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays: jnp.array(
+        [1.0, 1.0]
+    )
 )
 
 ns_settings = {
@@ -47,7 +49,7 @@ def test_ultranest_fit():
         _pred_data,
         _penalty_posdata,
         fast_kernel_arrays,
-        pos_fk_tables,
+        positivity_fast_kernel_arrays,
         mock_pdf_model,
         bayesian_prior,
         ns_settings,
@@ -91,7 +93,7 @@ def test_ultranest_fit_with_SliceSampler():
         _pred_data,
         _penalty_posdata,
         fast_kernel_arrays,
-        pos_fk_tables,
+        positivity_fast_kernel_arrays,
         mock_pdf_model,
         bayesian_prior,
         ns_settings,
@@ -135,7 +137,7 @@ def test_ultranest_fit_with_popSliceSampler():
         _pred_data,
         _penalty_posdata,
         fast_kernel_arrays,
-        pos_fk_tables,
+        positivity_fast_kernel_arrays,
         mock_pdf_model,
         bayesian_prior,
         ns_settings,
