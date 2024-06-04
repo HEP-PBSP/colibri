@@ -37,7 +37,7 @@ class AnalyticFit(BayesianFit):
 
 
 def analytic_fit(
-    central_covmat_index,
+    central_inv_covmat_index,
     _pred_data,
     pdf_model,
     analytic_settings,
@@ -55,7 +55,7 @@ def analytic_fit(
 
     Parameters
     ----------
-    central_covmat_index: commondata_utils.CentralCovmatIndex
+    central_inv_covmat_index: commondata_utils.CentralInvCovmatIndex
         dataclass containing central values and covmat.
 
     _pred_data: @jax.jit CompiledFunction
@@ -86,11 +86,8 @@ def analytic_fit(
     intercept = pred_and_pdf(jnp.zeros(len(parameters)))[0]
 
     # Construct the analytic solution
-    central_values = central_covmat_index.central_values
-    covmat = central_covmat_index.covmat
-
-    # Invert the covmat
-    inv_covmat = jla.inv(covmat)
+    central_values = central_inv_covmat_index.central_values
+    inv_covmat = central_inv_covmat_index.inv_covmat
 
     # Solve chi2 analytically for the mean
     Y = central_values - intercept

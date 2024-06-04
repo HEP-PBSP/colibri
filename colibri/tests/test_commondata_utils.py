@@ -1,6 +1,7 @@
 import pathlib
 
 import jax.numpy as jnp
+import jax.scipy.linalg as jla
 import pandas as pd
 from colibri.api import API as colibriAPI
 from colibri.commondata_utils import CentralCovmatIndex, experimental_commondata_tuple
@@ -110,3 +111,19 @@ def test_level1_commondata_tuple():
         reference_level1_central_values["data"].values,
         current_level1_central_values[0].central_values,
     )
+
+
+def test_central_inv_covmat_index():
+    """
+    Tests that the central_inv_covmat_index object is produced correctly.
+    """
+    cci = colibriAPI.central_covmat_index(**{**TEST_DATASETS, **T0_PDFSET})
+
+    cici = colibriAPI.central_inv_covmat_index(**{**TEST_DATASETS, **T0_PDFSET})
+
+    # check that central_inv_covmat_index computes inverse covariance matrix correctly
+    assert_allclose(cici.inv_covmat, jla.inv(cci.covmat))
+
+    # check that central values and indices are the same
+    assert_allclose(cici.central_values, cci.central_values)
+    assert_allclose(cici.central_values_idx, cci.central_values_idx)

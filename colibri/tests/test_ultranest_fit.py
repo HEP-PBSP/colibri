@@ -9,9 +9,9 @@ jax.config.update("jax_enable_x64", True)
 # Define mock input parameters
 bayesian_prior = lambda x: x
 FIT_XGRID = jnp.logspace(-7, 0, 50)
-central_covmat_index_mock = Mock()
-central_covmat_index_mock.central_values = jnp.ones(2)
-central_covmat_index_mock.covmat = jnp.eye(2)
+central_inv_covmat_index_mock = Mock()
+central_inv_covmat_index_mock.central_values = jnp.ones(2)
+central_inv_covmat_index_mock.inv_covmat = jnp.eye(2)
 fk_tables = [jnp.eye(2)]
 pos_fk_tables = [jnp.eye(2)]
 
@@ -43,7 +43,7 @@ def test_ultranest_fit():
     _pred_data = None
 
     fit_result = ultranest_fit(
-        central_covmat_index_mock,
+        central_inv_covmat_index_mock,
         _pred_data,
         _penalty_posdata,
         fk_tables,
@@ -87,7 +87,7 @@ def test_ultranest_fit_with_SliceSampler():
     _pred_data = None
 
     fit_result = ultranest_fit(
-        central_covmat_index_mock,
+        central_inv_covmat_index_mock,
         _pred_data,
         _penalty_posdata,
         fk_tables,
@@ -131,7 +131,7 @@ def test_ultranest_fit_with_popSliceSampler():
     _pred_data = None
 
     fit_result = ultranest_fit(
-        central_covmat_index_mock,
+        central_inv_covmat_index_mock,
         _pred_data,
         _penalty_posdata,
         fk_tables,

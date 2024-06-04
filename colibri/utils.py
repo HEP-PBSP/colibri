@@ -231,7 +231,7 @@ def likelihood_float_type(
     FIT_XGRID,
     bayesian_prior,
     output_path,
-    central_covmat_index,
+    central_inv_covmat_index,
     fk_tables,
 ):
     """
@@ -241,8 +241,8 @@ def likelihood_float_type(
 
     loss_function = chi2
 
-    central_values = central_covmat_index.central_values
-    inv_covmat = jla.inv(central_covmat_index.covmat)
+    central_values = central_inv_covmat_index.central_values
+    inv_covmat = central_inv_covmat_index.inv_covmat
 
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 

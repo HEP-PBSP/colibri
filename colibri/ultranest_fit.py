@@ -44,7 +44,7 @@ ultranest_logger.addHandler(handler)
 class ut_loglike(object):
     def __init__(
         self,
-        central_covmat_index,
+        central_inv_covmat_index,
         pdf_model,
         fit_xgrid,
         forward_map,
@@ -56,8 +56,8 @@ class ut_loglike(object):
         alpha,
         lambda_positivity,
     ):
-        self.central_values = central_covmat_index.central_values
-        self.inv_covmat = jla.inv(central_covmat_index.covmat)
+        self.central_values = central_inv_covmat_index.central_values
+        self.inv_covmat = central_inv_covmat_index.inv_covmat
         self.pdf_model = pdf_model
         self.chi2 = chi2
         self.penalty_posdata = penalty_posdata
@@ -121,7 +121,7 @@ class UltranestFit(BayesianFit):
 
 
 def ultranest_fit(
-    central_covmat_index,
+    central_inv_covmat_index,
     _pred_data,
     _penalty_posdata,
     fk_tables,
@@ -172,7 +172,7 @@ def ultranest_fit(
 
     # Initialize the log likelihood function
     log_likelihood = ut_loglike(
-        central_covmat_index,
+        central_inv_covmat_index,
         pdf_model,
         FIT_XGRID,
         _pred_data,

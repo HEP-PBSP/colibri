@@ -12,6 +12,7 @@ from dataclasses import dataclass, asdict
 
 import jax
 import jax.numpy as jnp
+import jax.scipy.linalg as jla
 from validphys.fkparser import load_fktable
 
 from colibri.theory_predictions import make_pred_dataset
@@ -195,3 +196,27 @@ def pseudodata_central_covmat_index(
     covariance matrix for a Monte Carlo fit.
     """
     return central_covmat_index(commondata_tuple, data_generation_covariance_matrix)
+
+
+@dataclass(frozen=True)
+class CentralInvCovmatIndex:
+    central_values: jnp.array
+    inv_covmat: jnp.array
+    central_values_idx: jnp.array
+
+    def to_dict(self):
+        return asdict(self)
+
+
+def central_inv_covmat_index(central_covmat_index):
+    """
+    Given a CentralCovmatIndex dataclass, compute the inverse
+    of the covariance matrix and store the relevant data into
+    CentralInvCovmatIndex dataclass.
+    """
+    inv_covmat = jla.inv(central_covmat_index.covmat)
+    return CentralInvCovmatIndex(
+        central_values=central_covmat_index.central_values,
+        central_values_idx=central_covmat_index.central_values_idx,
+        inv_covmat=inv_covmat,
+    )
