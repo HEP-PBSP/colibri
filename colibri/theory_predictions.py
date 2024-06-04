@@ -15,32 +15,7 @@ from validphys.fkparser import load_fktable
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def fast_kernel_data(data):
-    """
-    Given a DataGroupSpec instance returns a tuple of tuples
-    of FKTableData instances.
-
-    Parameters
-    ----------
-    data : validphys.coredata.DataGroupSpec
-
-    Returns
-    -------
-    tuple
-        tuple of tuples of FKTableData instances
-    """
-    fk_data = []
-    for ds in data.datasets:
-        fk_dataset = []
-        for fkspec in ds.fkspecs:
-            fk = load_fktable(fkspec).with_cuts(ds.cuts)
-            fk_dataset.append(fk)
-        fk_data.append(tuple(fk_dataset))
-
-    return tuple(fk_data)
-
-
-def fast_kernel_arrays(fast_kernel_data):
+def fast_kernel_arrays(data):
     """
     Given a tuple of tuples of FKTableData instances returns
     a tuple of tuples of jax.numpy arrays.
@@ -56,40 +31,27 @@ def fast_kernel_arrays(fast_kernel_data):
     """
     fk_arrays = []
 
-    for fk_dataset in fast_kernel_data:
+    for ds in data.datasets:
         fk_dataset_arr = []
-        for fk in fk_dataset:
+        for fkspec in ds.fkspecs:
+            fk = load_fktable(fkspec).with_cuts(ds.cuts)
             fk_dataset_arr.append(jnp.array(fk.get_np_fktable()))
         fk_arrays.append(tuple(fk_dataset_arr))
 
     return tuple(fk_arrays)
 
 
-def positivity_fast_kernel_data(posdatasets):
-    """
-    Similar to fast_kernel_data but for Positivity datasets.
-    """
-    pos_fk_data = []
-    for posdataset in posdatasets:
-        fk_dataset = []
-        for fkspec in posdataset.fkspecs:
-            fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
-            fk_dataset.append(fk)
-        pos_fk_data.append(tuple(fk_dataset))
-
-    return tuple(pos_fk_data)
-
-
-def positivity_fast_kernel_arrays(positivity_fast_kernel_data):
+def positivity_fast_kernel_arrays(posdatasets):
     """
     Similar to fast_kernel_arrays but for Positivity datasets.
 
     """
     pos_fk_arrays = []
 
-    for fk_dataset in positivity_fast_kernel_data:
+    for posdataset in posdatasets:
         fk_dataset_arr = []
-        for fk in fk_dataset:
+        for fkspec in posdataset.fkspecs:
+            fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
             fk_dataset_arr.append(jnp.array(fk.get_np_fktable()))
         pos_fk_arrays.append(tuple(fk_dataset_arr))
 
@@ -142,6 +104,29 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
     fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
     def dis_prediction(pdf, fk_arr):
+        """
+        Function to compute the theory prediction for a DIS observable.
+
+        Note that when running an ultranest fit this function gets compiled by jax.jit,
+        hence, ideally, this function should be pure.
+        However, luminosity indices and fk_xgrid_indices don't take much memory
+        and hence are left as global variables.
+        For more details on jax.jit issues with non pure functions see e.g.
+        https://github.com/google/jax/issues/5071
+
+        Parameters
+        ----------
+        pdf: jnp.ndarray
+            pdf grid (shape is 14,50)
+
+        fk_arr: jnp.ndarray
+            fktable array
+
+        Returns
+        -------
+        jnp.ndarray
+            theory prediction for a hadronic observable (shape is Ndata, )
+        """
         return jnp.einsum(
             "ijk, jk ->i", fk_arr, pdf[lumi_indices, :][:, fk_xgrid_indices]
         )
@@ -205,6 +190,29 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
     fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
 
     def had_prediction(pdf, fk_arr):
+        """
+        Function to compute the theory prediction for a Hadronic observable.
+
+        Note that when running an ultranest fit this function gets compiled by jax.jit,
+        hence, ideally, this function should be pure.
+        However, luminosity indices and fk_xgrid_indices don't take much memory
+        and hence are left as global variables.
+        For more details on jax.jit issues with non pure functions see e.g.
+        https://github.com/google/jax/issues/5071
+
+        Parameters
+        ----------
+        pdf: jnp.ndarray
+            pdf grid (shape is 14,50)
+
+        fk_arr: jnp.ndarray
+            fktable array
+
+        Returns
+        -------
+        jnp.ndarray
+            theory prediction for a hadronic observable (shape is Ndata, )
+        """
         return jnp.einsum(
             "ijkl,jk,jl->i",
             fk_arr,

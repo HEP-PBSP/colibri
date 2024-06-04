@@ -43,6 +43,21 @@ class PDFModel(ABC):
         pdf_func = self.grid_values_func(xgrid)
 
         def pred_and_pdf(params, fast_kernel_arrays):
+            """
+            Parameters
+            ----------
+            params: jnp.array
+                The model parameters.
+
+            fast_kernel_arrays: tuple
+                tuple of tuples of jnp.arrays
+                The FK tables to use.
+
+            Returns
+            -------
+            tuple
+                The predictions and the PDF values.
+            """
             pdf = pdf_func(params)
             predictions = forward_map(pdf, fast_kernel_arrays)
             return predictions, pdf
