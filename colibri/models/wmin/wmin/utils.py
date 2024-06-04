@@ -3,22 +3,30 @@ wmin.utils is a module that contains several utils for PDF fits in
 the wmin parameterization.
 """
 
-import jax
 import time
+
+import jax
 import pandas as pd
+from colibri.loss_functions import chi2
+from colibri.ultranest_fit import ut_loglike
 from reportengine.table import table
 
 
 @table
 def likelihood_time(
-    _chi2_with_positivity,
+    _penalty_posdata,
+    central_inv_covmat_index,
+    fk_tables,
+    pos_fk_tables,
     _pred_data,
     FIT_XGRID,
     pdf_model,
     bayesian_prior,
-    data,
     theoryid,
+    ns_settings,
     n_prior_samples=1000,
+    alpha=1e-7,
+    lambda_positivity=1000,
 ):
     """
     This function calculates the time it takes to evaluate the likelihood
@@ -26,8 +34,16 @@ def likelihood_time(
 
     Parameters
     ----------
-    _chi2_with_positivity: function
-        The chi2 function to use.
+    _penalty_posdata: function
+        The positivity penalty function to use.
+
+    central_inv_covmat_index: coliibri.commondata_utils.CentralInvCovmatIndex
+
+    fk_tables: list
+        The FK tables to use.
+
+    pos_fk_tables: list
+        The POS FK tables to use.
 
     _pred_data: function
         The prediction function to use.
@@ -36,17 +52,19 @@ def likelihood_time(
         The xgrid to use.
 
     pdf_model: PDFModel
-        The PDF model to use.
 
     bayesian_prior: function
         The prior function to use.
 
-    data: validphys.core.DataGroupSpec
-
     theoryid: str
 
-    n_prior_samples: int
-        The number of prior samples to use.
+    ns_settings: dict
+
+    n_prior_samples: int, 1000
+
+    alpha: float, 1e-7
+
+    lambda_positivity: int, 1000
 
     Returns
     -------
@@ -54,14 +72,22 @@ def likelihood_time(
         The DataFrame containing the results.
     """
 
-    ndata = sum([ds.load_commondata().ndata for ds in data.datasets])
+    central_values = central_inv_covmat_index.central_values
+    ndata = len(central_values)
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
-
-    @jax.jit
-    def log_likelihood(params):
-        predictions, pdf = pred_and_pdf(params)
-        return -0.5 * _chi2_with_positivity(predictions, pdf)
+    log_likelihood = ut_loglike(
+        central_inv_covmat_index,
+        pdf_model,
+        FIT_XGRID,
+        _pred_data,
+        fk_tables,
+        pos_fk_tables,
+        ns_settings,
+        chi2,
+        _penalty_posdata,
+        alpha,
+        lambda_positivity,
+    )
 
     # sample from prior
     rng = jax.random.PRNGKey(0)
