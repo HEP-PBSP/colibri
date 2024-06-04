@@ -3,9 +3,6 @@ colibri.theory_predictions.py
 
 This module contains the functions necessary for the computation of
 theory predictions by means of fast-kernel (FK) tables.
-
-Author: Mark N. Costantini
-Date: 11.11.2023
 """
 
 import jax
