@@ -33,12 +33,14 @@ class MonteCarloFit:
         Array containing the training loss.
     validation_loss: jnp.array
         Array containing the validation loss.
-
+    optimized_parameters: jnp.array
+        Array containing the optimized parameters.
     """
 
     monte_carlo_specs: dict
     training_loss: jnp.array
     validation_loss: jnp.array
+    optimized_parameters: jnp.array
 
 
 def monte_carlo_fit(
@@ -48,8 +50,6 @@ def monte_carlo_fit(
     len_trval_data,
     pdf_model,
     mc_initial_parameters,
-    replica_index,
-    output_path,
     optimizer_provider,
     early_stopper,
     max_epochs,
@@ -83,12 +83,6 @@ def monte_carlo_fit(
 
     mc_initial_parameters: jnp.array
         Initial parameters for the Monte Carlo fit.
-
-    replica_index: int
-        Index of the replica.
-
-    output_path: str
-        Path to the output directory.
 
     optimizer_provider: optax._src.base.GradientTransformationExtraArgs
         Optax optimizer.
@@ -200,7 +194,40 @@ def monte_carlo_fit(
 
     log.info("MONTE CARLO RUNNING TIME: %f" % (t1 - t0))
 
-    df = pd.DataFrame(parameters, index=pdf_model.param_names).T
+    return MonteCarloFit(
+        monte_carlo_specs={
+            "max_epochs": max_epochs,
+            "batch_size": batch_size,
+            "batch_seed": batch_seed,
+            "alpha": alpha,
+            "lambda_positivity": lambda_positivity,
+        },
+        training_loss=jnp.array(loss),
+        validation_loss=jnp.array(val_loss),
+        optimized_parameters=parameters,
+    )
+
+
+def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
+    """
+    Runs the Monte Carlo fit and writes the output to the output directory.
+
+    Parameters
+    ----------
+    monte_carlo_fit: MonteCarloFit
+        The results of the Monte Carlo fit.
+
+    pdf_model: pdf_model.PDFModel
+        The PDF model used in the fit.
+
+    output_path: pathlib.PosixPath
+        Path to the output folder.
+
+    replica_index: int
+    """
+    mc_fit = monte_carlo_fit
+
+    df = pd.DataFrame(mc_fit.optimized_parameters, index=pdf_model.param_names).T
 
     # In a Monte Carlo fit, replicas are written to the fit_replicas
     # directory, and mc_postfit must then be applied to select valid ones
@@ -229,25 +256,13 @@ def monte_carlo_fit(
     # Save the training and validation loss
     df = pd.DataFrame(
         {
-            "epochs": range(len(loss)),
-            "training_loss": loss,
-            "validation_loss": val_loss,
+            "epochs": range(len(mc_fit.training_loss)),
+            "training_loss": mc_fit.training_loss,
+            "validation_loss": mc_fit.validation_loss,
         }
     )
     df.to_csv(
         str(output_path) + f"/fit_replicas/replica_{replica_index}" + "/mc_loss.csv",
         index=False,
         float_format="%.5e",
-    )
-
-    return MonteCarloFit(
-        monte_carlo_specs={
-            "max_epochs": max_epochs,
-            "batch_size": batch_size,
-            "batch_seed": batch_seed,
-            "alpha": alpha,
-            "lambda_positivity": lambda_positivity,
-        },
-        training_loss=jnp.array(loss),
-        validation_loss=jnp.array(val_loss),
     )
