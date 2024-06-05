@@ -1,10 +1,13 @@
 """
 Module containing standard pytest data configurations for testing purposes.
 """
-
+import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
+<<<<<<< HEAD
 import numpy as np
 from unittest.mock import Mock
+=======
+>>>>>>> cd96917 (expanded test coverage)
 
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
@@ -333,7 +336,7 @@ class TestPDFModel(PDFModel):
             """
             Returns random array of shape (14,len(params))
             """
-            return np.random.rand(14, len(params))
+            return sum([param * xgrid for param in params])
 
         return wmin_param
 
@@ -348,3 +351,7 @@ MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: lambda params: (
     forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params)),
     np.ones((14, len(xgrid))),
 )
+
+TEST_XGRID = jnp.ones(2)
+TEST_FK_ARRAYS = (jnp.array([1, 2]),)
+TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0]

@@ -127,3 +127,7 @@ def test_central_inv_covmat_index():
     # check that central values and indices are the same
     assert_allclose(cici.central_values, cci.central_values)
     assert_allclose(cici.central_values_idx, cci.central_values_idx)
+
+    # check that the to_dict method works as expected
+    cici_dict = cici.to_dict()
+    assert isinstance(cici_dict, dict)
