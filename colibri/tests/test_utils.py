@@ -7,9 +7,17 @@ import pathlib
 import shutil
 
 import jax
+import jax.numpy as jnp
 import numpy as np
 import pandas
-from colibri.utils import cast_to_numpy, get_fit_path, get_full_posterior, get_pdf_model
+from colibri.tests.conftest import MOCK_CENTRAL_INV_COVMAT_INDEX, MOCK_PDF_MODEL
+from colibri.utils import (
+    cast_to_numpy,
+    get_fit_path,
+    get_full_posterior,
+    get_pdf_model,
+    likelihood_float_type,
+)
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
@@ -122,3 +130,37 @@ def test_get_full_posterior():
 
     # Clean up the copied directory
     shutil.rmtree(dest_path)
+
+
+def mock_bayesian_prior(array):
+    # Mocked version of bayesian_prior
+    return array
+
+
+def test_likelihood_float_type(
+    tmp_path,
+):
+
+    _pred_data = lambda x: jnp.ones(
+        len(MOCK_CENTRAL_INV_COVMAT_INDEX.central_values)
+    )  # Mock _pred_data
+    FIT_XGRID = jnp.linspace(0, 1, 10)  # Mock FIT_XGRID
+    output_path = tmp_path
+
+    fast_kernel_arrays = jax.random.uniform(
+        jax.random.PRNGKey(0), (10,)
+    )  # Mock fast_kernel_arrays
+
+    # Call the function under test
+    likelihood_float_type(
+        _pred_data=_pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        FIT_XGRID=FIT_XGRID,
+        bayesian_prior=mock_bayesian_prior,
+        output_path=output_path,
+        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        fast_kernel_arrays=fast_kernel_arrays,
+    )
+
+    # Assert that the dtype.txt file was created with correct dtype
+    assert os.path.exists(tmp_path / "dtype.txt")

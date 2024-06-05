@@ -11,6 +11,7 @@ from colibri.tests.conftest import (
     TEST_DATASETS,
     TEST_DATASETS_HAD,
     TEST_POS_DATASET,
+    TEST_SINGLE_POS_DATASET,
 )
 
 from validphys.fkparser import load_fktable
@@ -100,3 +101,34 @@ def test_make_had_prediction():
     )(pdf_grid[0], fk_arr)
 
     assert_allclose(pred1, pred2)
+
+
+def test_make_penalty_posdataset():
+    """
+    Tests that make_penalty_posdataset returns a function.
+    """
+    penalty_posdata = colibriAPI.make_penalty_posdataset(
+        **{**TEST_SINGLE_POS_DATASET, **TEST_DATASETS}
+    )
+
+    assert callable(penalty_posdata)
+
+
+def test_make_penalty_posdata():
+    """
+    Tests that make_penalty_posdata returns a function.
+    """
+    penalty_posdata = colibriAPI.make_penalty_posdata(
+        **{**TEST_POS_DATASET, **TEST_DATASETS}
+    )
+
+    assert callable(penalty_posdata)
+
+
+def test_make_pred_data():
+    """
+    Tests that make_pred_data returns a function.
+    """
+    pred_data = colibriAPI.make_pred_data(**{**TEST_DATASETS, **TEST_DATASET})
+
+    assert callable(pred_data)

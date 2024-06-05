@@ -254,6 +254,7 @@ def likelihood_float_type(
     params = bayesian_prior(
         jax.random.uniform(jax.random.PRNGKey(0), shape=(len(pdf_model.param_names),))
     )
+
     dtype = log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays).dtype
 
     # save the dtype to the output path

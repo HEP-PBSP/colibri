@@ -70,6 +70,13 @@ TEST_POS_DATASET = {
     }
 }
 
+TEST_SINGLE_POS_DATASET = {
+    "posdataset": {
+        "dataset": "NNPDF_POS_2P24GEV_F2U",
+        "maxlambda": 1e6,
+    }
+}
+
 
 T0_PDFSET = {"t0pdfset": "NNPDF40_nnlo_as_01180"}
 
@@ -355,3 +362,20 @@ MOCK_PDF_MODEL.pred_and_pdf_func = (
 TEST_XGRID = jnp.ones(2)
 TEST_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0]
+
+
+"""
+Mock instance of Central Covmat Index object
+"""
+MOCK_CENTRAL_COVMAT_INDEX = Mock()
+MOCK_CENTRAL_COVMAT_INDEX.central_values = jnp.ones(2)
+MOCK_CENTRAL_COVMAT_INDEX.inv_covmat = jnp.eye(2)
+MOCK_CENTRAL_COVMAT_INDEX.central_values_idx = jnp.arange(2)
+
+"""
+Mock instance of Central Inverse covmat index object
+"""
+MOCK_CENTRAL_INV_COVMAT_INDEX = Mock()
+MOCK_CENTRAL_INV_COVMAT_INDEX.central_values = jnp.ones(2)
+MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(2)
+MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(2)
