@@ -58,4 +58,4 @@ mc_initialiser_settings:
   min_val: -3
 
 actions_:
-- monte_carlo_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- run_monte_carlo_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
