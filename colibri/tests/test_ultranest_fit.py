@@ -1,12 +1,8 @@
 from unittest.mock import Mock, patch
-import jax.numpy as jnp
-import jax
 
-from colibri.ultranest_fit import (
-    UltranestFit,
-    ultranest_fit,
-    run_ultranest_fit,
-)
+import jax
+import jax.numpy as jnp
+from colibri.ultranest_fit import UltranestFit, run_ultranest_fit, ultranest_fit
 
 # Define mock input parameters
 bayesian_prior = lambda x: x
@@ -158,7 +154,7 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
 
-    # Run the run_analytic_fit function
+    # Run the run_ultranest_fit function
     output_path = str(tmp_path)
     run_ultranest_fit(mock_ultranest_fit, output_path, mock_pdf_model)
 

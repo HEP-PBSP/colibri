@@ -4,6 +4,7 @@ Module containing standard pytest data configurations for testing purposes.
 
 from colibri.pdf_model import PDFModel
 import numpy as np
+from unittest.mock import Mock
 
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
@@ -308,7 +309,7 @@ TEST_FULL_POS_DATASET = {
 
 
 """
-Toy PDF model for testing purposes.
+Toy PDF model to be used to test the pdf_model module.
 """
 N_PARAMS = 10
 
@@ -316,7 +317,7 @@ N_PARAMS = 10
 class TestPDFModel(PDFModel):
 
     def __init__(self, n_parameters):
-        self.n_basis = n_parameters
+        self.n_parameters = n_parameters
 
     @property
     def param_names(self):
@@ -335,3 +336,15 @@ class TestPDFModel(PDFModel):
             return np.random.rand(14, len(params))
 
         return wmin_param
+
+
+"""
+Mock PDF model to be used to test functions that require a PDFModel instance.
+"""
+MOCK_PDF_MODEL = Mock()
+MOCK_PDF_MODEL.param_names = ["param1", "param2"]
+MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: np.ones((14, len(xgrid)))
+MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: lambda params: (
+    forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params)),
+    np.ones((14, len(xgrid))),
+)
