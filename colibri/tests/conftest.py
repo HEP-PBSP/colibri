@@ -1,6 +1,7 @@
 """
 Module containing standard pytest data configurations for testing purposes.
 """
+
 import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 <<<<<<< HEAD

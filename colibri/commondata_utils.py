@@ -40,6 +40,7 @@ def level_0_commondata_tuple(
     experimental_commondata_tuple,
     closure_test_central_pdf_grid,
     FIT_XGRID,
+    fast_kernel_arrays,
     flavour_indices=None,
 ):
     """
@@ -72,14 +73,11 @@ def level_0_commondata_tuple(
     """
 
     fake_data = []
-    for cd, ds in zip(experimental_commondata_tuple, data.datasets):
+    for cd, ds, fk_dataset in zip(
+        experimental_commondata_tuple, data.datasets, fast_kernel_arrays
+    ):
         if cd.setname != ds.name:
             raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
-        fk_dataset = []
-        for fkspec in ds.fkspecs:
-            fk = load_fktable(fkspec).with_cuts(ds.cuts)
-            fk_arr = jnp.array(fk.get_np_fktable())
-            fk_dataset.append(fk_arr)
         # replace central values with theory prediction from `closure_test_pdf`
         fake_data.append(
             cd.with_central_value(
