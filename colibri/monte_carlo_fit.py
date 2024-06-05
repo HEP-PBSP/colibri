@@ -247,12 +247,14 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
     )
 
     # Save the output to csv
+    if not os.path.exists(replicas_path + f"/replica_{replica_index}"):
+        os.mkdir(replicas_path + f"/replica_{replica_index}")
+
     df.to_csv(
         replicas_path
         + f"/replica_{replica_index}/"
         + f"/mc_result_replica_{replica_index}.csv"
     )
-
     # Save the training and validation loss
     df = pd.DataFrame(
         {

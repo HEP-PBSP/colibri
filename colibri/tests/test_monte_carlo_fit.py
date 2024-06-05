@@ -1,10 +1,12 @@
-import numpy as np
-from numpy.testing import assert_allclose
-import jax.numpy as jnp
-from colibri.monte_carlo_fit import monte_carlo_fit, MonteCarloFit
-from colibri.tests.conftest import MOCK_PDF_MODEL
+from unittest.mock import Mock, patch
 
-pdf_model = MOCK_PDF_MODEL
+import jax.numpy as jnp
+import numpy as np
+from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_carlo_fit
+from colibri.tests.conftest import MOCK_PDF_MODEL
+from numpy.testing import assert_allclose
+
+mock_pdf_model = MOCK_PDF_MODEL
 N_PARAMS = len(MOCK_PDF_MODEL.param_names)
 
 
@@ -36,7 +38,7 @@ def test_monte_carlo_fit_runs_without_errors():
         _chi2_validation_data_with_positivity=lambda *args: 0.0,
         _pred_data=lambda *args: (np.zeros((N_PARAMS,)), np.zeros((N_PARAMS,))),
         len_trval_data=(100, 50),
-        pdf_model=pdf_model,
+        pdf_model=mock_pdf_model,
         mc_initial_parameters=np.zeros((N_PARAMS,)),
         optimizer_provider=MockOptimizerProvider(),
         early_stopper=MockEarlyStopper(),
@@ -55,3 +57,28 @@ def test_monte_carlo_fit_runs_without_errors():
     assert_allclose(result.optimized_parameters, jnp.array([0.0, 0.0]))
     assert_allclose(result.training_loss, jnp.array([]))
     assert_allclose(result.validation_loss, jnp.array([]))
+
+
+@patch("colibri.monte_carlo_fit.write_exportgrid")
+def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
+
+    # Define mock ultranest fit
+    mock_monte_carlo_fit = Mock()
+    mock_monte_carlo_fit.monte_carlo_specs = {}
+    mock_monte_carlo_fit.training_loss = jnp.array([0.1, 0.2, 0.3])
+    mock_monte_carlo_fit.validation_loss = jnp.array([0.2, 0.3, 0.4])
+    mock_monte_carlo_fit.optimized_parameters = jnp.array([0.0, 0.0])
+
+    # Run the run_monte_carlo_fit function
+    output_path = str(tmp_path)
+
+    run_monte_carlo_fit(
+        mock_monte_carlo_fit, mock_pdf_model, output_path, replica_index=1
+    )
+
+    # Check if the write_exportgrid function was called once as expected
+    assert mock_write_exportgrid.call_count == 1
+
+    # Assertions - check if files are created in the output path
+    assert (tmp_path / "fit_replicas/replica_1/mc_loss.csv").exists()
+    assert (tmp_path / "fit_replicas/replica_1/mc_result_replica_1.csv").exists()
