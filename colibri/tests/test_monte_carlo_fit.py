@@ -1,3 +1,4 @@
+import os
 from unittest.mock import Mock, patch
 
 import jax.numpy as jnp
@@ -61,6 +62,13 @@ def test_monte_carlo_fit_runs_without_errors():
 
 @patch("colibri.monte_carlo_fit.write_exportgrid")
 def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
+
+    # add side effect to the mock function to create dir
+    def create_directory_side_effect(*args, **kwargs):
+        os.makedirs(os.path.join(tmp_path, "fit_replicas/replica_1"), exist_ok=True)
+
+    # Assign the side effect function to the mock object
+    mock_write_exportgrid.side_effect = create_directory_side_effect
 
     # Define mock ultranest fit
     mock_monte_carlo_fit = Mock()
