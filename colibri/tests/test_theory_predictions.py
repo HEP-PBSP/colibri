@@ -1,5 +1,6 @@
 from numpy.testing import assert_allclose
 import jax.numpy as jnp
+import pytest
 
 from colibri.api import API as colibriAPI
 from colibri.theory_predictions import make_dis_prediction, make_had_prediction
@@ -12,6 +13,7 @@ from colibri.tests.conftest import (
     TEST_DATASETS_HAD,
     TEST_POS_DATASET,
     TEST_SINGLE_POS_DATASET,
+    TEST_SINGLE_POS_DATASET_HAD,
 )
 
 from validphys.fkparser import load_fktable
@@ -103,12 +105,15 @@ def test_make_had_prediction():
     assert_allclose(pred1, pred2)
 
 
-def test_make_penalty_posdataset():
+@pytest.mark.parametrize(
+    "posdataset", [TEST_SINGLE_POS_DATASET, TEST_SINGLE_POS_DATASET_HAD]
+)
+def test_make_penalty_posdataset(posdataset):
     """
     Tests that make_penalty_posdataset returns a function.
     """
     penalty_posdata = colibriAPI.make_penalty_posdataset(
-        **{**TEST_SINGLE_POS_DATASET, **TEST_DATASETS}
+        **{**posdataset, **TEST_DATASETS}
     )
 
     assert callable(penalty_posdata)
@@ -129,6 +134,14 @@ def test_make_pred_data():
     """
     Tests that make_pred_data returns a function.
     """
-    pred_data = colibriAPI.make_pred_data(**{**TEST_DATASETS, **TEST_DATASET})
+    eval_preds = colibriAPI.make_pred_data(**{**TEST_DATASETS, **TEST_DATASET})
 
-    assert callable(pred_data)
+    fk_arrs = colibriAPI.fast_kernel_arrays(**TEST_DATASETS)
+    pdf_grid = colibriAPI.closure_test_central_pdf_grid(
+        **{**CLOSURE_TEST_PDFSET, **TEST_DATASETS}
+    )
+
+    pred_data = eval_preds(pdf_grid, fk_arrs)
+
+    assert callable(eval_preds)
+    assert pred_data.shape == (fk_arrs[0][0].shape[0],)

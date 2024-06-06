@@ -77,6 +77,13 @@ TEST_SINGLE_POS_DATASET = {
     }
 }
 
+TEST_SINGLE_POS_DATASET_HAD = {
+    "posdataset": {
+        "dataset": "NNPDF_POS_2P24GEV_DYD",
+        "maxlambda": 1e6,
+    }
+}
+
 
 T0_PDFSET = {"t0pdfset": "NNPDF40_nnlo_as_01180"}
 
