@@ -172,6 +172,37 @@ def get_pdf_model(colibri_fit):
     return pdf_model
 
 
+def get_flow(colibri_fit):
+    """
+    Given a colibri fit, returns the normalizing flow model.
+
+    Parameters
+    ----------
+    colibri_fit : str
+        The name of the fit to read.
+
+
+    Returns
+    -------
+    flowtorch.distributions.flow.Flow
+    """
+
+    fit_path = get_fit_path(colibri_fit)
+
+    norm_flow_path = fit_path / "norm_flow.pkl"
+
+    # check that file exist
+    if not os.path.exists(norm_flow_path):
+        raise FileNotFoundError(
+            "Could not find the normalizing flow for the fit " + colibri_fit
+        )
+
+    with open(norm_flow_path, "rb") as file:
+        flow = dill.load(file)
+
+    return flow
+
+
 def pdf_models_equal(pdf_model_1, pdf_model_2):
     """
     Checks if two pdf models are equal.
