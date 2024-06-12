@@ -8,7 +8,6 @@ This module contains the main Bayesian fitting routine of colibri.
 from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
-import jax.scipy.linalg as jla
 import ultranest
 import ultranest.popstepsampler as popstepsampler
 import ultranest.stepsampler as ustepsampler

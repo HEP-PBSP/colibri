@@ -8,7 +8,6 @@ This module implements an abstract class PDFModel which is filled by the various
 from abc import ABC, abstractmethod
 from typing import Callable, Tuple
 import jax.numpy as jnp
-import jax
 
 
 class PDFModel(ABC):

@@ -56,7 +56,7 @@ def analytic_fit(
     Parameters
     ----------
     central_inv_covmat_index: commondata_utils.CentralInvCovmatIndex
-        dataclass containing central values and covmat.
+        dataclass containing central values and inverse covmat.
 
     _pred_data: @jax.jit CompiledFunction
         Prediction function for the fit.

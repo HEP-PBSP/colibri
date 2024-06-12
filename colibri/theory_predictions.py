@@ -17,12 +17,11 @@ OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 def fast_kernel_arrays(data):
     """
-    Given a tuple of tuples of FKTableData instances returns
-    a tuple of tuples of jax.numpy arrays.
+    Returns a tuple of tuples of jax.numpy arrays.
 
     Parameters
     ----------
-    fast_kernel_data : tuple
+    data : validphys.core.DataGroupSpec
 
     Returns
     -------
@@ -44,7 +43,6 @@ def fast_kernel_arrays(data):
 def positivity_fast_kernel_arrays(posdatasets):
     """
     Similar to fast_kernel_arrays but for Positivity datasets.
-
     """
     pos_fk_arrays = []
 
