@@ -3,7 +3,7 @@ requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.1.0"]
 build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry]
-name = "col_gp"
+name = "gp"
 version = "0.0.0"
 authors = ["PBSP Collaboration"]
 description = "Gaussian Process Model of PDFs"
@@ -20,4 +20,4 @@ doc = [
 ]
 
 [tool.poetry.scripts]
-col_gp = "gp.app:main"
+gp = "gp.app:main"

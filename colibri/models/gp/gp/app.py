@@ -19,7 +19,7 @@ class GridPdfApp(colibriApp):
 
 
 def main():
-    a = GridPdfApp(name="col_gp", providers=gp_providers)
+    a = GridPdfApp(name="gp", providers=gp_providers)
     a.main()
 
 
