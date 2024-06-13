@@ -55,6 +55,31 @@ class UltraNestLogLikelihood(object):
         alpha,
         lambda_positivity,
     ):
+        """
+        Parameters
+        ----------
+        central_inv_covmat_index: commondata_utils.CentralInvCovmatIndex
+
+        pdf_model: pdf_model.PDFModel
+
+        fit_xgrid: np.ndarray
+
+        forward_map: Callable
+
+        fast_kernel_arrays: tuple
+
+        positivity_fast_kernel_arrays: tuple
+
+        ns_settings: dict
+
+        chi2: Callable
+
+        penalty_posdata: Callable
+
+        alpha: float
+
+        lambda_positivity: float
+        """
         self.central_values = central_inv_covmat_index.central_values
         self.inv_covmat = central_inv_covmat_index.inv_covmat
         self.pdf_model = pdf_model
