@@ -13,6 +13,7 @@ gp_providers = [
     "gp.utils",
 ]
 
+
 class GridPdfApp(colibriApp):
     config_class = GPConfig
 
