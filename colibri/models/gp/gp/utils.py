@@ -1,7 +1,7 @@
 """
-grid_pdf.utils.py
+gp.utils.py
 
-Module containing util functions for grid PDF fits.
+Module containing util functions for GP fits.
 """
 
 from validphys import convolution
