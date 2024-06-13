@@ -5,6 +5,7 @@ The Gaussian process model.
 """
 
 import jax
+import jax.numpy as jnp
 
 from validphys import convolution
 
@@ -49,13 +50,22 @@ class GpPDFModel(PDFModel):
         """
 
         @jax.jit
-        def interp_func(pdf_grid):
+        def pdf_func(params):
             """
             Parameters
             ----------
             pdf_grid: jnp.array
                 The PDF grid values, with shape (Nfl, Nx)
             """
-            return pdf_grid
+            # split pdf_grid parameters from GP hyperparameters
+            pdf_grid, _ = jnp.split(params, [self.n_parameters])
 
-        return interp_func
+            # reshape pdf_grid to (Nfl, Nx)
+            pdf_grid = pdf_grid.reshape(
+                len(self.fitted_flavours),
+                int(len(pdf_grid) / len(self.fitted_flavours)),
+            )
+
+            return params
+
+        return pdf_func
