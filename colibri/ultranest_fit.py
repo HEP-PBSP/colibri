@@ -104,8 +104,21 @@ class UltraNestLogLikelihood(object):
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
 
     def __call__(self, params):
+        """
+        Note that this function is called by the ultranest sampler, and it must be
+        a function of the model parameters only.
+
+        Parameters
+        ----------
+        params: jnp.array
+            The model parameters.
+        """
         return self.log_likelihood(
-            params, self.central_values, self.inv_covmat, self.fast_kernel_arrays
+            params,
+            self.central_values,
+            self.inv_covmat,
+            self.fast_kernel_arrays,
+            self.positivity_fast_kernel_arrays,
         )
 
     @partial(jax.jit, static_argnames=("self",))
@@ -115,6 +128,7 @@ class UltraNestLogLikelihood(object):
         central_values,
         inv_covmat,
         fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
     ):
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * (
@@ -124,7 +138,7 @@ class UltraNestLogLikelihood(object):
                     pdf,
                     self.alpha,
                     self.lambda_positivity,
-                    self.positivity_fast_kernel_arrays,
+                    positivity_fast_kernel_arrays,
                 )
             )
         )
