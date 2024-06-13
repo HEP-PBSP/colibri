@@ -1,25 +1,24 @@
 """
-grid_pdf.app.py
+gp.app.py
 
-The grid_pdf app.
+The Gaussian Process app.
 """
 
 from colibri.app import colibriApp
-from grid_pdf.config import GridPdfConfig
+from gp.config import GPConfig
 
 
-grid_pdf_providers = [
-    "grid_pdf.model",
-    "grid_pdf.utils",
+gp_providers = [
+    "gp.model",
+    "gp.utils",
 ]
 
-
 class GridPdfApp(colibriApp):
-    config_class = GridPdfConfig
+    config_class = GPConfig
 
 
 def main():
-    a = GridPdfApp(name="grid_pdf", providers=grid_pdf_providers)
+    a = GridPdfApp(name="col_gp", providers=gp_providers)
     a.main()
 
 
