@@ -96,6 +96,7 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
 
     else:
         lumi_indices = fktable.luminosity_mapping
+        mask = jnp.ones_like(lumi_indices, dtype=bool)
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
@@ -126,7 +127,7 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
             theory prediction for a hadronic observable (shape is Ndata, )
         """
         return jnp.einsum(
-            "ijk, jk ->i", fk_arr, pdf[lumi_indices, :][:, fk_xgrid_indices]
+            "ijk, jk ->i", fk_arr[:, mask, :], pdf[lumi_indices, :][:, fk_xgrid_indices]
         )
 
     return dis_prediction
