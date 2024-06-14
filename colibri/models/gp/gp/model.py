@@ -65,7 +65,6 @@ class GpPDFModel(PDFModel):
                 len(self.fitted_flavours),
                 int(len(pdf_grid) / len(self.fitted_flavours)),
             )
-
-            return params
+            return pdf_grid
 
         return pdf_func
