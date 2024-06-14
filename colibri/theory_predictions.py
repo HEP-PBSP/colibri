@@ -178,11 +178,14 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
 
+        fk_arr_mask = mask_even * mask_odd
+
     else:
         lumi_indices = fktable.luminosity_mapping
-
+        mask = jnp.ones(lumi_indices, dtype=bool)
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
+        fk_arr_mask = jnp.ones_like(lumi_indices, dtype=bool)
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
@@ -214,7 +217,7 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
         """
         return jnp.einsum(
             "ijkl,jk,jl->i",
-            fk_arr,
+            fk_arr[:, fk_arr_mask, :, :],
             pdf[first_lumi_indices, :][:, fk_xgrid_indices],
             pdf[second_lumi_indices, :][:, fk_xgrid_indices],
         )
