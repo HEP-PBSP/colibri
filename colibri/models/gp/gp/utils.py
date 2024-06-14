@@ -7,8 +7,6 @@ Module containing util functions for GP fits.
 import jax
 import jax.numpy as jnp
 
-from validphys.core import PDF
-
 
 def bayesian_prior(pdf_model):
     """
