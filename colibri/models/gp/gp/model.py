@@ -7,44 +7,92 @@ The Gaussian process model.
 import jax
 import jax.numpy as jnp
 
-from validphys import convolution
-
 from colibri.pdf_model import PDFModel
+from colibri.constants import XGRID
 
 
 class GpPDFModel(PDFModel):
-    """A PDFModel implementation for the Gaussian process module."""
+    """
+    A PDFModel implementation for the Gaussian process module.
 
-    xgrids: dict
+    Attributes
+    ----------
+
+    """
+
+    gp_xgrid: list = XGRID
+    fitted_flavours: list
     param_names: list
+    gp_hyperparams_settings: dict
 
     name = "Gaussian process PDF model"
 
-    def __init__(self, flavour_xgrids):
-        self.xgrids = flavour_xgrids
+    def __init__(self, gp_xgrid, fitted_flavours, gp_hyperparams_settings):
+        self.gp_xgrid = gp_xgrid
+        self.fitted_flavours = fitted_flavours
+        self.gp_hyperparams_settings = gp_hyperparams_settings
 
     @property
-    def param_names(self):
-        """The parameters of the model."""
-        return [f"{fl}({x})" for fl in self.fitted_flavours for x in self.xgrids[fl]]
+    def param_names(self) -> list[str]:
+        """
+        The parameters of the model, including hyperparameters of the GP.
+
+        Returns
+        -------
+        list[str]
+            A list of parameter names in the format "flavour(x)" for xgrid parameters
+            and "hyperparameter(flavour)" for GP hyperparameters.
+        """
+        parameter_names = []
+
+        # Ensure necessary attributes are present
+        if not hasattr(self, "fitted_flavours"):
+            raise AttributeError(
+                "The model is missing the 'fitted_flavours' attribute."
+            )
+        if not hasattr(self, "gp_xgrid"):
+            raise AttributeError("The model is missing the 'xgrid' attribute.")
+        if not hasattr(self, "gp_hyperparams_settings"):
+            raise AttributeError(
+                "The model is missing the 'gp_hyperparams_settings' attribute."
+            )
+
+        # Generate parameter names for the grid values
+        parameter_names.extend(
+            f"{fl}({x})" for fl in self.fitted_flavours for x in self.gp_xgrid
+        )
+
+        # Generate parameter names for the GP hyperparameters
+        for fl in self.fitted_flavours:
+            if fl in self.gp_hyperparams_settings:
+
+                parameter_names.extend(
+                    f"{hyp_param}({fl})"
+                    for hyp_param in self.gp_hyperparams_settings[fl]
+                )
+
+        return parameter_names
 
     @property
     def n_parameters(self):
-        """The number of parameters of the model."""
-        return len(self.param_names)
+        """
+        The number of parameters of the model.
+        This does not include the GP hyperparameters.
+        """
+        # each flavour has the same number of parameters as the grid
+        return int(len(self.fitted_flavours) * len(self.gp_xgrid))
 
     @property
-    def fitted_flavours(self):
-        """The fitted flavours used in the model, in STANDARDISED order,
-        according to convolution.FK_FLAVOURS.
+    def n_hyperparameters(self):
         """
-        flavours = []
-        for flavour in convolution.FK_FLAVOURS:
-            if self.xgrids[flavour]:
-                flavours += [flavour]
-        return flavours
+        The number of hyperparameters of the model.
+        """
+        n_hyperparams = 0
+        for _, hyperparams in self.gp_hyperparams_settings.items():
+            n_hyperparams += len(hyperparams)
+        return n_hyperparams
 
-    def grid_values_func(self, xgrid):
+    def grid_values_func(self, gp_xgrid):
         """This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
         """
