@@ -182,7 +182,7 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
 
     else:
         lumi_indices = fktable.luminosity_mapping
-        mask = jnp.ones(lumi_indices, dtype=bool)
+        mask = jnp.ones_like(lumi_indices, dtype=bool)
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
         fk_arr_mask = jnp.ones_like(lumi_indices, dtype=bool)
