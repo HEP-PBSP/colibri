@@ -5,21 +5,19 @@ Module containing several utils for PDF fits.
 
 """
 
+import logging
 import os
 import pathlib
 import sys
 from functools import wraps
 
+import dill
 import jax
 import jax.numpy as jnp
-import jax.scipy.linalg as jla
 import numpy as np
 import pandas as pd
-import dill
-from validphys import convolution
-
-import logging
 from colibri.loss_functions import chi2
+from validphys import convolution
 
 log = logging.getLogger(__name__)
 
