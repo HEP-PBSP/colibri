@@ -182,10 +182,14 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
 
     else:
         lumi_indices = fktable.luminosity_mapping
+
+        mask_even = jnp.ones_like(lumi_indices[0::2], dtype=bool)
+        mask_odd = jnp.ones_like(lumi_indices[1::2], dtype=bool)
+        fk_arr_mask = mask_even * mask_odd
+
         mask = jnp.ones_like(lumi_indices, dtype=bool)
         first_lumi_indices = lumi_indices[0::2]
         second_lumi_indices = lumi_indices[1::2]
-        fk_arr_mask = jnp.ones_like(lumi_indices, dtype=bool)
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
