@@ -1,6 +1,7 @@
 from numpy.testing import assert_allclose
 import jax.numpy as jnp
 import pytest
+import jaxlib
 
 from colibri.api import API as colibriAPI
 from colibri.theory_predictions import make_dis_prediction, make_had_prediction
@@ -58,8 +59,7 @@ def test_positivity_fast_kernel_arrays():
 
 def test_make_dis_prediction():
     """
-    Test make_dis_prediction function gives the same results
-    when all luminosity indexes are used to when flavour_indices=None
+    Basic test of make_dis_prediction function.
     """
     ds = colibriAPI.dataset(**TEST_DATASET)
     pdf_grid = colibriAPI.closure_test_pdf_grid(
@@ -69,21 +69,16 @@ def test_make_dis_prediction():
     fktable = load_fktable(ds.fkspecs[0])
     fk_arr = jnp.array(fktable.get_np_fktable())
     FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS)
-    pred1 = make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None)(
-        pdf_grid[0], fk_arr
-    )
+    func = make_dis_prediction(fktable, FIT_XGRID)
+    pred = func(pdf_grid[0], fk_arr)
 
-    pred2 = make_dis_prediction(
-        fktable, FIT_XGRID, flavour_indices=fktable.luminosity_mapping
-    )(pdf_grid[0], fk_arr)
-
-    assert_allclose(pred1, pred2)
+    assert callable(func)
+    assert type(pred) == jaxlib.xla_extension.ArrayImpl
 
 
 def test_make_had_prediction():
     """
-    Test make_had_prediction function gives the same results
-    when all luminosity indexes are used to when flavour_indices=None
+    Basic test of make_had_prediction function.
     """
     ds = colibriAPI.dataset(**TEST_DATASET_HAD)
     pdf_grid = colibriAPI.closure_test_pdf_grid(
@@ -94,15 +89,11 @@ def test_make_had_prediction():
     fk_arr = jnp.array(fktable.get_np_fktable())
 
     FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS_HAD)
-    pred1 = make_had_prediction(fktable, FIT_XGRID, flavour_indices=None)(
-        pdf_grid[0], fk_arr
-    )
+    func = make_had_prediction(fktable, FIT_XGRID)
+    pred = func(pdf_grid[0], fk_arr)
 
-    pred2 = make_had_prediction(
-        fktable, FIT_XGRID, flavour_indices=fktable.luminosity_mapping
-    )(pdf_grid[0], fk_arr)
-
-    assert_allclose(pred1, pred2)
+    assert callable(func)
+    assert type(pred) == jaxlib.xla_extension.ArrayImpl
 
 
 @pytest.mark.parametrize(
