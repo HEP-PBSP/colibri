@@ -9,19 +9,26 @@ import jax
 import jax.numpy as jnp
 
 from validphys import convolution
-from validphys.fkparser import load_fktable
+from colibri.utils import load_fktable_colibri
 
 # Is this needed? -> probably no need to jit compile
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def fast_kernel_arrays(data):
+def fast_kernel_arrays(data, flavour_indices=None):
     """
     Returns a tuple of tuples of jax.numpy arrays.
 
     Parameters
     ----------
     data : validphys.core.DataGroupSpec
+
+    flavour_indices: list, default is None
+        if not None, the function will return fk arrays
+        that allow to compute the prediction for a subset
+        of flavours. The list must contain the flavour indices.
+        The indices correspond to the flavours in convolution.FK_FLAVOURS
+        e.g.: [1,2] -> ['\\Sigma', 'g']
 
     Returns
     -------
@@ -33,14 +40,16 @@ def fast_kernel_arrays(data):
     for ds in data.datasets:
         fk_dataset_arr = []
         for fkspec in ds.fkspecs:
-            fk = load_fktable(fkspec).with_cuts(ds.cuts)
+            # load fktable and apply flavour mask
+            fk = load_fktable_colibri(fkspec, ds).with_masked_flavours(flavour_indices)
+
             fk_dataset_arr.append(jnp.array(fk.get_np_fktable()))
         fk_arrays.append(tuple(fk_dataset_arr))
 
     return tuple(fk_arrays)
 
 
-def positivity_fast_kernel_arrays(posdatasets):
+def positivity_fast_kernel_arrays(posdatasets, flavour_indices=None):
     """
     Similar to fast_kernel_arrays but for Positivity datasets.
     """
@@ -49,14 +58,18 @@ def positivity_fast_kernel_arrays(posdatasets):
     for posdataset in posdatasets:
         fk_dataset_arr = []
         for fkspec in posdataset.fkspecs:
-            fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
+            # load fktable and apply flavour mask
+            fk = load_fktable_colibri(fkspec, posdataset).with_masked_flavours(
+                flavour_indices
+            )
+
             fk_dataset_arr.append(jnp.array(fk.get_np_fktable()))
         pos_fk_arrays.append(tuple(fk_dataset_arr))
 
     return tuple(pos_fk_arrays)
 
 
-def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
+def make_dis_prediction(fktable, FIT_XGRID):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -65,7 +78,9 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
 
     Parameters
     ----------
-    fktable : validphys.coredata.FKTableData
+    fktable : colibri.coredata.FKTableData
+            The fktable should be a colibri.coredata.FKTableData instance
+            and with cuts and masked flavours already applied.
 
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
@@ -76,27 +91,11 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
         that allows to compute the prediction for multiple
         prior samples at once.
 
-    flavour_indices: list, default is None
-        if not None, the function will be compiled in a way
-        that allows to compute the prediction for a subset
-        of flavours. The list must contain the flavour indices.
-        The indices correspond to the flavours in convolution.FK_FLAVOURS
-        e.g.: [1,2] -> ['\\Sigma', 'g']
-
-
     Returns
     -------
     @jax.jit CompiledFunction
     """
-
-    if flavour_indices is not None:
-        lumi_indices = fktable.luminosity_mapping
-        mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
-        lumi_indices = lumi_indices[mask]
-
-    else:
-        lumi_indices = fktable.luminosity_mapping
-        mask = jnp.ones_like(lumi_indices, dtype=bool)
+    lumi_indices = fktable.luminosity_mapping
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
@@ -127,13 +126,13 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
             theory prediction for a hadronic observable (shape is Ndata, )
         """
         return jnp.einsum(
-            "ijk, jk ->i", fk_arr[:, mask, :], pdf[lumi_indices, :][:, fk_xgrid_indices]
+            "ijk, jk ->i", fk_arr, pdf[lumi_indices, :][:, fk_xgrid_indices]
         )
 
     return dis_prediction
 
 
-def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
+def make_had_prediction(fktable, FIT_XGRID):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -153,43 +152,14 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
         that allows to compute the prediction for multiple
         prior samples at once.
 
-    flavour_indices: list, default is None
-        if not None, the function will be compiled in a way
-        that allows to compute the prediction for a subset
-        of flavours. The list must contain the flavour indices.
-        The indices correspond to the flavours in convolution.FK_FLAVOURS
-        e.g.: [1,2] -> ['\\Sigma', 'g']
 
     Returns
     -------
     @jax.jit CompiledFunction
     """
-
-    if flavour_indices is not None:
-        lumi_indices = fktable.luminosity_mapping
-        mask_even = jnp.isin(lumi_indices[0::2], jnp.array(flavour_indices))
-        mask_odd = jnp.isin(lumi_indices[1::2], jnp.array(flavour_indices))
-
-        # for hadronic predictions pdfs enter in pair, hence product of two
-        # boolean arrays and repeat by 2
-        mask = jnp.repeat(mask_even * mask_odd, repeats=2)
-        lumi_indices = lumi_indices[mask]
-
-        first_lumi_indices = lumi_indices[0::2]
-        second_lumi_indices = lumi_indices[1::2]
-
-        fk_arr_mask = mask_even * mask_odd
-
-    else:
-        lumi_indices = fktable.luminosity_mapping
-
-        mask_even = jnp.ones_like(lumi_indices[0::2], dtype=bool)
-        mask_odd = jnp.ones_like(lumi_indices[1::2], dtype=bool)
-        fk_arr_mask = mask_even * mask_odd
-
-        mask = jnp.ones_like(lumi_indices, dtype=bool)
-        first_lumi_indices = lumi_indices[0::2]
-        second_lumi_indices = lumi_indices[1::2]
+    lumi_indices = fktable.luminosity_mapping
+    first_lumi_indices = lumi_indices[0::2]
+    second_lumi_indices = lumi_indices[1::2]
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
@@ -221,7 +191,7 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
         """
         return jnp.einsum(
             "ijkl,jk,jl->i",
-            fk_arr[:, fk_arr_mask, :, :],
+            fk_arr,
             pdf[first_lumi_indices, :][:, fk_xgrid_indices],
             pdf[second_lumi_indices, :][:, fk_xgrid_indices],
         )
@@ -254,11 +224,12 @@ def make_pred_dataset(dataset, FIT_XGRID, flavour_indices=None):
     pred_funcs = []
 
     for fkspec in dataset.fkspecs:
-        fk = load_fktable(fkspec).with_cuts(dataset.cuts)
+        fk = load_fktable_colibri(fkspec, dataset).with_masked_flavours(flavour_indices)
+
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices)
+            pred = make_had_prediction(fk, FIT_XGRID)
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices)
+            pred = make_dis_prediction(fk, FIT_XGRID)
         pred_funcs.append(pred)
 
     def prediction(pdf, fk_dataset):
@@ -380,11 +351,13 @@ def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
     pred_funcs = []
 
     for fkspec in posdataset.fkspecs:
-        fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
+        fk = load_fktable_colibri(fkspec, posdataset).with_masked_flavours(
+            flavour_indices
+        )
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices)
+            pred = make_had_prediction(fk, FIT_XGRID)
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices)
+            pred = make_dis_prediction(fk, FIT_XGRID)
         pred_funcs.append(pred)
 
     def pos_penalty(pdf, alpha, lambda_positivity, fk_dataset):
