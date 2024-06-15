@@ -17,9 +17,44 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from colibri.loss_functions import chi2
+from colibri.coredata import FKTableData
+
 from validphys import convolution
+from validphys.fkparser import load_fktable
+
 
 log = logging.getLogger(__name__)
+
+
+def load_fktable_colibri(spec, dataset):
+    """
+    Uses the validphys.fkparser.load_fktable function to load a
+    validphys.coredata.FKTableData instance and then returns a
+    colibri.coredata.FKTableData instance with kinematic cuts applied.
+
+    Parameters
+    ----------
+    spec: validphys.core.FKTableSpec
+
+    dataset: validphys.core.DatasetSpec
+        used to impose the cuts
+
+    Returns
+    -------
+    colibri.coredata.FKTableData
+
+    """
+    fktable_data = load_fktable(spec).with_cuts(dataset.cuts)
+    colibri_fk_table_data = FKTableData(
+        sigma=fktable_data.sigma,
+        ndata=fktable_data.ndata,
+        Q0=fktable_data.Q0,
+        metadata=fktable_data.metadata,
+        hadronic=fktable_data.hadronic,
+        xgrid=fktable_data.xgrid,
+    )
+
+    return colibri_fk_table_data
 
 
 def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
