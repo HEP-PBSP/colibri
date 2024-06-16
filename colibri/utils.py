@@ -17,44 +17,89 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from colibri.loss_functions import chi2
-from colibri.coredata import FKTableData
 
 from validphys import convolution
-from validphys.fkparser import load_fktable
 
 
 log = logging.getLogger(__name__)
 
 
-def load_fktable_colibri(spec, dataset):
+def mask_fktable_array(fktable, flavour_indices=None):
     """
-    Uses the validphys.fkparser.load_fktable function to load a
-    validphys.coredata.FKTableData instance and then returns a
-    colibri.coredata.FKTableData instance with kinematic cuts applied.
+    Takes an FKTableData instance and returns an FK table array with masked flavours.
 
     Parameters
     ----------
-    spec: validphys.core.FKTableSpec
+    fktable: validphys.coredata.FKTableData
 
-    dataset: validphys.core.DatasetSpec
-        used to impose the cuts
+    flavour_indices: list, default is None
+        The indices of the flavours to keep.
+        If None, returns the original FKTableData.get_np_fktable() array with no masking.
 
     Returns
     -------
-    colibri.coredata.FKTableData
-
+    jnp.array
+        The FK table array with masked flavours.
     """
-    fktable_data = load_fktable(spec).with_cuts(dataset.cuts)
-    colibri_fk_table_data = FKTableData(
-        sigma=fktable_data.sigma,
-        ndata=fktable_data.ndata,
-        Q0=fktable_data.Q0,
-        metadata=fktable_data.metadata,
-        hadronic=fktable_data.hadronic,
-        xgrid=fktable_data.xgrid,
-    )
 
-    return colibri_fk_table_data
+    if flavour_indices is None:
+        return jnp.array(fktable.get_np_fktable())
+
+    if fktable.hadronic:
+        lumi_indices = fktable.luminosity_mapping
+        mask_even = jnp.isin(lumi_indices[0::2], jnp.array(flavour_indices))
+        mask_odd = jnp.isin(lumi_indices[1::2], jnp.array(flavour_indices))
+
+        fk_arr_mask = mask_even * mask_odd
+
+        return jnp.array(fktable.get_np_fktable()[:, fk_arr_mask, :, :])
+
+    else:
+        lumi_indices = fktable.luminosity_mapping
+        fk_arr_mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
+
+        return jnp.array(fktable.get_np_fktable()[:, fk_arr_mask, :])
+
+
+def mask_luminosity_mapping(fktable, flavour_indices=None):
+    """
+    Takes an FKTableData instance and returns a new instance with masked luminosity mapping.
+
+    Parameters
+    ----------
+    fktable: validphys.coredata.FKTableData
+
+    flavour_indices: list, default is None
+        The indices of the flavours to keep.
+        If None, returns the original FKTableData.luminosity_mapping with no masking.
+
+    Returns
+    -------
+    jnp.array
+        The luminosity mapping with masked flavours.
+    """
+
+    if flavour_indices is None:
+        return fktable.luminosity_mapping
+
+    if fktable.hadronic:
+        lumi_indices = fktable.luminosity_mapping
+        mask_even = jnp.isin(lumi_indices[0::2], jnp.array(flavour_indices))
+        mask_odd = jnp.isin(lumi_indices[1::2], jnp.array(flavour_indices))
+
+        # for hadronic predictions pdfs enter in pair, hence product of two
+        # boolean arrays and repeat by 2
+        mask = jnp.repeat(mask_even * mask_odd, repeats=2)
+        lumi_indices = lumi_indices[mask]
+
+        return lumi_indices
+
+    else:
+        lumi_indices = fktable.luminosity_mapping
+        mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
+        lumi_indices = lumi_indices[mask]
+
+        return lumi_indices
 
 
 def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
