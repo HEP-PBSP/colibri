@@ -70,7 +70,9 @@ class colibriApp(App):
             "--float_type",
             type=str,
             default=None,
-            help="The float type to use for the computations.",
+            help="The float type to use for the computations. \
+                Accepted values are float32, float64, bfloat16. \
+                Example of usage: --float_type float32",
         )
 
         return parser
