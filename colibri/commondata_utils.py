@@ -89,6 +89,7 @@ def level_1_commondata_tuple(
     level_0_commondata_tuple,
     data_generation_covariance_matrix,
     level_1_seed=123456,
+    float_type=None,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -107,6 +108,8 @@ def level_1_commondata_tuple(
     level_1_seed: int
         The random seed from which the level_1 data is drawn.
 
+    float_type: type, default is None
+
     Returns
     -------
     tuple
@@ -123,7 +126,7 @@ def level_1_commondata_tuple(
     # level_1 data.
     rng = jax.random.PRNGKey(level_1_seed)
     sample = jax.random.multivariate_normal(
-        rng, central_values, data_generation_covariance_matrix
+        rng, central_values, data_generation_covariance_matrix, dtype=float_type
     )
 
     # Now, reconstruct the commondata tuple, by modifying the original commondata
@@ -202,7 +205,7 @@ class CentralInvCovmatIndex:
         return asdict(self)
 
 
-def central_inv_covmat_index(central_covmat_index):
+def central_inv_covmat_index(central_covmat_index, float_type=None):
     """
     Given a CentralCovmatIndex dataclass, compute the inverse
     of the covariance matrix and store the relevant data into
@@ -210,7 +213,7 @@ def central_inv_covmat_index(central_covmat_index):
     """
     inv_covmat = jla.inv(central_covmat_index.covmat)
     return CentralInvCovmatIndex(
-        central_values=central_covmat_index.central_values,
+        central_values=jnp.array(central_covmat_index.central_values, dtype=float_type),
         central_values_idx=central_covmat_index.central_values_idx,
-        inv_covmat=inv_covmat,
+        inv_covmat=jnp.array(inv_covmat, dtype=float_type),
     )
