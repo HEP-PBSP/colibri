@@ -12,6 +12,8 @@ from dataclasses import dataclass, asdict
 
 import jax
 import jax.numpy as jnp
+import jax.scipy.linalg as jla
+from validphys.fkparser import load_fktable
 
 from colibri.theory_predictions import make_pred_dataset
 
@@ -38,6 +40,7 @@ def level_0_commondata_tuple(
     experimental_commondata_tuple,
     closure_test_central_pdf_grid,
     FIT_XGRID,
+    fast_kernel_arrays,
     flavour_indices=None,
 ):
     """
@@ -70,15 +73,17 @@ def level_0_commondata_tuple(
     """
 
     fake_data = []
-    for cd, ds in zip(experimental_commondata_tuple, data.datasets):
+    for cd, ds, fk_dataset in zip(
+        experimental_commondata_tuple, data.datasets, fast_kernel_arrays
+    ):
         if cd.setname != ds.name:
             raise RuntimeError(f"commondata {cd} does not correspond to dataset {ds}")
         # replace central values with theory prediction from `closure_test_pdf`
         fake_data.append(
             cd.with_central_value(
-                make_pred_dataset(
-                    ds, FIT_XGRID, vectorized=False, flavour_indices=flavour_indices
-                )(closure_test_central_pdf_grid)
+                make_pred_dataset(ds, FIT_XGRID, flavour_indices=flavour_indices)(
+                    closure_test_central_pdf_grid, fk_dataset
+                )
             )
         )
     return tuple(fake_data)
@@ -189,3 +194,27 @@ def pseudodata_central_covmat_index(
     covariance matrix for a Monte Carlo fit.
     """
     return central_covmat_index(commondata_tuple, data_generation_covariance_matrix)
+
+
+@dataclass(frozen=True)
+class CentralInvCovmatIndex:
+    central_values: jnp.array
+    inv_covmat: jnp.array
+    central_values_idx: jnp.array
+
+    def to_dict(self):
+        return asdict(self)
+
+
+def central_inv_covmat_index(central_covmat_index):
+    """
+    Given a CentralCovmatIndex dataclass, compute the inverse
+    of the covariance matrix and store the relevant data into
+    CentralInvCovmatIndex dataclass.
+    """
+    inv_covmat = jla.inv(central_covmat_index.covmat)
+    return CentralInvCovmatIndex(
+        central_values=central_covmat_index.central_values,
+        central_values_idx=central_covmat_index.central_values_idx,
+        inv_covmat=inv_covmat,
+    )

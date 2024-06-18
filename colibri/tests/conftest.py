@@ -2,6 +2,7 @@
 Module containing standard pytest data configurations for testing purposes.
 """
 
+import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 import numpy as np
 from unittest.mock import Mock
@@ -66,6 +67,20 @@ TEST_POS_DATASET = {
                 "maxlambda": 1e6,
             }
         ]
+    }
+}
+
+TEST_SINGLE_POS_DATASET = {
+    "posdataset": {
+        "dataset": "NNPDF_POS_2P24GEV_F2U",
+        "maxlambda": 1e6,
+    }
+}
+
+TEST_SINGLE_POS_DATASET_HAD = {
+    "posdataset": {
+        "dataset": "NNPDF_POS_2P24GEV_DYD",
+        "maxlambda": 1e6,
     }
 }
 
@@ -333,7 +348,7 @@ class TestPDFModel(PDFModel):
             """
             Returns random array of shape (14,len(params))
             """
-            return np.random.rand(14, len(params))
+            return sum([param * xgrid for param in params])
 
         return wmin_param
 
@@ -344,7 +359,31 @@ Mock PDF model to be used to test functions that require a PDFModel instance.
 MOCK_PDF_MODEL = Mock()
 MOCK_PDF_MODEL.param_names = ["param1", "param2"]
 MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: np.ones((14, len(xgrid)))
-MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: lambda params: (
-    forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params)),
-    np.ones((14, len(xgrid))),
+MOCK_PDF_MODEL.pred_and_pdf_func = (
+    lambda xgrid, forward_map: lambda params, fast_kernel_arrays: (
+        forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params)),
+        np.ones((14, len(xgrid))),
+    )
 )
+
+TEST_XGRID = jnp.ones(2)
+TEST_FK_ARRAYS = (jnp.array([1, 2]),)
+TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
+TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0]
+
+
+"""
+Mock instance of Central Covmat Index object
+"""
+MOCK_CENTRAL_COVMAT_INDEX = Mock()
+MOCK_CENTRAL_COVMAT_INDEX.central_values = jnp.ones(2)
+MOCK_CENTRAL_COVMAT_INDEX.inv_covmat = jnp.eye(2)
+MOCK_CENTRAL_COVMAT_INDEX.central_values_idx = jnp.arange(2)
+
+"""
+Mock instance of Central Inverse covmat index object
+"""
+MOCK_CENTRAL_INV_COVMAT_INDEX = Mock()
+MOCK_CENTRAL_INV_COVMAT_INDEX.central_values = jnp.ones(2)
+MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(2)
+MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(2)

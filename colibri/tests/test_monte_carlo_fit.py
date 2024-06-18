@@ -38,6 +38,8 @@ def test_monte_carlo_fit_runs_without_errors():
         _chi2_training_data_with_positivity=lambda *args: 0.0,
         _chi2_validation_data_with_positivity=lambda *args: 0.0,
         _pred_data=lambda *args: (np.zeros((N_PARAMS,)), np.zeros((N_PARAMS,))),
+        fast_kernel_arrays=(np.zeros((10, 10)), np.zeros((10, 10))),
+        positivity_fast_kernel_arrays=(np.zeros((10, 10)), np.zeros((10, 10))),
         len_trval_data=(100, 50),
         pdf_model=mock_pdf_model,
         mc_initial_parameters=np.zeros((N_PARAMS,)),

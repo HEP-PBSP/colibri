@@ -5,21 +5,101 @@ Module containing several utils for PDF fits.
 
 """
 
+import logging
 import os
 import pathlib
 import sys
 from functools import wraps
 
+import dill
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
-import dill
+from colibri.loss_functions import chi2
+
 from validphys import convolution
 
-import logging
 
 log = logging.getLogger(__name__)
+
+
+def mask_fktable_array(fktable, flavour_indices=None):
+    """
+    Takes an FKTableData instance and returns an FK table array with masked flavours.
+
+    Parameters
+    ----------
+    fktable: validphys.coredata.FKTableData
+
+    flavour_indices: list, default is None
+        The indices of the flavours to keep.
+        If None, returns the original FKTableData.get_np_fktable() array with no masking.
+
+    Returns
+    -------
+    jnp.array
+        The FK table array with masked flavours.
+    """
+
+    if flavour_indices is None:
+        return jnp.array(fktable.get_np_fktable())
+
+    if fktable.hadronic:
+        lumi_indices = fktable.luminosity_mapping
+        mask_even = jnp.isin(lumi_indices[0::2], jnp.array(flavour_indices))
+        mask_odd = jnp.isin(lumi_indices[1::2], jnp.array(flavour_indices))
+
+        fk_arr_mask = mask_even * mask_odd
+
+        return jnp.array(fktable.get_np_fktable()[:, fk_arr_mask, :, :])
+
+    else:
+        lumi_indices = fktable.luminosity_mapping
+        fk_arr_mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
+
+        return jnp.array(fktable.get_np_fktable()[:, fk_arr_mask, :])
+
+
+def mask_luminosity_mapping(fktable, flavour_indices=None):
+    """
+    Takes an FKTableData instance and returns a new instance with masked luminosity mapping.
+
+    Parameters
+    ----------
+    fktable: validphys.coredata.FKTableData
+
+    flavour_indices: list, default is None
+        The indices of the flavours to keep.
+        If None, returns the original FKTableData.luminosity_mapping with no masking.
+
+    Returns
+    -------
+    jnp.array
+        The luminosity mapping with masked flavours.
+    """
+
+    if flavour_indices is None:
+        return fktable.luminosity_mapping
+
+    if fktable.hadronic:
+        lumi_indices = fktable.luminosity_mapping
+        mask_even = jnp.isin(lumi_indices[0::2], jnp.array(flavour_indices))
+        mask_odd = jnp.isin(lumi_indices[1::2], jnp.array(flavour_indices))
+
+        # for hadronic predictions pdfs enter in pair, hence product of two
+        # boolean arrays and repeat by 2
+        mask = jnp.repeat(mask_even * mask_odd, repeats=2)
+        lumi_indices = lumi_indices[mask]
+
+        return lumi_indices
+
+    else:
+        lumi_indices = fktable.luminosity_mapping
+        mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
+        lumi_indices = lumi_indices[mask]
+
+        return lumi_indices
 
 
 def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
@@ -224,24 +304,36 @@ def cast_to_numpy(func):
 
 
 def likelihood_float_type(
-    _chi2, _pred_data, pdf_model, FIT_XGRID, bayesian_prior, output_path
+    _pred_data,
+    pdf_model,
+    FIT_XGRID,
+    bayesian_prior,
+    output_path,
+    central_inv_covmat_index,
+    fast_kernel_arrays,
 ):
     """
     Writes the dtype of the likelihood function to a file.
     Mainly used for testing purposes.
     """
 
+    loss_function = chi2
+
+    central_values = central_inv_covmat_index.central_values
+    inv_covmat = central_inv_covmat_index.inv_covmat
+
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     @jax.jit
-    def log_likelihood(params):
-        predictions, _ = pred_and_pdf(params)
-        return -0.5 * _chi2(predictions)
+    def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
+        predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
+        return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     params = bayesian_prior(
         jax.random.uniform(jax.random.PRNGKey(0), shape=(len(pdf_model.param_names),))
     )
-    dtype = log_likelihood(params).dtype
+
+    dtype = log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays).dtype
 
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:

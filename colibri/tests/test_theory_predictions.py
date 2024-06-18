@@ -1,4 +1,7 @@
 from numpy.testing import assert_allclose
+import jax.numpy as jnp
+import pytest
+import jaxlib
 
 from colibri.api import API as colibriAPI
 from colibri.theory_predictions import make_dis_prediction, make_had_prediction
@@ -9,9 +12,49 @@ from colibri.tests.conftest import (
     TEST_DATASET_HAD,
     TEST_DATASETS,
     TEST_DATASETS_HAD,
+    TEST_POS_DATASET,
+    TEST_SINGLE_POS_DATASET,
+    TEST_SINGLE_POS_DATASET_HAD,
 )
 
 from validphys.fkparser import load_fktable
+
+
+def test_fast_kernel_arrays():
+    """
+    Test that the fast kernel arrays are correctly loaded
+    """
+    fk_arrays = colibriAPI.fast_kernel_arrays(**TEST_DATASETS)
+
+    assert len(fk_arrays) == 1
+    assert type(fk_arrays) == tuple
+    assert type(fk_arrays[0]) == tuple
+
+    data = colibriAPI.data(**TEST_DATASETS)
+    ds = data.datasets[0]
+    fk_arr = jnp.array(load_fktable(ds.fkspecs[0]).with_cuts(ds.cuts).get_np_fktable())
+
+    assert_allclose(fk_arrays[0][0], fk_arr)
+
+
+def test_positivity_fast_kernel_arrays():
+    """
+    Test that the positivity fast kernel arrays are correctly loaded
+    """
+    fk_arrays = colibriAPI.positivity_fast_kernel_arrays(
+        **{**TEST_POS_DATASET, **TEST_DATASETS}
+    )
+
+    assert len(fk_arrays) == 1
+    assert type(fk_arrays) == tuple
+    assert type(fk_arrays[0]) == tuple
+
+    data = colibriAPI.posdatasets(**{**TEST_POS_DATASET, **TEST_DATASETS})
+
+    ds = data.data[0]
+    fk_arr = jnp.array(load_fktable(ds.fkspecs[0]).with_cuts(ds.cuts).get_np_fktable())
+
+    assert_allclose(fk_arrays[0][0], fk_arr)
 
 
 def test_make_dis_prediction():
@@ -25,16 +68,23 @@ def test_make_dis_prediction():
     )
 
     fktable = load_fktable(ds.fkspecs[0])
+    fk_arr = jnp.array(fktable.get_np_fktable())
+
     FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS)
-    pred1 = make_dis_prediction(
-        fktable, FIT_XGRID, vectorized=False, flavour_indices=None
-    )(pdf_grid[0])
+    pred1 = make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None)(
+        pdf_grid[0], fk_arr
+    )
 
     pred2 = make_dis_prediction(
-        fktable, FIT_XGRID, vectorized=False, flavour_indices=fktable.luminosity_mapping
-    )(pdf_grid[0])
+        fktable, FIT_XGRID, flavour_indices=fktable.luminosity_mapping
+    )(pdf_grid[0], fk_arr)
+
+    func = make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None)
+    pred = func(pdf_grid[0], fk_arr)
 
     assert_allclose(pred1, pred2)
+    assert callable(func)
+    assert type(pred) == jaxlib.xla_extension.ArrayImpl
 
 
 def test_make_had_prediction():
@@ -48,14 +98,63 @@ def test_make_had_prediction():
     )
 
     fktable = load_fktable(ds.fkspecs[0])
+    fk_arr = jnp.array(fktable.get_np_fktable())
 
     FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS_HAD)
-    pred1 = make_had_prediction(
-        fktable, FIT_XGRID, vectorized=False, flavour_indices=None
-    )(pdf_grid[0])
+    pred1 = make_had_prediction(fktable, FIT_XGRID, flavour_indices=None)(
+        pdf_grid[0], fk_arr
+    )
 
     pred2 = make_had_prediction(
-        fktable, FIT_XGRID, vectorized=False, flavour_indices=fktable.luminosity_mapping
-    )(pdf_grid[0])
+        fktable, FIT_XGRID, flavour_indices=fktable.luminosity_mapping
+    )(pdf_grid[0], fk_arr)
 
     assert_allclose(pred1, pred2)
+
+    func = make_had_prediction(fktable, FIT_XGRID, flavour_indices=None)
+    pred = func(pdf_grid[0], fk_arr)
+
+    assert callable(func)
+    assert type(pred) == jaxlib.xla_extension.ArrayImpl
+
+
+@pytest.mark.parametrize(
+    "posdataset", [TEST_SINGLE_POS_DATASET, TEST_SINGLE_POS_DATASET_HAD]
+)
+def test_make_penalty_posdataset(posdataset):
+    """
+    Tests that make_penalty_posdataset returns a function.
+    """
+    penalty_posdata = colibriAPI.make_penalty_posdataset(
+        **{**posdataset, **TEST_DATASETS}
+    )
+
+    assert callable(penalty_posdata)
+
+
+def test_make_penalty_posdata():
+    """
+    Tests that make_penalty_posdata returns a function.
+    """
+    penalty_posdata = colibriAPI.make_penalty_posdata(
+        **{**TEST_POS_DATASET, **TEST_DATASETS}
+    )
+
+    assert callable(penalty_posdata)
+
+
+def test_make_pred_data():
+    """
+    Tests that make_pred_data returns a function.
+    """
+    eval_preds = colibriAPI.make_pred_data(**{**TEST_DATASETS, **TEST_DATASET})
+
+    fk_arrs = colibriAPI.fast_kernel_arrays(**TEST_DATASETS)
+    pdf_grid = colibriAPI.closure_test_central_pdf_grid(
+        **{**CLOSURE_TEST_PDFSET, **TEST_DATASETS}
+    )
+
+    pred_data = eval_preds(pdf_grid, fk_arrs)
+
+    assert callable(eval_preds)
+    assert pred_data.shape == (fk_arrs[0][0].shape[0],)

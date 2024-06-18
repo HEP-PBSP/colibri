@@ -14,9 +14,11 @@ import ultranest.stepsampler as ustepsampler
 import time
 import logging
 import sys
+from functools import partial
 
 from colibri.utils import resample_from_ns_posterior
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
+from colibri.loss_functions import chi2
 import numpy as np
 from mpi4py import MPI
 
@@ -38,6 +40,110 @@ handler = logging.StreamHandler(sys.stdout)
 ultranest_logger.addHandler(handler)
 
 
+class UltraNestLogLikelihood(object):
+    def __init__(
+        self,
+        central_inv_covmat_index,
+        pdf_model,
+        fit_xgrid,
+        forward_map,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        penalty_posdata,
+        alpha,
+        lambda_positivity,
+    ):
+        """
+        Parameters
+        ----------
+        central_inv_covmat_index: commondata_utils.CentralInvCovmatIndex
+
+        pdf_model: pdf_model.PDFModel
+
+        fit_xgrid: np.ndarray
+
+        forward_map: Callable
+
+        fast_kernel_arrays: tuple
+
+        positivity_fast_kernel_arrays: tuple
+
+        ns_settings: dict
+
+        chi2: Callable
+
+        penalty_posdata: Callable
+
+        alpha: float
+
+        lambda_positivity: float
+        """
+        self.central_values = central_inv_covmat_index.central_values
+        self.inv_covmat = central_inv_covmat_index.inv_covmat
+        self.pdf_model = pdf_model
+        self.chi2 = chi2
+        self.penalty_posdata = penalty_posdata
+        self.alpha = alpha
+        self.lambda_positivity = lambda_positivity
+        self.pred_and_pdf = pdf_model.pred_and_pdf_func(
+            fit_xgrid, forward_map=forward_map
+        )
+        if ns_settings["ReactiveNS_settings"]["vectorized"]:
+            self.pred_and_pdf = jax.vmap(
+                self.pred_and_pdf, in_axes=(0, None), out_axes=(0, 0)
+            )
+
+            self.chi2 = jax.vmap(self.chi2, in_axes=(None, 0, None), out_axes=0)
+            self.penalty_posdata = jax.vmap(
+                self.penalty_posdata, in_axes=(0, None, None, None), out_axes=0
+            )
+
+        self.fast_kernel_arrays = fast_kernel_arrays
+        self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
+
+    def __call__(self, params):
+        """
+        Note that this function is called by the ultranest sampler, and it must be
+        a function of the model parameters only.
+
+        Parameters
+        ----------
+        params: jnp.array
+            The model parameters.
+        """
+        return self.log_likelihood(
+            params,
+            self.central_values,
+            self.inv_covmat,
+            self.fast_kernel_arrays,
+            self.positivity_fast_kernel_arrays,
+        )
+
+    @partial(jax.jit, static_argnames=("self",))
+    def log_likelihood(
+        self,
+        params,
+        central_values,
+        inv_covmat,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+    ):
+        predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
+        return -0.5 * (
+            self.chi2(central_values, predictions, inv_covmat)
+            + jnp.sum(
+                self.penalty_posdata(
+                    pdf,
+                    self.alpha,
+                    self.lambda_positivity,
+                    positivity_fast_kernel_arrays,
+                )
+            )
+        )
+
+
 @dataclass(frozen=True)
 class UltranestFit(BayesianFit):
     """
@@ -56,12 +162,17 @@ class UltranestFit(BayesianFit):
 
 
 def ultranest_fit(
-    _chi2_with_positivity,
+    central_inv_covmat_index,
     _pred_data,
+    _penalty_posdata,
+    fast_kernel_arrays,
+    positivity_fast_kernel_arrays,
     pdf_model,
     bayesian_prior,
     ns_settings,
     FIT_XGRID,
+    alpha=1e-7,
+    lambda_positivity=1000,
 ):
     """
     The complete Nested Sampling fitting routine, for any PDF model.
@@ -100,15 +211,20 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
-
-    if ns_settings["ReactiveNS_settings"]["vectorized"]:
-        pred_and_pdf = jax.vmap(pred_and_pdf, in_axes=(0,), out_axes=(0, 0))
-
-    @jax.jit
-    def log_likelihood(params):
-        predictions, pdf = pred_and_pdf(params)
-        return -0.5 * _chi2_with_positivity(predictions, pdf)
+    # Initialize the log likelihood function
+    log_likelihood = UltraNestLogLikelihood(
+        central_inv_covmat_index,
+        pdf_model,
+        FIT_XGRID,
+        _pred_data,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        _penalty_posdata,
+        alpha,
+        lambda_positivity,
+    )
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,

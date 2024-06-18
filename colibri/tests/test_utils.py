@@ -5,11 +5,31 @@ Module for testing the utils module.
 import os
 import pathlib
 import shutil
+from numpy.testing import assert_allclose
+import pytest
 
 import jax
+import jax.numpy as jnp
 import numpy as np
 import pandas
-from colibri.utils import cast_to_numpy, get_fit_path, get_full_posterior, get_pdf_model
+from colibri.api import API as cAPI
+from colibri.tests.conftest import (
+    MOCK_CENTRAL_INV_COVMAT_INDEX,
+    MOCK_PDF_MODEL,
+    TEST_DATASET_HAD,
+    TEST_DATASET,
+)
+from colibri.utils import (
+    cast_to_numpy,
+    get_fit_path,
+    get_full_posterior,
+    get_pdf_model,
+    likelihood_float_type,
+    mask_fktable_array,
+    mask_luminosity_mapping,
+)
+from validphys.fkparser import load_fktable
+
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
@@ -122,3 +142,111 @@ def test_get_full_posterior():
 
     # Clean up the copied directory
     shutil.rmtree(dest_path)
+
+
+def mock_bayesian_prior(array):
+    # Mocked version of bayesian_prior
+    return array
+
+
+@pytest.mark.parametrize("dataset_input", [TEST_DATASET_HAD, TEST_DATASET])
+def test_mask_fktable_array(dataset_input):
+    """
+    Test that masking of fktable arrays works as expected.
+    """
+
+    dataset = cAPI.dataset(**dataset_input)
+    fktable = load_fktable(dataset.fkspecs[0]).with_cuts(dataset.cuts)
+
+    # keep only flavours 1 and 2
+    flavour_indices = [1, 2]
+
+    # Without masking
+    assert_allclose(mask_fktable_array(fktable), jnp.array(fktable.get_np_fktable()))
+
+    # With masking
+    masked_fktable = mask_fktable_array(fktable, flavour_indices)
+
+    if fktable.hadronic:
+        np_fktable = fktable.get_np_fktable()
+        luminosity_mapping = fktable.luminosity_mapping
+
+        mask_even = jnp.isin(luminosity_mapping[0::2], jnp.array(flavour_indices))
+        mask_odd = jnp.isin(luminosity_mapping[1::2], jnp.array(flavour_indices))
+        fk_arr_mask = mask_even * mask_odd
+
+        expected_fktable = np_fktable[:, fk_arr_mask, :, :]
+
+    else:
+        np_fktable = fktable.get_np_fktable()
+        lumi_indices = fktable.luminosity_mapping
+        fk_arr_mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
+        expected_fktable = np_fktable[:, fk_arr_mask, :]
+
+    assert_allclose(masked_fktable, jnp.array(expected_fktable))
+
+
+@pytest.mark.parametrize("dataset_input", [TEST_DATASET_HAD, TEST_DATASET])
+def test_mask_luminosity_mapping(dataset_input):
+    """
+    Test that masking of luminosity mapping works as expected.
+    """
+    dataset = cAPI.dataset(**dataset_input)
+    fktable = load_fktable(dataset.fkspecs[0]).with_cuts(dataset.cuts)
+
+    # keep only flavours 1 and 2
+    flavour_indices = [1, 2]
+
+    # Without masking
+    assert_allclose(
+        mask_luminosity_mapping(fktable), jnp.array(fktable.luminosity_mapping)
+    )
+
+    # With masking
+    masked_luminosity_mapping = mask_luminosity_mapping(fktable, flavour_indices)
+
+    if fktable.hadronic:
+        lumi_indices = fktable.luminosity_mapping
+        mask_even = jnp.isin(lumi_indices[0::2], jnp.array(flavour_indices))
+        mask_odd = jnp.isin(lumi_indices[1::2], jnp.array(flavour_indices))
+
+        # for hadronic predictions pdfs enter in pair, hence product of two
+        # boolean arrays and repeat by 2
+        mask = jnp.repeat(mask_even * mask_odd, repeats=2)
+        lumi_indices = lumi_indices[mask]
+
+    else:
+        lumi_indices = fktable.luminosity_mapping
+        mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
+        lumi_indices = lumi_indices[mask]
+
+    assert_allclose(masked_luminosity_mapping, lumi_indices)
+
+
+def test_likelihood_float_type(
+    tmp_path,
+):
+
+    _pred_data = lambda x: jnp.ones(
+        len(MOCK_CENTRAL_INV_COVMAT_INDEX.central_values)
+    )  # Mock _pred_data
+    FIT_XGRID = jnp.linspace(0, 1, 10)  # Mock FIT_XGRID
+    output_path = tmp_path
+
+    fast_kernel_arrays = jax.random.uniform(
+        jax.random.PRNGKey(0), (10,)
+    )  # Mock fast_kernel_arrays
+
+    # Call the function under test
+    likelihood_float_type(
+        _pred_data=_pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        FIT_XGRID=FIT_XGRID,
+        bayesian_prior=mock_bayesian_prior,
+        output_path=output_path,
+        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        fast_kernel_arrays=fast_kernel_arrays,
+    )
+
+    # Assert that the dtype.txt file was created with correct dtype
+    assert os.path.exists(tmp_path / "dtype.txt")

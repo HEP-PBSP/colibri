@@ -47,6 +47,8 @@ def monte_carlo_fit(
     _chi2_training_data_with_positivity,
     _chi2_validation_data_with_positivity,
     _pred_data,
+    fast_kernel_arrays,
+    positivity_fast_kernel_arrays,
     len_trval_data,
     pdf_model,
     mc_initial_parameters,
@@ -120,24 +122,57 @@ def monte_carlo_fit(
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     @jax.jit
-    def loss_training(parameters, batch_idx):
-        predictions, pdf = pred_and_pdf(parameters)
+    def loss_training(
+        parameters,
+        batch_idx,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        alpha,
+        lambda_positivity,
+    ):
+        predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
 
         return _chi2_training_data_with_positivity(
-            predictions, pdf, batch_idx, alpha, lambda_positivity
+            predictions,
+            pdf,
+            batch_idx,
+            alpha,
+            lambda_positivity,
+            positivity_fast_kernel_arrays,
         )
 
     @jax.jit
-    def loss_validation(parameters):
-        predictions, pdf = pred_and_pdf(parameters)
+    def loss_validation(
+        parameters,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        alpha,
+        lambda_positivity,
+    ):
+        predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
 
         return _chi2_validation_data_with_positivity(
-            predictions, pdf, alpha, lambda_positivity
+            predictions, pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
         )
 
     @jax.jit
-    def step(params, opt_state, batch_idx):
-        loss_value, grads = jax.value_and_grad(loss_training)(params, batch_idx)
+    def step(
+        params,
+        opt_state,
+        batch_idx,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        alpha,
+        lambda_positivity,
+    ):
+        loss_value, grads = jax.value_and_grad(loss_training)(
+            params,
+            batch_idx,
+            fast_kernel_arrays,
+            positivity_fast_kernel_arrays,
+            alpha,
+            lambda_positivity,
+        )
         updates, opt_state = optimizer_provider.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
         return params, opt_state, loss_value
@@ -169,11 +204,38 @@ def monte_carlo_fit(
         for _ in range(num_batches):
             batch = next(batches)
 
-            parameters, opt_state, loss_value = step(parameters, opt_state, batch)
+            parameters, opt_state, loss_value = step(
+                parameters,
+                opt_state,
+                batch,
+                fast_kernel_arrays,
+                positivity_fast_kernel_arrays,
+                alpha,
+                lambda_positivity,
+            )
 
-            epoch_loss += loss_training(parameters, batch) / batch_size
+            epoch_loss += (
+                loss_training(
+                    parameters,
+                    batch,
+                    fast_kernel_arrays,
+                    positivity_fast_kernel_arrays,
+                    alpha,
+                    lambda_positivity,
+                )
+                / batch_size
+            )
 
-        epoch_val_loss += loss_validation(parameters) / len_val_idx
+        epoch_val_loss += (
+            loss_validation(
+                parameters,
+                fast_kernel_arrays,
+                positivity_fast_kernel_arrays,
+                alpha,
+                lambda_positivity,
+            )
+            / len_val_idx
+        )
         epoch_loss /= num_batches
 
         early_stopper = early_stopper.update(epoch_val_loss)

@@ -8,7 +8,6 @@ This module implements an abstract class PDFModel which is filled by the various
 from abc import ABC, abstractmethod
 from typing import Callable, Tuple
 import jax.numpy as jnp
-import jax
 
 
 class PDFModel(ABC):
@@ -40,11 +39,26 @@ class PDFModel(ABC):
         The forward_map is a function that takes in the PDF defined on the
         xgrid grid. They must therefore be compatible.
         """
+        pdf_func = self.grid_values_func(xgrid)
 
-        @jax.jit
-        def pred_and_pdf(params):
-            pdf = self.grid_values_func(xgrid)(params)
-            predictions = forward_map(pdf)
+        def pred_and_pdf(params, fast_kernel_arrays):
+            """
+            Parameters
+            ----------
+            params: jnp.array
+                The model parameters.
+
+            fast_kernel_arrays: tuple
+                tuple of tuples of jnp.arrays
+                The FK tables to use.
+
+            Returns
+            -------
+            tuple
+                The predictions and the PDF values.
+            """
+            pdf = pdf_func(params)
+            predictions = forward_map(pdf, fast_kernel_arrays)
             return predictions, pdf
 
         return pred_and_pdf

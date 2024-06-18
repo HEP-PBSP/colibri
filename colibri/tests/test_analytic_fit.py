@@ -5,9 +5,9 @@ from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 import logging
 import pytest
 
-mock_central_covmat_index = Mock()
-mock_central_covmat_index.central_values = jnp.ones(2)
-mock_central_covmat_index.covmat = jnp.eye(2)
+mock_central_inv_covmat_index = Mock()
+mock_central_inv_covmat_index.central_values = jnp.ones(2)
+mock_central_inv_covmat_index.inv_covmat = jnp.eye(2)
 
 analytic_settings = {
     "sampling_seed": 123,
@@ -37,7 +37,7 @@ def test_analytic_fit_flat_direction():
     with pytest.raises(ValueError):
         # Run the analytic fit and make sure that the Value Error is raised
         analytic_fit(
-            mock_central_covmat_index,
+            mock_central_inv_covmat_index,
             _pred_data,
             mock_pdf_model,
             analytic_settings,
@@ -61,7 +61,7 @@ def test_analytic_fit(caplog):
 
     # Run the analytic fit
     result = analytic_fit(
-        mock_central_covmat_index,
+        mock_central_inv_covmat_index,
         _pred_data,
         mock_pdf_model,
         analytic_settings,
@@ -82,7 +82,7 @@ def test_analytic_fit(caplog):
     # Run the analytic fit
     with caplog.at_level(logging.ERROR):  # Set the log level to ERROR
         result_2 = analytic_fit(
-            mock_central_covmat_index,
+            mock_central_inv_covmat_index,
             _pred_data,
             mock_pdf_model,
             analytic_settings,

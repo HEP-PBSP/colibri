@@ -7,7 +7,6 @@ This module provides the functions necessary for the computation of the chi2 for
 Date: 17.01.2024
 """
 
-import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
@@ -41,7 +40,6 @@ def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix):
     central_values = mc_pseudodata.pseudodata[tr_idx]
     covmat = fit_covariance_matrix[tr_idx][:, tr_idx]
 
-    @jax.jit
     def chi2(predictions, batch_idx):
         """
         Parameters
@@ -110,8 +108,14 @@ def make_chi2_training_data_with_positivity(
 
     posdata_training_idx = mc_posdata_split.training
 
-    @jax.jit
-    def chi2(predictions, pdf, batch_idx, alpha, lambda_positivity):
+    def chi2(
+        predictions,
+        pdf,
+        batch_idx,
+        alpha,
+        lambda_positivity,
+        positivity_fast_kernel_arrays,
+    ):
         """
         Parameters
         ----------
@@ -143,9 +147,9 @@ def make_chi2_training_data_with_positivity(
         loss = jnp.sum(chi2_vec**2)
 
         # add penalty term due to positivity
-        pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
-            posdata_training_idx
-        ]
+        pos_penalty = _penalty_posdata(
+            pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
+        )[posdata_training_idx]
         loss += jnp.sum(pos_penalty)
 
         return loss
@@ -182,7 +186,6 @@ def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix):
     # decompose covmat
     sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
 
-    @jax.jit
     def chi2(predictions):
         """ """
         diff = predictions[val_idx] - central_values
@@ -226,7 +229,9 @@ def make_chi2_validation_data_with_positivity(
         function to compute chi2 of a pdf grid on validation data.
     """
     if not mc_pseudodata.trval_split:
-        return lambda predictions, pdf, alpha, lambda_positivity: jnp.nan
+        return (
+            lambda predictions, pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays: jnp.nan
+        )
 
     val_idx = mc_pseudodata.validation_indices
     central_values = mc_pseudodata.pseudodata[val_idx]
@@ -236,8 +241,7 @@ def make_chi2_validation_data_with_positivity(
     # decompose covmat
     sqrt_covmat = jnp.array(sqrt_covmat_jax(covmat))
 
-    @jax.jit
-    def chi2(predictions, pdf, alpha, lambda_positivity):
+    def chi2(predictions, pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays):
         """ """
         diff = predictions[val_idx] - central_values
 
@@ -246,9 +250,9 @@ def make_chi2_validation_data_with_positivity(
         loss = jnp.sum(chi2_vec**2)
 
         # add penalty term due to positivity
-        pos_penalty = _penalty_posdata(pdf, alpha, lambda_positivity)[
-            posdata_validation_idx
-        ]
+        pos_penalty = _penalty_posdata(
+            pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
+        )[posdata_validation_idx]
         loss += jnp.sum(pos_penalty)
 
         return loss
