@@ -3,7 +3,6 @@ colibri.covmats.py
 
 Module containing covariance matrices functions.
 
-Author: Mark N. Costantini 
 Notes: Several functions are taken from validphys.covmats
 Date: 11.11.2023
 """
