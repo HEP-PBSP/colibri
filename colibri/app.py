@@ -66,10 +66,14 @@ class colibriApp(App):
         )
 
         parser.add_argument(
-            "-f32",
-            "--float32",
+            "-dtype",
+            "--float_type",
+            type=str,
+            default=None,
             action="store_true",
-            help="Use float32 precision for the computation",
+            help="The float type to use for the computations. \
+                Accepted values are float32, float64, bfloat16. \
+                Example of usage: --float_type float32",
         )
 
         return parser

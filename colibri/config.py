@@ -29,6 +29,8 @@ rank = comm.Get_rank()
 
 log = logging.getLogger(__name__)
 
+ACCEPTED_FLOAT_TYPES = [None, "float64", "float32", "bfloat16"]
+
 
 class EnvironmentError_(Exception):
     pass
@@ -36,20 +38,25 @@ class EnvironmentError_(Exception):
 
 class Environment(Environment):
     def __init__(
-        self, replica_index=None, trval_index=0, float32=False, *args, **kwargs
+        self, replica_index=None, trval_index=0, float_type=None, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
         self.replica_index = replica_index
         self.trval_index = trval_index
-        self.float32 = float32
+        self.float_type = float_type
 
-        if self.float32:
-            log.info("Using float32 precision")
+        if self.float_type not in ACCEPTED_FLOAT_TYPES:
+            raise ValueError(
+                f"float_type must be either 'float64', 'float32' or 'bfloat16', got {float_type}"
+            )
+        if self.float_type in ["float32", "bfloat16"]:
+            log.info(f"Using {float_type} precision")
             log.warning(
-                "If running with ultranest, only SliceSampler is supported with float32 precision."
+                f"If running with ultranest, only SliceSampler is supported with {float_type} precision."
             )
             jax.config.update("jax_enable_x64", False)
+
         else:
             log.info("Using float64 precision")
             jax.config.update("jax_enable_x64", True)
@@ -59,6 +66,7 @@ class Environment(Environment):
         return {
             "replica_index": "The MC replica index",
             "trval_index": "The Training/Validation split index",
+            "float_type": "The float precision used in the fit",
             **super().ns_dump_description(),
         }
 
