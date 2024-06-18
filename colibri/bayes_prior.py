@@ -9,7 +9,7 @@ from colibri.checks import check_pdf_models_equal
 
 
 @check_pdf_models_equal
-def bayesian_prior(prior_settings):
+def bayesian_prior(prior_settings, float_type=None):
     """
     Produces a prior transform function.
 
@@ -17,6 +17,8 @@ def bayesian_prior(prior_settings):
     ----------
     prior_settings: dict
         The settings for the prior transform.
+
+    float_type: dtype, default=None
 
     Returns
     -------
@@ -29,7 +31,7 @@ def bayesian_prior(prior_settings):
 
         @jax.jit
         def prior_transform(cube):
-            return cube * (max_val - min_val) + min_val
+            return jnp.array(cube * (max_val - min_val) + min_val, dtype=float_type)
 
     elif prior_settings["type"] == "prior_from_gauss_posterior":
         prior_fit = prior_settings["prior_fit"]
@@ -47,8 +49,10 @@ def bayesian_prior(prior_settings):
         def prior_transform(cube):
             # generate independent gaussian with mean 0 and std 1
             independent_gaussian = jax.scipy.stats.norm.ppf(cube)
-            return mean_posterior + jnp.einsum(
-                "ij,...j->...i", sqrt_cov_posterior, independent_gaussian
+            return jnp.array(
+                mean_posterior
+                + jnp.einsum("ij,...j->...i", sqrt_cov_posterior, independent_gaussian),
+                dtype=float_type,
             )
 
     else:
