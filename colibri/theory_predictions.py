@@ -16,7 +16,7 @@ from colibri.utils import mask_fktable_array, mask_luminosity_mapping
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 
-def fast_kernel_arrays(data, flavour_indices=None):
+def fast_kernel_arrays(data, flavour_indices=None, float_type=None):
     """
     Returns a tuple of tuples of jax.numpy arrays.
 
@@ -30,6 +30,8 @@ def fast_kernel_arrays(data, flavour_indices=None):
         of flavours. The list must contain the flavour indices.
         The indices correspond to the flavours in convolution.FK_FLAVOURS
         e.g.: [1,2] -> ['\\Sigma', 'g']
+
+    float_type: type, default is None
 
     Returns
     -------
@@ -45,7 +47,7 @@ def fast_kernel_arrays(data, flavour_indices=None):
             fk = load_fktable(fkspec).with_cuts(ds.cuts)
 
             # get FK-array with masked flavours
-            fk_arr = mask_fktable_array(fk, flavour_indices)
+            fk_arr = mask_fktable_array(fk, flavour_indices, float_type=float_type)
 
             fk_dataset_arr.append(fk_arr)
         fk_arrays.append(tuple(fk_dataset_arr))
@@ -53,7 +55,7 @@ def fast_kernel_arrays(data, flavour_indices=None):
     return tuple(fk_arrays)
 
 
-def positivity_fast_kernel_arrays(posdatasets, flavour_indices=None):
+def positivity_fast_kernel_arrays(posdatasets, flavour_indices=None, float_type=None):
     """
     Similar to fast_kernel_arrays but for Positivity datasets.
     """
@@ -66,7 +68,7 @@ def positivity_fast_kernel_arrays(posdatasets, flavour_indices=None):
             fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
 
             # get FK-array with masked flavours
-            fk_arr = mask_fktable_array(fk, flavour_indices)
+            fk_arr = mask_fktable_array(fk, flavour_indices, float_type=float_type)
 
             fk_dataset_arr.append(fk_arr)
         pos_fk_arrays.append(tuple(fk_dataset_arr))
@@ -315,7 +317,9 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None):
     return eval_preds
 
 
-def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
+def make_penalty_posdataset(
+    posdataset, FIT_XGRID, flavour_indices=None, float_type=None
+):
     """
     Given a PositivitySetSpec compute the positivity penalty
     as a lagrange multiplier times elu of minus the theory prediction
@@ -328,7 +332,9 @@ def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
 
-    vectorized: bool, default is False
+    flavour_indices: list, default is None
+
+    float_type: type, default is None
 
     Returns
     -------
@@ -358,17 +364,21 @@ def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
         pred_funcs.append(pred)
 
     def pos_penalty(pdf, alpha, lambda_positivity, fk_dataset):
-        return lambda_positivity * jax.nn.elu(
-            -OP[posdataset.op](
-                *[f(pdf, fk_arr) for (f, fk_arr) in zip(pred_funcs, fk_dataset)]
+        return jnp.array(
+            lambda_positivity
+            * jax.nn.elu(
+                -OP[posdataset.op](
+                    *[f(pdf, fk_arr) for (f, fk_arr) in zip(pred_funcs, fk_dataset)]
+                ),
+                alpha,
             ),
-            alpha,
+            dtype=float_type,
         )
 
     return pos_penalty
 
 
-def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
+def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None, float_type=None):
     """
     Compute positivity penalty for list of PositivitySetSpec
 
@@ -381,7 +391,9 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
 
-    vectorized: bool, default is False
+    flavour_indices: list, default is None
+
+    float_type: type, default is None
 
     Returns
     -------
@@ -393,7 +405,7 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
 
     for posdataset in posdatasets:
         predictions.append(
-            make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices)
+            make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices, float_type)
         )
 
     def pos_penalties(pdf, alpha, lambda_positivity, fast_kernel_arrays):
