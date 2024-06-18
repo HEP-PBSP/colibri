@@ -24,7 +24,7 @@ from validphys import convolution
 log = logging.getLogger(__name__)
 
 
-def mask_fktable_array(fktable, flavour_indices=None):
+def mask_fktable_array(fktable, flavour_indices=None, float_type=None):
     """
     Takes an FKTableData instance and returns an FK table array with masked flavours.
 
@@ -36,6 +36,10 @@ def mask_fktable_array(fktable, flavour_indices=None):
         The indices of the flavours to keep.
         If None, returns the original FKTableData.get_np_fktable() array with no masking.
 
+    float_type: type, default is None
+        The type to cast the FK table array to.
+        When None dtype is float32.
+
     Returns
     -------
     jnp.array
@@ -43,7 +47,7 @@ def mask_fktable_array(fktable, flavour_indices=None):
     """
 
     if flavour_indices is None:
-        return jnp.array(fktable.get_np_fktable())
+        return jnp.array(fktable.get_np_fktable(), dtype=float_type)
 
     if fktable.hadronic:
         lumi_indices = fktable.luminosity_mapping
@@ -52,13 +56,15 @@ def mask_fktable_array(fktable, flavour_indices=None):
 
         fk_arr_mask = mask_even * mask_odd
 
-        return jnp.array(fktable.get_np_fktable()[:, fk_arr_mask, :, :])
+        return jnp.array(
+            fktable.get_np_fktable()[:, fk_arr_mask, :, :], dtype=float_type
+        )
 
     else:
         lumi_indices = fktable.luminosity_mapping
         fk_arr_mask = jnp.isin(lumi_indices, jnp.array(flavour_indices))
 
-        return jnp.array(fktable.get_np_fktable()[:, fk_arr_mask, :])
+        return jnp.array(fktable.get_np_fktable()[:, fk_arr_mask, :], dtype=float_type)
 
 
 def mask_luminosity_mapping(fktable, flavour_indices=None):
@@ -77,6 +83,7 @@ def mask_luminosity_mapping(fktable, flavour_indices=None):
     -------
     jnp.array
         The luminosity mapping with masked flavours.
+        Array of integers.
     """
 
     if flavour_indices is None:
@@ -102,7 +109,7 @@ def mask_luminosity_mapping(fktable, flavour_indices=None):
         return lumi_indices
 
 
-def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
+def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65, float_type=None):
     """
     Computes the t0 pdf grid in the evolution basis.
 
@@ -116,6 +123,8 @@ def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
 
     Q0: float, default is 1.65
 
+    float_type: type, default is None
+
     Returns
     -------
     t0grid: jnp.array
@@ -125,12 +134,13 @@ def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
     t0grid = jnp.array(
         convolution.evolution.grid_values(
             t0pdfset, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
-        ).squeeze(-1)
+        ).squeeze(-1),
+        dtype=float_type,
     )
     return t0grid
 
 
-def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65):
+def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65, float_type=None):
     """
     Computes the closure_test_pdf grid in the evolution basis.
 
@@ -144,6 +154,8 @@ def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65):
 
     Q0: float, default is 1.65
 
+    float_type: type, default is None
+
     Returns
     -------
     grid: jnp.array
@@ -153,7 +165,8 @@ def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65):
     grid = jnp.array(
         convolution.evolution.grid_values(
             closure_test_pdf, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
-        ).squeeze(-1)
+        ).squeeze(-1),
+        dtype=float_type,
     )
     return grid
 
