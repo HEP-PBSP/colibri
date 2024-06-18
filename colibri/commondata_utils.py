@@ -10,7 +10,6 @@ from dataclasses import dataclass, asdict
 import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
-from validphys.fkparser import load_fktable
 
 from colibri.theory_predictions import make_pred_dataset
 
