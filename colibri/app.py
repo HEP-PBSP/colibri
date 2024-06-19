@@ -70,7 +70,6 @@ class colibriApp(App):
             "--float_type",
             type=str,
             default=None,
-            action="store_true",
             help="The float type to use for the computations. \
                 Accepted values are float32, float64, bfloat16. \
                 Example of usage: --float_type float32",
