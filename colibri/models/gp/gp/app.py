@@ -14,12 +14,12 @@ gp_providers = [
 ]
 
 
-class GridPdfApp(colibriApp):
+class GpPdfApp(colibriApp):
     config_class = GPConfig
 
 
 def main():
-    a = GridPdfApp(name="gp", providers=gp_providers)
+    a = GpPdfApp(name="gp", providers=gp_providers)
     a.main()
 
 
