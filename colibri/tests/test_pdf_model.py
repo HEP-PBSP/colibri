@@ -30,6 +30,18 @@ def test_grid_values_func():
     assert_array_equal(func(params), expected_output)
 
 
+def test_grid_extrapolation_func():
+    """
+    Tests that the grid_values_func returns the correct values.
+    """
+    func = model.grid_extrapolation_func(TEST_XGRID)
+    params = jnp.array([2, 3])
+
+    expected_output = jnp.array([5, 5])
+
+    assert_array_equal(func(params), expected_output)
+
+
 def test_pred_and_pdf_func():
     """
     Tests that the pred_and_pdf_func returns the correct values.
