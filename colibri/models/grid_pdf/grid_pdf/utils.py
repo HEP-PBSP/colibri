@@ -20,6 +20,7 @@ def closure_test_central_pdf_grid(
     pdf_model,
     FIT_XGRID,
     reduced_xgrid_data=False,
+    float_type=None,
 ):
     """
     Computes the central member of the closure_test_pdf grid in the
@@ -44,6 +45,7 @@ def closure_test_central_pdf_grid(
         When True the closure_test_central_pdf_grid is overriden.
         When False the closure_test_pdf_grid from colibri.utils is used.
 
+    float_type: type, default is None
 
     Returns
     -------
@@ -53,11 +55,11 @@ def closure_test_central_pdf_grid(
 
     if not reduced_xgrid_data:
         return colibri.utils.closure_test_pdf_grid(
-            closure_test_pdf, FIT_XGRID, Q0=1.65
+            closure_test_pdf, FIT_XGRID, Q0=1.65, float_type=float_type
         )[0]
 
     # Obtain the PDF values as parameters, then use the model interpolation function
-    interpolator = pdf_model.grid_values_func(FIT_XGRID)
+    interpolator = pdf_model.grid_values_func(FIT_XGRID, float_type=float_type)
 
     parameters = []
     for fl in pdf_model.xgrids.keys():
@@ -74,10 +76,10 @@ def closure_test_central_pdf_grid(
     parameters = jnp.concatenate(parameters)
     reduced_pdfgrid = interpolator(parameters)
 
-    return reduced_pdfgrid
+    return jnp.array(reduced_pdfgrid, dtype=float_type)
 
 
-def pdf_prior_grid(prior_settings, pdf_model):
+def pdf_prior_grid(prior_settings, pdf_model, float_type=None):
     """
     Load the replicas grid for the Bayesian prior.
     """
@@ -94,10 +96,10 @@ def pdf_prior_grid(prior_settings, pdf_model):
         axis=2,
     )
 
-    return replicas_grid
+    return jnp.array(replicas_grid, dtype=float_type)
 
 
-def bayesian_prior(prior_settings, pdf_model):
+def bayesian_prior(prior_settings, pdf_model, float_type=None):
     """
     Produces the Bayesian prior for a grid_pdf fit. The options for the
     prior are given in prior_settings, which is a dictionary with required
@@ -121,7 +123,7 @@ def bayesian_prior(prior_settings, pdf_model):
 
     if prior_settings["type"] == "uniform_pdf_prior":
         nsigma = prior_settings["nsigma"]
-        pdf_grid = pdf_prior_grid(prior_settings, pdf_model)
+        pdf_grid = pdf_prior_grid(prior_settings, pdf_model, float_type=float_type)
 
         # Remove central replica
         replicas_grid = pdf_grid[1:, :, :, :]
@@ -138,10 +140,10 @@ def bayesian_prior(prior_settings, pdf_model):
         @jax.jit
         def prior_transform(cube):
             params = error_down + (error_up - error_down) * cube
-            return params
+            return jnp.array(params, dtype=float_type)
 
     elif prior_settings["type"] == "gaussian_pdf_prior":
-        pdf_grid = pdf_prior_grid(prior_settings, pdf_model)
+        pdf_grid = pdf_prior_grid(prior_settings, pdf_model, float_type=float_type)
 
         central_prior_grid = pdf_grid[0, :, :, :].squeeze()
         # Remove central replica
@@ -173,10 +175,10 @@ def bayesian_prior(prior_settings, pdf_model):
                 "ij,kj->ki", independent_gaussian.T, cholesky_pdf_covmat
             ).squeeze(-1)
 
-            return prior
+            return jnp.array(prior, dtype=float_type)
 
     else:
-        return colibri.bayes_prior.bayesian_prior(prior_settings)
+        return colibri.bayes_prior.bayesian_prior(prior_settings, float_type=float_type)
 
     return prior_transform
 
