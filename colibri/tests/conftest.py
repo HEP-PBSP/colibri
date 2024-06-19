@@ -338,7 +338,7 @@ class TestPDFModel(PDFModel):
     def param_names(self):
         return [f"w_{i+1}" for i in range(self.n_parameters)]
 
-    def grid_values_func(self, xgrid):
+    def grid_values_func(self, xgrid, float_type=None):
         """
         This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
@@ -358,10 +358,12 @@ Mock PDF model to be used to test functions that require a PDFModel instance.
 """
 MOCK_PDF_MODEL = Mock()
 MOCK_PDF_MODEL.param_names = ["param1", "param2"]
-MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: np.ones((14, len(xgrid)))
+MOCK_PDF_MODEL.grid_values_func = lambda xgrid, float_type: lambda params: np.ones(
+    (14, len(xgrid))
+)
 MOCK_PDF_MODEL.pred_and_pdf_func = (
-    lambda xgrid, forward_map: lambda params, fast_kernel_arrays: (
-        forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params)),
+    lambda xgrid, forward_map, float_type: lambda params, fast_kernel_arrays: (
+        forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid, float_type)(params)),
         np.ones((14, len(xgrid))),
     )
 )

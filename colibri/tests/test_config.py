@@ -8,15 +8,15 @@ import unittest
 
 def test_float32_precision_enabled():
     with mock.patch("colibri.config.jax") as mock_jax:
-        env = Environment(float32=True)
-        assert env.float32
+        env = Environment(float_type="float32")
+        assert env.float_type == "float32"
         mock_jax.config.update.assert_called_once_with("jax_enable_x64", False)
 
 
 def test_float64_precision_enabled():
     with mock.patch("colibri.config.jax") as mock_jax:
-        env = Environment(float32=False)
-        assert not env.float32
+        env = Environment(float_type="float64")
+        assert env.float_type == "float64"
         mock_jax.config.update.assert_called_once_with("jax_enable_x64", True)
 
 

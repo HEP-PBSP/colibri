@@ -231,7 +231,7 @@ def test_likelihood_global_wmin(wmin_model_settings):
     assert time_per_eval < THRESHOLD_TIME_GLOBAL
 
 
-@pytest.mark.parametrize("float_type", [64, 32])
+@pytest.mark.parametrize("float_type", [64, 32, 16])
 def test_likelihood_is_correct_type(float_type):
     """
     Tests that the likelihood is compiled with the correct float type.
@@ -251,7 +251,13 @@ def test_likelihood_is_correct_type(float_type):
         )
     elif float_type == 32:
         sp.run(
-            f"{EXE} {RUNCARD_WMIN_LIKELIHOOD_TYPE} --float32".split(),
+            f"{EXE} {RUNCARD_WMIN_LIKELIHOOD_TYPE} --float_type float32".split(),
+            cwd=regression_path,
+            check=True,
+        )
+    elif float_type == 16:
+        sp.run(
+            f"{EXE} {RUNCARD_WMIN_LIKELIHOOD_TYPE} --float_type bfloat16".split(),
             cwd=regression_path,
             check=True,
         )
@@ -259,7 +265,10 @@ def test_likelihood_is_correct_type(float_type):
     # read dtype from file and assert it is the corret one
     with open(dir_path / "dtype.txt", "r") as f:
         dtype = f.read().strip()
-        assert dtype == f"float{float_type}"
+        if float_type == 16:
+            assert dtype == "bfloat16"
+        else:
+            assert dtype == f"float{float_type}"
 
     # remove directory with results
     sp.run(f"rm -r {dir_path}".split(), check=True)
