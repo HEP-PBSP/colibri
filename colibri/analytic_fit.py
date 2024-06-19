@@ -43,6 +43,7 @@ def analytic_fit(
     analytic_settings,
     bayesian_prior,
     FIT_XGRID,
+    float_type=None,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -70,6 +71,9 @@ def analytic_fit(
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
+
+    float_type: dtype, default is None
+
     """
 
     log.warning("The prior is assumed to be flat in the parameters.")
@@ -78,7 +82,9 @@ def analytic_fit(
     )
 
     parameters = pdf_model.param_names
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(
+        FIT_XGRID, forward_map=_pred_data, float_type=float_type
+    )
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))

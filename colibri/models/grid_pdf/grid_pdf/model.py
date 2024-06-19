@@ -44,7 +44,7 @@ class GridPDFModel(PDFModel):
                 flavours += [flavour]
         return flavours
 
-    def grid_values_func(self, interpolation_grid):
+    def grid_values_func(self, interpolation_grid, float_type=None):
         """This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
         """
@@ -65,6 +65,6 @@ class GridPDFModel(PDFModel):
                 else:
                     interpolants += [jnp.array([0.0] * len(interpolation_grid))]
                 params = params[len(self.xgrids[flavour]) :]
-            return jnp.array(interpolants)
+            return jnp.array(interpolants, dtype=float_types)
 
         return interp_func
