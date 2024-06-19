@@ -60,7 +60,7 @@ def write_exportgrid(
     fit_name = str(output_path).split("/")[-1]
 
     # Create the exportgrid
-    lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+    lhapdf_interpolator = pdf_model.grid_extrapolation_func(LHAPDF_XGRID)
 
     # Rotate the grid from the evolution basis into the export grid basis
     grid_for_writing = np.array(lhapdf_interpolator(parameters))
