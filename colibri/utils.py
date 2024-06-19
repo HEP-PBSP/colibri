@@ -324,6 +324,7 @@ def likelihood_float_type(
     output_path,
     central_inv_covmat_index,
     fast_kernel_arrays,
+    float_type=None,
 ):
     """
     Writes the dtype of the likelihood function to a file.
@@ -335,7 +336,9 @@ def likelihood_float_type(
     central_values = central_inv_covmat_index.central_values
     inv_covmat = central_inv_covmat_index.inv_covmat
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(
+        FIT_XGRID, forward_map=_pred_data, float_type=float_type
+    )
 
     @jax.jit
     def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):

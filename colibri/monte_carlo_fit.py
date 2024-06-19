@@ -60,6 +60,7 @@ def monte_carlo_fit(
     batch_seed=1,
     alpha=1e-7,
     lambda_positivity=1000,
+    float_type=None,
 ):
     """
     This function performs a Monte Carlo fit.
@@ -119,7 +120,9 @@ def monte_carlo_fit(
         validation_loss: jnp.array
     """
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
+    pred_and_pdf = pdf_model.pred_and_pdf_func(
+        FIT_XGRID, forward_map=_pred_data, float_type=float_type
+    )
 
     @jax.jit
     def loss_training(

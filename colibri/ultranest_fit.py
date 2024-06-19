@@ -54,6 +54,7 @@ class UltraNestLogLikelihood(object):
         penalty_posdata,
         alpha,
         lambda_positivity,
+        float_type=None,
     ):
         """
         Parameters
@@ -88,7 +89,7 @@ class UltraNestLogLikelihood(object):
         self.alpha = alpha
         self.lambda_positivity = lambda_positivity
         self.pred_and_pdf = pdf_model.pred_and_pdf_func(
-            fit_xgrid, forward_map=forward_map
+            fit_xgrid, forward_map=forward_map, float_type=float_type
         )
         if ns_settings["ReactiveNS_settings"]["vectorized"]:
             self.pred_and_pdf = jax.vmap(
