@@ -65,6 +65,6 @@ class GridPDFModel(PDFModel):
                 else:
                     interpolants += [jnp.array([0.0] * len(interpolation_grid))]
                 params = params[len(self.xgrids[flavour]) :]
-            return jnp.array(interpolants, dtype=float_types)
+            return jnp.array(interpolants, dtype=float_type)
 
         return interp_func
