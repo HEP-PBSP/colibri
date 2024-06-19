@@ -110,10 +110,10 @@ def test_ultranest_fit():
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid, float_type: lambda params: jnp.ones(
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
         (14, len(xgrid))
     )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map, float_type: (
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
         lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
     )
     _pred_data = None
@@ -154,10 +154,10 @@ def test_ultranest_fit_with_SliceSampler():
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid, float_type: lambda params: jnp.ones(
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
         (14, len(xgrid))
     )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map, float_type: (
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
         lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
     )
     _pred_data = None
@@ -198,10 +198,10 @@ def test_ultranest_fit_with_popSliceSampler():
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid, float_type: lambda params: jnp.ones(
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
         (14, len(xgrid))
     )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map, float_type: (
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
         lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
     )
     _pred_data = None

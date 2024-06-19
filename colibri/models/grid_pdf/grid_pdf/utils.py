@@ -59,7 +59,7 @@ def closure_test_central_pdf_grid(
         )[0]
 
     # Obtain the PDF values as parameters, then use the model interpolation function
-    interpolator = pdf_model.grid_values_func(FIT_XGRID, float_type=float_type)
+    interpolator = pdf_model.grid_values_func(FIT_XGRID)
 
     parameters = []
     for fl in pdf_model.xgrids.keys():

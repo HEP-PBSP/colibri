@@ -33,15 +33,16 @@ class WMinPDF(PDFModel):
 
     name = "weight mininisation PDF model"
 
-    def __init__(self, wminpdfset, n_basis):
+    def __init__(self, wminpdfset, n_basis, float_type=None):
         self.wminpdfset = wminpdfset
         self.n_basis = n_basis
+        self.float_type = float_type
 
     @property
     def param_names(self):
         return [f"w_{i+1}" for i in range(self.n_basis)]
 
-    def grid_values_func(self, interpolation_grid, float_type=None):
+    def grid_values_func(self, interpolation_grid):
         """
         This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
@@ -66,7 +67,7 @@ class WMinPDF(PDFModel):
                 interpolation_grid,
                 [1.65],
             ).squeeze(-1),
-            dtype=float_type,
+            dtype=self.float_type,
         )
 
         if self.n_basis + 1 > input_grid.shape[0]:
@@ -95,8 +96,8 @@ class WMinPDF(PDFModel):
         def wmin_param(weights):
             weights = jnp.concatenate(
                 (
-                    jnp.array([1.0], dtype=float_type),
-                    jnp.array(weights, dtype=float_type),
+                    jnp.array([1.0], dtype=self.float_type),
+                    jnp.array(weights, dtype=self.float_type),
                 )
             )
             pdf = jnp.einsum("i,ijk", weights, wmin_input_grid)

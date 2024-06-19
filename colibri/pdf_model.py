@@ -22,14 +22,14 @@ class PDFModel(ABC):
         pass
 
     @abstractmethod
-    def grid_values_func(self, xgrid, float_type=None):
+    def grid_values_func(self, xgrid):
         """This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
         """
         pass
 
     def pred_and_pdf_func(
-        self, xgrid, forward_map, float_type=None
+        self, xgrid, forward_map
     ) -> Callable[[jnp.array], Tuple[jnp.ndarray, jnp.ndarray]]:
         """This method produces a function that returns a tuple of 2 arrays,
         taking the model parameters as input.
@@ -39,7 +39,7 @@ class PDFModel(ABC):
         The forward_map is a function that takes in the PDF defined on the
         xgrid grid. They must therefore be compatible.
         """
-        pdf_func = self.grid_values_func(xgrid, float_type=float_type)
+        pdf_func = self.grid_values_func(xgrid)
 
         def pred_and_pdf(params, fast_kernel_arrays):
             """

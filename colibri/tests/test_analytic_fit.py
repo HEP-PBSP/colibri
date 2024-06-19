@@ -25,10 +25,10 @@ def test_analytic_fit_flat_direction():
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid, float_type: lambda params: jnp.ones(
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
         (14, len(xgrid))
     )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map, float_type: (
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
         lambda params: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
     )
 
@@ -50,10 +50,10 @@ def test_analytic_fit(caplog):
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid, float_type: lambda params: jnp.ones(
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
         (14, len(xgrid))
     )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map, float_type: (
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
         lambda params: (params, jnp.ones((14, len(xgrid))))
     )
 

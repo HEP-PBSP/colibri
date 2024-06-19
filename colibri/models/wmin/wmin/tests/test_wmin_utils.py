@@ -36,7 +36,7 @@ class MockPDFModel:
     n_basis = N_MOCK_DATA
 
     @staticmethod
-    def pred_and_pdf_func(FIT_XGRID, forward_map, float_type=None):
+    def pred_and_pdf_func(FIT_XGRID, forward_map):
         def pred_and_pdf(params, fast_kernel_arrays):
             predictions = params * 2
             pdf = params * 3
