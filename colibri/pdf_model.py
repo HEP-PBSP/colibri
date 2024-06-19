@@ -28,6 +28,14 @@ class PDFModel(ABC):
         """
         pass
 
+    def grid_extrapolation_func(self, xgrid):
+        """This function should produce a grid extrapolation function, which takes
+        in the model parameters, and produces the PDF values on the grid xgrid.
+
+        Can be overwritten if the model has a different extrapolation function.
+        """
+        return self.grid_values_func(xgrid)
+
     def pred_and_pdf_func(
         self, xgrid, forward_map
     ) -> Callable[[jnp.array], Tuple[jnp.ndarray, jnp.ndarray]]:
