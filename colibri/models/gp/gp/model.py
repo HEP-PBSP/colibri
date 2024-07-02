@@ -6,9 +6,13 @@ The Gaussian process model.
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from colibri.pdf_model import PDFModel
-from colibri.constants import XGRID
+from colibri.constants import FLAVOUR_TO_ID_MAPPING
+import time
+from validphys import convolution
+from gp.utils import gibbs_kernel
 
 
 class GpPDFModel(PDFModel):
@@ -20,17 +24,21 @@ class GpPDFModel(PDFModel):
 
     """
 
-    gp_xgrid: list = XGRID
+    fit_xgrid: list
     fitted_flavours: list
     param_names: list
     gp_hyperparams_settings: dict
+    prior_settings: dict
 
     name = "Gaussian process PDF model"
 
-    def __init__(self, gp_xgrid, fitted_flavours, gp_hyperparams_settings):
-        self.gp_xgrid = gp_xgrid
+    def __init__(
+        self, fit_xgrid, fitted_flavours, gp_hyperparams_settings, prior_settings
+    ):
+        self.fit_xgrid = fit_xgrid
         self.fitted_flavours = fitted_flavours
         self.gp_hyperparams_settings = gp_hyperparams_settings
+        self.prior_settings = prior_settings
 
     @property
     def param_names(self) -> list[str]:
@@ -50,8 +58,8 @@ class GpPDFModel(PDFModel):
             raise AttributeError(
                 "The model is missing the 'fitted_flavours' attribute."
             )
-        if not hasattr(self, "gp_xgrid"):
-            raise AttributeError("The model is missing the 'xgrid' attribute.")
+        if not hasattr(self, "fit_xgrid"):
+            raise AttributeError("The model is missing the 'fit_xgrid' attribute.")
         if not hasattr(self, "gp_hyperparams_settings"):
             raise AttributeError(
                 "The model is missing the 'gp_hyperparams_settings' attribute."
@@ -59,7 +67,7 @@ class GpPDFModel(PDFModel):
 
         # Generate parameter names for the grid values
         parameter_names.extend(
-            f"{fl}({x})" for fl in self.fitted_flavours for x in self.gp_xgrid
+            f"{fl}({x})" for fl in self.fitted_flavours for x in self.fit_xgrid
         )
 
         # Generate parameter names for the GP hyperparameters
@@ -80,7 +88,7 @@ class GpPDFModel(PDFModel):
         This does not include the GP hyperparameters.
         """
         # each flavour has the same number of parameters as the grid
-        return int(len(self.fitted_flavours) * len(self.gp_xgrid))
+        return int(len(self.fitted_flavours) * len(self.fit_xgrid))
 
     @property
     def n_hyperparameters(self):
@@ -92,27 +100,115 @@ class GpPDFModel(PDFModel):
             n_hyperparams += len(hyperparams)
         return n_hyperparams
 
-    def grid_values_func(self, gp_xgrid):
+    def grid_values_func(self, xgrid):
         """This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
         """
+        if (len(xgrid) != len(self.fit_xgrid)) or (
+            not jnp.allclose(jnp.array(xgrid), self.fit_xgrid)
+        ):
 
-        @jax.jit
-        def pdf_func(params):
-            """
-            Parameters
-            ----------
-            pdf_grid: jnp.array
-                The PDF grid values, with shape (Nfl, Nx)
-            """
-            # split pdf_grid parameters from GP hyperparameters
-            pdf_grid, _ = jnp.split(params, [self.n_parameters])
+            if type(xgrid) == list:
+                xgrid = jnp.array(xgrid)
 
-            # reshape pdf_grid to (Nfl, Nx)
-            pdf_grid = pdf_grid.reshape(
-                len(self.fitted_flavours),
-                int(len(pdf_grid) / len(self.fitted_flavours)),
-            )
-            return pdf_grid
+            def pdf_func(params):
+                """
+                Does the conditioning of the GP on the grid values.
+
+                Parameters
+                ----------
+                params: jnp.array
+                    The model parameters.
+                """
+
+                # split pdf_grid parameters from GP hyperparameters
+                pdf_grid, hyperparameters = jnp.split(params, [self.n_parameters])
+
+                # compute the kernel on the training grid
+                training_kernel = self.gp_kernel(
+                    hyperparameters, self.fit_xgrid, self.fit_xgrid, self.prior_settings
+                )
+
+                # compute the kernel on the test grid
+                test_kernel = self.gp_kernel(
+                    hyperparameters, xgrid, xgrid, self.prior_settings
+                )
+
+                # compute covariance between training and test grid
+                cross_kernel = self.gp_kernel(
+                    hyperparameters, self.fit_xgrid, xgrid, self.prior_settings
+                )
+
+                # compute the inverse of the training kernel
+                training_kernel_inv = jnp.linalg.inv(training_kernel)
+
+                # compute the mean of the GP
+                mean_gp = self.gp_mean(
+                    hyperparameters, xgrid, self.prior_settings
+                ) + jnp.dot(
+                    cross_kernel.T,
+                    jnp.dot(
+                        training_kernel_inv,
+                        pdf_grid
+                        - self.gp_mean(
+                            hyperparameters, self.fit_xgrid, self.prior_settings
+                        ),
+                    ),
+                )
+
+                # compute the covariance of the GP
+                cov_gp = test_kernel - jnp.dot(
+                    cross_kernel.T, jnp.dot(training_kernel_inv, cross_kernel)
+                )
+
+                # generate random key with seed that depends on current time
+                seed = int(time.time() * 1e9)
+                key = jax.random.PRNGKey(seed)
+
+                # sample from the GP
+                # note: need to use svd method for numerical stability (cholesky can fail because of numerical negative zeros)
+                pdf_grid = jax.random.multivariate_normal(
+                    key=key, mean=mean_gp, cov=cov_gp, method="svd"
+                )
+
+                lhapdf_grid = np.zeros((len(convolution.FK_FLAVOURS), len(xgrid)))
+
+                for flavour in convolution.FK_FLAVOURS:
+                    if flavour in self.fitted_flavours:
+                        flavour_idx = FLAVOUR_TO_ID_MAPPING[flavour]
+                        # does not work when fitting more than one flavour
+                        lhapdf_grid[flavour_idx] = pdf_grid
+
+                return lhapdf_grid
+
+        else:
+
+            @jax.jit
+            def pdf_func(params):
+                """
+                Parameters
+                ----------
+                pdf_grid: jnp.array
+                    The PDF grid values, with shape (Nfl, Nx)
+                """
+                # split pdf_grid parameters from GP hyperparameters
+                pdf_grid, _ = jnp.split(params, [self.n_parameters])
+
+                # reshape pdf_grid to (Nfl, Nx)
+                pdf_grid = pdf_grid.reshape(
+                    len(self.fitted_flavours),
+                    int(len(pdf_grid) / len(self.fitted_flavours)),
+                )
+                return pdf_grid
 
         return pdf_func
+
+    def gp_kernel(self, hyperparameters, xgrid1, xgrid2, prior_settings):
+        """ """
+        if prior_settings["type"] == "gibbs_kernel_prior":
+            return gibbs_kernel(hyperparameters, xgrid1, xgrid2)
+
+    def gp_mean(self, hyperparameters, xgrid, prior_settings):
+        """ """
+        if prior_settings["type"] == "gibbs_kernel_prior":
+            return jnp.zeros(len(xgrid))
