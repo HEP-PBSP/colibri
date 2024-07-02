@@ -111,6 +111,15 @@ class GpPDFModel(PDFModel):
             if type(xgrid) == list:
                 xgrid = jnp.array(xgrid)
 
+            # remove points that are already in the training grid
+            common_xgrid_mask = jnp.isin(xgrid, self.fit_xgrid)
+            common_xgrid_idx = jnp.where(common_xgrid_mask)[0]
+            common_fit_xgrid_idx = jnp.where(
+                self.fit_xgrid == xgrid[common_xgrid_mask]
+            )[0]
+
+            xgrid = xgrid[~common_xgrid_mask]
+
             def pdf_func(params):
                 """
                 Does the conditioning of the GP on the grid values.
@@ -171,7 +180,12 @@ class GpPDFModel(PDFModel):
                     key=key, mean=mean_gp, cov=cov_gp, method="svd"
                 )
 
-                lhapdf_grid = np.zeros((len(convolution.FK_FLAVOURS), len(xgrid)))
+                # add back the points that were already in the training grid
+                pdf_grid = jnp.insert(
+                    pdf_grid, common_xgrid_idx + 1, params[common_fit_xgrid_idx]
+                )
+
+                lhapdf_grid = np.zeros((len(convolution.FK_FLAVOURS), len(pdf_grid)))
 
                 for flavour in convolution.FK_FLAVOURS:
                     if flavour in self.fitted_flavours:
