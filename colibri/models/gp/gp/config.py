@@ -10,7 +10,6 @@ import logging
 from gp.model import GpPDFModel
 
 from colibri.config import Environment, colibriConfig
-from colibri.constants import XGRID
 from validphys import convolution
 
 log = logging.getLogger(__name__)
@@ -24,19 +23,6 @@ class GPConfig(colibriConfig):
     """
     GPConfig class Inherits from colibri.config.colibriConfig
     """
-
-    def produce_gp_xgrid(self, custom_xgrid=XGRID):
-        """
-        Produce the xgrid for the Gaussian process.
-
-        Parameters
-        ----------
-        gp_xgrid: list
-            The xgrid for the Gaussian process. Default is XGRID.
-        """
-        if custom_xgrid != XGRID:
-            log.warning("Using custom xgrid for the Gaussian process.")
-        return custom_xgrid
 
     def parse_gp_hyperparams_settings(self, gp_hyperparams_settings={}):
         """
@@ -69,12 +55,19 @@ class GPConfig(colibriConfig):
         return flavours
 
     def produce_pdf_model(
-        self, gp_xgrid, fitted_flavours, gp_hyperparams_settings, output_path
+        self,
+        FIT_XGRID,
+        fitted_flavours,
+        gp_hyperparams_settings,
+        prior_settings,
+        output_path,
     ):
         """
         Produce the PDF model for the Gaussian process fit.
         """
-        model = GpPDFModel(gp_xgrid, fitted_flavours, gp_hyperparams_settings)
+        model = GpPDFModel(
+            FIT_XGRID, fitted_flavours, gp_hyperparams_settings, prior_settings
+        )
         # dump model to output_path using dill
         # this is mainly needed by scripts/ns_resampler.py
         with open(output_path / "pdf_model.pkl", "wb") as file:
