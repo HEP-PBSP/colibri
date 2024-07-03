@@ -7,7 +7,9 @@ from wmin.utils import likelihood_time
 N_MOCK_DATA = 100
 MOCK_NAME_THEORY = "test_theory"
 
-mock_penalty_posdata = lambda pdf, alpha, lambda_positivity, fast_kernel_arrays: 0
+mock_penalty_posdata = (
+    lambda pdf, alpha, lambda_positivity, fast_kernel_arrays: jnp.array([0])
+)
 central_inv_covmat_index = Mock()
 central_inv_covmat_index.central_values = jnp.ones(N_MOCK_DATA)
 central_inv_covmat_index.inv_covmat = jnp.eye(N_MOCK_DATA)

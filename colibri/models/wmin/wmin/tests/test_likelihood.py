@@ -17,7 +17,6 @@ from colibri.tests.conftest import (
     TEST_DATASETS,
     TEST_DATASETS_DIS_HAD,
     TEST_DATASETS_HAD,
-    TEST_POS_DATASET,
 )
 from wmin.api import API as wminAPI
 from wmin.tests.wmin_conftest import (
