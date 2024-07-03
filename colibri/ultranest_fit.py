@@ -90,7 +90,6 @@ class UltraNestLogLikelihood(object):
         self.pred_and_pdf = pdf_model.pred_and_pdf_func(
             fit_xgrid, forward_map=forward_map
         )
-        self.pos_sum_axis = 0
 
         if ns_settings["ReactiveNS_settings"]["vectorized"]:
             self.pred_and_pdf = jax.vmap(
@@ -104,7 +103,6 @@ class UltraNestLogLikelihood(object):
 
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
-        self.pos_sum_axis = 1
 
     def __call__(self, params):
         """
@@ -143,7 +141,7 @@ class UltraNestLogLikelihood(object):
                     self.lambda_positivity,
                     positivity_fast_kernel_arrays,
                 ),
-                axis=self.pos_sum_axis,
+                axis=-1,
             )
         )
 
