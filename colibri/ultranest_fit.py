@@ -287,9 +287,12 @@ def ultranest_fit(
 
         # Compute bayesian metrics
         min_chi2 = -2 * ultranest_result["maximum_likelihood"]["logl"]
-        avg_chi2 = jnp.array(
-            [-2 * log_likelihood(jnp.array(sample)).item() for sample in full_samples]
-        ).mean()
+        try:
+            avg_chi2 = jnp.array(
+                [-2 * log_likelihood(jnp.array(sample)).item() for sample in full_samples]
+            ).mean()
+        except:
+            import IPython; IPython.embed()    
         Cb = avg_chi2 - min_chi2
 
         fit_result = UltranestFit(
