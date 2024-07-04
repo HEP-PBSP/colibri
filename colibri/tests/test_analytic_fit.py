@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import jax.random
 from unittest.mock import Mock, patch
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
+from colibri.tests.conftest import TEST_FK_ARRAYS
 import logging
 import pytest
 
@@ -29,7 +30,7 @@ def test_analytic_fit_flat_direction():
         (14, len(xgrid))
     )
     mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
+        lambda params, fkarrs: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
     )
 
     _pred_data = None
@@ -43,6 +44,7 @@ def test_analytic_fit_flat_direction():
             analytic_settings,
             bayesian_prior,
             FIT_XGRID,
+            TEST_FK_ARRAYS,
         )
 
 
@@ -54,7 +56,7 @@ def test_analytic_fit(caplog):
         (14, len(xgrid))
     )
     mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params: (params, jnp.ones((14, len(xgrid))))
+        lambda params, fkarrs: (params, jnp.ones((14, len(xgrid))))
     )
 
     _pred_data = None
@@ -67,6 +69,7 @@ def test_analytic_fit(caplog):
         analytic_settings,
         bayesian_prior,
         FIT_XGRID,
+        TEST_FK_ARRAYS,
     )
 
     assert isinstance(result, AnalyticFit)
@@ -88,6 +91,7 @@ def test_analytic_fit(caplog):
             analytic_settings,
             bayesian_prior,
             FIT_XGRID,
+            TEST_FK_ARRAYS,
         )
 
     # Check that an error message was logged, because the prior was not wide enough
