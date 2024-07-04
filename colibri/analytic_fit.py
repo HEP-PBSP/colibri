@@ -156,7 +156,7 @@ def analytic_fit(
 
     # Compute average chi2
     diffs = Y[:, None] - X @ full_samples.T
-    avg_chi2 = (diffs.T @ Sigma @ diffs).mean()
+    avg_chi2 = jnp.einsum("ij,jk,ki->i", diffs.T, Sigma, diffs).mean()
 
     log.info(f"Average chi2 = {avg_chi2}")
 
