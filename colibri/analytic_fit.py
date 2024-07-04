@@ -155,9 +155,9 @@ def analytic_fit(
         )
 
     # Compute average chi2
-    avg_chi2 = jnp.array(
-        [(Y - X @ sample).T @ Sigma @ (Y - X @ sample) for sample in full_samples]
-    ).mean()
+    diffs = Y[:, None] - X @ full_samples.T
+    avg_chi2 = (diffs.T @ Sigma @ diffs).mean()
+
     log.info(f"Average chi2 = {avg_chi2}")
 
     # Compute the Bayesian complexity
