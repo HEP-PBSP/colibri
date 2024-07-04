@@ -290,24 +290,14 @@ def ultranest_fit(
 
         # the log_likelihood function here should never be vectorized as the samples do not come in batches
         if ns_settings["ReactiveNS_settings"]["vectorized"]:
-            ns_settings["ReactiveNS_settings"]["vectorized"] = False
-            log_likelihood = UltraNestLogLikelihood(
-                central_inv_covmat_index,
-                pdf_model,
-                FIT_XGRID,
-                _pred_data,
-                fast_kernel_arrays,
-                positivity_fast_kernel_arrays,
-                ns_settings,
-                chi2,
-                _penalty_posdata,
-                alpha,
-                lambda_positivity,
-            )
-
-        avg_chi2 = jnp.array(
-            [-2 * log_likelihood(jnp.array(sample)).item() for sample in full_samples]
-        ).mean()
+            avg_chi2 = jnp.array([-2 * log_likelihood(full_samples)]).mean()
+        else:
+            avg_chi2 = jnp.array(
+                [
+                    -2 * log_likelihood(jnp.array(sample)).item()
+                    for sample in full_samples
+                ]
+            ).mean()
         Cb = avg_chi2 - min_chi2
 
         fit_result = UltranestFit(
