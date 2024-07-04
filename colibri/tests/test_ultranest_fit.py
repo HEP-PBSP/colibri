@@ -140,6 +140,40 @@ def test_ultranest_fit():
     assert isinstance(fit_result.ultranest_result, dict)
 
 
+def test_ultranest_fit_vectorized():
+    # Create mock pdf model
+    mock_pdf_model = Mock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
+        (14, len(xgrid))
+    )
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
+    )
+    _pred_data = None
+    ns_settings["ReactiveNS_settings"]["vectorized"] = True
+    fit_result = ultranest_fit(
+        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        _pred_data,
+        _penalty_posdata,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        mock_pdf_model,
+        bayesian_prior,
+        ns_settings,
+        FIT_XGRID,
+    )
+
+    assert isinstance(fit_result, UltranestFit)
+    assert fit_result.resampled_posterior.shape == (
+        ns_settings["n_posterior_samples"],
+        len(mock_pdf_model.param_names),
+    )
+    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.ultranest_specs == ns_settings
+    assert isinstance(fit_result.ultranest_result, dict)
+
+
 def test_ultranest_fit_with_SliceSampler():
     ns_settings = {
         "ultranest_seed": 42,
