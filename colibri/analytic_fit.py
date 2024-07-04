@@ -43,6 +43,7 @@ def analytic_fit(
     analytic_settings,
     bayesian_prior,
     FIT_XGRID,
+    fast_kernel_arrays,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -82,8 +83,8 @@ def analytic_fit(
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
-    predictions = jnp.array([pred_and_pdf(basis)[0] for basis in bases])
-    intercept = pred_and_pdf(jnp.zeros(len(parameters)))[0]
+    predictions = jnp.array([pred_and_pdf(basis, fast_kernel_arrays)[0] for basis in bases])
+    intercept = pred_and_pdf(jnp.zeros(len(parameters)), fast_kernel_arrays)[0]
 
     # Construct the analytic solution
     central_values = central_inv_covmat_index.central_values
