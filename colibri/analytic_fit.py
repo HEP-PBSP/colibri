@@ -83,7 +83,9 @@ def analytic_fit(
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
-    predictions = jnp.array([pred_and_pdf(basis, fast_kernel_arrays)[0] for basis in bases])
+    predictions = jnp.array(
+        [pred_and_pdf(basis, fast_kernel_arrays)[0] for basis in bases]
+    )
     intercept = pred_and_pdf(jnp.zeros(len(parameters)), fast_kernel_arrays)[0]
 
     # Construct the analytic solution
