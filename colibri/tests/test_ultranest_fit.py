@@ -9,6 +9,7 @@ from colibri.ultranest_fit import (
     run_ultranest_fit,
     ultranest_fit,
     UltraNestLogLikelihood,
+    log_likelihood,
 )
 from colibri.loss_functions import chi2
 from colibri.tests.conftest import (
@@ -106,6 +107,40 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
     assert MOCK_PDF_MODEL == ultranest_loglike.pdf_model
 
     assert mock_jax_vmap.call_count == 3
+
+
+def test_log_likelihood():
+    """
+    Tests that the log_likeliihodd function just returns an
+    UltraNestLogLikelihood instance.
+    """
+    ultranest_loglike = UltraNestLogLikelihood(
+        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        pdf_model=MOCK_PDF_MODEL,
+        fit_xgrid=FIT_XGRID,
+        forward_map=TEST_FORWARD_MAP,
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+        positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
+        ns_settings=ns_settings,
+        chi2=mock_chi2,
+        penalty_posdata=_penalty_posdata,
+        alpha=1e-7,
+        lambda_positivity=1000,
+    )
+    log_like = log_likelihood(
+        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_PDF_MODEL,
+        FIT_XGRID,
+        TEST_FORWARD_MAP,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        _penalty_posdata,
+        alpha=1e-7,
+        lambda_positivity=1000,
+    )
+
+    assert type(ultranest_loglike) == type(log_like)
 
 
 def test_ultranest_fit():
