@@ -176,7 +176,10 @@ def log_likelihood(
     lambda_positivity,
 ):
     """
-    TODO
+    Instantiates the UltraNestLogLikelihood class.
+    This function is used to create the log likelihood function for the UltraNest sampler.
+    The function, being a node of the reportengine graph, can be overriden by the user for 
+    model specific applications by changing the log_likelihood method of the UltraNestLogLikelihood class.
     """
     return UltraNestLogLikelihood(
         central_inv_covmat_index,
@@ -215,7 +218,7 @@ def ultranest_fit(
 
     log_likelihood: Callable
         The log likelihood function for the model.
-    
+
     Returns
     -------
     UltranestFit
