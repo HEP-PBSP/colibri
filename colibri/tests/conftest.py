@@ -392,6 +392,8 @@ MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(2)
 """
 Mock Log likelihood class
 """
+
+
 class UltraNestLogLikelihoodMock:
     def __init__(
         self,
@@ -444,7 +446,7 @@ class UltraNestLogLikelihoodMock:
         self.pred_and_pdf = pdf_model.pred_and_pdf_func(
             fit_xgrid, forward_map=forward_map
         )
-        
+
         if ns_settings["ReactiveNS_settings"]["vectorized"]:
             self.pred_and_pdf = jax.vmap(
                 self.pred_and_pdf, in_axes=(0, None), out_axes=(0, 0)
@@ -484,6 +486,4 @@ class UltraNestLogLikelihoodMock:
         positivity_fast_kernel_arrays,
     ):
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
-        return -0.5 * (
-            self.chi2(central_values, predictions, inv_covmat)
-        )
+        return -0.5 * (self.chi2(central_values, predictions, inv_covmat))
