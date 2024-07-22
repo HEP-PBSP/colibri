@@ -215,7 +215,7 @@ def test_ultranest_fit_with_SliceSampler():
         lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
     )
     _pred_data = None
-    
+
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         mock_pdf_model,
@@ -269,16 +269,25 @@ def test_ultranest_fit_with_popSliceSampler():
     )
     _pred_data = None
 
-    fit_result = ultranest_fit(
+    mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
+        mock_pdf_model,
+        FIT_XGRID,
         _pred_data,
-        _penalty_posdata,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        _penalty_posdata,
+        alpha=1e-7,
+        lambda_positivity=0,
+    )
+
+    fit_result = ultranest_fit(
         mock_pdf_model,
         bayesian_prior,
         ns_settings,
-        FIT_XGRID,
+        mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
