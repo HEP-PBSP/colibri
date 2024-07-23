@@ -59,3 +59,18 @@ class WminConfig(colibriConfig):
             with open(output_path / "pdf_model.pkl", "wb") as file:
                 dill.dump(model, file)
         return model
+
+    def parse_wmin_regularisation_settings(self, settings):
+        """ """
+        if "type" not in settings.keys():
+            raise ValueError("Missing key type for wmin_regularisation_settings")
+
+        if settings["type"] == "l2_reg":
+            if "lambda_factor" not in settings.keys():
+                settings["lambda_factor"] = 10
+
+        if settings["type"] == "l1_reg":
+            if "lambda_factor" not in settings.keys():
+                settings["lambda_factor"] = 10
+
+        return settings

@@ -31,8 +31,7 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
         penalty_posdata,
         alpha,
         lambda_positivity,
-        wmin_l2_reg=False,
-        wmin_l2_reg_factor=10,
+        wmin_regularisation_settings={},
     ):
         super().__init__(
             central_inv_covmat_index,
@@ -47,8 +46,7 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
             alpha,
             lambda_positivity,
         )
-        self.wmin_l2_reg = wmin_l2_reg
-        self.wmin_l2_reg_factor = wmin_l2_reg_factor
+        self.wmin_regularisation_settings = wmin_regularisation_settings
 
     @partial(jax.jit, static_argnames=("self",))
     def log_likelihood(
@@ -61,10 +59,20 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
     ):
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
 
-        if self.wmin_l2_reg:
-            wmin_l2_reg_penalty = self.wmin_l2_reg_factor * jnp.sum(params**2)
+        if self.wmin_regularisation_settings:
+
+            if self.wmin_regularisation_settings["type"] == "l2_reg":
+                regularisation_term = self.wmin_regularisation_settings[
+                    "lambda_factor"
+                ] * jnp.sum(params**2)
+
+            elif self.wmin_regularisation_settings["type"] == "l1_reg":
+                regularisation_term = self.wmin_regularisation_settings[
+                    "lambda_factor"
+                ] * jnp.sum(jnp.abs(params))
+
         else:
-            wmin_l2_reg_penalty = 0
+            regularisation_term = 0
 
         return -0.5 * (
             self.chi2(central_values, predictions, inv_covmat)
@@ -77,7 +85,7 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
                 ),
                 axis=-1,
             )
-            + wmin_l2_reg_penalty
+            + regularisation_term
         )
 
 
@@ -92,11 +100,10 @@ def log_likelihood(
     _penalty_posdata,
     alpha,
     lambda_positivity,
-    wmin_l2_reg=False,
-    wmin_l2_reg_factor=10,
+    wmin_regularisation_settings={},
 ):
     """
-    TODO
+    Overriding the log_likelihood function from colibri.ultranest_fit
     """
     return WminUltraNestLogLikelihood(
         central_inv_covmat_index,
@@ -110,6 +117,5 @@ def log_likelihood(
         _penalty_posdata,
         alpha,
         lambda_positivity,
-        wmin_l2_reg,
-        wmin_l2_reg_factor,
+        wmin_regularisation_settings,
     )
