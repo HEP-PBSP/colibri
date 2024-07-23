@@ -39,7 +39,7 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
                 ),
                 axis=-1,
             )
-        + 100 * jnp.sum(params ** 2)
+            + 100 * jnp.sum(params**2)
         )
 
 
