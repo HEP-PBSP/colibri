@@ -64,12 +64,12 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
             if self.wmin_regularisation_settings["type"] == "l2_reg":
                 regularisation_term = self.wmin_regularisation_settings[
                     "lambda_factor"
-                ] * jnp.sum(params**2)
+                ] * jnp.sum(params**2, axis=-1)
 
             elif self.wmin_regularisation_settings["type"] == "l1_reg":
                 regularisation_term = self.wmin_regularisation_settings[
                     "lambda_factor"
-                ] * jnp.sum(jnp.abs(params))
+                ] * jnp.sum(jnp.abs(params), axis=-1)
 
         else:
             regularisation_term = 0
