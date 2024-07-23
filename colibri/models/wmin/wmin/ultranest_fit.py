@@ -15,8 +15,40 @@ from colibri.loss_functions import chi2
 
 class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
     """
-    TODO
+    UltraNest log likelihood with additional terms for the wmin model.
     """
+
+    def __init__(
+        self,
+        central_inv_covmat_index,
+        pdf_model,
+        fit_xgrid,
+        forward_map,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        penalty_posdata,
+        alpha,
+        lambda_positivity,
+        wmin_l2_reg=False,
+        wmin_l2_reg_factor=10,
+    ):
+        super().__init__(
+            central_inv_covmat_index,
+            pdf_model,
+            fit_xgrid,
+            forward_map,
+            fast_kernel_arrays,
+            positivity_fast_kernel_arrays,
+            ns_settings,
+            chi2,
+            penalty_posdata,
+            alpha,
+            lambda_positivity,
+        )
+        self.wmin_l2_reg = wmin_l2_reg
+        self.wmin_l2_reg_factor = wmin_l2_reg_factor
 
     @partial(jax.jit, static_argnames=("self",))
     def log_likelihood(
@@ -28,6 +60,12 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
         positivity_fast_kernel_arrays,
     ):
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
+
+        if self.wmin_l2_reg:
+            wmin_l2_reg_penalty = self.wmin_l2_reg_factor * jnp.sum(params**2)
+        else:
+            wmin_l2_reg_penalty = 0
+
         return -0.5 * (
             self.chi2(central_values, predictions, inv_covmat)
             + jnp.sum(
@@ -39,7 +77,7 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
                 ),
                 axis=-1,
             )
-            + 100 * jnp.sum(params**2)
+            + wmin_l2_reg_penalty
         )
 
 
@@ -54,6 +92,8 @@ def log_likelihood(
     _penalty_posdata,
     alpha,
     lambda_positivity,
+    wmin_l2_reg=False,
+    wmin_l2_reg_factor=10,
 ):
     """
     TODO
@@ -70,4 +110,6 @@ def log_likelihood(
         _penalty_posdata,
         alpha,
         lambda_positivity,
+        wmin_l2_reg,
+        wmin_l2_reg_factor,
     )
