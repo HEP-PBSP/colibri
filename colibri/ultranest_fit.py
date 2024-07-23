@@ -163,30 +163,50 @@ class UltranestFit(BayesianFit):
     ultranest_result: dict
 
 
-def ultranest_fit(
+def log_likelihood(
     central_inv_covmat_index,
+    pdf_model,
+    FIT_XGRID,
     _pred_data,
-    _penalty_posdata,
     fast_kernel_arrays,
     positivity_fast_kernel_arrays,
+    ns_settings,
+    _penalty_posdata,
+    alpha,
+    lambda_positivity,
+):
+    """
+    Instantiates the UltraNestLogLikelihood class.
+    This function is used to create the log likelihood function for the UltraNest sampler.
+    The function, being a node of the reportengine graph, can be overriden by the user for
+    model specific applications by changing the log_likelihood method of the UltraNestLogLikelihood class.
+    """
+    return UltraNestLogLikelihood(
+        central_inv_covmat_index,
+        pdf_model,
+        FIT_XGRID,
+        _pred_data,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        _penalty_posdata,
+        alpha,
+        lambda_positivity,
+    )
+
+
+def ultranest_fit(
     pdf_model,
     bayesian_prior,
     ns_settings,
-    FIT_XGRID,
-    alpha=1e-7,
-    lambda_positivity=1000,
+    log_likelihood,
 ):
     """
     The complete Nested Sampling fitting routine, for any PDF model.
 
     Parameters
     ----------
-    _chi2_with_positivity: @jax.jit CompiledFunction
-        The chi2 function with positivity constraint.
-
-    _pred_data: theory_predictions.make_pred_data
-        The function to compute the theory predictions.
-
     pdf_model: pdf_model.PDFModel
         The PDF model to fit.
 
@@ -196,9 +216,8 @@ def ultranest_fit(
     ns_settings: dict
         Settings for the Nested Sampling fit.
 
-    FIT_XGRID: np.ndarray
-        xgrid of the theory, computed by a production rule by taking
-        the sorted union of the xgrids of the datasets entering the fit.
+    log_likelihood: Callable
+        The log likelihood function for the model.
 
     Returns
     -------
@@ -212,21 +231,6 @@ def ultranest_fit(
     np.random.seed(ns_settings["ultranest_seed"])
 
     parameters = pdf_model.param_names
-
-    # Initialize the log likelihood function
-    log_likelihood = UltraNestLogLikelihood(
-        central_inv_covmat_index,
-        pdf_model,
-        FIT_XGRID,
-        _pred_data,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
-        ns_settings,
-        chi2,
-        _penalty_posdata,
-        alpha,
-        lambda_positivity,
-    )
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,

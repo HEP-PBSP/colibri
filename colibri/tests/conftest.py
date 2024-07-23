@@ -2,6 +2,7 @@
 Module containing standard pytest data configurations for testing purposes.
 """
 
+import jax
 import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 import numpy as np
@@ -387,3 +388,102 @@ MOCK_CENTRAL_INV_COVMAT_INDEX = Mock()
 MOCK_CENTRAL_INV_COVMAT_INDEX.central_values = jnp.ones(2)
 MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(2)
 MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(2)
+
+"""
+Mock Log likelihood class
+"""
+
+
+class UltraNestLogLikelihoodMock:
+    def __init__(
+        self,
+        central_inv_covmat_index,
+        pdf_model,
+        fit_xgrid,
+        forward_map,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        penalty_posdata,
+        alpha,
+        lambda_positivity,
+    ):
+        """
+        Mock version of UltraNestLogLikelihood class for testing purposes.
+
+        Parameters
+        ----------
+        central_inv_covmat_index: commondata_utils.CentralInvCovmatIndex
+
+        pdf_model: pdf_model.PDFModel
+
+        fit_xgrid: np.ndarray
+
+        forward_map: Callable
+
+        fast_kernel_arrays: tuple
+
+        positivity_fast_kernel_arrays: tuple
+
+        ns_settings: dict
+
+        chi2: Callable
+
+        penalty_posdata: Callable
+
+        alpha: float
+
+        lambda_positivity: float
+        """
+        self.central_values = central_inv_covmat_index.central_values
+        self.inv_covmat = central_inv_covmat_index.inv_covmat
+        self.pdf_model = pdf_model
+        self.chi2 = chi2
+        self.penalty_posdata = penalty_posdata
+        self.alpha = alpha
+        self.lambda_positivity = lambda_positivity
+        self.pred_and_pdf = pdf_model.pred_and_pdf_func(
+            fit_xgrid, forward_map=forward_map
+        )
+
+        if ns_settings["ReactiveNS_settings"]["vectorized"]:
+            self.pred_and_pdf = jax.vmap(
+                self.pred_and_pdf, in_axes=(0, None), out_axes=(0, 0)
+            )
+
+            self.chi2 = jax.vmap(self.chi2, in_axes=(None, 0, None), out_axes=0)
+            self.penalty_posdata = jax.vmap(
+                self.penalty_posdata, in_axes=(0, None, None, None), out_axes=0
+            )
+
+        self.fast_kernel_arrays = fast_kernel_arrays
+        self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
+
+    def __call__(self, params):
+        """
+        Mock function called by the ultranest sampler.
+
+        Parameters
+        ----------
+        params: np.array
+            The model parameters.
+        """
+        return self.log_likelihood(
+            params,
+            self.central_values,
+            self.inv_covmat,
+            self.fast_kernel_arrays,
+            self.positivity_fast_kernel_arrays,
+        )
+
+    def log_likelihood(
+        self,
+        params,
+        central_values,
+        inv_covmat,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+    ):
+        predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
+        return -0.5 * (self.chi2(central_values, predictions, inv_covmat))

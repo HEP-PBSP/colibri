@@ -9,13 +9,16 @@ from colibri.ultranest_fit import (
     run_ultranest_fit,
     ultranest_fit,
     UltraNestLogLikelihood,
+    log_likelihood,
 )
+from colibri.loss_functions import chi2
 from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     TEST_FORWARD_MAP,
     TEST_FK_ARRAYS,
     TEST_POS_FK_ARRAYS,
+    UltraNestLogLikelihoodMock,
 )
 
 jax.config.update("jax_enable_x64", True)
@@ -106,6 +109,40 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
     assert mock_jax_vmap.call_count == 3
 
 
+def test_log_likelihood():
+    """
+    Tests that the log_likeliihodd function just returns an
+    UltraNestLogLikelihood instance.
+    """
+    ultranest_loglike = UltraNestLogLikelihood(
+        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        pdf_model=MOCK_PDF_MODEL,
+        fit_xgrid=FIT_XGRID,
+        forward_map=TEST_FORWARD_MAP,
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+        positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
+        ns_settings=ns_settings,
+        chi2=mock_chi2,
+        penalty_posdata=_penalty_posdata,
+        alpha=1e-7,
+        lambda_positivity=1000,
+    )
+    log_like = log_likelihood(
+        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_PDF_MODEL,
+        FIT_XGRID,
+        TEST_FORWARD_MAP,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        _penalty_posdata,
+        alpha=1e-7,
+        lambda_positivity=1000,
+    )
+
+    assert type(ultranest_loglike) == type(log_like)
+
+
 def test_ultranest_fit():
     # Create mock pdf model
     mock_pdf_model = Mock()
@@ -117,17 +154,25 @@ def test_ultranest_fit():
         lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
     )
     _pred_data = None
-
-    fit_result = ultranest_fit(
+    mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
+        mock_pdf_model,
+        FIT_XGRID,
         _pred_data,
-        _penalty_posdata,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        _penalty_posdata,
+        alpha=1e-7,
+        lambda_positivity=0,
+    )
+
+    fit_result = ultranest_fit(
         mock_pdf_model,
         bayesian_prior,
         ns_settings,
-        FIT_XGRID,
+        mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
@@ -152,16 +197,26 @@ def test_ultranest_fit_vectorized():
     )
     _pred_data = None
     ns_settings["ReactiveNS_settings"]["vectorized"] = True
-    fit_result = ultranest_fit(
+
+    mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
+        mock_pdf_model,
+        FIT_XGRID,
         _pred_data,
-        _penalty_posdata,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        _penalty_posdata,
+        alpha=1e-7,
+        lambda_positivity=0,
+    )
+
+    fit_result = ultranest_fit(
         mock_pdf_model,
         bayesian_prior,
         ns_settings,
-        FIT_XGRID,
+        mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
@@ -196,16 +251,25 @@ def test_ultranest_fit_with_SliceSampler():
     )
     _pred_data = None
 
-    fit_result = ultranest_fit(
+    mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
+        mock_pdf_model,
+        FIT_XGRID,
         _pred_data,
-        _penalty_posdata,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        _penalty_posdata,
+        alpha=1e-7,
+        lambda_positivity=0,
+    )
+
+    fit_result = ultranest_fit(
         mock_pdf_model,
         bayesian_prior,
         ns_settings,
-        FIT_XGRID,
+        mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
@@ -240,16 +304,25 @@ def test_ultranest_fit_with_popSliceSampler():
     )
     _pred_data = None
 
-    fit_result = ultranest_fit(
+    mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
+        mock_pdf_model,
+        FIT_XGRID,
         _pred_data,
-        _penalty_posdata,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2,
+        _penalty_posdata,
+        alpha=1e-7,
+        lambda_positivity=0,
+    )
+
+    fit_result = ultranest_fit(
         mock_pdf_model,
         bayesian_prior,
         ns_settings,
-        FIT_XGRID,
+        mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
