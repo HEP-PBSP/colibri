@@ -8,6 +8,7 @@ import resource
 import logging
 
 import jax
+import jax.numpy as jnp
 import pandas as pd
 from colibri.loss_functions import chi2
 from colibri.ultranest_fit import UltraNestLogLikelihood
@@ -132,3 +133,43 @@ def likelihood_time(
         index=["wmin"],
     )
     return df
+
+
+def wmin_l1_penalty(params, lambda_factor):
+    """
+    L1 penalty for the wmin model.
+
+    Parameters
+    ----------
+    params: array
+        The parameters to use.
+
+    lambda_factor: float
+        The lambda factor to use.
+
+    Returns
+    -------
+    penalty: float
+        The penalty.
+    """
+    return lambda_factor * jnp.sum(jnp.abs(params), axis=-1)
+
+
+def wmin_l2_penalty(params, lambda_factor):
+    """
+    L2 penalty for the wmin model.
+
+    Parameters
+    ----------
+    params: array
+        The parameters to use.
+
+    lambda_factor: float
+        The lambda penalty factor to use.
+
+    Returns
+    -------
+    penalty: float
+        The penalty.
+    """
+    return lambda_factor * jnp.sum(params**2, axis=-1)

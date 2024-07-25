@@ -11,6 +11,7 @@ import jax.numpy as jnp
 from functools import partial
 from colibri.ultranest_fit import UltraNestLogLikelihood
 from colibri.loss_functions import chi2
+from wmin.utils import wmin_l1_penalty, wmin_l2_penalty
 
 
 class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
@@ -48,6 +49,15 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
         )
         self.wmin_regularisation_settings = wmin_regularisation_settings
 
+        if self.wmin_regularisation_settings:
+            self.lambda_factor = self.wmin_regularisation_settings["lambda_factor"]
+
+            if self.wmin_regularisation_settings["type"] == "l2_reg":
+                self.regularisation_penalty = wmin_l2_penalty
+
+            elif self.wmin_regularisation_settings["type"] == "l1_reg":
+                self.regularisation_penalty = wmin_l1_penalty
+
     @partial(jax.jit, static_argnames=("self",))
     def log_likelihood(
         self,
@@ -57,22 +67,17 @@ class WminUltraNestLogLikelihood(UltraNestLogLikelihood):
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
     ):
+        """
+        Computes the log likelihood for the wmin model.
+        """
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
 
         if self.wmin_regularisation_settings:
-
-            if self.wmin_regularisation_settings["type"] == "l2_reg":
-                regularisation_term = self.wmin_regularisation_settings[
-                    "lambda_factor"
-                ] * jnp.sum(params**2, axis=-1)
-
-            elif self.wmin_regularisation_settings["type"] == "l1_reg":
-                regularisation_term = self.wmin_regularisation_settings[
-                    "lambda_factor"
-                ] * jnp.sum(jnp.abs(params), axis=-1)
-
+            regularisation_term = self.regularisation_penalty(
+                params, self.lambda_factor
+            )
         else:
-            regularisation_term = 0
+            regularisation_term = 0.0
 
         return -0.5 * (
             self.chi2(central_values, predictions, inv_covmat)
