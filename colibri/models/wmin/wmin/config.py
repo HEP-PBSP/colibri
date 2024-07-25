@@ -67,10 +67,10 @@ class WminConfig(colibriConfig):
 
         if settings["type"] == "l2_reg":
             if "lambda_factor" not in settings.keys():
-                settings["lambda_factor"] = 1.
+                settings["lambda_factor"] = 1.0
 
         if settings["type"] == "l1_reg":
             if "lambda_factor" not in settings.keys():
-                settings["lambda_factor"] = 1.
+                settings["lambda_factor"] = 1.0
 
         return settings

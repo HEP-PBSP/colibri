@@ -2,7 +2,8 @@ from unittest.mock import Mock
 
 import jax.numpy as jnp
 import pandas as pd
-from wmin.utils import likelihood_time
+from numpy.testing import assert_allclose
+from wmin.utils import likelihood_time, wmin_l1_penalty, wmin_l2_penalty
 
 N_MOCK_DATA = 100
 MOCK_NAME_THEORY = "test_theory"
@@ -105,3 +106,41 @@ def test_likelihood_time_samples():
     assert result.loc["wmin", "Theory"] == MOCK_NAME_THEORY
     assert isinstance(result.loc["wmin", "Likelihood eval time (s)"], float)
     assert result.loc["wmin", "Likelihood eval time (s)"] > 0
+
+
+def test_wmin_l1_penalty():
+    """
+    test the output of wmin_l1_penalty
+    """
+    params = jnp.array(
+        [
+            2,
+        ]
+    )
+    lambda_factor = 1
+
+    assert wmin_l1_penalty(params, lambda_factor) == 2
+
+    # test with vectorized parameters
+    params = jnp.array([[2], [3]])
+    lambda_factor = 1
+    assert_allclose(wmin_l1_penalty(params, lambda_factor), jnp.array([2, 3]))
+
+
+def test_wmin_l2_penalty():
+    """
+    test the output of wmin_l2_penalty
+    """
+    params = jnp.array(
+        [
+            2,
+        ]
+    )
+    lambda_factor = 1
+
+    assert wmin_l2_penalty(params, lambda_factor) == 4
+
+    # test with vectorized parameters
+    params = jnp.array([[2], [3]])
+    lambda_factor = 1
+    assert_allclose(wmin_l2_penalty(params, lambda_factor), jnp.array([4, 9]))
