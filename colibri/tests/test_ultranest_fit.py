@@ -64,8 +64,7 @@ def test_UltraNestLogLikelihood_class():
         ns_settings=ns_settings,
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=1000,
+        positivity_penalty_settings={"positivity_penalty": True, "alpha": 1e-7, "lambda_positivity": 1000},
     )
 
     assert_allclose(
@@ -94,8 +93,7 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
         ns_settings=vect_ns_settings,
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=1000,
+        positivity_penalty_settings={"positivity_penalty": True, "alpha": 1e-7, "lambda_positivity": 1000},
     )
 
     assert_allclose(
@@ -124,8 +122,7 @@ def test_log_likelihood():
         ns_settings=ns_settings,
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=1000,
+        positivity_penalty_settings={"positivity_penalty": True, "alpha": 1e-7, "lambda_positivity": 1000},
     )
     log_like = log_likelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
