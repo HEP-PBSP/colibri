@@ -64,7 +64,11 @@ def test_UltraNestLogLikelihood_class():
         ns_settings=ns_settings,
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
-        positivity_penalty_settings={"positivity_penalty": True, "alpha": 1e-7, "lambda_positivity": 1000},
+        positivity_penalty_settings={
+            "positivity_penalty": True,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     assert_allclose(
@@ -93,7 +97,11 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
         ns_settings=vect_ns_settings,
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
-        positivity_penalty_settings={"positivity_penalty": True, "alpha": 1e-7, "lambda_positivity": 1000},
+        positivity_penalty_settings={
+            "positivity_penalty": True,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     assert_allclose(
@@ -112,6 +120,9 @@ def test_log_likelihood():
     Tests that the log_likeliihodd function just returns an
     UltraNestLogLikelihood instance.
     """
+    POS_PENALTY_SETTINGS = (
+        {"positivity_penalty": True, "alpha": 1e-7, "lambda_positivity": 1000},
+    )
     ultranest_loglike = UltraNestLogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
@@ -122,7 +133,7 @@ def test_log_likelihood():
         ns_settings=ns_settings,
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
-        positivity_penalty_settings={"positivity_penalty": True, "alpha": 1e-7, "lambda_positivity": 1000},
+        positivity_penalty_settings=POS_PENALTY_SETTINGS,
     )
     log_like = log_likelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
@@ -133,8 +144,7 @@ def test_log_likelihood():
         positivity_fast_kernel_arrays,
         ns_settings,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=1000,
+        positivity_penalty_settings=POS_PENALTY_SETTINGS,
     )
 
     assert type(ultranest_loglike) == type(log_like)
