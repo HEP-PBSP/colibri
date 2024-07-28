@@ -1,5 +1,5 @@
 from unittest.mock import Mock, patch
-
+import pytest
 import copy
 import jax
 import jax.numpy as jnp
@@ -50,7 +50,8 @@ vect_ns_settings = copy.deepcopy(ns_settings)
 vect_ns_settings["ReactiveNS_settings"]["vectorized"] = True
 
 
-def test_UltraNestLogLikelihood_class():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_UltraNestLogLikelihood_class(pos_penalty):
     """
     Tests the UltraNestLogLikelihood class.
     """
@@ -65,7 +66,7 @@ def test_UltraNestLogLikelihood_class():
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
         positivity_penalty_settings={
-            "positivity_penalty": True,
+            "positivity_penalty": pos_penalty,
             "alpha": 1e-7,
             "lambda_positivity": 1000,
         },
