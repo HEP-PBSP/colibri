@@ -406,8 +406,7 @@ class UltraNestLogLikelihoodMock:
         ns_settings,
         chi2,
         penalty_posdata,
-        alpha,
-        lambda_positivity,
+        positivity_penalty_settings,
     ):
         """
         Mock version of UltraNestLogLikelihood class for testing purposes.
@@ -432,17 +431,15 @@ class UltraNestLogLikelihoodMock:
 
         penalty_posdata: Callable
 
-        alpha: float
-
-        lambda_positivity: float
+        positivity_penalty_settings: dict
         """
         self.central_values = central_inv_covmat_index.central_values
         self.inv_covmat = central_inv_covmat_index.inv_covmat
         self.pdf_model = pdf_model
         self.chi2 = chi2
         self.penalty_posdata = penalty_posdata
-        self.alpha = alpha
-        self.lambda_positivity = lambda_positivity
+        self.positivity_penalty_settings = positivity_penalty_settings
+
         self.pred_and_pdf = pdf_model.pred_and_pdf_func(
             fit_xgrid, forward_map=forward_map
         )
