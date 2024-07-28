@@ -273,3 +273,28 @@ def test_parse_positivity_penalty_settings_defaults():
     }
 
     assert pos_settings == expected_settings
+
+
+def test_parse_positivity_penalty_settings():
+    """
+    Test that the inputs are parsed as expected by positivity penalty
+    settings parser.
+    """
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {"positivity_penalty": True, "alpha": 1e-7, "lambda_positivity": 10000}
+
+    # Call the function
+    pos_settings = config.parse_positivity_penalty_settings(settings)
+
+    # Check that the settings were parsed correctly
+    expected_settings = {
+        "positivity_penalty": True,
+        "alpha": 1e-7,
+        "lambda_positivity": 10000,
+    }
+
+    assert pos_settings == expected_settings
