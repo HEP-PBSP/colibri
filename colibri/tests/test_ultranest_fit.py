@@ -82,8 +82,9 @@ def test_UltraNestLogLikelihood_class(pos_penalty):
     assert _penalty_posdata == ultranest_loglike.penalty_posdata
 
 
+@pytest.mark.parametrize("pos_penalty", [True, False])
 @patch("colibri.ultranest_fit.jax.vmap")
-def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
+def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
     """
     Tests the UltraNestLogLikelihood class with vectorized ReactiveNS settings.
     """
@@ -99,7 +100,7 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
         positivity_penalty_settings={
-            "positivity_penalty": True,
+            "positivity_penalty": pos_penalty,
             "alpha": 1e-7,
             "lambda_positivity": 1000,
         },
@@ -116,13 +117,14 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
     assert mock_jax_vmap.call_count == 3
 
 
-def test_log_likelihood():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_log_likelihood(pos_penalty):
     """
     Tests that the log_likeliihodd function just returns an
     UltraNestLogLikelihood instance.
     """
     POS_PENALTY_SETTINGS = (
-        {"positivity_penalty": True, "alpha": 1e-7, "lambda_positivity": 1000},
+        {"positivity_penalty": pos_penalty, "alpha": 1e-7, "lambda_positivity": 1000},
     )
     ultranest_loglike = UltraNestLogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
@@ -151,7 +153,8 @@ def test_log_likelihood():
     assert type(ultranest_loglike) == type(log_like)
 
 
-def test_ultranest_fit():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_ultranest_fit(pos_penalty):
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
@@ -172,8 +175,11 @@ def test_ultranest_fit():
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=0,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     fit_result = ultranest_fit(
@@ -193,7 +199,8 @@ def test_ultranest_fit():
     assert isinstance(fit_result.ultranest_result, dict)
 
 
-def test_ultranest_fit_vectorized():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_ultranest_fit_vectorized(pos_penalty):
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
@@ -216,8 +223,11 @@ def test_ultranest_fit_vectorized():
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=0,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     fit_result = ultranest_fit(
@@ -237,7 +247,8 @@ def test_ultranest_fit_vectorized():
     assert isinstance(fit_result.ultranest_result, dict)
 
 
-def test_ultranest_fit_with_SliceSampler():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_ultranest_fit_with_SliceSampler(pos_penalty):
     ns_settings = {
         "ultranest_seed": 42,
         "ReactiveNS_settings": {"vectorized": False},
@@ -269,8 +280,11 @@ def test_ultranest_fit_with_SliceSampler():
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=0,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     fit_result = ultranest_fit(
@@ -290,7 +304,8 @@ def test_ultranest_fit_with_SliceSampler():
     assert isinstance(fit_result.ultranest_result, dict)
 
 
-def test_ultranest_fit_with_popSliceSampler():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     ns_settings = {
         "ultranest_seed": 42,
         "ReactiveNS_settings": {"vectorized": False},
@@ -322,8 +337,11 @@ def test_ultranest_fit_with_popSliceSampler():
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=0,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     fit_result = ultranest_fit(
