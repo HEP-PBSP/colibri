@@ -17,7 +17,12 @@ from validphys.sumrules import sum_rules, KNOWN_SUM_RULES_EXPECTED
 from validphys import convolution
 from validphys.core import PDF
 
-from colibri.constants import LHAPDF_XGRID, evolution_to_export_matrix, EXPORT_LABELS
+from colibri.constants import (
+    LHAPDF_XGRID,
+    evolution_to_export_matrix,
+    EXPORT_LABELS,
+    FLAVOUR_TO_ID_MAPPING,
+)
 
 log = logging.getLogger(__name__)
 
@@ -131,12 +136,9 @@ def basis_replica_selector(
                 f"Selected {len(selected_replicas_idxs)} replicas for {pdf} that pass all sum rules simultaneously"
             )
 
-            pdf_obj = PDF(pdf)
-            lpdf = pdf_obj.load()
-
             # Calculate the pdf grid for the selected replicas at the given scale Q and xgrid
             pdf_grid = convolution.evolution.grid_values(
-                pdf_obj, convolution.FK_FLAVOURS, xgrid, [Q]
+                PDF(pdf), convolution.FK_FLAVOURS, xgrid, [Q]
             ).squeeze(-1)[selected_replicas_idxs]
 
             # normalize the pdf grid so that sum rules are exact
@@ -156,10 +158,16 @@ def basis_replica_selector(
                 - 2 * svalence_sr[selected_replicas_idxs]
             )
 
-            pdf_grid[:, [1, 2], :] /= Amomentum[:, None, None]
-            pdf_grid[:, [3], :] /= Avalence[:, None, None]
-            pdf_grid[:, [4], :] /= Avalence3[:, None, None]
-            pdf_grid[:, [5], :] /= Avalence8[:, None, None]
+            pdf_grid[
+                :, [FLAVOUR_TO_ID_MAPPING["\Sigma"], FLAVOUR_TO_ID_MAPPING["g"]], :
+            ] /= Amomentum[:, None, None]
+            pdf_grid[:, [FLAVOUR_TO_ID_MAPPING["V"]], :] *= 3 / Avalence[:, None, None]
+            pdf_grid[:, [FLAVOUR_TO_ID_MAPPING["V3"]], :] *= (
+                1 / Avalence3[:, None, None]
+            )
+            pdf_grid[:, [FLAVOUR_TO_ID_MAPPING["V8"]], :] *= (
+                3 / Avalence8[:, None, None]
+            )
 
             wmin_basis.append(pdf_grid)
 
