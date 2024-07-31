@@ -10,12 +10,22 @@ import numpy as np
 import logging
 import os
 import yaml
+import pathlib
+import shutil
 
 from reportengine import collect
 
 from validphys.sumrules import sum_rules, KNOWN_SUM_RULES_EXPECTED
-from validphys import convolution
+from validphys import convolution, lhaindex
 from validphys.core import PDF
+from validphys.mc2hessian import (
+    hessian_from_lincomb,
+    _compress_X,
+    _get_X,
+    _pdf_normalization,
+    mc2hessian_xgrid,
+)
+from validphys.checks import check_pdf_is_montecarlo
 
 from colibri.constants import (
     LHAPDF_XGRID,
@@ -214,3 +224,59 @@ def write_wmin_basis(basis_replica_selector, output_path, Q=1.65):
     log.info(
         "Now you can evolve them with evolve_fit and then compress them with mc2_hessian"
     )
+
+
+def _create_mc2hessian(
+    pdf, Q, xgrid, Neig, output_path, name=None, hessian_normalization=False
+):
+    """
+    Same as validphys.mc2hessian._create_mc2hessian but with the option not to normalize the eigenvectors.s
+    """
+    X = _get_X(pdf, Q, xgrid, reshape=True)
+    vec = _compress_X(X, Neig)
+    if hessian_normalization:
+        norm = _pdf_normalization(pdf)
+    else:
+        norm = 1.0
+    return hessian_from_lincomb(pdf, vec / norm, folder=output_path, set_name=name)
+
+
+@check_pdf_is_montecarlo
+def mc2hessian(
+    pdf,
+    Q,
+    Neig: int,
+    output_path,
+    gridname,
+    installgrid: bool = False,
+    hessian_normalization=False,
+):
+    """
+    Same as validphys.mc2hessian.mc2hessian but with the option not to normalize the eigenvectors.
+
+    Note: mc2hessian_xgrid is taken as the default xgrid that is returned by validphys.mc2hessian.mc2hessian_xgrid
+    """
+    result_path = _create_mc2hessian(
+        pdf,
+        Q=Q,
+        xgrid=mc2hessian_xgrid(),
+        Neig=Neig,
+        output_path=output_path,
+        name=gridname,
+        hessian_normalization=hessian_normalization,
+    )
+    if installgrid:
+        lhafolder = pathlib.Path(lhaindex.get_lha_datapath())
+        dest = lhafolder / gridname
+        if lhaindex.isinstalled(gridname):
+            log.warning(
+                "Target directory for new PDF, %s, already exists. "
+                "Removing contents.",
+                dest,
+            )
+            if dest.is_dir():
+                shutil.rmtree(str(dest))
+            else:
+                dest.unlink()
+        shutil.copytree(result_path, dest)
+        log.info("Wmin PDF set installed at %s", dest)
