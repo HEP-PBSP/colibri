@@ -159,12 +159,12 @@ def basis_replica_selector(
                 + dvalence_sr[selected_replicas_idxs]
                 - 2 * svalence_sr[selected_replicas_idxs]
             )
-            
-            pdf_grid[:, [1,2], :] /= Amomentum[:, None, None]
+
+            pdf_grid[:, [1, 2], :] /= Amomentum[:, None, None]
             pdf_grid[:, [3], :] /= Avalence[:, None, None]
             pdf_grid[:, [4], :] /= Avalence3[:, None, None]
             pdf_grid[:, [5], :] /= Avalence8[:, None, None]
 
-            wmin_basis.append(pdf_grid)            
+            wmin_basis.append(pdf_grid)
 
     return np.concatenate(wmin_basis, axis=0)
