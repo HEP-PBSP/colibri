@@ -1,9 +1,15 @@
 """
-TODO
+wmin.basis.py
+
+This module contains the functions that allow to construct a basis for the wmin parametrisation.
+The main target used for the construction of the basis at this stage is the simultaneous 
+satisfaction of the momentum, u-valence and d-valence sum rules.
 """
 
 import numpy as np
 import logging
+import os
+import yaml
 
 from reportengine import collect
 
@@ -11,19 +17,9 @@ from validphys.sumrules import sum_rules, KNOWN_SUM_RULES_EXPECTED
 from validphys import convolution
 from validphys.core import PDF
 
-from colibri.constants import LHAPDF_XGRID
+from colibri.constants import LHAPDF_XGRID, evolution_to_export_matrix, EXPORT_LABELS
 
 log = logging.getLogger(__name__)
-
-# PID_TO_FLAVOUR = {
-#     1: 'd',
-#     2: 'u',
-#     3: 's',
-#     4: 'c',
-#     5: 'b',
-#     6: 't',
-#     21: 'g',
-# }
 
 
 def sum_rules_dict(pdf, Q=1.65):
@@ -168,3 +164,45 @@ def basis_replica_selector(
             wmin_basis.append(pdf_grid)
 
     return np.concatenate(wmin_basis, axis=0)
+
+
+def write_wmin_basis(basis_replica_selector, output_path, Q=1.65):
+    """ """
+    wmin_basis_pdf_grid = basis_replica_selector
+
+    replicas_path = str(output_path) + "/replicas"
+    if not os.path.exists(replicas_path):
+        os.mkdir(replicas_path)
+
+    for replica_index in range(1, wmin_basis_pdf_grid.shape[0]):
+
+        rep_path = replicas_path + f"/replica_{replica_index}"
+
+        if not os.path.exists(rep_path):
+            os.mkdir(rep_path)
+
+        fit_name = str(output_path).split("/")[-1]
+
+        grid_for_writing = (
+            evolution_to_export_matrix @ wmin_basis_pdf_grid[replica_index]
+        )
+        grid_for_writing = grid_for_writing.T.tolist()
+
+        # Prepare a dictionary for the exportgrid
+        export_grid = {}
+
+        # Set the initial Q2 value, which will always be the same.
+        export_grid["q20"] = (Q) ** 2
+        export_grid["xgrid"] = LHAPDF_XGRID
+        export_grid["replica"] = int(replica_index)
+        export_grid["labels"] = EXPORT_LABELS
+
+        export_grid["pdfgrid"] = grid_for_writing
+
+        with open(rep_path + "/" + fit_name + ".exportgrid", "w") as outfile:
+            yaml.dump(export_grid, outfile)
+
+    log.info(f"Replicas written to {replicas_path}")
+    log.info(
+        "Now you can evolve them with evolve_fit and then compress them with mc2_hessian"
+    )
