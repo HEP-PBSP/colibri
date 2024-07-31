@@ -10,6 +10,7 @@ from wmin.config import WminConfig
 wmin_providers = [
     "wmin.model",
     "wmin.utils",
+    "wmin.basis",
 ]
 
 
