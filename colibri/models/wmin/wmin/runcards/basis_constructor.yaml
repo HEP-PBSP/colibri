@@ -12,4 +12,4 @@ Q: 1.65
 sum_rule_atol: 5e-3
 
 actions_:
-  - basis_replica_selector
+  - write_wmin_basis
