@@ -5,8 +5,10 @@ meta:
 
 
 pdfs:
-  - NNPDF40_nnlo_as_01180
-  - PDF4LHC15_nnlo_mc
+  - PDF4LHC21_mc
+
+# theory id for DGLAP evolution
+theoryid: 700
 
 Q: 1.65
 sum_rule_atol: 5e-3
