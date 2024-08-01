@@ -1,13 +1,13 @@
-pdf: test_basis
+pdf: 240801_wmin_basis
 
-Neig: 10
+Neig: 100
 Q: 1.65
 hessian_normalization: false
 
-gridname: test_basis_pca
+gridname: 240801_wmin_basis_pca 
 
 
 installgrid: True
 
 actions_:
-  - mc2hessian
+  - mc2_pca
