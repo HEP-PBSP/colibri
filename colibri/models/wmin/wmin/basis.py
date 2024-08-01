@@ -242,7 +242,7 @@ def _create_mc2hessian(
 
 
 @check_pdf_is_montecarlo
-def mc2hessian(
+def mc2_pca(
     pdf,
     Q,
     Neig: int,
