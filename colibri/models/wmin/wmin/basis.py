@@ -102,7 +102,7 @@ def basis_replica_selector(
             uvalence_sr = sr["uvalence"]
             dvalence_sr = sr["dvalence"]
             svalence_sr = sr["svalence"]
-            # cvalence_sr = sr['cvalence']
+            cvalence_sr = sr["cvalence"]
 
             momentum_sr_idx = np.where(
                 np.isclose(
@@ -132,14 +132,24 @@ def basis_replica_selector(
                     atol=sum_rule_atol,
                 )
             )[0]
-            # cvalence_sr_idx = np.where(np.isclose(cvalence_sr, KNOWN_SUM_RULES_EXPECTED['cvalence'], atol=sum_rule_atol))[0]
+            cvalence_sr_idx = np.where(
+                np.isclose(
+                    cvalence_sr,
+                    KNOWN_SUM_RULES_EXPECTED["cvalence"],
+                    atol=sum_rule_atol,
+                )
+            )[0]
 
             # Select replicas that pass all sum rules simultaneously
             selected_replicas_idxs = np.intersect1d(
                 np.intersect1d(
-                    np.intersect1d(momentum_sr_idx, uvalence_sr_idx), dvalence_sr_idx
+                    np.intersect1d(
+                        np.intersect1d(momentum_sr_idx, uvalence_sr_idx),
+                        dvalence_sr_idx,
+                    ),
+                    svalence_sr_idx,
                 ),
-                svalence_sr_idx,
+                cvalence_sr_idx,
             )
 
             log.info(
