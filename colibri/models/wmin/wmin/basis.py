@@ -69,7 +69,7 @@ def basis_replica_selector(
 ):
     """
     For each pdf set select replicas that simultaneously pass the
-    momentum, u-valence and d-valence sum rules to the required accuracy.
+    momentum, u-valence, d-valence, s-valence, and c-valence sum rules to the required accuracy.
     Returns a pdf grid of dimension (Nreplicas x Nfl x Ngrid) that combines all the replicas from
     different PDF sets at the given scale Q
 
@@ -89,7 +89,7 @@ def basis_replica_selector(
 
     Returns
     -------
-    array of
+    array of shape (Nreplicas x Nfl x Ngrid)
         A pdf grid that combines all the replicas from different PDF sets at the given scale Q.
     """
 
@@ -195,7 +195,9 @@ def basis_replica_selector(
 
 
 def write_wmin_basis(basis_replica_selector, output_path, Q=1.65):
-    """ """
+    """
+    Writes the wmin basis at the parametrisation scale Q to the output_path.
+    """
     wmin_basis_pdf_grid = basis_replica_selector
 
     replicas_path = str(output_path) + "/replicas"
@@ -240,7 +242,11 @@ def _create_mc2hessian(
     pdf, Q, xgrid, Neig, output_path, name=None, hessian_normalization=False
 ):
     """
-    Same as validphys.mc2hessian._create_mc2hessian but with the option not to normalize the eigenvectors.s
+    Same as validphys.mc2hessian._create_mc2hessian but with the option not to normalize the eigenvectors.
+    Note: setting hessian_normalization to False has the advantage of getting a PDF set with a more
+    natural variance (since we treat replicas as samples from a posterior distribution), this, in turn,
+    yields wmin coefficients that are smaller by a factor of Hessian_norm. The advantage of having this
+    is that we get a smaller error in the sum rules due to miscancellation effects of the type (SR_i - SR_0).
     """
     X = _get_X(pdf, Q, xgrid, reshape=True)
     vec = _compress_X(X, Neig)
@@ -266,6 +272,7 @@ def mc2_pca(
 
     Note: mc2hessian_xgrid is taken as the default xgrid that is returned by validphys.mc2hessian.mc2hessian_xgrid
     """
+    log.warning("Using default xgrid from mc2hessian_xgrid for PCA.")
     result_path = _create_mc2hessian(
         pdf,
         Q=Q,
