@@ -1,7 +1,16 @@
+meta:
+  author: Mark N. Costantini
+  title: Runcard to get the PCA of a PDF set
+  keywords: [wmin basis, PCA]
+
 pdf: 240801_wmin_basis
 
 Neig: 100
 Q: 1.65
+
+# When normalizing, wmin coefficient will in general be larger by a factor
+# proportional to the Hessian normalization factor. This can be problematic
+# as it can lead to miscancellations in the Sum Rules.
 hessian_normalization: false
 
 gridname: 240801_wmin_basis_pca 
