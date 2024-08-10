@@ -7,13 +7,14 @@ This module contains the functions to export the results of the fit.
 
 import os
 from dataclasses import dataclass
+import yaml
 
 import jax.numpy as jnp
 import pandas as pd
 from mpi4py import MPI
 
 from colibri.lhapdf import write_exportgrid
-from colibri.constants import LHAPDF_XGRID, evolution_to_export_matrix, EXPORT_LABELS
+from colibri.constants import LHAPDF_XGRID, evolution_to_flavour_matrix, EXPORT_LABELS
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -93,7 +94,14 @@ def export_bayes_results(
         )
 
 
-def write_exportgrid(grid_for_writing, replica_index, Q=1.65, xgrid=LHAPDF_XGRID, export_labels=EXPORT_LABELS):
+def write_exportgrid(
+    grid_for_writing,
+    grid_name,
+    replica_index,
+    Q=1.65,
+    xgrid=LHAPDF_XGRID,
+    export_labels=EXPORT_LABELS,
+):
     """
     Writes an exportgrid file to the output path.
     The exportgrids are written in the format required by EKO, but are not yet
@@ -104,10 +112,14 @@ def write_exportgrid(grid_for_writing, replica_index, Q=1.65, xgrid=LHAPDF_XGRID
     grid_for_writing: jnp.array
         An array of shape (14,Nx) containing the PDF values in the evolution basis.
 
-        
+    grid_name: str
+        The name of the grid to write.
+
+    replica_index: int
+        The replica number which will be written.
     """
-    
-    grid_for_writing = evolution_to_export_matrix @ grid_for_writing
+
+    grid_for_writing = evolution_to_flavour_matrix @ grid_for_writing
     grid_for_writing = grid_for_writing.T.tolist()
 
     # Prepare a dictionary for the exportgrid
@@ -121,8 +133,9 @@ def write_exportgrid(grid_for_writing, replica_index, Q=1.65, xgrid=LHAPDF_XGRID
 
     export_grid["pdfgrid"] = grid_for_writing
 
-    with open(rep_path + "/" + fit_name + ".exportgrid", "w") as outfile:
+    with open(f"{grid_name}.exportgrid", "w") as outfile:
         yaml.dump(export_grid, outfile)
+
 
 def write_replicas(bayes_fit, output_path, pdf_model):
     """
