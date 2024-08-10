@@ -15,7 +15,7 @@ import os
 import time
 
 from colibri.data_batch import data_batches
-from colibri.lhapdf import write_exportgrid
+from colibri.mc_utils import write_exportgrid
 
 log = logging.getLogger(__name__)
 
