@@ -33,6 +33,8 @@ from colibri.constants import (
     EXPORT_LABELS,
     FLAVOUR_TO_ID_MAPPING,
 )
+from colibri.export_results import write_exportgrid
+
 
 log = logging.getLogger(__name__)
 
@@ -194,7 +196,13 @@ def basis_replica_selector(
     return np.concatenate(wmin_basis, axis=0)
 
 
-def write_wmin_basis(basis_replica_selector, output_path, Q=1.65):
+def write_wmin_basis(
+    basis_replica_selector,
+    output_path,
+    Q=1.65,
+    xgrid=LHAPDF_XGRID,
+    export_labels=EXPORT_LABELS,
+):
     """
     Writes the wmin basis at the parametrisation scale Q to the output_path.
     """
@@ -207,30 +215,20 @@ def write_wmin_basis(basis_replica_selector, output_path, Q=1.65):
     for replica_index in range(1, wmin_basis_pdf_grid.shape[0]):
 
         rep_path = replicas_path + f"/replica_{replica_index}"
-
         if not os.path.exists(rep_path):
             os.mkdir(rep_path)
-
         fit_name = str(output_path).split("/")[-1]
 
-        grid_for_writing = (
-            evolution_to_flavour_matrix @ wmin_basis_pdf_grid[replica_index]
+        grid_name = rep_path + "/" + fit_name
+
+        write_exportgrid(
+            grid_for_writing=wmin_basis_pdf_grid[replica_index],
+            grid_name=grid_name,
+            replica_index=replica_index,
+            Q=Q,
+            xgrid=xgrid,
+            export_labels=export_labels,
         )
-        grid_for_writing = grid_for_writing.T.tolist()
-
-        # Prepare a dictionary for the exportgrid
-        export_grid = {}
-
-        # Set the initial Q2 value, which will always be the same.
-        export_grid["q20"] = (Q) ** 2
-        export_grid["xgrid"] = LHAPDF_XGRID
-        export_grid["replica"] = int(replica_index)
-        export_grid["labels"] = EXPORT_LABELS
-
-        export_grid["pdfgrid"] = grid_for_writing
-
-        with open(rep_path + "/" + fit_name + ".exportgrid", "w") as outfile:
-            yaml.dump(export_grid, outfile)
 
     log.info(f"Replicas written to {replicas_path}")
     log.info(
