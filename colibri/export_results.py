@@ -8,12 +8,12 @@ This module contains the functions to export the results of the fit.
 import os
 from dataclasses import dataclass
 import yaml
+import numpy as np
 
 import jax.numpy as jnp
 import pandas as pd
 from mpi4py import MPI
 
-from colibri.lhapdf import write_exportgrid
 from colibri.constants import LHAPDF_XGRID, evolution_to_flavour_matrix, EXPORT_LABELS
 
 comm = MPI.COMM_WORLD
@@ -137,7 +137,15 @@ def write_exportgrid(
         yaml.dump(export_grid, outfile)
 
 
-def write_replicas(bayes_fit, output_path, pdf_model):
+def write_replicas(
+    bayes_fit,
+    output_path,
+    pdf_model,
+    monte_carlo=False,
+    Q=1.65,
+    xgrid=LHAPDF_XGRID,
+    export_labels=EXPORT_LABELS,
+):
     """
     Write the replicas of the Bayesian fit to export grids.
 
@@ -149,10 +157,17 @@ def write_replicas(bayes_fit, output_path, pdf_model):
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
+    monte_carlo: bool
+        Whether the fit is a Monte Carlo fit. If True, the exportgrids are written
+        to a folder called "fit_replicas" in the output_path.
     """
     if rank == 0:
         # create replicas folder if it does not exist
-        replicas_path = str(output_path) + "/replicas"
+        if monte_carlo:
+            replicas_path = str(output_path) + "/fit_replicas"
+        else:
+            replicas_path = str(output_path) + "/replicas"
+
         if not os.path.exists(replicas_path):
             os.mkdir(replicas_path)
 
@@ -164,12 +179,30 @@ def write_replicas(bayes_fit, output_path, pdf_model):
     # Distribute indices among processes using scatter
     indices_per_process = list(range(rank, n_posterior_samples, size))
 
+    fit_name = str(output_path).split("/")[-1]
+
+    # Create the exportgrid
+    lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+
     # Finish by writing the replicas to export grids, ready for evolution
     for i in indices_per_process:
-        log.info(f"Writing exportgrid for replica {i+1}")
+
+        # Get the PDF grid in the evolution basis
+        parameters = jnp.array(bayes_fit.resampled_posterior[i, :])
+        grid_for_writing = np.array(lhapdf_interpolator(parameters))
+
+        replica_index = i + 1
+        rep_path = replicas_path + f"/replica_{replica_index}"
+        if not os.path.exists(rep_path):
+            os.mkdir(rep_path)
+        grid_name = rep_path + "/" + fit_name
+
+        log.info(f"Writing exportgrid for replica {replica_index}")
         write_exportgrid(
-            jnp.array(bayes_fit.resampled_posterior[i, :]),
-            pdf_model,
-            i + 1,
-            output_path,
+            grid_for_writing=grid_for_writing,
+            grid_name=grid_name,
+            replica_index=replica_index,
+            Q=Q,
+            xgrid=xgrid,
+            export_labels=export_labels,
         )
