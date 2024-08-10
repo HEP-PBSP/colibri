@@ -29,7 +29,7 @@ from validphys.checks import check_pdf_is_montecarlo
 
 from colibri.constants import (
     LHAPDF_XGRID,
-    evolution_to_export_matrix,
+    evolution_to_flavour_matrix,
     EXPORT_LABELS,
     FLAVOUR_TO_ID_MAPPING,
 )
@@ -214,7 +214,7 @@ def write_wmin_basis(basis_replica_selector, output_path, Q=1.65):
         fit_name = str(output_path).split("/")[-1]
 
         grid_for_writing = (
-            evolution_to_export_matrix @ wmin_basis_pdf_grid[replica_index]
+            evolution_to_flavour_matrix @ wmin_basis_pdf_grid[replica_index]
         )
         grid_for_writing = grid_for_writing.T.tolist()
 
