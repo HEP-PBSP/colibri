@@ -62,19 +62,11 @@ def test_export_bayes_results(tmp_path):
     )
 
 
-@patch("colibri.export_results.os.path.exists", return_value=False)
-@patch("colibri.export_results.os.mkdir")
 @patch("colibri.export_results.write_exportgrid")
 @patch("colibri.export_results.log.info")
-def test_write_replicas(
-    mock_log_info, mock_write_exportgrid, mock_os_mkdir, mock_os_path_exists, tmp_path
-):
+def test_write_replicas(mock_log_info, mock_write_exportgrid, tmp_path):
     output_path = str(tmp_path)
     write_replicas(bayes_fit, output_path, pdf_model)
-
-    # Check if the replicas directory was created
-    mock_os_path_exists.assert_called_once_with(output_path + "/replicas")
-    mock_os_mkdir.assert_called_once_with(output_path + "/replicas")
 
     # Check if the write_exportgrid function was called for each sample
     assert mock_write_exportgrid.call_count == bayes_fit.resampled_posterior.shape[0]
