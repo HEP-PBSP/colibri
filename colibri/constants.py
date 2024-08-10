@@ -1,3 +1,10 @@
+"""
+colibri.constants
+
+This module contains the constants used in the colibri package.
+The rotation matrix used to transform the PDF grid from the evolution basis to the flavour basis is also defined here.
+Note that the flavour basis is the basis in which the PDFs are exported for LHAPDF format.
+"""
 import numpy as np
 
 FLAVOURS_ID_MAPPINGS = {
@@ -288,7 +295,7 @@ EXPORT_LABELS = [
     "PHT",
 ]
 
-export_to_evolution = {
+flavour_to_evolution = {
     "\Sigma": {
         "U": 1,
         "UBAR": 1,
@@ -397,21 +404,21 @@ export_to_evolution = {
     "photon": {"PHT": 1},
 }
 
-# Construct the inverse transformation from evolution to export
+# Construct the inverse transformation from evolution to flavour basis
 num_flav = len(FLAVOURS_ID_MAPPINGS)
-export_to_evolution_matrix = np.zeros((num_flav, num_flav))
+flavour_to_evolution_matrix = np.zeros((num_flav, num_flav))
 for i in range(num_flav):
     j = 0
     for flav in EXPORT_LABELS:
-        if flav in export_to_evolution[FLAVOURS_ID_MAPPINGS[i]].keys():
-            export_to_evolution_matrix[i, j] = export_to_evolution[
+        if flav in flavour_to_evolution[FLAVOURS_ID_MAPPINGS[i]].keys():
+            flavour_to_evolution_matrix[i, j] = flavour_to_evolution[
                 FLAVOURS_ID_MAPPINGS[i]
             ][flav]
         else:
-            export_to_evolution_matrix[i, j] = 0
+            flavour_to_evolution_matrix[i, j] = 0
         j += 1
 
-evolution_to_export_matrix = np.linalg.inv(export_to_evolution_matrix)
+evolution_to_flavour_matrix = np.linalg.inv(flavour_to_evolution_matrix)
 
 
 GRID_MAPPING = {
