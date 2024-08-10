@@ -5,6 +5,7 @@ This module contains the constants used in the colibri package.
 The rotation matrix used to transform the PDF grid from the evolution basis to the flavour basis is also defined here.
 Note that the flavour basis is the basis in which the PDFs are exported for LHAPDF format.
 """
+
 import numpy as np
 
 FLAVOURS_ID_MAPPINGS = {
