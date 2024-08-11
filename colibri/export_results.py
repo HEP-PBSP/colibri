@@ -108,7 +108,7 @@ def write_exportgrid(
     evolved.
 
     Note: grid should be in the evolution basis.
-    
+
     Parameters
     ----------
     grid_for_writing: jnp.array
@@ -126,7 +126,7 @@ def write_exportgrid(
 
     # Prepare a dictionary for the exportgrid
     export_grid = {
-        "q20": Q ** 2,
+        "q20": Q**2,
         "xgrid": xgrid,
         "replica": int(replica_index),
         "labels": export_labels,
@@ -158,7 +158,7 @@ def write_replicas(
         The PDF model used in the fit.
     """
     if rank == 0:
-        # create replicas folder if it does not exist 
+        # create replicas folder if it does not exist
         replicas_path = Path(output_path) / "replicas"
         replicas_path.mkdir(parents=True, exist_ok=True)
 

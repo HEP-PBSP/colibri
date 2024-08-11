@@ -15,7 +15,7 @@ import os
 import time
 
 from colibri.data_batch import data_batches
-from colibri.mc_utils import write_exportgrid
+from colibri.mc_utils import write_exportgrid_mc
 
 log = logging.getLogger(__name__)
 
@@ -300,12 +300,11 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
 
     # Finish by writing the export grid, ready for evolution
     log.info(f"Writing exportgrid for replica {replica_index}")
-    write_exportgrid(
+    write_exportgrid_mc(
         jnp.array(df.iloc[0, :].tolist()),
         pdf_model,
         replica_index,
         output_path,
-        monte_carlo=True,
     )
 
     df.to_csv(
