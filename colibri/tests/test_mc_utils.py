@@ -3,7 +3,7 @@ import pathlib
 from numpy.testing import assert_allclose
 
 from unittest.mock import Mock, patch, mock_open
-from colibri.mc_utils import write_exportgrid
+from colibri.mc_utils import write_exportgrid_mc
 from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 import jax.numpy as jnp
 
@@ -50,7 +50,6 @@ mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
     (14, len(xgrid))
 )
 replica_index = 1
-monte_carlo = False
 
 
 @patch("os.path.exists")
@@ -61,9 +60,9 @@ def test_write_exportgrid_creates_directories(
 ):
     mock_exists.side_effect = lambda path: False
 
-    write_exportgrid(parameters, mock_pdf_model, replica_index, tmp_path, monte_carlo)
+    write_exportgrid_mc(parameters, mock_pdf_model, replica_index, tmp_path)
 
-    expected_dir_path = f"{tmp_path}/replicas/replica_1"
+    expected_dir_path = f"{tmp_path}/fit_replicas/replica_1"
     mock_mkdir.assert_called_once_with(expected_dir_path)
 
 
@@ -74,13 +73,11 @@ def test_write_exportgrid_writes_file(mock_open, mock_mkdir, mock_exists, tmp_pa
     mock_exists.side_effect = lambda path: False
 
     with patch("yaml.dump") as mock_yaml_dump:
-        write_exportgrid(
-            parameters, mock_pdf_model, replica_index, tmp_path, monte_carlo
-        )
+        write_exportgrid_mc(parameters, mock_pdf_model, replica_index, tmp_path)
 
         fit_name = str(tmp_path).split("/")[-1]
 
-        expected_file_path = f"{tmp_path}/replicas/replica_1/{fit_name}.exportgrid"
+        expected_file_path = f"{tmp_path}/fit_replicas/replica_1/{fit_name}.exportgrid"
         mock_open.assert_called_once_with(expected_file_path, "w")
 
         written_data = mock_yaml_dump.call_args[0][0]
@@ -100,9 +97,8 @@ def test_write_exportgrid_correct_paths_for_monte_carlo(
     mock_open, mock_mkdir, mock_exists, tmp_path
 ):
     mock_exists.side_effect = lambda path: False
-    monte_carlo = True
 
-    write_exportgrid(parameters, mock_pdf_model, replica_index, tmp_path, monte_carlo)
+    write_exportgrid_mc(parameters, mock_pdf_model, replica_index, tmp_path)
 
     expected_dir_path = f"{tmp_path}/fit_replicas/replica_1"
     mock_mkdir.assert_called_once_with(expected_dir_path)
@@ -116,6 +112,6 @@ def test_write_exportgrid_no_directory_creation_if_exists(
 ):
     mock_exists.side_effect = lambda path: True
 
-    write_exportgrid(parameters, mock_pdf_model, replica_index, tmp_path, monte_carlo)
+    write_exportgrid_mc(parameters, mock_pdf_model, replica_index, tmp_path)
 
     mock_mkdir.assert_not_called()

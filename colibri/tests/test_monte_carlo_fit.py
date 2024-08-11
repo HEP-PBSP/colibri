@@ -62,7 +62,7 @@ def test_monte_carlo_fit_runs_without_errors():
     assert_allclose(result.validation_loss, jnp.array([]))
 
 
-@patch("colibri.monte_carlo_fit.write_exportgrid")
+@patch("colibri.monte_carlo_fit.write_exportgrid_mc")
 def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
 
     # add side effect to the mock function to create dir
