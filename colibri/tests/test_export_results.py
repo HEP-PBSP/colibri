@@ -1,9 +1,20 @@
-from unittest.mock import Mock, patch
-from colibri.export_results import write_replicas, export_bayes_results
+"""
+colibri.tests.test_export_results.py
+
+This module contains the tests for the export_results module of colibri.
+"""
+
+from unittest.mock import Mock, mock_open, patch
+
 import jax
-import os
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+from colibri.export_results import (
+    export_bayes_results,
+    write_exportgrid,
+    write_replicas,
+)
 
 # Mock the objects and functions used in tests
 # Mock the BayesianFit object
@@ -60,6 +71,53 @@ def test_export_bayes_results(tmp_path):
         content
         == f"logz,min_chi2,avg_chi2,Cb\n{bayes_fit.logz},{bayes_fit.min_chi2},{bayes_fit.avg_chi2},{bayes_fit.bayes_complexity}\n"
     )
+
+
+def test_write_exportgrid():
+    # Mock data
+    grid_for_writing = np.random.rand(14, 2)  # Mock a random 14x2 array
+    grid_name = "test_grid"
+    replica_index = 1
+    Q = 1.65
+    xgrid = [0.001, 0.01, 0.1, 1.0]  # Mock xgrid values
+    export_labels = ["a", "b", "c"]  # Mock labels
+
+    # Mock open and yaml.dump
+    with patch("builtins.open", mock_open()) as mocked_file:
+        with patch("yaml.dump") as mocked_yaml_dump:
+
+            write_exportgrid(
+                grid_for_writing=grid_for_writing,
+                grid_name=grid_name,
+                replica_index=replica_index,
+                Q=Q,
+                xgrid=xgrid,
+                export_labels=export_labels,
+            )
+
+            # Ensure that yaml.dump was called with a dictionary that contains
+            # the expected keys and some key properties.
+            called_args, _ = mocked_yaml_dump.call_args
+            written_data = called_args[0]
+
+            # Check that the main structure is correct
+            assert "q20" in written_data
+            assert "xgrid" in written_data
+            assert "replica" in written_data
+            assert "labels" in written_data
+            assert "pdfgrid" in written_data
+
+            # Check specific values
+            assert written_data["q20"] == Q**2
+            assert written_data["xgrid"] == xgrid
+            assert written_data["replica"] == replica_index
+            assert written_data["labels"] == export_labels
+
+            # Check that the pdfgrid was transformed as expected (shape, not values)
+            assert np.array(written_data["pdfgrid"]).shape == (2, 14)
+
+    # Verify that the file was opened with the correct name
+    mocked_file.assert_called_once_with(f"{grid_name}.exportgrid", "w")
 
 
 @patch("colibri.export_results.write_exportgrid")
