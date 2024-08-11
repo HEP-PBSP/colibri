@@ -5,10 +5,10 @@ This module contains the functions to export the results of the fit.
 
 """
 
-import os
 from dataclasses import dataclass
 import yaml
 import numpy as np
+from pathlib import Path
 
 import jax.numpy as jnp
 import pandas as pd
@@ -107,10 +107,13 @@ def write_exportgrid(
     The exportgrids are written in the format required by EKO, but are not yet
     evolved.
 
+    Note: grid should be in the evolution basis.
+    
     Parameters
     ----------
     grid_for_writing: jnp.array
-        An array of shape (14,Nx) containing the PDF values in the evolution basis.
+        An array of shape (14,Nx) containing the PDF values.
+        Note that the grid should be in the evolution basis.
 
     grid_name: str
         The name of the grid to write.
@@ -118,20 +121,17 @@ def write_exportgrid(
     replica_index: int
         The replica number which will be written.
     """
-
     grid_for_writing = evolution_to_flavour_matrix @ grid_for_writing
     grid_for_writing = grid_for_writing.T.tolist()
 
     # Prepare a dictionary for the exportgrid
-    export_grid = {}
-
-    # Set the initial Q2 value, which should always be (1.65)**2.
-    export_grid["q20"] = (Q) ** 2
-    export_grid["xgrid"] = xgrid
-    export_grid["replica"] = int(replica_index)
-    export_grid["labels"] = export_labels
-
-    export_grid["pdfgrid"] = grid_for_writing
+    export_grid = {
+        "q20": Q ** 2,
+        "xgrid": xgrid,
+        "replica": int(replica_index),
+        "labels": export_labels,
+        "pdfgrid": grid_for_writing,
+    }
 
     with open(f"{grid_name}.exportgrid", "w") as outfile:
         yaml.dump(export_grid, outfile)
@@ -141,7 +141,6 @@ def write_replicas(
     bayes_fit,
     output_path,
     pdf_model,
-    monte_carlo=False,
     Q=1.65,
     xgrid=LHAPDF_XGRID,
     export_labels=EXPORT_LABELS,
@@ -157,19 +156,11 @@ def write_replicas(
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
-    monte_carlo: bool
-        Whether the fit is a Monte Carlo fit. If True, the exportgrids are written
-        to a folder called "fit_replicas" in the output_path.
     """
     if rank == 0:
-        # create replicas folder if it does not exist
-        if monte_carlo:
-            replicas_path = str(output_path) + "/fit_replicas"
-        else:
-            replicas_path = str(output_path) + "/replicas"
-
-        if not os.path.exists(replicas_path):
-            os.mkdir(replicas_path)
+        # create replicas folder if it does not exist 
+        replicas_path = Path(output_path) / "replicas"
+        replicas_path.mkdir(parents=True, exist_ok=True)
 
     # Synchronize to ensure all processes are ready to write replicas
     comm.Barrier()
@@ -179,28 +170,25 @@ def write_replicas(
     # Distribute indices among processes using scatter
     indices_per_process = list(range(rank, n_posterior_samples, size))
 
-    fit_name = str(output_path).split("/")[-1]
+    fit_name = Path(output_path).name
 
     # Create the exportgrid
-    lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+    lhapdf_interpolator = pdf_model.grid_values_func(xgrid)
 
     # Finish by writing the replicas to export grids, ready for evolution
     for i in indices_per_process:
-
-        # Get the PDF grid in the evolution basis
         parameters = jnp.array(bayes_fit.resampled_posterior[i, :])
         grid_for_writing = np.array(lhapdf_interpolator(parameters))
 
         replica_index = i + 1
-        rep_path = replicas_path + f"/replica_{replica_index}"
-        if not os.path.exists(rep_path):
-            os.mkdir(rep_path)
-        grid_name = rep_path + "/" + fit_name
+        rep_path = replicas_path / f"replica_{replica_index}"
+        rep_path.mkdir(exist_ok=True)
+        grid_name = rep_path / fit_name
 
         log.info(f"Writing exportgrid for replica {replica_index}")
         write_exportgrid(
             grid_for_writing=grid_for_writing,
-            grid_name=grid_name,
+            grid_name=str(grid_name),
             replica_index=replica_index,
             Q=Q,
             xgrid=xgrid,
