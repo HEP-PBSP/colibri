@@ -11,7 +11,7 @@ import numpy as np
 import yaml
 
 
-from colibri.constants import LHAPDF_XGRID, evolution_to_export_matrix, EXPORT_LABELS
+from colibri.constants import LHAPDF_XGRID, evolution_to_flavour_matrix, EXPORT_LABELS
 
 
 def write_exportgrid(
@@ -64,7 +64,7 @@ def write_exportgrid(
 
     # Rotate the grid from the evolution basis into the export grid basis
     grid_for_writing = np.array(lhapdf_interpolator(parameters))
-    grid_for_writing = evolution_to_export_matrix @ grid_for_writing
+    grid_for_writing = evolution_to_flavour_matrix @ grid_for_writing
     grid_for_writing = grid_for_writing.T.tolist()
 
     # Prepare a dictionary for the exportgrid
