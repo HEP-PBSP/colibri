@@ -9,11 +9,13 @@ import argparse
 import logging
 import pathlib
 import dill
+import numpy as np
 
 from reportengine import colors
 
 from colibri.utils import resample_from_ns_posterior
-from colibri.lhapdf import write_exportgrid
+from colibri.export_results import write_exportgrid
+from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 
 from mpi4py import MPI
 
@@ -52,6 +54,14 @@ def main():
         type=str,
         default=None,
         help="The name of the resampled fit.",
+    )
+
+    parser.add_argument(
+        "--parametrisation_scale",
+        "-Q",
+        type=float,
+        default=1.65,
+        help="The scale at which the PDFs are fitted.",
     )
 
     args = parser.parse_args()
@@ -117,15 +127,37 @@ def main():
     # Distribute indices among processes using scatter
     indices_per_process = list(range(rank, nreplicas, size))
 
+    new_rep_path = resampled_fit_path / "replicas"
+
+    if not os.path.exists(new_rep_path):
+        os.mkdir(new_rep_path)
+
     # Finish by writing the replicas to export grids, ready for evolution
     for i in indices_per_process:
-        log.info(f"Writing exportgrid for replica {i+1} on rank {rank}")
+
+        # Get the PDF grid in the evolution basis
+        parameters = resampled_posterior[i]
+        lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+        grid_for_writing = np.array(lhapdf_interpolator(parameters))
+
+        replica_index = i + 1
+
+        replica_index_path = new_rep_path / f"replica_{replica_index}"
+        if not os.path.exists(replica_index_path):
+            os.mkdir(replica_index_path)
+
+        grid_name = replica_index_path / args.resampled_fit_name
+
+        log.info(f"Writing exportgrid for replica {replica_index}")
         write_exportgrid(
-            resampled_posterior[i],
-            pdf_model,
-            i + 1,
-            resampled_fit_path,
+            grid_for_writing=grid_for_writing,
+            grid_name=grid_name,
+            replica_index=replica_index,
+            Q=args.parametrisation_scale,
+            xgrid=LHAPDF_XGRID,
+            export_labels=EXPORT_LABELS,
         )
+        log.info(f"Writing exportgrid for replica {replica_index} on rank {rank}")
 
     # Synchronize to ensure all processes have finished
     comm.Barrier()
