@@ -66,7 +66,7 @@ Collects the sum rules for all PDF sets.
 pdfs_sum_rules = collect("sum_rules_dict", ("pdfs",))
 
 
-def basis_replica_selector(
+def wmin_basis_pdf_grid(
     pdfs_sum_rules, sum_rule_atol=1e-3, Q=1.65, xgrid=LHAPDF_XGRID
 ):
     """
@@ -197,7 +197,7 @@ def basis_replica_selector(
 
 
 def write_wmin_basis(
-    basis_replica_selector,
+    wmin_basis_pdf_grid,
     output_path,
     Q=1.65,
     xgrid=LHAPDF_XGRID,
@@ -206,7 +206,7 @@ def write_wmin_basis(
     """
     Writes the wmin basis at the parametrisation scale Q to the output_path.
     """
-    wmin_basis_pdf_grid = basis_replica_selector
+    wmin_basis_pdf_grid = wmin_basis_pdf_grid
 
     replicas_path = str(output_path) + "/replicas"
     if not os.path.exists(replicas_path):
