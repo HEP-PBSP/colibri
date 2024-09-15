@@ -66,6 +66,63 @@ Collects the sum rules for all PDF sets.
 pdfs_sum_rules = collect("sum_rules_dict", ("pdfs",))
 
 
+
+
+
+def wmin_pdfbasis_normalization(pdf_grid, pdf_basis="intrinsic_charm"):
+    """
+    Imposes certain conditions on the 14 PDF flavours in the evolution basis.
+    
+    Intrinsic charm basis: 
+    V = V15 = V24 = V35 and Sigma = T24 = T35, this means that 
+    in this basis we have 8 independent PDF flavours (photon is zero). 
+
+    Perturbative charm basis:
+    V = V15 = V24 = V35 and Sigma = T15 = T24 = T35, this means that
+    in this basis we have 7 independent PDF flavours (photon is zero).
+
+    Parameters
+    ----------
+    pdf_grid: np.array, shape (Nfl x Ngrid)
+
+    pdf_basis: str, default is "intrinsic_charm"
+        The PDF basis to normalize to, can be either "intrinsic_charm" or "perturbative_charm".
+
+
+    Returns
+    -------
+    np.array, an array of shape (Nreplicas x Nfl x Ngrid)
+    TODO: decide whether we want to return something of shape (Nreplicas x Nfl x Ngrid) or (Nfl x Ngrid)
+    """
+    # check if the pdf_basis is valid
+    if pdf_basis not in ["intrinsic_charm", "perturbative_charm"]:
+        raise ValueError(
+            f"pdf_basis must be either 'intrinsic_charm' or 'perturbative_charm', got {pdf_basis}"
+        )
+    
+    sigma = pdf_grid[FLAVOUR_TO_ID_MAPPING["\Sigma"],:]
+    valence = pdf_grid[FLAVOUR_TO_ID_MAPPING["V"],:]
+
+    if pdf_basis == "intrinsic_charm":
+        # impose the intrinsic charm basis: V = V15 = V24 = V35 and Sigma = T24 = T35
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["V15"],:] = valence
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["V24"],:] = valence
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["V35"],:] = valence
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["T24"],:] = sigma
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["T35"],:] = sigma
+        
+    elif pdf_basis == "perturbative_charm":
+        # impose the perturbative charm basis: V = V15 = V24 = V35 and Sigma = T15 = T24 = T35
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["V15"],:] = valence
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["V24"],:] = valence
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["V35"],:] = valence
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["T15"],:] = sigma
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["T24"],:] = sigma
+        pdf_grid[FLAVOUR_TO_ID_MAPPING["T35"],:] = sigma
+        
+    return pdf_grid
+
+
 def wmin_basis_pdf_grid(
     pdfs_sum_rules, sum_rule_atol=1e-3, Q=1.65, xgrid=LHAPDF_XGRID
 ):
