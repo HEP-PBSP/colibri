@@ -66,16 +66,50 @@ Collects the sum rules for all PDF sets.
 pdfs_sum_rules = collect("sum_rules_dict", ("pdfs",))
 
 
+def wmin_basis_sum_rules_normalization(pdf_grid, sum_rule_dict):
+    """
+    Normalizes the pdf grid so that the sum rules are exact.
 
+    Parameters
+    ----------
+    pdf_grid: np.array, shape (Nreplicas x Nfl x Ngrid)
+
+    sum_rule_dict: dict
+        A dictionary containing the sum rules in the flavour basis for the given PDF set.
+
+    Returns
+    -------
+    np.array, an array of shape (Nreplicas x Nfl x Ngrid)
+    """
+
+    momentum_sr = sum_rule_dict["momentum"]
+    uvalence_sr = sum_rule_dict["uvalence"]
+    dvalence_sr = sum_rule_dict["dvalence"]
+    svalence_sr = sum_rule_dict["svalence"]
+
+    # normalize the pdf grid so that sum rules are exact
+    Amomentum = momentum_sr
+    Avalence = uvalence_sr + dvalence_sr + svalence_sr
+    Avalence3 = uvalence_sr - dvalence_sr
+    Avalence8 = uvalence_sr + dvalence_sr - 2 * svalence_sr
+
+    pdf_grid[
+        :, [FLAVOUR_TO_ID_MAPPING["\Sigma"], FLAVOUR_TO_ID_MAPPING["g"]], :
+    ] /= Amomentum[:, None, None]
+    pdf_grid[:, [FLAVOUR_TO_ID_MAPPING["V"]], :] *= 3 / Avalence[:, None, None]
+    pdf_grid[:, [FLAVOUR_TO_ID_MAPPING["V3"]], :] *= 1 / Avalence3[:, None, None]
+    pdf_grid[:, [FLAVOUR_TO_ID_MAPPING["V8"]], :] *= 3 / Avalence8[:, None, None]
+
+    return pdf_grid
 
 
 def wmin_pdfbasis_normalization(pdf_grid, pdf_basis="intrinsic_charm"):
     """
     Imposes certain conditions on the 14 PDF flavours in the evolution basis.
-    
-    Intrinsic charm basis: 
-    V = V15 = V24 = V35 and Sigma = T24 = T35, this means that 
-    in this basis we have 8 independent PDF flavours (photon is zero). 
+
+    Intrinsic charm basis:
+    V = V15 = V24 = V35 and Sigma = T24 = T35, this means that
+    in this basis we have 8 independent PDF flavours (photon is zero).
 
     Perturbative charm basis:
     V = V15 = V24 = V35 and Sigma = T15 = T24 = T35, this means that
@@ -83,7 +117,7 @@ def wmin_pdfbasis_normalization(pdf_grid, pdf_basis="intrinsic_charm"):
 
     Parameters
     ----------
-    pdf_grid: np.array, shape (Nfl x Ngrid)
+    pdf_grid: np.array, shape (Nreplicas x Nfl x Ngrid)
 
     pdf_basis: str, default is "intrinsic_charm"
         The PDF basis to normalize to, can be either "intrinsic_charm" or "perturbative_charm".
