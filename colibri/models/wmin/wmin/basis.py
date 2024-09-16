@@ -147,6 +147,9 @@ def wmin_basis_sum_rules_normalization(
     sum_rule_dict: dict
         A dictionary containing the sum rules in the flavour basis for the given PDF set.
 
+    selected_replicas_idxs: slice
+        list of indices of replicas to be selected from the pdf_grid.
+
     Returns
     -------
     np.array, an array of shape (Nreplicas x Nfl x Ngrid)
@@ -241,9 +244,11 @@ def wmin_basis_pdf_grid(
     The function returns a pdf grid of dimension (Nreplicas x Nfl x Ngrid) that combines the replicas
     from the specified PDF sets following this rules:
 
-    1. Normalises the basis so that it is consistent with the chosen PDF Basis, e.g. Intrinsic or Perturbative charm.
-    2. Normalises replicas so that sum rules hold exactly.
-    3. Combines replicas from different PDF sets into a single grid at the given scale Q.
+    1. Select replicas that pass all sum rules simultaneously. Some replicas might not be integrable at the given scale Q
+    hence we need would not be able to normalize them to satisfy the sum rules.
+    2. Normalises the basis so that it is consistent with the chosen PDF Basis, e.g. Intrinsic or Perturbative charm.
+    3. Normalises replicas so that sum rules hold exactly.
+    4. Combines replicas from different PDF sets into a single grid at the given scale Q.
 
     Parameters
     ----------
