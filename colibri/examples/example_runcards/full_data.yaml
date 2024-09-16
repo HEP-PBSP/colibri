@@ -121,8 +121,11 @@ positivity:
   - {dataset: NNPDF_POS_2P24GEV_XSB, maxlambda: 1e6}
   - {dataset: NNPDF_POS_2P24GEV_XGL, maxlambda: 1e6}
 
-alpha: 1e-7                           
-lambda_positivity: 1000                 
+positivity_penalty_settings:
+  positivity_penalty: True
+  alpha: 1e-7                           
+  lambda_positivity: 1000             
+     
 
 use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
