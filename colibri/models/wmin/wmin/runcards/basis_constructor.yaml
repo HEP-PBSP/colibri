@@ -5,10 +5,11 @@ meta:
 
 
 pdfs: 
-  - NNPDF40_nnlo_as_01180
+  - PDF4LHC21_mc
 
 # theory id for DGLAP evolution 
 theoryid: 700
+pdf_basis: intrinsic_charm
 
 Q: 1.65
 sum_rule_atol: 1e-2
