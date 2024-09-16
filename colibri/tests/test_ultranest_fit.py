@@ -396,3 +396,101 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
     assert (tmp_path / "ns_result.csv").exists()
     assert (tmp_path / "bayes_metrics.csv").exists()
     assert (tmp_path / "full_posterior_sample.csv").exists()
+
+import pytest
+import numpy as np
+import jax.numpy as jnp
+from unittest.mock import MagicMock
+
+
+def test_log_likelihood_with_and_without_pos_penalty():
+    # Mocking inputs
+    central_inv_covmat_index = MagicMock()
+    central_inv_covmat_index.central_values = jnp.array([1.0, 2.0])
+    central_inv_covmat_index.inv_covmat = jnp.eye(2)
+
+    pdf_model = MagicMock()
+    pdf_model.pred_and_pdf_func = MagicMock(
+        return_value=lambda params, fast_kernel_arrays: (params, params)
+    )
+
+    # Simple forward map placeholder
+    forward_map = lambda x: x
+
+    # Dummy FK tables
+    fast_kernel_arrays = (jnp.array([1.0]),)
+    positivity_fast_kernel_arrays = (jnp.array([1.0]),)
+
+    ns_settings = {"ReactiveNS_settings": {"vectorized": False}}
+
+    # Mocking chi2 and penalty_posdata
+    chi2_mock = MagicMock(return_value=10.0)
+    penalty_posdata_mock = MagicMock(return_value=jnp.array([5.0]))
+
+    # Test with positivity_penalty enabled
+    positivity_penalty_settings = {
+        "positivity_penalty": True,
+        "alpha": 0.1,
+        "lambda_positivity": 0.5,
+    }
+
+    # Instantiate the class
+    log_likelihood_class = UltraNestLogLikelihood(
+        central_inv_covmat_index,
+        pdf_model,
+        jnp.array([0.1, 0.2]),  # dummy fit_xgrid
+        forward_map,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2_mock,
+        penalty_posdata_mock,
+        positivity_penalty_settings,
+    )
+
+    # Mock the params
+    params = jnp.array([0.3, 0.4])
+
+    # Call log_likelihood with positivity penalty enabled
+    ll_value_with_penalty = log_likelihood_class.log_likelihood(
+        params,
+        log_likelihood_class.central_values,
+        log_likelihood_class.inv_covmat,
+        log_likelihood_class.fast_kernel_arrays,
+        log_likelihood_class.positivity_fast_kernel_arrays,
+    )
+
+    # Expectation: chi2 value + penalty (5.0) => -0.5 * (10.0 + 5.0)
+    assert ll_value_with_penalty == pytest.approx(-7.5)
+
+    # Test with positivity_penalty disabled
+    positivity_penalty_settings = {
+        "positivity_penalty": False,
+        "alpha": 0.1,
+        "lambda_positivity": 0.5,
+    }
+
+    # Instantiate the class
+    log_likelihood_class = UltraNestLogLikelihood(
+        central_inv_covmat_index,
+        pdf_model,
+        jnp.array([0.1, 0.2]),  # dummy fit_xgrid
+        forward_map,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2_mock,
+        penalty_posdata_mock,
+        positivity_penalty_settings,
+    )
+
+    ll_value_without_penalty = log_likelihood_class.log_likelihood(
+        params,
+        log_likelihood_class.central_values,
+        log_likelihood_class.inv_covmat,
+        log_likelihood_class.fast_kernel_arrays,
+        log_likelihood_class.positivity_fast_kernel_arrays,
+    )
+
+    # Expectation: Only chi2 value, no penalty => -0.5 * (10.0)
+    assert ll_value_without_penalty == pytest.approx(-5.0)
