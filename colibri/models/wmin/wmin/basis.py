@@ -134,7 +134,9 @@ def wmin_basis_replica_selector(sum_rule_dict, sum_rule_atol=1e-2):
     return selected_replicas_idxs
 
 
-def wmin_basis_sum_rules_normalization(pdf_grid, sum_rule_dict, selected_replicas_idxs=slice(None)):
+def wmin_basis_sum_rules_normalization(
+    pdf_grid, sum_rule_dict, selected_replicas_idxs=slice(None)
+):
     """
     Normalizes the pdf grid so that the sum rules are exact.
 
@@ -225,7 +227,11 @@ def wmin_pdfbasis_normalization(pdf_grid, pdf_basis="intrinsic_charm"):
 
 
 def wmin_basis_pdf_grid(
-    pdfs_sum_rules, pdf_basis="intrinsic_charm", Q=1.65, xgrid=LHAPDF_XGRID, sum_rule_atol=1e-2
+    pdfs_sum_rules,
+    pdf_basis="intrinsic_charm",
+    Q=1.65,
+    xgrid=LHAPDF_XGRID,
+    sum_rule_atol=1e-2,
 ):
     """
     Returns a pdf grid of dimension (Nreplicas x Nfl x Ngrid) that combines all the replicas from
@@ -264,28 +270,34 @@ def wmin_basis_pdf_grid(
 
         for pdf, sr in sr_dict.items():
 
-            # TODO: determine whether this preprocessing is necessary
-            # # Select replicas that pass all sum rules simultaneously
-            # selected_replicas_idxs = wmin_basis_replica_selector(
-            #     sr, sum_rule_atol=sum_rule_atol
-            # )
+            # Select replicas that pass all sum rules simultaneously
+            # Note: this is needed as otherwise some PDF replicas, even when explicitly normalized, might not satisfy the sum rules
+            selected_replicas_idxs = wmin_basis_replica_selector(
+                sr, sum_rule_atol=sum_rule_atol
+            )
 
-            # log.info(
-            #     f"Selected {len(selected_replicas_idxs)} replicas for {pdf} that pass all sum rules simultaneously"
-            # )
+            log.info(
+                f"Selected {len(selected_replicas_idxs)} replicas for {pdf} that pass all sum rules simultaneously"
+            )
 
             # Calculate the pdf grid at the given scale Q and xgrid
             pdf_grid = convolution.evolution.grid_values(
                 PDF(pdf), convolution.FK_FLAVOURS, xgrid, [Q]
-            ).squeeze(-1)
-
-            # Normalize the pdf grid so that pdf basis is consistent with the chosen PDF Basis
-            pdf_grid = wmin_pdfbasis_normalization(pdf_grid, pdf_basis=pdf_basis)
-            log.info(f"Normalized the {str(pdf)} grid to {pdf_basis} basis")
+            ).squeeze(-1)[selected_replicas_idxs]
 
             # Normalize the pdf grid so that sum rules are exact
-            pdf_grid = wmin_basis_sum_rules_normalization(pdf_grid, sum_rule_dict=sr)
+            pdf_grid = wmin_basis_sum_rules_normalization(
+                pdf_grid,
+                sum_rule_dict=sr,
+                selected_replicas_idxs=selected_replicas_idxs,
+            )
             log.info(f"Normalized the {str(pdf)} grid so that sum rules are exact")
+
+            # Normalize the pdf grid so that pdf basis is consistent with the chosen PDF Basis
+            # Note: pdf basis normalisation is done after sum rule normalisation. This is because the sum rule normalisation
+            # changes the values of V and Sigma
+            pdf_grid = wmin_pdfbasis_normalization(pdf_grid, pdf_basis=pdf_basis)
+            log.info(f"Normalized the {str(pdf)} grid to {pdf_basis} basis")
 
             wmin_basis.append(pdf_grid)
 
