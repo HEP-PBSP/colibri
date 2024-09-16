@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 import pytest
 import copy
 import jax
@@ -396,11 +396,6 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
     assert (tmp_path / "ns_result.csv").exists()
     assert (tmp_path / "bayes_metrics.csv").exists()
     assert (tmp_path / "full_posterior_sample.csv").exists()
-
-import pytest
-import numpy as np
-import jax.numpy as jnp
-from unittest.mock import MagicMock
 
 
 def test_log_likelihood_with_and_without_pos_penalty():
