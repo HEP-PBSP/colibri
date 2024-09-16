@@ -64,7 +64,7 @@ Collects the sum rules for all PDF sets.
 pdfs_sum_rules = collect("sum_rules_dict", ("pdfs",))
 
 
-def wmin_basis_replica_selector(sum_rule_dict, sum_rule_atol=1e-3):
+def wmin_basis_replica_selector(sum_rule_dict, sum_rule_atol=1e-2):
     """
     For a pdf set select replicas that simultaneously pass the
     momentum, u-valence, d-valence, s-valence, and c-valence sum rules to the required accuracy.
@@ -134,7 +134,7 @@ def wmin_basis_replica_selector(sum_rule_dict, sum_rule_atol=1e-3):
     return selected_replicas_idxs
 
 
-def wmin_basis_sum_rules_normalization(pdf_grid, sum_rule_dict):
+def wmin_basis_sum_rules_normalization(pdf_grid, sum_rule_dict, selected_replicas_idxs=slice(None)):
     """
     Normalizes the pdf grid so that the sum rules are exact.
 
@@ -150,10 +150,10 @@ def wmin_basis_sum_rules_normalization(pdf_grid, sum_rule_dict):
     np.array, an array of shape (Nreplicas x Nfl x Ngrid)
     """
 
-    momentum_sr = sum_rule_dict["momentum"]
-    uvalence_sr = sum_rule_dict["uvalence"]
-    dvalence_sr = sum_rule_dict["dvalence"]
-    svalence_sr = sum_rule_dict["svalence"]
+    momentum_sr = sum_rule_dict["momentum"][selected_replicas_idxs]
+    uvalence_sr = sum_rule_dict["uvalence"][selected_replicas_idxs]
+    dvalence_sr = sum_rule_dict["dvalence"][selected_replicas_idxs]
+    svalence_sr = sum_rule_dict["svalence"][selected_replicas_idxs]
 
     # normalize the pdf grid so that sum rules are exact
     Amomentum = momentum_sr
@@ -225,7 +225,7 @@ def wmin_pdfbasis_normalization(pdf_grid, pdf_basis="intrinsic_charm"):
 
 
 def wmin_basis_pdf_grid(
-    pdfs_sum_rules, pdf_basis="intrinsic_charm", Q=1.65, xgrid=LHAPDF_XGRID
+    pdfs_sum_rules, pdf_basis="intrinsic_charm", Q=1.65, xgrid=LHAPDF_XGRID, sum_rule_atol=1e-2
 ):
     """
     Returns a pdf grid of dimension (Nreplicas x Nfl x Ngrid) that combines all the replicas from
@@ -281,9 +281,11 @@ def wmin_basis_pdf_grid(
 
             # Normalize the pdf grid so that pdf basis is consistent with the chosen PDF Basis
             pdf_grid = wmin_pdfbasis_normalization(pdf_grid, pdf_basis=pdf_basis)
+            log.info(f"Normalized the {str(pdf)} grid to {pdf_basis} basis")
 
             # Normalize the pdf grid so that sum rules are exact
             pdf_grid = wmin_basis_sum_rules_normalization(pdf_grid, sum_rule_dict=sr)
+            log.info(f"Normalized the {str(pdf)} grid so that sum rules are exact")
 
             wmin_basis.append(pdf_grid)
 
