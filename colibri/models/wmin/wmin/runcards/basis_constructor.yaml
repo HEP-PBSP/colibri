@@ -1,11 +1,11 @@
 meta:
   author: Mark N. Costantini
-  title: runcard for construction of wmin basis
+  title: runcard for construction of wmin basis in intrinsic charm basis
   keywords: [wmin basis]
 
 
 pdfs: 
-  - PDF4LHC21_mc
+  - 230103_jcm_disonly_001
 
 # theory id for DGLAP evolution 
 theoryid: 700
