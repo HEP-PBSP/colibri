@@ -3,7 +3,7 @@ meta:
   title: Runcard to get the PCA of a PDF set
   keywords: [wmin basis, PCA]
 
-pdf: 240801_wmin_basis
+pdf: test_wmin_basis
 
 Neig: 100
 Q: 1.65
@@ -13,7 +13,7 @@ Q: 1.65
 # as it can lead to miscancellations in the Sum Rules.
 hessian_normalization: false
 
-gridname: 240801_wmin_basis_pca 
+gridname: test_wmin_basis_pca 
 
 
 installgrid: True
