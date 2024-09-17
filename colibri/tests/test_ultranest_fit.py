@@ -1,5 +1,5 @@
-from unittest.mock import Mock, patch
-
+from unittest.mock import Mock, patch, MagicMock
+import pytest
 import copy
 import jax
 import jax.numpy as jnp
@@ -50,7 +50,8 @@ vect_ns_settings = copy.deepcopy(ns_settings)
 vect_ns_settings["ReactiveNS_settings"]["vectorized"] = True
 
 
-def test_UltraNestLogLikelihood_class():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_UltraNestLogLikelihood_class(pos_penalty):
     """
     Tests the UltraNestLogLikelihood class.
     """
@@ -64,8 +65,11 @@ def test_UltraNestLogLikelihood_class():
         ns_settings=ns_settings,
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=1000,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     assert_allclose(
@@ -78,8 +82,9 @@ def test_UltraNestLogLikelihood_class():
     assert _penalty_posdata == ultranest_loglike.penalty_posdata
 
 
+@pytest.mark.parametrize("pos_penalty", [True, False])
 @patch("colibri.ultranest_fit.jax.vmap")
-def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
+def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
     """
     Tests the UltraNestLogLikelihood class with vectorized ReactiveNS settings.
     """
@@ -94,8 +99,11 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
         ns_settings=vect_ns_settings,
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=1000,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     assert_allclose(
@@ -109,11 +117,15 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap):
     assert mock_jax_vmap.call_count == 3
 
 
-def test_log_likelihood():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_log_likelihood(pos_penalty):
     """
     Tests that the log_likeliihodd function just returns an
     UltraNestLogLikelihood instance.
     """
+    POS_PENALTY_SETTINGS = (
+        {"positivity_penalty": pos_penalty, "alpha": 1e-7, "lambda_positivity": 1000},
+    )
     ultranest_loglike = UltraNestLogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
@@ -124,8 +136,7 @@ def test_log_likelihood():
         ns_settings=ns_settings,
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=1000,
+        positivity_penalty_settings=POS_PENALTY_SETTINGS,
     )
     log_like = log_likelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
@@ -136,14 +147,14 @@ def test_log_likelihood():
         positivity_fast_kernel_arrays,
         ns_settings,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=1000,
+        positivity_penalty_settings=POS_PENALTY_SETTINGS,
     )
 
     assert type(ultranest_loglike) == type(log_like)
 
 
-def test_ultranest_fit():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_ultranest_fit(pos_penalty):
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
@@ -164,8 +175,11 @@ def test_ultranest_fit():
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=0,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     fit_result = ultranest_fit(
@@ -185,7 +199,8 @@ def test_ultranest_fit():
     assert isinstance(fit_result.ultranest_result, dict)
 
 
-def test_ultranest_fit_vectorized():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_ultranest_fit_vectorized(pos_penalty):
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
@@ -208,8 +223,11 @@ def test_ultranest_fit_vectorized():
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=0,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     fit_result = ultranest_fit(
@@ -229,7 +247,8 @@ def test_ultranest_fit_vectorized():
     assert isinstance(fit_result.ultranest_result, dict)
 
 
-def test_ultranest_fit_with_SliceSampler():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_ultranest_fit_with_SliceSampler(pos_penalty):
     ns_settings = {
         "ultranest_seed": 42,
         "ReactiveNS_settings": {"vectorized": False},
@@ -261,8 +280,11 @@ def test_ultranest_fit_with_SliceSampler():
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=0,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     fit_result = ultranest_fit(
@@ -282,7 +304,8 @@ def test_ultranest_fit_with_SliceSampler():
     assert isinstance(fit_result.ultranest_result, dict)
 
 
-def test_ultranest_fit_with_popSliceSampler():
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     ns_settings = {
         "ultranest_seed": 42,
         "ReactiveNS_settings": {"vectorized": False},
@@ -314,8 +337,11 @@ def test_ultranest_fit_with_popSliceSampler():
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha=1e-7,
-        lambda_positivity=0,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
     )
 
     fit_result = ultranest_fit(
@@ -370,3 +396,96 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
     assert (tmp_path / "ns_result.csv").exists()
     assert (tmp_path / "bayes_metrics.csv").exists()
     assert (tmp_path / "full_posterior_sample.csv").exists()
+
+
+def test_log_likelihood_with_and_without_pos_penalty():
+    # Mocking inputs
+    central_inv_covmat_index = MagicMock()
+    central_inv_covmat_index.central_values = jnp.array([1.0, 2.0])
+    central_inv_covmat_index.inv_covmat = jnp.eye(2)
+
+    pdf_model = MagicMock()
+    pdf_model.pred_and_pdf_func = MagicMock(
+        return_value=lambda params, fast_kernel_arrays: (params, params)
+    )
+
+    # Simple forward map placeholder
+    forward_map = lambda x: x
+
+    # Dummy FK tables
+    fast_kernel_arrays = (jnp.array([1.0]),)
+    positivity_fast_kernel_arrays = (jnp.array([1.0]),)
+
+    ns_settings = {"ReactiveNS_settings": {"vectorized": False}}
+
+    # Mocking chi2 and penalty_posdata
+    chi2_mock = MagicMock(return_value=10.0)
+    penalty_posdata_mock = MagicMock(return_value=jnp.array([5.0]))
+
+    # Test with positivity_penalty enabled
+    positivity_penalty_settings = {
+        "positivity_penalty": True,
+        "alpha": 0.1,
+        "lambda_positivity": 0.5,
+    }
+
+    # Instantiate the class
+    log_likelihood_class = UltraNestLogLikelihood(
+        central_inv_covmat_index,
+        pdf_model,
+        jnp.array([0.1, 0.2]),  # dummy fit_xgrid
+        forward_map,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2_mock,
+        penalty_posdata_mock,
+        positivity_penalty_settings,
+    )
+
+    # Mock the params
+    params = jnp.array([0.3, 0.4])
+
+    # Call log_likelihood with positivity penalty enabled
+    ll_value_with_penalty = log_likelihood_class.log_likelihood(
+        params,
+        log_likelihood_class.central_values,
+        log_likelihood_class.inv_covmat,
+        log_likelihood_class.fast_kernel_arrays,
+        log_likelihood_class.positivity_fast_kernel_arrays,
+    )
+
+    # Expectation: chi2 value + penalty (5.0) => -0.5 * (10.0 + 5.0)
+    assert ll_value_with_penalty == pytest.approx(-7.5)
+
+    # Test with positivity_penalty disabled
+    positivity_penalty_settings = {
+        "positivity_penalty": False,
+        "alpha": 0.1,
+        "lambda_positivity": 0.5,
+    }
+
+    # Instantiate the class
+    log_likelihood_class = UltraNestLogLikelihood(
+        central_inv_covmat_index,
+        pdf_model,
+        jnp.array([0.1, 0.2]),  # dummy fit_xgrid
+        forward_map,
+        fast_kernel_arrays,
+        positivity_fast_kernel_arrays,
+        ns_settings,
+        chi2_mock,
+        penalty_posdata_mock,
+        positivity_penalty_settings,
+    )
+
+    ll_value_without_penalty = log_likelihood_class.log_likelihood(
+        params,
+        log_likelihood_class.central_values,
+        log_likelihood_class.inv_covmat,
+        log_likelihood_class.fast_kernel_arrays,
+        log_likelihood_class.positivity_fast_kernel_arrays,
+    )
+
+    # Expectation: Only chi2 value, no penalty => -0.5 * (10.0)
+    assert ll_value_without_penalty == pytest.approx(-5.0)

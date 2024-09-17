@@ -63,8 +63,11 @@ SETUP = {
     "theoryid": MOCK_NAME_THEORY,
     "ns_settings": NS_SETTINGS,
     "n_prior_samples": 100,
-    "alpha": 1e-7,
-    "lambda_positivity": 1000,
+    "positivity_penalty_settings": {
+        "positivity_penalty": False,
+        "alpha": 1e-7,
+        "lambda_positivity": 1000,
+    },
 }
 
 

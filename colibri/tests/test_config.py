@@ -248,3 +248,60 @@ def test_parse_ns_settings_with_defaults(tmp_path):
     }
 
     assert ns_settings == expected_settings
+
+
+def test_parse_positivity_penalty_settings_defaults():
+    """
+    Test that the correct defaults are returned by positivity penalty
+    parser.
+    """
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {}
+
+    # Call the function
+    pos_settings = config.parse_positivity_penalty_settings(settings)
+
+    # Check that the settings were parsed correctly
+    expected_settings = {
+        "positivity_penalty": False,
+        "alpha": 1e-7,
+        "lambda_positivity": 3000,
+    }
+
+    assert pos_settings == expected_settings
+
+
+@patch("colibri.config.log.warning")
+def test_parse_positivity_penalty_settings(mock_warning):
+    """
+    Test that the inputs are parsed as expected by positivity penalty
+    settings parser.
+    """
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {
+        "unknown_key": 1,
+        "positivity_penalty": True,
+        "alpha": 1e-7,
+        "lambda_positivity": 10000,
+    }
+
+    # Call the function
+    pos_settings = config.parse_positivity_penalty_settings(settings)
+
+    # Check that the settings were parsed correctly
+    expected_settings = {
+        "positivity_penalty": True,
+        "alpha": 1e-7,
+        "lambda_positivity": 10000,
+    }
+
+    assert pos_settings == expected_settings
+    assert mock_warning.called

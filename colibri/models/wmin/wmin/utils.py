@@ -37,8 +37,7 @@ def likelihood_time(
     theoryid,
     ns_settings,
     n_prior_samples=1000,
-    alpha=1e-7,
-    lambda_positivity=1000,
+    positivity_penalty_settings={},
 ):
     """
     This function calculates the time it takes to evaluate the likelihood
@@ -100,8 +99,7 @@ def likelihood_time(
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha,
-        lambda_positivity,
+        positivity_penalty_settings,
     )
 
     # sample from prior

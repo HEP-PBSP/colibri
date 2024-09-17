@@ -52,8 +52,7 @@ class UltraNestLogLikelihood(object):
         ns_settings,
         chi2,
         penalty_posdata,
-        alpha,
-        lambda_positivity,
+        positivity_penalty_settings,
     ):
         """
         Parameters
@@ -76,17 +75,16 @@ class UltraNestLogLikelihood(object):
 
         penalty_posdata: Callable
 
-        alpha: float
+        positivity_penalty_settings: dict, default {}
 
-        lambda_positivity: float
         """
         self.central_values = central_inv_covmat_index.central_values
         self.inv_covmat = central_inv_covmat_index.inv_covmat
         self.pdf_model = pdf_model
         self.chi2 = chi2
         self.penalty_posdata = penalty_posdata
-        self.alpha = alpha
-        self.lambda_positivity = lambda_positivity
+        self.positivity_penalty_settings = positivity_penalty_settings
+
         self.pred_and_pdf = pdf_model.pred_and_pdf_func(
             fit_xgrid, forward_map=forward_map
         )
@@ -132,18 +130,21 @@ class UltraNestLogLikelihood(object):
         positivity_fast_kernel_arrays,
     ):
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
-        return -0.5 * (
-            self.chi2(central_values, predictions, inv_covmat)
-            + jnp.sum(
+
+        if self.positivity_penalty_settings["positivity_penalty"]:
+            pos_penalty = jnp.sum(
                 self.penalty_posdata(
                     pdf,
-                    self.alpha,
-                    self.lambda_positivity,
+                    self.positivity_penalty_settings["alpha"],
+                    self.positivity_penalty_settings["lambda_positivity"],
                     positivity_fast_kernel_arrays,
                 ),
                 axis=-1,
             )
-        )
+        else:
+            pos_penalty = 0
+
+        return -0.5 * (self.chi2(central_values, predictions, inv_covmat) + pos_penalty)
 
 
 @dataclass(frozen=True)
@@ -172,8 +173,7 @@ def log_likelihood(
     positivity_fast_kernel_arrays,
     ns_settings,
     _penalty_posdata,
-    alpha,
-    lambda_positivity,
+    positivity_penalty_settings,
 ):
     """
     Instantiates the UltraNestLogLikelihood class.
@@ -191,8 +191,7 @@ def log_likelihood(
         ns_settings,
         chi2,
         _penalty_posdata,
-        alpha,
-        lambda_positivity,
+        positivity_penalty_settings,
     )
 
 

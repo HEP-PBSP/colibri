@@ -249,6 +249,42 @@ class colibriConfig(Config):
 
         return ns_settings
 
+    def parse_positivity_penalty_settings(self, settings):
+        """
+        Parses the positivity_penalty_settings namespace from the runcard,
+        and ensures the choice of settings is valid.
+        """
+        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
+        known_keys = {
+            "alpha",
+            "lambda_positivity",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(
+                    f"Key '{k}' in positivity_penalty_settings not known.",
+                    k,
+                    known_keys,
+                )
+            )
+
+        # Now construct the positivity_penalty_settings dictionary, checking the parameter
+        # combinations are valid
+        positivity_penalty_settings = {}
+
+        # Set the positivity penalty parameters
+        positivity_penalty_settings["positivity_penalty"] = settings.get(
+            "positivity_penalty", False
+        )
+        positivity_penalty_settings["alpha"] = settings.get("alpha", 1e-7)
+        positivity_penalty_settings["lambda_positivity"] = settings.get(
+            "lambda_positivity", 3000
+        )
+
+        return positivity_penalty_settings
+
     def parse_analytic_settings(
         self,
         settings,
