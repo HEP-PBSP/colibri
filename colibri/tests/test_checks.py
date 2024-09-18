@@ -1,5 +1,6 @@
 from colibri.checks import check_pdf_models_equal
 from unittest.mock import patch, MagicMock, mock_open
+import pytest
 
 
 @patch(
@@ -60,13 +61,10 @@ def test_check_pdf_models_equal_false_theoryid(
     # Configure mock behavior
     mock_pdf_models_equal.side_effect = lambda x, y: x == y
 
-    # Check that an assertion is raised without checking the assertion error
-    try:
-        check_pdf_models_equal.__wrapped__(prior_settings, pdf_model, theoryid, t0pdfset)
-    except:
-        pass
-    else:
-        assert False, "Assertion error was not raised"
+    with pytest.raises(Exception):
+        check_pdf_models_equal.__wrapped__(
+            prior_settings, pdf_model, theoryid, t0pdfset
+        )
 
 
 @patch(
@@ -96,12 +94,7 @@ def test_check_pdf_models_equal_false_t0pdf(
     # Configure mock behavior
     mock_pdf_models_equal.side_effect = lambda x, y: x == y
 
-    # Check that an assertion is raised without checking the assertion error
-    try:
+    with pytest.raises(Exception):
         check_pdf_models_equal.__wrapped__(
             prior_settings, pdf_model, theoryid, t0pdfset
         )
-    except:
-        pass
-    else:
-        assert False, "Assertion error was not raised"
