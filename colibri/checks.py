@@ -32,7 +32,7 @@ def check_pdf_models_equal(prior_settings, pdf_model, theoryid, t0pdfset):
             prior_filter = yaml.safe_load(file)
 
         # check that theory id used in prior fit is the same as the one used in the current fit
-        if str(prior_filter["theoryid"]) != theoryid.id:
+        if prior_filter["theoryid"] != theoryid.id:
             raise ValueError(
                 f"Theory id {theoryid} does not match theory id of prior {prior_filter['theoryid']}"
             )
