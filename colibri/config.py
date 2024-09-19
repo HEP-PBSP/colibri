@@ -258,6 +258,7 @@ class colibriConfig(Config):
         known_keys = {
             "alpha",
             "lambda_positivity",
+            "positivity_penalty",
         }
 
         kdiff = settings.keys() - known_keys
