@@ -18,6 +18,7 @@ def basis_to_target_distances(
     wmin_basis_pdfs,
     nweights,
     pdf_aliases,
+    dist_type=0,
     Q=1.65,
     x_grid=np.logspace(-5, 0, 50),
     flavours=[1, -1, 2, -2, 3, -3, 4, 21],
@@ -58,7 +59,7 @@ def basis_to_target_distances(
                     flavours,
                     x_grid,
                     Q,
-                    dist_type=0,
+                    dist_type=dist_type,
                 )
                 distance.append(d)
             distances[basis["name"]].append(
