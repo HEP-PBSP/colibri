@@ -49,8 +49,8 @@ def basis_to_target_distances(
     distances = {}
     for basis in wmin_bases:
         distances[basis["name"]] = []
-        distance = []
         for pdf in target_pdf_sets:
+            distance = []
             for member in pdf["members"]:
                 original, reco, w, d = wmin_distance(
                     member,
