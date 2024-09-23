@@ -1,0 +1,32 @@
+meta:
+  author: James Moore
+  title: Plotting
+  keywords: [wmin basis]
+
+pdf_aliases:
+  NNPDF23_nnlo_as_0118: NNPDF2.3
+  240918_mnc_wmin_nnpdf40_basis_disonly_pca: NNPDF40dis_pca
+  240919_mnc_pdf4lhc_basis_pca: PDF4LHC_pca
+  240919_mnc_mixed_pdf4lhc_nnpdf40_basis_pca: PDF4LHC_NNPDF40_pca
+
+target_pdfs:
+  - NNPDF23_nnlo_as_0118
+  - JAM19PDF_proton_nlo
+  - NNPDF40_nlo_as_01180
+  - NNPDF40_lo_as_01180
+
+wmin_basis_pdfs: 
+  - 240918_mnc_wmin_nnpdf40_basis_disonly_pca
+  - 240919_mnc_pdf4lhc_basis_pca
+  - 240919_mnc_mixed_pdf4lhc_nnpdf40_basis_pca 
+
+nweights: 60
+
+template_text: |
+  # Distances to complete target set
+  {@histogram_complete_target_set@}
+  # Distances from bases to each target set
+  {@histogram_individual_target_sets@}
+
+actions_:
+  - report(main=True)
