@@ -53,13 +53,14 @@ def sum_rules_dict(pdf, Q=1.65):
     Returns
     -------
     dict
-        A dictionary containing the sum rules for the given PDF set.
+        A nested dictionary with key name of the PDF set and value a dictionary
+        containing the sum rules values for the replicas of the PDF set.
     """
     return {str(pdf): sum_rules(pdf, Q)}
 
 
 """
-Collects the sum rules for all PDF sets.
+Collects the sum rules for all PDF sets. Is a list of nested sum_rules_dict dictionaries.
 """
 pdfs_sum_rules = collect("sum_rules_dict", ("pdfs",))
 
@@ -74,7 +75,8 @@ def wmin_basis_replica_selector(sum_rule_dict, sum_rule_atol=1e-2):
     ----------
     sum_rule_dict: dict
 
-    sum_rule_atol: float, default is 1e-3
+    sum_rule_atol: float, default is 1e-2
+        the absolute tolerance for the sum rules.
     """
 
     momentum_sr = sum_rule_dict["momentum"]
