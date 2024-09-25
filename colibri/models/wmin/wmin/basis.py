@@ -93,18 +93,11 @@ def wmin_basis_replica_selector(sum_rule_dict, sum_rule_atol=1e-2):
         for sum_rule_type in sum_rules_types
     ]
 
-    momentum_sr_idx, uvalence_sr_idx, dvalence_sr_idx, svalence_sr_idx, cvalence_sr_idx = sum_rules_indices
     # Select replicas that pass all sum rules simultaneously
-    selected_replicas_idxs = np.intersect1d(
-        np.intersect1d(
-            np.intersect1d(
-                np.intersect1d(momentum_sr_idx, uvalence_sr_idx),
-                dvalence_sr_idx,
-            ),
-            svalence_sr_idx,
-        ),
-        cvalence_sr_idx,
-    )
+    selected_replicas_idxs = sum_rules_indices[0]  # Start with the first index set
+
+    for sr_idx in sum_rules_indices[1:]:
+        selected_replicas_idxs = np.intersect1d(selected_replicas_idxs, sr_idx)
 
     return selected_replicas_idxs
 
