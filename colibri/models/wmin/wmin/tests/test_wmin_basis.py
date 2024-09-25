@@ -24,7 +24,8 @@ from validphys import convolution
 @pytest.mark.parametrize("pdf_basis", ["intrinsic_charm", "perturbative_charm"])
 def test_wmin_pdfbasis_normalization(pdf_basis):
     """
-    Test the normalization of the PDF basis.
+    Test that the PDF-basis, intrinsic and perturbative charm, normalisation
+    works as expected.
     """
     pdf_grid = np.random.rand(100, 14, 50)
 
@@ -65,7 +66,7 @@ def test_wmin_pdfbasis_normalization(pdf_basis):
 
 def test_wmin_basis_sum_rules_normalization():
     """
-    Test the normalization of the PDF basis.
+    Test that the PDF basis sum-rules normalisation works as expected.
     """
     pdf = PDF(TEST_PDFSET)
     sr = sum_rules_dict(pdf)[TEST_PDFSET]
