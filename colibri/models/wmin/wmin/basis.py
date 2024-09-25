@@ -78,49 +78,22 @@ def wmin_basis_replica_selector(sum_rule_dict, sum_rule_atol=1e-2):
     sum_rule_atol: float, default is 1e-2
         the absolute tolerance for the sum rules.
     """
+    sum_rules_types = ["momentum", "uvalence", "dvalence", "svalence", "cvalence"]
+    sum_rules_values = {
+        sum_rule_type: sum_rule_dict[sum_rule_type] for sum_rule_type in sum_rules_types
+    }
+    sum_rules_indices = [
+        np.where(
+            np.isclose(
+                sum_rules_values[sum_rule_type],
+                KNOWN_SUM_RULES_EXPECTED[sum_rule_type],
+                atol=sum_rule_atol,
+            )
+        )[0]
+        for sum_rule_type in sum_rules_types
+    ]
 
-    momentum_sr = sum_rule_dict["momentum"]
-    uvalence_sr = sum_rule_dict["uvalence"]
-    dvalence_sr = sum_rule_dict["dvalence"]
-    svalence_sr = sum_rule_dict["svalence"]
-    cvalence_sr = sum_rule_dict["cvalence"]
-
-    momentum_sr_idx = np.where(
-        np.isclose(
-            momentum_sr,
-            KNOWN_SUM_RULES_EXPECTED["momentum"],
-            atol=sum_rule_atol,
-        )
-    )[0]
-    uvalence_sr_idx = np.where(
-        np.isclose(
-            uvalence_sr,
-            KNOWN_SUM_RULES_EXPECTED["uvalence"],
-            atol=sum_rule_atol,
-        )
-    )[0]
-    dvalence_sr_idx = np.where(
-        np.isclose(
-            dvalence_sr,
-            KNOWN_SUM_RULES_EXPECTED["dvalence"],
-            atol=sum_rule_atol,
-        )
-    )[0]
-    svalence_sr_idx = np.where(
-        np.isclose(
-            svalence_sr,
-            KNOWN_SUM_RULES_EXPECTED["svalence"],
-            atol=sum_rule_atol,
-        )
-    )[0]
-    cvalence_sr_idx = np.where(
-        np.isclose(
-            cvalence_sr,
-            KNOWN_SUM_RULES_EXPECTED["cvalence"],
-            atol=sum_rule_atol,
-        )
-    )[0]
-
+    momentum_sr_idx, uvalence_sr_idx, dvalence_sr_idx, svalence_sr_idx, cvalence_sr_idx = sum_rules_indices
     # Select replicas that pass all sum rules simultaneously
     selected_replicas_idxs = np.intersect1d(
         np.intersect1d(
