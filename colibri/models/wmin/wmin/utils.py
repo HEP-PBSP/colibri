@@ -90,8 +90,9 @@ def likelihood_time(
 
     central_values = central_inv_covmat_index.central_values
     ndata = len(central_values)
-    
+
     from wmin.ultranest_fit import WminUltraNestLogLikelihood
+
     log_likelihood = WminUltraNestLogLikelihood(
         central_inv_covmat_index,
         pdf_model,
