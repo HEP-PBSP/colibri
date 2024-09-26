@@ -11,7 +11,6 @@ import jax
 import jax.numpy as jnp
 import pandas as pd
 from colibri.loss_functions import chi2
-from colibri.ultranest_fit import UltraNestLogLikelihood
 from reportengine.table import table
 
 
@@ -78,6 +77,8 @@ def likelihood_time(
 
     lambda_positivity: int, 1000
 
+    wmin_regularisation_settings: dict, {}
+
     Returns
     -------
     df: pd.DataFrame
@@ -89,8 +90,9 @@ def likelihood_time(
 
     central_values = central_inv_covmat_index.central_values
     ndata = len(central_values)
-
-    log_likelihood = UltraNestLogLikelihood(
+    
+    from wmin.ultranest_fit import WminUltraNestLogLikelihood
+    log_likelihood = WminUltraNestLogLikelihood(
         central_inv_covmat_index,
         pdf_model,
         FIT_XGRID,

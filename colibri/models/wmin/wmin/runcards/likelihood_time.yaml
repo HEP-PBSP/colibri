@@ -166,6 +166,10 @@ ns_settings:
     min_ess: 50
     frac_remain: 0.01
 
+wmin_regularisation_settings:
+  type: l2_reg
+  lambda_factor: 100
+
 template_text: |
 
   ## Likelihood timings:
