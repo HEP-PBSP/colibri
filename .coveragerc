@@ -1,4 +1,3 @@
 [run]
 omit = 
-    colibri/models/*
     colibri/plots_and_tables/*
