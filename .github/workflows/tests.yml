@@ -35,7 +35,6 @@ jobs:
         miniforge-variant: Miniforge
         miniforge-version: latest
         activate-environment: colibri-dev
-        use-mamba: true    
     
     - name: Cache Conda packages
       uses: actions/cache@v3
@@ -46,7 +45,7 @@ jobs:
             hashFiles('environment.yml') }}
     
     - name: Update environment
-      run: mamba env update -n colibri-dev -f environment.yml
+      run: conda env update -n colibri-dev -f environment.yml
       if: steps.cache.outputs.cache-hit != 'true'
 
     - name: Install colibri and models
