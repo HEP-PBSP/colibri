@@ -148,6 +148,9 @@ def histogram_complete_target_set(basis_to_target_distances):
 
 
 def pdf_grid(pdf, pid, x_grid, Q):
+    """
+    TODO
+    """
     out = []
     for x in x_grid:
         out.append(pdf.xfxQ(pid, x, Q))
