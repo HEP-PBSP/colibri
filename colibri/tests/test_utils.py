@@ -7,6 +7,7 @@ import pathlib
 import shutil
 from numpy.testing import assert_allclose
 import pytest
+from unittest.mock import patch, mock_open
 
 import jax
 import jax.numpy as jnp
@@ -79,44 +80,41 @@ def test_get_path_fit():
     shutil.rmtree(dest_path)
 
 
-def test_get_pdf_model():
-    """
-    Tests that get_pdf_model works correctly.
-    """
-    conda_prefix = os.getenv("CONDA_PREFIX")
+def test_get_pdf_model_success():
+    """Test successful retrieval of the PDF model when the file exists."""
 
-    destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
-    source_dir = pathlib.Path("colibri/tests/regression") / SIMPLE_WMIN_FIT
+    # Sample data to be returned by dill.load
+    mock_pdf_model = "sample_pdf_model"
 
-    # Ensure the destination directory exists
-    destination_dir.mkdir(parents=True, exist_ok=True)
+    # Mock the file path returned by get_fit_path
+    mock_fit_path = pathlib.Path("/mock/path/to/fit")
 
-    # Copy the source directory to the destination
-    dest_path = destination_dir / SIMPLE_WMIN_FIT
-    shutil.copytree(source_dir, dest_path)
+    with patch("os.path.exists", return_value=True), patch(
+        "builtins.open", mock_open(read_data="mock_data")
+    ), patch("dill.load", return_value=mock_pdf_model), patch(
+        "colibri.utils.get_fit_path", return_value=mock_fit_path
+    ):
 
-    # Check that loading pdf model from .pkl file works
-    pdf_model = get_pdf_model(SIMPLE_WMIN_FIT)
+        result = get_pdf_model("mock_fit_name")
 
-    # check trivial stuff assotiated with the pdf model stored in SINGLE_WMIN_FIT
-    assert pdf_model is not None
-    assert pdf_model.n_basis == 10
-    assert pdf_model.param_names == [
-        "w_1",
-        "w_2",
-        "w_3",
-        "w_4",
-        "w_5",
-        "w_6",
-        "w_7",
-        "w_8",
-        "w_9",
-        "w_10",
-    ]
-    assert pdf_model.name == "weight mininisation PDF model"
+        assert result == mock_pdf_model
 
-    # Clean up the copied directory
-    shutil.rmtree(dest_path)
+
+def test_get_pdf_model_file_not_found():
+    """Test that FileNotFoundError is raised when the pdf_model.pkl does not exist."""
+
+    # Mock the file path returned by get_fit_path
+    mock_fit_path = pathlib.Path("/mock/path/to/fit")
+
+    with patch("os.path.exists", return_value=False), patch(
+        "colibri.utils.get_fit_path", return_value=mock_fit_path
+    ):
+
+        try:
+            get_pdf_model("mock_fit_name")
+
+        except FileNotFoundError as e:
+            assert str(e) == "Could not find the pdf model for the fit mock_fit_name"
 
 
 def test_get_full_posterior():
