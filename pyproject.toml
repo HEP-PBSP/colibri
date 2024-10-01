@@ -16,7 +16,6 @@ python = "^3.9"
 prompt_toolkit = "*"
 h5py = "*"
 
-ultranest = "*" 
 jax = "*"
 optax = "*"
 flax = "*"
