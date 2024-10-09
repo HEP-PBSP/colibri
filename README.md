@@ -17,13 +17,6 @@ this will create a conda environment called `colibri-dev` that has a `colibri` e
 conda env create -n myenv -f environment.yml
 ```
 
-- Option 2:
-From you base conda environment run:
-```
-conda env create -f full_environment.yml
-```
-this will create a conda environment called `colibri-dev` that has a `colibri` executable, all the needed dependencies as well
-as the other subpackages such as `wmin` and `grid_pdf`.
 
 - Option 3:
 Create a working environment with conda (or mamba):
@@ -46,15 +39,4 @@ pip install .
 ```
 
 ## Installation of Various Models
-In general if you are not using the `full_environment.yml` installation, it is possible to manually install the various models.
-# Grid PDF 
-```
-cd models/grid_pdf
-pip install -e .
-```
-
-# Weight Minimization
-```
-cd models/wmin
-pip install -e .
-```
+The various PDF models, such as wmin-model and gp-model, should be installed from the respective repositories.

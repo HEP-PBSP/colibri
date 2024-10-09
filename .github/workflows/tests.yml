@@ -48,13 +48,6 @@ jobs:
       run: mamba env update -n colibri-dev -f environment.yml
       if: steps.cache.outputs.cache-hit != 'true'
 
-    - name: Install colibri and models
-      shell: bash -l {0}
-      run: |
-        cd colibri/models/wmin
-        pip install .
-        cd ../grid_pdf
-        pip install .
     - name: Lint with flake8
       shell: bash -l {0}
       run: |

@@ -43,9 +43,15 @@ jobs:
             ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
             hashFiles('environment.yml') }}
     
-    - name: Update environment (full includes colibri and models)
-      run: mamba env update -n colibri-dev -f full_environment.yml
+    - name: Update environment
+      run: mamba env update -n colibri-dev -f environment.yml
       if: steps.cache.outputs.cache-hit != 'true'
+
+    - name: Install grid_pdf private repository
+      run: |
+        source $(conda info --base)/etc/profile.d/conda.sh  # Initialize Conda
+        conda activate colibri-dev
+        pip install git+https://${{ secrets.COLIBRI_TOKEN }}@github.com/HEP-PBSP/grid_pdf-model.git
 
     - name: Copy theory to Conda environment
       shell: bash -l {0}
@@ -67,8 +73,14 @@ jobs:
         clean: false
 
     - name: Update environment again (on main)
-      run: mamba env update -n colibri-dev -f full_environment.yml
+      run: mamba env update -n colibri-dev -f environment.yml
       if: steps.cache.outputs.cache-hit != 'true'
+
+    - name: Install grid_pdf private repository
+      run: |
+        source $(conda info --base)/etc/profile.d/conda.sh  # Initialize Conda
+        conda activate colibri-dev
+        pip install git+https://${{ secrets.COLIBRI_TOKEN }}@github.com/HEP-PBSP/grid_pdf-model.git
 
     - name: Run MC fit in main
       shell: bash -l {0}
