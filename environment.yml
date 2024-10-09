@@ -9,6 +9,7 @@ dependencies:
   - lhapdf
   - pandoc
   - mpi4py
+  - ultranest
   - pip
   - pip:
     - -e .
