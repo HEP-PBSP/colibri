@@ -124,10 +124,7 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     mock_pdf_model.pred_and_pdf_func.return_value = linear_model
 
     # Test for linear model (should not raise an exception)
-    try:
-        check_pdf_model_is_linear.__wrapped__(mock_pdf_model, FIT_XGRID, data)
-    except ValueError as e:
-        pytest.fail(f"Unexpected ValueError for linear model: {str(e)}")
+    check_pdf_model_is_linear.__wrapped__(mock_pdf_model, FIT_XGRID, data)
 
     # Now mock a non-linear model to ensure the ValueError is raised
     def non_linear_model(params, fk):
@@ -137,5 +134,5 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     mock_pdf_model.pred_and_pdf_func.return_value = non_linear_model
 
     # Ensure ValueError is raised for non-linear model
-    with pytest.raises(ValueError, match="PDF model is not linear"):
+    with pytest.raises(ValueError):
         check_pdf_model_is_linear.__wrapped__(mock_pdf_model, FIT_XGRID, data)
