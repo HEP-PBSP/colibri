@@ -14,6 +14,7 @@ import jax.numpy as jnp
 import jax.numpy.linalg as jla
 
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
+from colibri.checks import check_pdf_model_is_linear
 
 import logging
 
@@ -36,6 +37,7 @@ class AnalyticFit(BayesianFit):
     analytic_specs: dict
 
 
+@check_pdf_model_is_linear
 def analytic_fit(
     central_inv_covmat_index,
     _pred_data,
