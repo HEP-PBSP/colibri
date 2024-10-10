@@ -5,6 +5,9 @@ See validphys/checks.py and reportengine/checks.py for more information / exampl
 
 import yaml
 from reportengine.checks import make_argcheck
+import jax.numpy as jnp
+import jax
+from colibri.theory_predictions import make_pred_data, fast_kernel_arrays
 
 from colibri.utils import get_fit_path, get_pdf_model, pdf_models_equal
 
@@ -41,4 +44,46 @@ def check_pdf_models_equal(prior_settings, pdf_model, theoryid, t0pdfset):
         if prior_filter["t0pdfset"] != t0pdfset.name:
             raise ValueError(
                 f"t0pdfset {theoryid.t0pdfset} does not match t0pdfset of prior {prior_filter['t0pdfset']}"
+            )
+
+
+@make_argcheck
+def check_pdf_model_is_linear(pdf_model, FIT_XGRID, data):
+    """
+    Decorator that can be added to functions to check that the
+    PDF model is linear.
+    """
+
+    pred_data = make_pred_data(data, FIT_XGRID)
+    fk = fast_kernel_arrays(data)
+
+    parameters = pdf_model.param_names
+    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)
+    intercept = pred_and_pdf(jnp.zeros(len(parameters)), fk)[0]
+
+    # Run the check for 10 random points in the parameter space
+    for i in range(10):
+        key = jax.random.PRNGKey(i)
+        key1, key2 = jax.random.split(key)
+        # generate two random points in the parameter space
+        x1 = jax.random.uniform(key1, (len(parameters),))
+        x2 = jax.random.uniform(key2, (len(parameters),))
+
+        # Test additivity
+        add_check = jnp.isclose(
+            pred_and_pdf(x1, fk)[0] + pred_and_pdf(x2, fk)[0],
+            pred_and_pdf(x1 + x2, fk)[0] + intercept,
+        )
+
+        # Test homogeneity
+        c = jax.random.uniform(key, (1,))
+
+        homogeneity_check = jnp.isclose(
+            c * (pred_and_pdf(x1, fk)[0] - intercept),
+            pred_and_pdf(c * x1, fk)[0] - intercept,
+        )
+
+        if not add_check.all() or not homogeneity_check.all():
+            raise ValueError(
+                f"PDF model is not linear or predictions are not linear in the PDFs (e.g. hadronic data is included)."
             )
