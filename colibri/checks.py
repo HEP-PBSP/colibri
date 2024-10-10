@@ -84,4 +84,6 @@ def check_pdf_model_is_linear(pdf_model, FIT_XGRID, data):
         )
 
         if not add_check.all() or not homogeneity_check.all():
-            raise ValueError(f"PDF model is not linear.")
+            raise ValueError(
+                f"PDF model is not linear or predictions are not linear in the PDFs (e.g. hadronic data is included)."
+            )
