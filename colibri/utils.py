@@ -350,6 +350,23 @@ def likelihood_float_type(
 
 
 def closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID):
+    """
+    Computes the closure test pdf grid from a colibri model.
+
+    Parameters
+    ----------
+    closure_test_model_settings: dict
+        Settings for the closure test model.
+
+    FIT_XGRID: jnp.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
+
+    Returns
+    -------
+    jnp.array
+        The closure test pdf grid.
+    """
     try:
         model = closure_test_model_settings["model"]
         # Dynamically import the module
