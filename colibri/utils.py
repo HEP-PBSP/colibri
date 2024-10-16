@@ -20,6 +20,9 @@ from colibri.loss_functions import chi2
 
 from validphys import convolution
 
+import importlib
+import inspect
+
 
 log = logging.getLogger(__name__)
 
@@ -130,7 +133,9 @@ def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
     return t0grid
 
 
-def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65):
+def closure_test_pdf_grid(
+    closure_test_pdf, FIT_XGRID, Q0=1.65, closure_test_model_settings={}
+):
     """
     Computes the closure_test_pdf grid in the evolution basis.
 
@@ -150,11 +155,15 @@ def closure_test_pdf_grid(closure_test_pdf, FIT_XGRID, Q0=1.65):
         grid, is N_rep x N_fl x N_x
     """
 
-    grid = jnp.array(
-        convolution.evolution.grid_values(
-            closure_test_pdf, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
-        ).squeeze(-1)
-    )
+    if closure_test_pdf == "colibri_model":
+        pdf = closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID)
+        return [pdf]
+    else:
+        grid = jnp.array(
+            convolution.evolution.grid_values(
+                closure_test_pdf, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
+            ).squeeze(-1)
+        )
     return grid
 
 
@@ -338,3 +347,43 @@ def likelihood_float_type(
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:
         file.write(str(dtype))
+
+
+def closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID):
+    try:
+        model = closure_test_model_settings["model"]
+        # Dynamically import the module
+        module = importlib.import_module(model)
+        log.info(f"Successfully imported '{model}' model for closure test.")
+
+        if hasattr(module, "config"):
+            from colibri.config import colibriConfig
+
+            config = getattr(module, "config")
+            classes = inspect.getmembers(config, inspect.isclass)
+
+            for _, cls in classes:
+                if issubclass(cls, colibriConfig) and cls is not colibriConfig:
+                    signature = inspect.signature(
+                        cls(input_params={}).produce_pdf_model
+                    )
+                    inputs = {}
+                    for arg in signature.parameters:
+                        if arg in closure_test_model_settings:
+                            inputs[arg] = closure_test_model_settings[arg]
+
+                    pdf_model = cls(input_params={}).produce_pdf_model(
+                        **inputs, output_path=None, dump_model=False
+                    )
+
+            pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)
+            params = jnp.array(closure_test_model_settings["parameters"])
+            pdf_grid = pdf_grid_func(params)
+
+            return pdf_grid
+
+        else:
+            raise AttributeError(f"The model '{model}' has no 'config' module.")
+
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError(f"Colibri model '{model}' is not installed.")
