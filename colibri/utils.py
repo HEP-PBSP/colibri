@@ -367,10 +367,30 @@ def closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID):
                     signature = inspect.signature(
                         cls(input_params={}).produce_pdf_model
                     )
+
+                    required_args = []
+                    # Loop through the parameters in the function's signature
+                    for name, param in signature.parameters.items():
+                        # Check if the parameter has no default value
+                        if param.default == inspect.Parameter.empty and param.kind in (
+                            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                            inspect.Parameter.KEYWORD_ONLY,
+                        ):
+                            if name == "output_path" or name == "dump_model":
+                                continue
+                            required_args.append(name)
+
                     inputs = {}
                     for arg in signature.parameters:
                         if arg in closure_test_model_settings:
                             inputs[arg] = closure_test_model_settings[arg]
+
+                    # Check that keys in inputs are the same as required_args
+                    if set(inputs.keys()) != set(required_args):
+                        raise ValueError(
+                            f"Required arguments for the model '{model}' are "
+                            f"{required_args}, but got {list(inputs.keys())}."
+                        )
 
                     pdf_model = cls(input_params={}).produce_pdf_model(
                         **inputs, output_path=None, dump_model=False
