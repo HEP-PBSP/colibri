@@ -379,12 +379,16 @@ def closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID):
             config = getattr(module, "config")
             classes = inspect.getmembers(config, inspect.isclass)
 
+            # Loop through the classes in the module
+            # and find the class that is a subclass of colibriConfig
             for _, cls in classes:
                 if issubclass(cls, colibriConfig) and cls is not colibriConfig:
+                    # Get the signature of the produce_pdf_model method
                     signature = inspect.signature(
                         cls(input_params={}).produce_pdf_model
                     )
 
+                    # Get the required arguments for the produce_pdf_model method
                     required_args = []
                     # Loop through the parameters in the function's signature
                     for name, param in signature.parameters.items():
@@ -397,6 +401,8 @@ def closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID):
                                 continue
                             required_args.append(name)
 
+                    # Create a dictionary with the required arguments
+                    # and their values from closure_test_model_settings
                     inputs = {}
                     for arg in signature.parameters:
                         if arg in closure_test_model_settings:
@@ -409,10 +415,12 @@ def closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID):
                             f"{required_args}, but got {list(inputs.keys())}."
                         )
 
+                    # Produce the pdf model
                     pdf_model = cls(input_params={}).produce_pdf_model(
                         **inputs, output_path=None, dump_model=False
                     )
 
+            # Compute the pdf grid
             pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)
             params = jnp.array(closure_test_model_settings["parameters"])
             pdf_grid = pdf_grid_func(params)
