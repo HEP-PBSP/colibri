@@ -3,8 +3,7 @@ import logging
 
 from validphys import convolution
 
-import importlib
-import inspect
+from colibri.utils import produce_pdf_model_from_colibri_model
 
 log = logging.getLogger(__name__)
 
@@ -73,68 +72,15 @@ def closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID):
     jnp.array
         The closure test pdf grid.
     """
-    try:
-        model = closure_test_model_settings["model"]
-        # Dynamically import the module
-        module = importlib.import_module(model)
-        log.info(f"Successfully imported '{model}' model for closure test.")
+    # Produce the pdf model
+    model_name = closure_test_model_settings["model"]
+    pdf_model = produce_pdf_model_from_colibri_model(
+        model_name, closure_test_model_settings
+    )
 
-        if hasattr(module, "config"):
-            from colibri.config import colibriConfig
+    # Compute the pdf grid
+    pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)
+    params = jnp.array(closure_test_model_settings["parameters"])
+    pdf_grid = pdf_grid_func(params)
 
-            config = getattr(module, "config")
-            classes = inspect.getmembers(config, inspect.isclass)
-
-            # Loop through the classes in the module
-            # and find the class that is a subclass of colibriConfig
-            for _, cls in classes:
-                if issubclass(cls, colibriConfig) and cls is not colibriConfig:
-                    # Get the signature of the produce_pdf_model method
-                    signature = inspect.signature(
-                        cls(input_params={}).produce_pdf_model
-                    )
-
-                    # Get the required arguments for the produce_pdf_model method
-                    required_args = []
-                    # Loop through the parameters in the function's signature
-                    for name, param in signature.parameters.items():
-                        # Check if the parameter has no default value
-                        if param.default == inspect.Parameter.empty and param.kind in (
-                            inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                            inspect.Parameter.KEYWORD_ONLY,
-                        ):
-                            if name == "output_path" or name == "dump_model":
-                                continue
-                            required_args.append(name)
-
-                    # Create a dictionary with the required arguments
-                    # and their values from closure_test_model_settings
-                    inputs = {}
-                    for arg in signature.parameters:
-                        if arg in closure_test_model_settings:
-                            inputs[arg] = closure_test_model_settings[arg]
-
-                    # Check that keys in inputs are the same as required_args
-                    if set(inputs.keys()) != set(required_args):
-                        raise ValueError(
-                            f"Required arguments for the model '{model}' are "
-                            f"{required_args}, but got {list(inputs.keys())}."
-                        )
-
-                    # Produce the pdf model
-                    pdf_model = cls(input_params={}).produce_pdf_model(
-                        **inputs, output_path=None, dump_model=False
-                    )
-
-            # Compute the pdf grid
-            pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)
-            params = jnp.array(closure_test_model_settings["parameters"])
-            pdf_grid = pdf_grid_func(params)
-
-            return pdf_grid
-
-        else:
-            raise AttributeError(f"The model '{model}' has no 'config' module.")
-
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError(f"Colibri model '{model}' is not installed.")
+    return pdf_grid
