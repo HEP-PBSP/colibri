@@ -2,9 +2,6 @@
 colibri.provider_aliases.py
 
 Module collecting aliases for functions when used as providers.
-
-Author: Luca Mantani
-Date: 21.12.2023
 """
 
 ##############################################

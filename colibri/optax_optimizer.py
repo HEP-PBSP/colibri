@@ -3,8 +3,6 @@ colibri.optax_optimizer.py
 
 Module contains functions for optax gradient descent optimisation.
 
-Author: Mark N. Costantini
-Date: 11.11.2023
 """
 
 import optax
