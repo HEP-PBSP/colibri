@@ -338,3 +338,36 @@ def likelihood_float_type(
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:
         file.write(str(dtype))
+
+
+def closest_indices(a, v, atol=1e-4):
+    """
+    Returns the indices of the closest value in an array to a given value.
+
+    Note: the function is different from np.searchsorted.
+    The main difference is that np.searchsorted returns the index where each
+    element of v should be inserted in a in order to preserve the order (see example below).
+
+    Parameters
+    ----------
+    a : array-like
+
+    v : array-like or float
+
+    Returns
+    -------
+    array-like
+
+    Examples
+    --------
+    >>> a = np.array([1, 2, 3])
+    >>> v = np.array([1.1, 3.0])
+    >>> closest_indices(array, value, atol=0.1)
+    array([0, 2])
+
+    >>> np.searchsorted(a, v)
+    array([1, 2])
+
+    """
+
+    return np.where(np.isclose(a, v[:, None], atol=atol) == True)[1]
