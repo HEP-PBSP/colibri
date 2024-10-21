@@ -370,4 +370,4 @@ def closest_indices(a, v, atol=1e-4):
 
     """
 
-    return np.where(np.isclose(a, v[:, None], atol=atol) == True)[1]
+    return jnp.where(jnp.isclose(a, v[:, None], atol=atol) == True)[1]
