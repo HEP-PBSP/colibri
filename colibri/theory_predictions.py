@@ -10,7 +10,7 @@ import jax.numpy as jnp
 
 from validphys import convolution
 from validphys.fkparser import load_fktable
-from colibri.utils import mask_fktable_array, mask_luminosity_mapping
+from colibri.utils import mask_fktable_array, mask_luminosity_mapping, closest_indices
 
 # Is this needed? -> probably no need to jit compile
 OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
@@ -100,7 +100,7 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
-    fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
+    fk_xgrid_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-7)
 
     def dis_prediction(pdf, fk_arr):
         """
@@ -160,7 +160,7 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
-    fk_xgrid_indices = jnp.searchsorted(FIT_XGRID, fk_xgrid)
+    fk_xgrid_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-7)
 
     def had_prediction(pdf, fk_arr):
         """
