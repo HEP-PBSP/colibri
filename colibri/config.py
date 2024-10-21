@@ -3,9 +3,7 @@ colibri.config.py
 
 Config module of colibri
 
-Author: Mark N. Costantini
 Note: several functions are taken from validphys.config
-Date: 11.11.2023
 """
 
 import hashlib
