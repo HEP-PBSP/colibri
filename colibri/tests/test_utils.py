@@ -28,6 +28,7 @@ from colibri.utils import (
     likelihood_float_type,
     mask_fktable_array,
     mask_luminosity_mapping,
+    closest_indices,
 )
 from validphys.fkparser import load_fktable
 
@@ -248,3 +249,47 @@ def test_likelihood_float_type(
 
     # Assert that the dtype.txt file was created with correct dtype
     assert os.path.exists(tmp_path / "dtype.txt")
+
+
+def test_single_value():
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([1.1])
+    result = closest_indices(a, v, atol=0.2)
+    expected = np.array([0])
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_multiple_values():
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([1.1, 3.0])
+    result = closest_indices(a, v, atol=0.2)
+    expected = np.array([0, 2])
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_no_close_values():
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([4.0])
+    result = closest_indices(a, v, atol=0.2)
+    expected = np.array([])  # No close values
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_exact_match():
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([1.0, 2.0, 3.0])
+    result = closest_indices(a, v, atol=1e-7)
+    expected = np.array([0, 1, 2])
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_atol_effect():
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([2.1])
+    result = closest_indices(a, v, atol=0.09)  # Should not match 2.0 due to tight atol
+    expected = np.array([])  # No match because atol is small
+    np.testing.assert_array_equal(result, expected)
+
+    result = closest_indices(a, v, atol=0.11)  # Now 2.1 is close enough to 2.0
+    expected = np.array([1])
+    np.testing.assert_array_equal(result, expected)
