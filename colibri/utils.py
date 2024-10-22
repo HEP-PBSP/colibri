@@ -340,7 +340,7 @@ def likelihood_float_type(
         file.write(str(dtype))
 
 
-def closest_indices(a, v, atol=1e-4):
+def closest_indices(a, v, atol=1e-7):
     """
     Returns the indices of the closest value in an array to a given value.
 
