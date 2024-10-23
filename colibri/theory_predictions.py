@@ -23,7 +23,7 @@ def fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False):
     """
     if fill_fk_xgrid_with_zeros:
         return jnp.arange(len(FIT_XGRID))
-    
+
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
     # atol is chosen to be 1e-7 as this is the order of magnitude of the difference between the smallest entries of the XGRID
@@ -32,7 +32,9 @@ def fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False):
     return fk_xgrid_indices
 
 
-def fast_kernel_arrays(data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False):
+def fast_kernel_arrays(
+    data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
+):
     """
     Returns a tuple of tuples of jax.numpy arrays.
 
@@ -70,19 +72,20 @@ def fast_kernel_arrays(data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with
 
             # get FK-array with masked flavours
             fk_arr = mask_fktable_array(fk, flavour_indices)
-            
+
             if fill_fk_xgrid_with_zeros:
                 # fill with zeros the Xgrid dimension of the FK table so as to have tensor of shape (Ndat, Nfl, Nfk_xgrid)
                 fk_xgrid = fk.xgrid
                 non_zero_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-8)
-                new_fk_arr = np.zeros((fk_arr.shape[0], fk_arr.shape[1], len(FIT_XGRID)))
+                new_fk_arr = np.zeros(
+                    (fk_arr.shape[0], fk_arr.shape[1], len(FIT_XGRID))
+                )
                 new_fk_arr[:, :, non_zero_indices] = fk_arr
                 fk_arr = jnp.array(new_fk_arr)
 
             fk_dataset_arr.append(fk_arr)
         fk_arrays.append(tuple(fk_dataset_arr))
-    
-    
+
     return tuple(fk_arrays)
 
 
@@ -107,7 +110,9 @@ def positivity_fast_kernel_arrays(posdatasets, flavour_indices=None):
     return tuple(pos_fk_arrays)
 
 
-def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False):
+def make_dis_prediction(
+    fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
+):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -125,7 +130,7 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_
         the sorted union of the xgrids of the datasets entering the fit.
 
     flavour_indices: list, default is None
-    
+
     fill_fk_xgrid_with_zeros: bool, default is False
         If True, then the missing xgrid points in the FK table
         will be filled with zeros. This is useful when the FK table
@@ -138,7 +143,9 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_
     """
     lumi_indices = mask_luminosity_mapping(fktable, flavour_indices)
 
-    fk_xgrid_indices = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros)
+    fk_xgrid_indices = fktable_xgrid_indices(
+        fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros
+    )
 
     def dis_prediction(pdf, fk_arr):
         """
@@ -171,7 +178,9 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_
     return dis_prediction
 
 
-def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False):
+def make_had_prediction(
+    fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
+):
     """
     Given an FKTableData instance returns a jax.jit
     compiled function taking a pdf grid as input
@@ -202,8 +211,10 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_
     first_lumi_indices = lumi_indices[0::2]
     second_lumi_indices = lumi_indices[1::2]
 
-    fk_xgrid_indices = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros)
-    
+    fk_xgrid_indices = fktable_xgrid_indices(
+        fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros
+    )
+
     def had_prediction(pdf, fk_arr):
         """
         Function to compute the theory prediction for a Hadronic observable.
@@ -238,7 +249,9 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_
     return had_prediction
 
 
-def make_pred_dataset(dataset, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False):
+def make_pred_dataset(
+    dataset, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
+):
     """
     Compute theory prediction for a DataSetSpec
 
@@ -266,9 +279,19 @@ def make_pred_dataset(dataset, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_wi
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
 
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros)
+            pred = make_had_prediction(
+                fk,
+                FIT_XGRID,
+                flavour_indices,
+                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+            )
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros)
+            pred = make_dis_prediction(
+                fk,
+                FIT_XGRID,
+                flavour_indices,
+                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+            )
         pred_funcs.append(pred)
 
     def prediction(pdf, fk_dataset):
@@ -279,7 +302,9 @@ def make_pred_dataset(dataset, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_wi
     return prediction
 
 
-def make_pred_data(data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False):
+def make_pred_data(
+    data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
+):
     """
     Compute theory prediction for entire DataGroupSpec
 
@@ -304,7 +329,14 @@ def make_pred_data(data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zer
     predictions = []
 
     for ds in data.datasets:
-        predictions.append(make_pred_dataset(ds, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros))
+        predictions.append(
+            make_pred_dataset(
+                ds,
+                FIT_XGRID,
+                flavour_indices,
+                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+            )
+        )
 
     def eval_preds(pdf, fast_kernel_arrays):
         return jnp.concatenate(
@@ -318,7 +350,9 @@ def make_pred_data(data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zer
     return eval_preds
 
 
-def make_pred_t0data(data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False):
+def make_pred_t0data(
+    data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
+):
     """
     Compute theory prediction for entire DataGroupSpec.
     It is specifically meant for t0 predictions, i.e. it
@@ -346,7 +380,12 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_z
 
     for ds in data.datasets:
         predictions.append(
-            make_pred_dataset(ds, FIT_XGRID, flavour_indices=flavour_indices, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros)
+            make_pred_dataset(
+                ds,
+                FIT_XGRID,
+                flavour_indices=flavour_indices,
+                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+            )
         )
 
     def eval_preds(pdf, fast_kernel_arrays):
@@ -357,7 +396,9 @@ def make_pred_t0data(data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_z
     return eval_preds
 
 
-def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False):
+def make_penalty_posdataset(
+    posdataset, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
+):
     """
     Given a PositivitySetSpec compute the positivity penalty
     as a lagrange multiplier times elu of minus the theory prediction
@@ -394,9 +435,19 @@ def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None, fill_fk
     for fkspec in posdataset.fkspecs:
         fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros)
+            pred = make_had_prediction(
+                fk,
+                FIT_XGRID,
+                flavour_indices,
+                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+            )
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros)
+            pred = make_dis_prediction(
+                fk,
+                FIT_XGRID,
+                flavour_indices,
+                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+            )
         pred_funcs.append(pred)
 
     def pos_penalty(pdf, alpha, lambda_positivity, fk_dataset):
