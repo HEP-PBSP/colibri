@@ -19,7 +19,25 @@ OP = {key: jax.jit(val) for key, val in convolution.OP.items()}
 
 def fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False):
     """
-    TODO
+    Given an FKTableData instance and the xgrid used in the fit returns
+    the indices of the xgrid of the FK table in the xgrid of the fit.
+
+    If fill_fk_xgrid_with_zeros is True, then the all indices of the fit xgrid
+    are returned. This is useful when the FK table is needed as tensor
+    of shape (Ndat, Nfl, Nfk_xgrid) with Nfk_xgrid and Nfl fixed for all datasets.
+
+    Parameters
+    ----------
+    fktable : validphys.coredata.FKTableData
+
+    FIT_XGRID: jnp.ndarray
+        array of xgrid points of the theory entering the fit
+
+    fill_fk_xgrid_with_zeros: bool, default is False
+
+    Returns
+    -------
+    jnp.ndarray of indices
     """
     if fill_fk_xgrid_with_zeros:
         return jnp.arange(len(FIT_XGRID))
@@ -92,6 +110,8 @@ def fast_kernel_arrays(
 def positivity_fast_kernel_arrays(posdatasets, flavour_indices=None):
     """
     Similar to fast_kernel_arrays but for Positivity datasets.
+    Note: no fill_fk_xgrid_with_zeros should be needed here as the xgrid
+    of the positivity fast-kernel arrays is the same as XGRID.
     """
     pos_fk_arrays = []
 
@@ -114,14 +134,11 @@ def make_dis_prediction(
     fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
 ):
     """
-    Given an FKTableData instance returns a jax.jit
-    compiled function taking a pdf grid as input
-    and returning a theory prediction for a DIS
-    observable.
+    Closure to compute the theory prediction for a DIS observable.
 
     Parameters
     ----------
-    fktable : colibri.coredata.FKTableData
+    fktable : validphys.coredata.FKTableData
             The fktable should be a colibri.coredata.FKTableData instance
             and with cuts and masked flavours already applied.
 
@@ -139,7 +156,7 @@ def make_dis_prediction(
 
     Returns
     -------
-    @jax.jit CompiledFunction
+    Callable
     """
     lumi_indices = mask_luminosity_mapping(fktable, flavour_indices)
 
@@ -182,10 +199,7 @@ def make_had_prediction(
     fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
 ):
     """
-    Given an FKTableData instance returns a jax.jit
-    compiled function taking a pdf grid as input
-    and returning a theory prediction for a hadronic
-    observable.
+    Closure to compute the theory prediction for a Hadronic observable.
 
     Parameters
     ----------
@@ -205,7 +219,7 @@ def make_had_prediction(
 
     Returns
     -------
-    @jax.jit CompiledFunction
+    Callable
     """
     lumi_indices = mask_luminosity_mapping(fktable, flavour_indices)
     first_lumi_indices = lumi_indices[0::2]
@@ -265,12 +279,11 @@ def make_pred_dataset(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+
     Returns
     -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid in input
-        and returning theory prediction for one
-        dataset
+    Callable
     """
 
     pred_funcs = []
@@ -318,12 +331,11 @@ def make_pred_data(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+
     Returns
     -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid in input
-        and returning theory prediction for one
-        data group
+    Callable
     """
 
     predictions = []
@@ -368,12 +380,11 @@ def make_pred_t0data(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+
     Returns
     -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid in input
-        and returning theory prediction for one
-        data group
+    Callable
     """
 
     predictions = []
@@ -397,7 +408,9 @@ def make_pred_t0data(
 
 
 def make_penalty_posdataset(
-    posdataset, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
+    posdataset,
+    FIT_XGRID,
+    flavour_indices=None,
 ):
     """
     Given a PositivitySetSpec compute the positivity penalty
@@ -439,14 +452,14 @@ def make_penalty_posdataset(
                 fk,
                 FIT_XGRID,
                 flavour_indices,
-                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+                fill_fk_xgrid_with_zeros=False,
             )
         else:
             pred = make_dis_prediction(
                 fk,
                 FIT_XGRID,
                 flavour_indices,
-                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+                fill_fk_xgrid_with_zeros=False,
             )
         pred_funcs.append(pred)
 
