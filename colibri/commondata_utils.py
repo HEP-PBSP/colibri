@@ -39,6 +39,7 @@ def level_0_commondata_tuple(
     FIT_XGRID,
     fast_kernel_arrays,
     flavour_indices=None,
+    fill_fk_xgrid_with_zeros=False,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -78,9 +79,12 @@ def level_0_commondata_tuple(
         # replace central values with theory prediction from `closure_test_pdf`
         fake_data.append(
             cd.with_central_value(
-                make_pred_dataset(ds, FIT_XGRID, flavour_indices=flavour_indices)(
-                    closure_test_central_pdf_grid, fk_dataset
-                )
+                make_pred_dataset(
+                    ds,
+                    FIT_XGRID,
+                    flavour_indices=flavour_indices,
+                    fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+                )(closure_test_central_pdf_grid, fk_dataset)
             )
         )
     return tuple(fake_data)
