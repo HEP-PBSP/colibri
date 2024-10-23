@@ -4,7 +4,11 @@ import pytest
 import jaxlib
 
 from colibri.api import API as colibriAPI
-from colibri.theory_predictions import make_dis_prediction, make_had_prediction
+from colibri.theory_predictions import (
+    make_dis_prediction,
+    make_had_prediction,
+    fktable_xgrid_indices,
+)
 
 from colibri.tests.conftest import (
     TEST_DATASET,
@@ -18,6 +22,60 @@ from colibri.tests.conftest import (
 )
 
 from validphys.fkparser import load_fktable
+
+
+# Mock FKTableData class to simulate the 'fktable' object
+class FKTableDataMock:
+    def __init__(self, xgrid):
+        self.xgrid = xgrid
+
+
+def test_fktable_xgrid_indices_fill_with_zeros():
+    # Case where fill_fk_xgrid_with_zeros is True
+    fktable = FKTableDataMock(xgrid=jnp.array([0.1, 0.2, 0.3]))
+    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
+
+    expected_indices = jnp.arange(
+        len(FIT_XGRID)
+    )  # Should return indices for the entire FIT_XGRID
+    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=True)
+
+    assert jnp.array_equal(result, expected_indices)
+
+
+def test_fktable_xgrid_indices_no_fill():
+    # Case where fill_fk_xgrid_with_zeros is False
+    fktable = FKTableDataMock(xgrid=jnp.array([0.1, 0.2, 0.3]))
+    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
+
+    expected_indices = jnp.array([1, 3, 5])  # Indices where fk_xgrid matches FIT_XGRID
+    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+
+    assert jnp.array_equal(result, expected_indices)
+
+
+def test_fktable_xgrid_indices_with_tolerance():
+    # Case where some points are close within tolerance
+    fktable = FKTableDataMock(xgrid=jnp.array([0.10000001, 0.2, 0.30000001]))
+    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
+
+    # Due to tolerance, the indices should match as if they were the same
+    expected_indices = jnp.array([1, 3, 5])
+    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+
+    assert jnp.array_equal(result, expected_indices)
+
+
+def test_fktable_xgrid_indices_no_matches():
+    # Case where no FK table xgrid matches FIT_XGRID
+    fktable = FKTableDataMock(xgrid=jnp.array([0.6, 0.7, 0.8]))
+    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
+
+    expected_indices = jnp.array(
+        []
+    )  # No matching indices, closest_indices returns empty array
+    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+    assert jnp.array_equal(result, expected_indices)
 
 
 def test_fast_kernel_arrays():
