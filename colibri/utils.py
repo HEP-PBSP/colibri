@@ -338,3 +338,37 @@ def likelihood_float_type(
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:
         file.write(str(dtype))
+
+
+def compute_determinants_of_principal_minors(C):
+    """
+    Computes the determinants of the principal minors of a symmetric, positive semi-definite matrix C.
+
+    Parameters
+    ----------
+    C (np.ndarray): An nxn covariance matrix (symmetric, positive semi-definite)
+
+    Returns
+    -------
+    List[float]: A list of determinants of the principal minors from C_n down to C_0
+    """
+    n = C.shape[0]
+    determinants = []
+
+    # Perform the Cholesky decomposition of the full matrix C
+    try:
+        L = np.linalg.cholesky(C)
+    except np.linalg.LinAlgError:
+        raise ValueError("Matrix is not positive semi-definite or symmetric.")
+
+    # Compute determinants of principal minors by iteratively removing rows/columns from the Cholesky factor
+    for k in range(n, 0, -1):
+        # Compute determinant of C_k using the product of diagonal entries of the top-left kxk submatrix of L
+        L_k = L[:k, :k]
+        det_C_k = np.prod(np.diag(L_k)) ** 2  # Square of product of diagonals
+        determinants.append(det_C_k)
+
+    # C_0 is defined to have determinant 1
+    determinants.append(1.0)
+
+    return determinants
