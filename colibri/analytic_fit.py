@@ -50,7 +50,7 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
     ----------
     sol_covmat: array
         Covariance matrix of the posterior (X^T Sigma^-1 X)^-1.
-    
+
     sol_mean
 
     a_vec: np.ndarray
@@ -63,12 +63,12 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
     -------
     float: The log evidence.
     """
- 
+
     # Take into account change of variables of type (x - mu) -> x
     b_vec -= sol_mean
     a_vec -= sol_mean
 
-    if sol_covmat.shape[0] ==1:
+    if sol_covmat.shape[0] == 1:
         sol_covmat = sol_covmat[0][0]
         erf_arg_a = a_vec / (np.sqrt(2 * sol_covmat))
         erf_arg_b = b_vec / (np.sqrt(2 * sol_covmat))
@@ -80,22 +80,39 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 
         log_occam_factor = np.log(np.sqrt(sol_covmat) / (b_vec - a_vec))
 
-        log_evidence = max_logl + 0.5 * np.log(2 * np.pi) + log_occam_factor + np.log(erf_terms)
-        
+        log_evidence = (
+            max_logl + 0.5 * np.log(2 * np.pi) + log_occam_factor + np.log(erf_terms)
+        )
+
         return log_evidence[0]
-    
+
     elif sol_covmat.shape[0] == 2:
         # compute the correlation coefficient
         rho = sol_covmat[0, 1] / np.sqrt(sol_covmat[0, 0] * sol_covmat[1, 1])
         sigma1 = np.sqrt(sol_covmat[0, 0])
         sigma2 = np.sqrt(sol_covmat[1, 1])
-        
-        erf_terms = (special.erf(b_vec[0] / (sigma1 * np.sqrt(2))) - special.erf(a_vec[0] / (sigma1 * np.sqrt(2)))) * \
-                    (special.erf(b_vec[1] / (sigma2 * np.sqrt(2 * (1 - rho**2)))) - special.erf(a_vec[1] / (sigma2 * np.sqrt(2 * (1 - rho**2)))))
 
-        exp_corr_term = - rho / (2. * np.pi * np.sqrt(1 - rho**2)) * (np.exp(-0.5 * (a_vec[0]**2 / sigma1**2))  - np.exp(-0.5 * (b_vec[0]**2 / sigma1**2))) * \
-                        (np.exp(-0.5 * (a_vec[1]**2 / (sigma2**2 * (1 - rho**2)) ))  + np.exp(-0.5 * (b_vec[1]**2 / (sigma2**2 * (1 - rho**2)) )))
-        
+        erf_terms = (
+            special.erf(b_vec[0] / (sigma1 * np.sqrt(2)))
+            - special.erf(a_vec[0] / (sigma1 * np.sqrt(2)))
+        ) * (
+            special.erf(b_vec[1] / (sigma2 * np.sqrt(2 * (1 - rho**2))))
+            - special.erf(a_vec[1] / (sigma2 * np.sqrt(2 * (1 - rho**2))))
+        )
+
+        exp_corr_term = (
+            -rho
+            / (2.0 * np.pi * np.sqrt(1 - rho**2))
+            * (
+                np.exp(-0.5 * (a_vec[0] ** 2 / sigma1**2))
+                - np.exp(-0.5 * (b_vec[0] ** 2 / sigma1**2))
+            )
+            * (
+                np.exp(-0.5 * (a_vec[1] ** 2 / (sigma2**2 * (1 - rho**2))))
+                + np.exp(-0.5 * (b_vec[1] ** 2 / (sigma2**2 * (1 - rho**2))))
+            )
+        )
+
         integral = 0.25 * (erf_terms - exp_corr_term)
         log_integral = np.log(integral)
 
@@ -107,10 +124,9 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
         log_evidence = max_logl + np.log(2 * np.pi) + log_occam_factor + log_integral
         return log_evidence
 
-
     # n > 2 case
     determinants = compute_determinants_of_principal_minors(sol_covmat)
-    
+
     sqrt_det_ratios = np.sqrt(determinants[:-1] / determinants[1:])
 
     erf_arg_a = a_vec / np.sqrt(2) * sqrt_det_ratios
@@ -120,16 +136,20 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
     erf_b = special.erf(erf_arg_b)
 
     log_erf_terms = np.log(0.5 * (erf_b - erf_a)).sum()
-    
+
     occam_factor_num = np.sqrt(jla.det(sol_covmat))
     occam_factor_denom = np.prod((b_vec - a_vec))
 
     log_occam_factor = np.log(occam_factor_num / occam_factor_denom)
 
-    log_evidence = max_logl + sol_covmat.shape[0] / 2 * np.log(2 * np.pi) + log_occam_factor + log_erf_terms
-    
+    log_evidence = (
+        max_logl
+        + sol_covmat.shape[0] / 2 * np.log(2 * np.pi)
+        + log_occam_factor
+        + log_erf_terms
+    )
+
     return log_evidence
-    
 
 
 @check_pdf_model_is_linear
@@ -236,10 +256,17 @@ def analytic_fit(
     # Compute maximum log likelihood
     max_logl = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
 
-    logZ = gaussian_integral + max_logl + log_prior
+    logZ_laplace = gaussian_integral + max_logl + log_prior
 
-    log.info(f"LogZ = {logZ}")
-    log.info(f"Maximum log likelihood = {max_logl}")
+    log.info(f"LogZ (Laplace approx) = {logZ_laplace}")
+
+    # computation of the evidence (analytic approximation)
+    log_evidence = analytic_evidence_uniform_prior(
+        sol_covmat, sol_mean, max_logl, prior_lower, prior_upper
+    )
+
+    log.info(f"LogZ (Analytic approximation) = {log_evidence}")
+    log.info(f"Maximal log likelihood = {max_logl}")
 
     # Compute minimum chi2
     min_chi2 = -2 * max_logl
