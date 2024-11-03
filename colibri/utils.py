@@ -371,4 +371,4 @@ def compute_determinants_of_principal_minors(C):
     # C_0 is defined to have determinant 1
     determinants.append(1.0)
 
-    return determinants
+    return np.array(determinants)
