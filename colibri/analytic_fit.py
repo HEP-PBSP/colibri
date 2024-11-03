@@ -38,6 +38,7 @@ class AnalyticFit(BayesianFit):
     """
 
     analytic_specs: dict
+    logz_laplace: float
 
 
 def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec):
