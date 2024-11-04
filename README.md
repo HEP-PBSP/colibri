@@ -6,7 +6,7 @@
 <div style="text-align: right; font-size: 10px;">
     Artwork by
 
-@qftoons
+[@qftoons](https://www.instagram.com/qftoons/)
 </div>
 
 # colibri
