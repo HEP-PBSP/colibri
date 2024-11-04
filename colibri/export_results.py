@@ -83,13 +83,10 @@ def export_bayes_results(
     # Save the resampled results
     df = pd.DataFrame(bayes_fit.resampled_posterior, columns=bayes_fit.param_names)
     df.to_csv(str(output_path) + f"/{results_name}.csv", float_format="%.5e")
-
-    # Write the results to file
-    with open(str(output_path) + "/bayes_metrics.csv", "w") as f:
-        f.write(
-            f"logz,min_chi2,avg_chi2,Cb\n{bayes_fit.logz},{bayes_fit.min_chi2},{bayes_fit.avg_chi2},{bayes_fit.bayes_complexity}\n"
-        )
-
+    
+    # Save bayesian metrics to csv file
+    pd.DataFrame.from_dict([bayes_fit.bayesian_metrics]).to_csv(str(output_path) + f"/bayes_metrics.csv", float_format="%.5e")
+    
 
 def write_exportgrid(
     grid_for_writing,
