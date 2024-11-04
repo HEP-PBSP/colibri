@@ -1,12 +1,10 @@
 
 <div align="center">
-<img src="./colibri-logo.png" alt="colibri logo" width="50%">
+<img src="./colibri-logo.png" alt="colibri logo" width="40%">
 </div>
 
 <div style="text-align: right; font-size: 10px;">
-    Artwork by
-
-[@qftoons](https://www.instagram.com/qftoons/)
+    Artwork by <a href="https://www.instagram.com/qftoons/" target="_blank">@qftoons</a>
 </div>
 
 # colibri
