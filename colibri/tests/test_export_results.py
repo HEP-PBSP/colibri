@@ -23,10 +23,7 @@ bayes_fit.resampled_posterior = jax.random.uniform(jax.random.PRNGKey(0), shape=
 bayes_fit.full_posterior_samples = jax.random.uniform(
     jax.random.PRNGKey(0), shape=(100, 2)
 )
-bayes_fit.bayes_complexity = 1.0
-bayes_fit.avg_chi2 = 1.0
-bayes_fit.min_chi2 = 1.0
-bayes_fit.logz = 1.0
+bayes_fit.bayesian_metrics = {"logz": 1}
 bayes_fit.param_names = ["param1", "param2"]
 
 # Mock the pdf_model object
@@ -67,10 +64,8 @@ def test_export_bayes_results(tmp_path):
     # Check if the bayes_metrics.csv file was created and contains the correct data
     with open(str(output_path) + "/bayes_metrics.csv", "r") as f:
         content = f.read()
-    assert (
-        content
-        == f"logz,min_chi2,avg_chi2,Cb\n{bayes_fit.logz},{bayes_fit.min_chi2},{bayes_fit.avg_chi2},{bayes_fit.bayes_complexity}\n"
-    )
+
+    assert content == f"logz\n{bayes_fit.bayesian_metrics["logz"]}\n"
 
 
 def test_write_exportgrid():
