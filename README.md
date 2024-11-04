@@ -3,6 +3,12 @@
 <img src="./colibri-logo.png" alt="colibri logo" width="50%">
 </div>
 
+<div style="text-align: right; font-size: 10px;">
+    Artwork by
+
+@qftoons
+</div>
+
 # colibri
 ![Tests bagde](https://github.com/HEP-PBSP/colibri/actions/workflows/tests.yml/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
