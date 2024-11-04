@@ -51,10 +51,7 @@ class BayesianFit:
     param_names: list
     resampled_posterior: jnp.array
     full_posterior_samples: jnp.array
-    bayes_complexity: float
-    avg_chi2: float
-    min_chi2: float
-    logz: float
+    bayesian_metrics: dict
 
 
 def export_bayes_results(
