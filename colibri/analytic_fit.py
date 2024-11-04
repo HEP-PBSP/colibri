@@ -300,7 +300,7 @@ def analytic_fit(
             "bayes_complexity": Cb,
             "avg_chi2": avg_chi2,
             "min_chi2": min_chi2,
-            "logz": logZ,
+            "logZ_laplace": logZ_laplace,
         },
     )
 
