@@ -83,10 +83,14 @@ def export_bayes_results(
     # Save the resampled results
     df = pd.DataFrame(bayes_fit.resampled_posterior, columns=bayes_fit.param_names)
     df.to_csv(str(output_path) + f"/{results_name}.csv", float_format="%.5e")
-    
+
     # Save bayesian metrics to csv file
-    pd.DataFrame.from_dict([bayes_fit.bayesian_metrics]).to_csv(str(output_path) + f"/bayes_metrics.csv", float_format="%.5e")
-    
+    pd.DataFrame.from_dict([bayes_fit.bayesian_metrics]).to_csv(
+        str(output_path) + f"/bayes_metrics.csv",
+        float_format="%.5e",
+        index=False,
+    )
+
 
 def write_exportgrid(
     grid_for_writing,
