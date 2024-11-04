@@ -149,7 +149,7 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
         + log_erf_terms
     )
 
-    return log_evidence
+    return log_evidence, log_occam_factor
 
 
 @check_pdf_model_is_linear
@@ -258,14 +258,15 @@ def analytic_fit(
 
     logZ_laplace = gaussian_integral + max_logl + log_prior
 
-    log.info(f"LogZ (Laplace approx) = {logZ_laplace}")
+    log.info(f"LogZ (Laplace approximation) = {logZ_laplace}")
 
     # computation of the evidence (analytic approximation)
-    log_evidence = analytic_evidence_uniform_prior(
+    log_evidence, log_occam_factor = analytic_evidence_uniform_prior(
         sol_covmat, sol_mean, max_logl, prior_lower, prior_upper
     )
 
     log.info(f"LogZ (Analytic approximation) = {log_evidence}")
+    log.info(f"Log Occam factor = {log_occam_factor}")
     log.info(f"Maximal log likelihood = {max_logl}")
 
     # Compute minimum chi2
