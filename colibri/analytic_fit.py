@@ -174,10 +174,12 @@ def analytic_fit(
         resampled_posterior=samples,
         param_names=parameters,
         full_posterior_samples=full_samples,
-        bayes_complexity=Cb,
-        avg_chi2=avg_chi2,
-        min_chi2=min_chi2,
-        logz=logZ,
+        bayesian_metrics={
+            "bayes_complexity": Cb,
+            "avg_chi2": avg_chi2,
+            "min_chi2": min_chi2,
+            "logz": logZ,
+        },
     )
 
 
