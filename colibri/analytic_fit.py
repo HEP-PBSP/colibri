@@ -302,6 +302,8 @@ def analytic_fit(
             "avg_chi2": avg_chi2,
             "min_chi2": min_chi2,
             "logZ_laplace": logZ_laplace,
+            "logZ_analytic": log_evidence,
+            "log_occam_factor": log_occam_factor,
         },
     )
 
