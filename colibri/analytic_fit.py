@@ -38,13 +38,13 @@ class AnalyticFit(BayesianFit):
     """
 
     analytic_specs: dict
-    logz_laplace: float
 
 
 def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec):
     """
     Compute the log of the evidence for Gaussian likelihood and uniform prior.
     The implementation is based on the following paper: https://arxiv.org/pdf/2301.13783
+    and consists in a small improvement of the Laplace approximation.
 
     Parameters
     ----------
@@ -68,63 +68,6 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
     b_vec -= sol_mean
     a_vec -= sol_mean
 
-    if sol_covmat.shape[0] == 1:
-        sol_covmat = sol_covmat[0][0]
-        erf_arg_a = a_vec / (np.sqrt(2 * sol_covmat))
-        erf_arg_b = b_vec / (np.sqrt(2 * sol_covmat))
-
-        erf_a = special.erf(erf_arg_a)
-        erf_b = special.erf(erf_arg_b)
-
-        erf_terms = 0.5 * (erf_b - erf_a)
-
-        log_occam_factor = np.log(np.sqrt(sol_covmat) / (b_vec - a_vec))
-
-        log_evidence = (
-            max_logl + 0.5 * np.log(2 * np.pi) + log_occam_factor + np.log(erf_terms)
-        )
-
-        return log_evidence[0]
-
-    elif sol_covmat.shape[0] == 2:
-        # compute the correlation coefficient
-        rho = sol_covmat[0, 1] / np.sqrt(sol_covmat[0, 0] * sol_covmat[1, 1])
-        sigma1 = np.sqrt(sol_covmat[0, 0])
-        sigma2 = np.sqrt(sol_covmat[1, 1])
-
-        erf_terms = (
-            special.erf(b_vec[0] / (sigma1 * np.sqrt(2)))
-            - special.erf(a_vec[0] / (sigma1 * np.sqrt(2)))
-        ) * (
-            special.erf(b_vec[1] / (sigma2 * np.sqrt(2 * (1 - rho**2))))
-            - special.erf(a_vec[1] / (sigma2 * np.sqrt(2 * (1 - rho**2))))
-        )
-
-        exp_corr_term = (
-            -rho
-            / (2.0 * np.pi * np.sqrt(1 - rho**2))
-            * (
-                np.exp(-0.5 * (a_vec[0] ** 2 / sigma1**2))
-                - np.exp(-0.5 * (b_vec[0] ** 2 / sigma1**2))
-            )
-            * (
-                np.exp(-0.5 * (a_vec[1] ** 2 / (sigma2**2 * (1 - rho**2))))
-                + np.exp(-0.5 * (b_vec[1] ** 2 / (sigma2**2 * (1 - rho**2))))
-            )
-        )
-
-        integral = 0.25 * (erf_terms - exp_corr_term)
-        log_integral = np.log(integral)
-
-        occam_factor_num = np.sqrt(jla.det(sol_covmat))
-        occam_factor_denom = np.prod((b_vec - a_vec))
-
-        log_occam_factor = np.log(occam_factor_num / occam_factor_denom)
-
-        log_evidence = max_logl + np.log(2 * np.pi) + log_occam_factor + log_integral
-        return log_evidence
-
-    # n > 2 case
     determinants = compute_determinants_of_principal_minors(sol_covmat)
 
     sqrt_det_ratios = np.sqrt(determinants[:-1] / determinants[1:])
@@ -261,17 +204,20 @@ def analytic_fit(
     log.info(f"LogZ (Laplace approximation) = {logZ_laplace}")
 
     # computation of the evidence (analytic approximation)
-    log_evidence, log_occam_factor = analytic_evidence_uniform_prior(
+    logZ_analytical, log_occam_factor = analytic_evidence_uniform_prior(
         sol_covmat, sol_mean, max_logl, prior_lower, prior_upper
     )
 
-    log.info(f"LogZ (Analytic approximation) = {log_evidence}")
+    log.info(f"LogZ (Analytic approximation) = {logZ_analytical}")
     log.info(f"Log Occam factor = {log_occam_factor}")
     log.info(f"Maximal log likelihood = {max_logl}")
 
     # Compute minimum chi2
     min_chi2 = -2 * max_logl
     log.info(f"Minimum chi2 = {min_chi2}")
+
+    BIC = min_chi2 + sol_covmat.shape[0] * np.log(Sigma.shape[0])
+    AIC = min_chi2 + 2 * sol_covmat.shape[0]
 
     # Check that the prior is wide enough
     if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
@@ -302,8 +248,10 @@ def analytic_fit(
             "avg_chi2": avg_chi2,
             "min_chi2": min_chi2,
             "logZ_laplace": logZ_laplace,
-            "logZ_analytic": log_evidence,
+            "logZ_analytic": logZ_analytical,
             "log_occam_factor": log_occam_factor,
+            "BIC": BIC,
+            "AIC": AIC,
         },
     )
 
