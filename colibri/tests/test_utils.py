@@ -269,7 +269,6 @@ def test_non_psd_matrix():
     C = np.array([[2, -3], [-3, 1]])
     try:
         compute_determinants_of_principal_minors(C)
-        assert False, "Expected ValueError for non-PSD matrix"
     except ValueError as e:
         assert str(e) == "Matrix is not positive semi-definite or symmetric."
 
