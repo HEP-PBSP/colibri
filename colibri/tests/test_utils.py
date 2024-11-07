@@ -28,6 +28,7 @@ from colibri.utils import (
     likelihood_float_type,
     mask_fktable_array,
     mask_luminosity_mapping,
+    compute_determinants_of_principal_minors,
 )
 from validphys.fkparser import load_fktable
 
@@ -248,3 +249,40 @@ def test_likelihood_float_type(
 
     # Assert that the dtype.txt file was created with correct dtype
     assert os.path.exists(tmp_path / "dtype.txt")
+
+
+def test_identity_matrix():
+    C = np.identity(3)
+    expected = np.array([1.0, 1.0, 1.0, 1.0])
+    result = compute_determinants_of_principal_minors(C)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_single_element_matrix():
+    C = np.array([[2]])
+    expected = np.array([1.0, 2.0])
+    result = compute_determinants_of_principal_minors(C)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_non_psd_matrix():
+    C = np.array([[2, -3], [-3, 1]])
+    try:
+        compute_determinants_of_principal_minors(C)
+        assert False, "Expected ValueError for non-PSD matrix"
+    except ValueError as e:
+        assert str(e) == "Matrix is not positive semi-definite or symmetric."
+
+
+def test_known_psd_matrix():
+    C = np.array([[4, 2], [2, 3]])
+    expected = np.array([1.0, 4.0, 8.0])
+    result = compute_determinants_of_principal_minors(C)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_large_psd_matrix():
+    C = np.array([[4, 2, 0], [2, 3, 1], [0, 1, 2]])
+    expected = np.array([1.0, 4.0, 8.0, 12.0])
+    result = compute_determinants_of_principal_minors(C)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
