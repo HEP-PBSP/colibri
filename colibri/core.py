@@ -1,5 +1,7 @@
 """
-TODO
+colibri.core.py
+
+This module contains the dataclasses for the core of colibri.
 """
 
 from dataclasses import dataclass
@@ -74,7 +76,17 @@ class ColibriSpecs:
 
     Attributes
     ----------
-    TODO
+    loss_function_specs: ColibriLossFunctionSpecs
+        The specs for the loss function of the fit.
+    
+    prior_settings: ColibriPriorSpecs
+        The specs for the prior of the fit.
+    
+    ns_settings: ColibriNestedSamplingSpecs
+        The specs for the nested sampling of the fit.
+    
+    analytic_settings: ColibriAnalyticFitSpecs
+        The specs for the analytic fit of the fit.
     """
 
     loss_function_specs: Optional[ColibriLossFunctionSpecs]
