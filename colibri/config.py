@@ -195,7 +195,6 @@ class colibriConfig(Config):
         ns_settings_settings = settings.get("ns_settings", {})
         ns_settings = ns_settings_parser(ns_settings_settings, output_path)
 
-
         # create a colibri_specs instance
         col_spec = ColibriSpecs(
             loss_function_specs=loss_function_specs,

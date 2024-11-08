@@ -3,6 +3,7 @@ TODO
 """
 
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -39,18 +40,47 @@ class ColibriPriorSpecs:
 
 
 @dataclass(frozen=True)
+class ColibriNestedSamplingSpecs:
+    """
+    Dataclass containing the specs for the nested sampling of a Colibri fit.
+
+    Attributes
+    ----------
+    nested_sampling_specs: dict
+        Dictionary containing the settings of the nested sampling.
+    """
+
+    ns_settings: dict
+
+
+@dataclass(frozen=True)
+class ColibriAnalyticFitSpecs:
+    """
+    Dataclass containing the specs for the analytic fit of a Colibri fit.
+
+    Attributes
+    ----------
+    analytic_fit_specs: dict
+        Dictionary containing the settings of the analytic fit.
+    """
+
+    analytic_settings: dict
+
+
+@dataclass(frozen=True)
 class ColibriSpecs:
     """
     Dataclass containing the settings of a Colibri fit.
 
     Attributes
     ----------
-    colibri_specs: dict
-        Dictionary containing the settings of the Colibri fit.
+    TODO
     """
 
-    loss_function_specs: ColibriLossFunctionSpecs
-    prior_settings: ColibriPriorSpecs
+    loss_function_specs: Optional[ColibriLossFunctionSpecs]
+    prior_settings: Optional[ColibriPriorSpecs]
+    ns_settings: Optional[ColibriNestedSamplingSpecs]
+    analytic_settings: Optional[ColibriAnalyticFitSpecs]
 
 
 @dataclass(frozen=True)
