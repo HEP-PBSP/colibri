@@ -16,7 +16,7 @@ import jax.numpy as jnp
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
-from colibri.core import ColibriTheorySpecs
+from colibri.core import ColibriTheorySpecs, ColibriLossFunctionSpecs
 
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
@@ -181,6 +181,34 @@ class colibriConfig(Config):
 
         return ColibriTheorySpecs(
             theoryid=settings["theoryid"], use_cuts=settings.get("use_cuts", "internal")
+        )
+
+    def parse_loss_function_specs(self, settings):
+        """
+        Parses the loss_function_specs namespace from the runcard,
+        and returns a ColibriLossFunctionSpecs object.
+        Defaults are used if the keys are not present in the runcard.
+
+        Parameters
+        ----------
+        settings: dict
+            The loss_function_specs namespace from the runcard
+
+        Returns
+        -------
+        ColibriLossFunctionSpecs
+            A dataclass containing the loss function specifications
+        """
+        known_keys = {"use_fit_t0", "t0pdfset"}
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in loss_function not known.", k, known_keys)
+            )
+
+        return ColibriLossFunctionSpecs(
+            use_fit_t0=settings.get("use_fit_t0", False),
+            t0pdfset=settings.get("t0pdfset", None),
         )
 
     def parse_ns_settings(
