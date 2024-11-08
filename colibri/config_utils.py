@@ -8,7 +8,7 @@ import logging
 from reportengine.configparser import ConfigError
 import os
 
-from colibri.core import ColibriNestedSamplingSpecs
+from colibri.core import ColibriNestedSamplingSpecs, ColibriAnalyticFitSpecs
 
 
 log = logging.getLogger(__name__)
@@ -146,4 +146,4 @@ def analytic_settings_parser(
     # Set the optimal prior flag
     analytic_settings["optimal_prior"] = settings.get("optimal_prior", False)
 
-    return analytic_settings
+    return ColibriAnalyticFitSpecs(analytic_settings=analytic_settings)

@@ -21,7 +21,7 @@ from colibri.core import (
     ColibriPriorSpecs,
     ColibriSpecs,
 )
-from colibri.config_utils import ns_settings_parser
+from colibri.config_utils import ns_settings_parser, analytic_settings_parser
 
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
@@ -196,12 +196,15 @@ class colibriConfig(Config):
         ns_settings = ns_settings_parser(ns_settings_settings, output_path)
 
         # Analytic settings
+        analytic_settings_settings = settings.get("analytic_settings", {})
+        analytic_settings = analytic_settings_parser(analytic_settings_settings)
 
         # create a colibri_specs instance
         col_spec = ColibriSpecs(
             loss_function_specs=loss_function_specs,
             prior_settings=prior_specs,
             ns_settings=ns_settings,
+            analytic_settings=analytic_settings,
         )
 
         return col_spec
@@ -232,6 +235,15 @@ class colibriConfig(Config):
         Given the parsed colibri_specs, returns the ns_settings.
         """
         return colibri_specs.ns_settings.ns_settings
+
+    def produce_analytic_settings(
+        self,
+        colibri_specs,
+    ):
+        """
+        Given the parsed colibri_specs, returns the analytic_settings.
+        """
+        return colibri_specs.analytic_settings.analytic_settings
 
     def parse_positivity_penalty_settings(self, settings):
         """
@@ -269,48 +281,6 @@ class colibriConfig(Config):
         )
 
         return positivity_penalty_settings
-
-    def parse_analytic_settings(
-        self,
-        settings,
-    ):
-        """For an analytic fit, parses the analytic_settings namespace from the runcard,
-        and ensures the choice of settings is valid.
-        """
-
-        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
-        known_keys = {
-            "n_posterior_samples",
-            "sampling_seed",
-            "full_sample_size",
-            "optimal_prior",
-        }
-
-        kdiff = settings.keys() - known_keys
-        for k in kdiff:
-            log.warning(
-                ConfigError(f"Key '{k}' in analytic_settings not known.", k, known_keys)
-            )
-
-        # Now construct the analytic_settings dictionary, checking the parameter combinations are
-        # valid
-        analytic_settings = {}
-
-        # Set the sampling seed
-        analytic_settings["sampling_seed"] = settings.get("sampling_seed", 123456)
-
-        # Set the posterior resampling parameters
-        analytic_settings["n_posterior_samples"] = settings.get(
-            "n_posterior_samples", 100
-        )
-
-        # Set the full sample size
-        analytic_settings["full_sample_size"] = settings.get("full_sample_size", 1000)
-
-        # Set the optimal prior flag
-        analytic_settings["optimal_prior"] = settings.get("optimal_prior", False)
-
-        return analytic_settings
 
     def produce_vectorized(self, ns_settings):
         """Returns True if the fit is vectorized, False otherwise.
