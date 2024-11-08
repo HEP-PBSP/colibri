@@ -59,7 +59,7 @@ class ColibriSpecs:
     colibri_specs: dict
         Dictionary containing the settings of the Colibri fit.
     """
-    theory_specs: ColibriTheory
+    theory_specs: ColibriTheorySpecs
     loss_function_specs: ColibriLossFunctionSpecs
     prior_specs: ColibriPriorSpecs
 

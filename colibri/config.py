@@ -154,62 +154,59 @@ class colibriConfig(Config):
         )
         return xgrid
 
-    def parse_theory_specs(self, settings):
+    def parse_colibri_specs(self, settings):
         """
-        Parses the theory_specs namespace from the runcard,
-        and ensures the choice of settings is valid.
+        This parse rule is used to parse the colibri specs that are common to all fits
+        and always needed.
 
         Parameters
         ----------
         settings: dict
-            The theory_specs namespace from the runcard
-
+            The colibri namespace from the runcard
+        
         Returns
         -------
-        ColibriTheorySpecs
-            A dataclass containing the theory specifications
+        ColibriSpecs
+            A dataclass containing the colibri specifications
         """
-        known_keys = {"theoryid", "use_cuts"}
+        known_keys = {"theory_specs", "loss_function_specs", "prior_specs"}
         kdiff = settings.keys() - known_keys
         for k in kdiff:
-            log.warning(ConfigError(f"Key '{k}' in theory not known.", k, known_keys))
-
-        if "theoryid" not in settings:
+            log.warning(ConfigError(f"Key '{k}' in colibri not known.", k, known_keys))
+        
+        # theory_specs namespace
+        theory_specs_settings = settings.get("theory_specs", {})
+        if "theoryid" not in theory_specs_settings:
             raise ConfigError(
                 "theoryid needs to be specified in the theory_specs of the runcard."
             )
 
-        return ColibriTheorySpecs(
-            theoryid=settings["theoryid"], use_cuts=settings.get("use_cuts", "internal")
+        theory_specs = ColibriTheorySpecs(
+            theoryid=theory_specs_settings["theoryid"], use_cuts=theory_specs_settings.get("use_cuts", "internal")
         )
 
-    def parse_loss_function_specs(self, settings):
-        """
-        Parses the loss_function_specs namespace from the runcard,
-        and returns a ColibriLossFunctionSpecs object.
-        Defaults are used if the keys are not present in the runcard.
-
-        Parameters
-        ----------
-        settings: dict
-            The loss_function_specs namespace from the runcard
-
-        Returns
-        -------
-        ColibriLossFunctionSpecs
-            A dataclass containing the loss function specifications
-        """
-        known_keys = {"use_fit_t0", "t0pdfset"}
-        kdiff = settings.keys() - known_keys
-        for k in kdiff:
-            log.warning(
-                ConfigError(f"Key '{k}' in loss_function not known.", k, known_keys)
-            )
-
-        return ColibriLossFunctionSpecs(
-            use_fit_t0=settings.get("use_fit_t0", False),
-            t0pdfset=settings.get("t0pdfset", None),
+        # loss_function_specs namespace
+        loss_function_specs_settings = settings.get("loss_function_specs", {})
+        
+        loss_function_specs = ColibriLossFunctionSpecs(
+            use_fit_t0=loss_function_specs_settings.get("use_fit_t0", False),
+            t0pdfset=loss_function_specs_settings.get("t0pdfset", None),
         )
+
+        # prior_specs namespace
+        prior_specs_settings = settings.get("prior_specs", {})
+        prior_specs = ColibriPriorSpecs(prior_settings=prior_specs_settings)
+        
+
+        # create a colibri_specs instance 
+        col_spec = ColibriSpecs(
+            theory_specs=theory_specs,
+            loss_function_specs=loss_function_specs,
+            prior_specs=prior_specs,
+        )
+
+        return col_spec
+
 
     def parse_ns_settings(
         self,
