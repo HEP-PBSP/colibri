@@ -1,6 +1,7 @@
 """
 TODO
 """
+
 from dataclasses import dataclass
 
 
@@ -14,7 +15,8 @@ class ColibriTheorySpecs:
 
     Note: currently in colibri cuts only supports: `use_cuts: internal`
     """
-    theoryid: str    
+
+    theoryid: str
     use_cuts: str
 
 
@@ -32,6 +34,7 @@ class ColibriLossFunctionSpecs:
     t0pdfset: str
         the pdfset to be used for the t0-prescription
     """
+
     use_fit_t0: bool
     t0pdfset: str
 
@@ -43,9 +46,10 @@ class ColibriPriorSpecs:
 
     Attributes
     ----------
-    prior_specs: dict
+    prior_settings: dict
         Dictionary containing the settings of the prior.
     """
+
     prior_settings: dict
 
 
@@ -59,9 +63,10 @@ class ColibriSpecs:
     colibri_specs: dict
         Dictionary containing the settings of the Colibri fit.
     """
+
     theory_specs: ColibriTheorySpecs
     loss_function_specs: ColibriLossFunctionSpecs
-    prior_specs: ColibriPriorSpecs
+    prior_settings: ColibriPriorSpecs
 
 
 @dataclass(frozen=True)
@@ -75,9 +80,8 @@ class ColibriFit:
 
     fit_path: str
         Path to the fit.
-    
+
     """
 
     colibri_specs: ColibriSpecs
     fit_path: str
-    

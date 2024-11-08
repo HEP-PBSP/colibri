@@ -174,7 +174,7 @@ class colibriConfig(Config):
         ColibriSpecs
             A dataclass containing the colibri specifications
         """
-        known_keys = {"theory_specs", "loss_function_specs", "prior_specs"}
+        known_keys = {"theory_specs", "loss_function_specs", "prior_settings"}
         kdiff = settings.keys() - known_keys
         for k in kdiff:
             log.warning(ConfigError(f"Key '{k}' in colibri not known.", k, known_keys))
@@ -199,18 +199,24 @@ class colibriConfig(Config):
             t0pdfset=loss_function_specs_settings.get("t0pdfset", None),
         )
 
-        # prior_specs namespace
-        prior_specs_settings = settings.get("prior_specs", {})
+        # prior_settings namespace
+        prior_specs_settings = settings.get("prior_settings", {})
         prior_specs = ColibriPriorSpecs(prior_settings=prior_specs_settings)
 
         # create a colibri_specs instance
         col_spec = ColibriSpecs(
             theory_specs=theory_specs,
             loss_function_specs=loss_function_specs,
-            prior_specs=prior_specs,
+            prior_settings=prior_specs,
         )
 
         return col_spec
+
+    def produce_prior_settings(self, colibri_specs):
+        """
+        Given the parsed colibri_specs, returns the prior settings.
+        """
+        return colibri_specs.prior_settings.prior_settings
 
     def parse_ns_settings(
         self,
