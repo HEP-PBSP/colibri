@@ -174,7 +174,7 @@ class colibriConfig(Config):
         ColibriSpecs
             A dataclass containing the colibri specifications
         """
-        known_keys = {"loss_function_specs", "prior_settings"}
+        known_keys = {"loss_function_specs", "prior_settings", "ns_settings"}
         kdiff = settings.keys() - known_keys
         for k in kdiff:
             log.warning(ConfigError(f"Key '{k}' in colibri not known.", k, known_keys))
@@ -194,6 +194,8 @@ class colibriConfig(Config):
         # Nested Sampling settings
         ns_settings_settings = settings.get("ns_settings", {})
         ns_settings = ns_settings_parser(ns_settings_settings, output_path)
+
+        # Analytic settings
 
         # create a colibri_specs instance
         col_spec = ColibriSpecs(
