@@ -10,6 +10,12 @@ from unittest.mock import patch
 from reportengine.configparser import ConfigError
 
 from colibri.config_utils import ns_settings_parser, analytic_settings_parser
+from colibri.core import (
+    DEFAULT_N_POSTERIOR_SAMPLES,
+    DEFAULT_SAMPLING_SEED,
+    DEFAULT_FULL_SAMPLE_SIZE,
+    DEFAULT_OPTIMAL_PRIOR,
+)
 
 
 @patch("colibri.config_utils.log.warning")
@@ -35,7 +41,7 @@ def test_parse_analytic_settings(mock_warning):
         "optimal_prior": True,
     }
 
-    assert result.analytic_settings == expected
+    assert result.to_dict() == expected
 
     # Check that the warning was called for the unknown key
     mock_warning.assert_called_once()
@@ -53,12 +59,12 @@ def test_parse_analytic_settings_defaults():
 
     # Assert the result is as expected with default values
     expected = {
-        "sampling_seed": 123456,
-        "n_posterior_samples": 100,
-        "full_sample_size": 1000,
-        "optimal_prior": False,
+        "sampling_seed": DEFAULT_SAMPLING_SEED,
+        "n_posterior_samples": DEFAULT_N_POSTERIOR_SAMPLES,
+        "full_sample_size": DEFAULT_FULL_SAMPLE_SIZE,
+        "optimal_prior": DEFAULT_OPTIMAL_PRIOR,
     }
-    assert result.analytic_settings == expected
+    assert result.to_dict() == expected
 
 
 @patch("colibri.config_utils.os.path.exists")
@@ -134,7 +140,7 @@ def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path
         },
         "Run_settings": {},
         "SliceSampler_settings": {},
-        "ultranest_seed": 123456,
+        "ultranest_seed": DEFAULT_SAMPLING_SEED,
         "sampler_plot": True,
         "popstepsampler": False,
     }
@@ -172,8 +178,8 @@ def test_parse_ns_settings_with_defaults(tmp_path):
 
     # Check that the settings were parsed correctly
     expected_settings = {
-        "n_posterior_samples": 1000,
-        "posterior_resampling_seed": 123456,
+        "n_posterior_samples": DEFAULT_N_POSTERIOR_SAMPLES,
+        "posterior_resampling_seed": DEFAULT_SAMPLING_SEED,
         "ReactiveNS_settings": {
             "log_dir": str(tmp_path / "ultranest_logs"),
             "resume": "overwrite",
@@ -181,7 +187,7 @@ def test_parse_ns_settings_with_defaults(tmp_path):
         },
         "Run_settings": {},
         "SliceSampler_settings": {},
-        "ultranest_seed": 123456,
+        "ultranest_seed": DEFAULT_SAMPLING_SEED,
         "sampler_plot": True,
         "popstepsampler": False,
     }
