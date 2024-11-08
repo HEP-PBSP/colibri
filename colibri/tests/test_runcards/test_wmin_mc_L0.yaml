@@ -24,15 +24,19 @@ reduced_xgrid_data: True               # An artefact of the old grid_pdf impleme
 # Loss function specs
 #####################
 
+colibri_specs:
+
+  loss_function_specs:
+    use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+    t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
+
+
 positivity:                            # Positivity datasets, used in the positivity penalty.
   posdatasets:
   - {dataset: POSF2U, maxlambda: 1e6}
 
 alpha: 1e-7                           
 lambda_positivity: 0                 
-
-use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
-t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
 
 
 #############
