@@ -102,7 +102,7 @@ def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
         "popstepsampler": True,
     }
 
-    assert ns_settings.ns_settings == expected_settings
+    assert ns_settings.to_dict() == expected_settings
     assert mock_info.called
 
 
@@ -139,7 +139,7 @@ def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path
         "popstepsampler": False,
     }
 
-    assert ns_settings.ns_settings == expected_settings
+    assert ns_settings.to_dict() == expected_settings
     assert mock_warning.called
 
 
@@ -186,4 +186,4 @@ def test_parse_ns_settings_with_defaults(tmp_path):
         "popstepsampler": False,
     }
 
-    assert ns_settings.ns_settings == expected_settings
+    assert ns_settings.to_dict() == expected_settings

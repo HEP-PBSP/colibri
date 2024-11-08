@@ -11,6 +11,7 @@ from colibri.ultranest_fit import (
     UltraNestLogLikelihood,
     log_likelihood,
 )
+from colibri.core import NestedSamplingSettings
 from colibri.loss_functions import chi2
 from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
@@ -45,9 +46,10 @@ ns_settings = {
     "posterior_resampling_seed": 123,
     "sampler_plot": False,
 }
+ns_settings = NestedSamplingSettings(**ns_settings)
 
 vect_ns_settings = copy.deepcopy(ns_settings)
-vect_ns_settings["ReactiveNS_settings"]["vectorized"] = True
+vect_ns_settings.ReactiveNS_settings["vectorized"] = True
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
@@ -191,11 +193,11 @@ def test_ultranest_fit(pos_penalty):
 
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
-        ns_settings["n_posterior_samples"],
+        ns_settings.n_posterior_samples,
         len(mock_pdf_model.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
-    assert fit_result.ultranest_specs == ns_settings
+    assert fit_result.ultranest_specs == ns_settings.to_dict()
     assert isinstance(fit_result.ultranest_result, dict)
 
 
@@ -211,7 +213,7 @@ def test_ultranest_fit_vectorized(pos_penalty):
         lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
     )
     _pred_data = None
-    ns_settings["ReactiveNS_settings"]["vectorized"] = True
+    ns_settings.ReactiveNS_settings["vectorized"] = True
 
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
@@ -239,11 +241,11 @@ def test_ultranest_fit_vectorized(pos_penalty):
 
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
-        ns_settings["n_posterior_samples"],
+        ns_settings.n_posterior_samples,
         len(mock_pdf_model.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
-    assert fit_result.ultranest_specs == ns_settings
+    assert fit_result.ultranest_specs == ns_settings.to_dict()
     assert isinstance(fit_result.ultranest_result, dict)
 
 
@@ -259,6 +261,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
         "sampler_plot": False,
         "popstepsampler": False,
     }
+    ns_settings = NestedSamplingSettings(**ns_settings)
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
@@ -296,11 +299,11 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
 
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
-        ns_settings["n_posterior_samples"],
+        ns_settings.n_posterior_samples,
         len(mock_pdf_model.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
-    assert fit_result.ultranest_specs == ns_settings
+    assert fit_result.ultranest_specs == ns_settings.to_dict()
     assert isinstance(fit_result.ultranest_result, dict)
 
 
@@ -316,6 +319,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
         "sampler_plot": False,
         "popstepsampler": True,
     }
+    ns_settings = NestedSamplingSettings(**ns_settings)
     # Create mock pdf model
     mock_pdf_model = Mock()
     mock_pdf_model.param_names = ["param1", "param2"]
@@ -353,11 +357,11 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
 
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
-        ns_settings["n_posterior_samples"],
+        ns_settings.n_posterior_samples,
         len(mock_pdf_model.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
-    assert fit_result.ultranest_specs == ns_settings
+    assert fit_result.ultranest_specs == ns_settings.to_dict()
     assert isinstance(fit_result.ultranest_result, dict)
 
 
@@ -417,6 +421,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
     positivity_fast_kernel_arrays = (jnp.array([1.0]),)
 
     ns_settings = {"ReactiveNS_settings": {"vectorized": False}}
+    ns_settings = NestedSamplingSettings(**ns_settings)
 
     # Mocking chi2 and penalty_posdata
     chi2_mock = MagicMock(return_value=10.0)
