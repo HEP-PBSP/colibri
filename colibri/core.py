@@ -4,7 +4,7 @@ colibri.core.py
 This module contains the dataclasses for the core of colibri.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict, field
 from typing import Optional
 
 
@@ -42,17 +42,41 @@ class ColibriPriorSpecs:
 
 
 @dataclass(frozen=True)
-class ColibriNestedSamplingSpecs:
+class NestedSamplingSettings:
     """
     Dataclass containing the specs for the nested sampling of a Colibri fit.
 
     Attributes
     ----------
-    nested_sampling_specs: dict
-        Dictionary containing the settings of the nested sampling.
+    n_posterior_samples: int
+        Number of posterior samples.
+    posterior_resampling_seed: int
+        Seed for the posterior resampling.
+    ReactiveNS_settings: dict
+        Settings for the Reactive Nested Sampling.
+    Run_settings: dict
+        Settings for the run.
+    SliceSampler_settings: dict
+        Settings for the slice sampler.
+    ultranest_seed: int
+        Seed for the ultranest.
+    sampler_plot: bool
+        Whether to plot and save the posterior.
+    popstepsampler: bool
+        Whether to use the popstepsampler.
     """
 
-    ns_settings: dict
+    ReactiveNS_settings: dict = field(default_factory=dict)
+    Run_settings: dict = field(default_factory=dict)
+    n_posterior_samples: int = 100
+    posterior_resampling_seed: int = 1
+    SliceSampler_settings: dict = field(default_factory=dict)
+    ultranest_seed: int = 1
+    sampler_plot: bool = True
+    popstepsampler: bool = False
+
+    def to_dict(self):
+        return asdict(self)
 
 
 @dataclass(frozen=True)
@@ -91,7 +115,7 @@ class ColibriSpecs:
 
     loss_function_specs: Optional[ColibriLossFunctionSpecs]
     prior_settings: Optional[ColibriPriorSpecs]
-    ns_settings: Optional[ColibriNestedSamplingSpecs]
+    ns_settings: Optional[NestedSamplingSettings]
     analytic_settings: Optional[ColibriAnalyticFitSpecs]
 
 

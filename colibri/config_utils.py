@@ -8,7 +8,7 @@ import logging
 from reportengine.configparser import ConfigError
 import os
 
-from colibri.core import ColibriNestedSamplingSpecs, ColibriAnalyticFitSpecs
+from colibri.core import NestedSamplingSettings, ColibriAnalyticFitSpecs
 
 
 log = logging.getLogger(__name__)
@@ -21,6 +21,18 @@ def ns_settings_parser(
     """
     For a Nested Sampling fit, parses the ns_settings namespace from the runcard,
     and ensures the choice of settings is valid.
+    Returns a NestedSamplingSpecs object.
+
+    Parameters
+    ----------
+    settings: dict
+        The settings namespace from the runcard.
+    output_path: pathlib.Path
+        The path to the output directory of the fit.
+
+    Returns
+    -------
+    NestedSamplingSpecs
     """
 
     # Begin by checking that the user-supplied keys are known; warn the user otherwise.
@@ -105,7 +117,7 @@ def ns_settings_parser(
     if not ns_settings["ReactiveNS_settings"]["resume"]:
         ns_settings["ReactiveNS_settings"]["resume"] = "overwrite"
 
-    return ColibriNestedSamplingSpecs(ns_settings=ns_settings)
+    return NestedSamplingSettings(**ns_settings)
 
 
 def analytic_settings_parser(

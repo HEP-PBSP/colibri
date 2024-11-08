@@ -233,7 +233,7 @@ class colibriConfig(Config):
         """
         Given the parsed colibri_specs, returns the ns_settings.
         """
-        return colibri_specs.ns_settings.ns_settings
+        return colibri_specs.ns_settings
 
     def produce_analytic_settings(
         self,
@@ -285,7 +285,7 @@ class colibriConfig(Config):
         """Returns True if the fit is vectorized, False otherwise.
         This is required for the predictions functions, which do not take ns_settings as an argument.
         """
-        return ns_settings["ReactiveNS_settings"]["vectorized"]
+        return ns_settings.ReactiveNS_settings["vectorized"]
 
     @explicit_node
     def produce_commondata_tuple(self, closure_test_level=False):
