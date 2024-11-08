@@ -218,7 +218,7 @@ class colibriConfig(Config):
         """
         Given the parsed colibri_specs, returns the t0pdfset.
         """
-        return colibri_specs.loss_function_specs.t0pdfset
+        return self.parse_pdf(colibri_specs.loss_function_specs.t0pdfset)
 
     def produce_use_fit_t0(self, colibri_specs):
         """
