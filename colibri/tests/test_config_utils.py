@@ -3,12 +3,14 @@ colibri.tests.test_config_utils.py
 
 This module contains the tests for the config_utils module of colibri.
 """
+
 import unittest
 from unittest.mock import patch
 
 from reportengine.configparser import ConfigError
 
 from colibri.config_utils import ns_settings_parser, analytic_settings_parser
+
 
 @patch("colibri.config_utils.log.warning")
 def test_parse_analytic_settings(mock_warning):
@@ -63,7 +65,7 @@ def test_parse_analytic_settings_defaults():
 @patch("colibri.config_utils.log.warning")
 @patch("colibri.config_utils.log.info")
 def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
-    
+
     # Test known key settings
     settings = {
         "n_posterior_samples": 500,
@@ -107,7 +109,7 @@ def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
 @patch("colibri.config_utils.os.path.exists")
 @patch("colibri.config_utils.log.warning")
 def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path):
-    
+
     # Test with unknown keys in settings
     settings = {
         "unknown_key": "value",
@@ -144,7 +146,7 @@ def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path
 @patch("colibri.config_utils.os.path.exists")
 @patch("colibri.config_utils.log.info")
 def test_parse_ns_settings_with_missing_log_dir(mock_info, mock_exists, tmp_path):
-    
+
     # Test missing log directory
     settings = {
         "ReactiveNS_settings": {
@@ -161,7 +163,7 @@ def test_parse_ns_settings_with_missing_log_dir(mock_info, mock_exists, tmp_path
 
 
 def test_parse_ns_settings_with_defaults(tmp_path):
-    
+
     # Test default settings
     settings = {}
 
@@ -185,4 +187,3 @@ def test_parse_ns_settings_with_defaults(tmp_path):
     }
 
     assert ns_settings.ns_settings == expected_settings
-
