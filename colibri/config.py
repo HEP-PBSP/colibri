@@ -242,7 +242,7 @@ class colibriConfig(Config):
         """
         Given the parsed colibri_specs, returns the analytic_settings.
         """
-        return colibri_specs.analytic_settings.analytic_settings
+        return colibri_specs.analytic_settings
 
     def parse_positivity_penalty_settings(self, settings):
         """

@@ -7,6 +7,14 @@ This module contains the dataclasses for the core of colibri.
 from dataclasses import dataclass, asdict, field
 from typing import Optional
 
+"""
+Default values for the Colibri fits.
+"""
+DEFAULT_N_POSTERIOR_SAMPLES = 100
+DEFAULT_SAMPLING_SEED = 1
+DEFAULT_FULL_SAMPLE_SIZE = 1000
+DEFAULT_OPTIMAL_PRIOR = False
+
 
 @dataclass(frozen=True)
 class ColibriLossFunctionSpecs:
@@ -83,10 +91,10 @@ class NestedSamplingSettings:
 
     ReactiveNS_settings: dict = field(default_factory=dict)
     Run_settings: dict = field(default_factory=dict)
-    n_posterior_samples: int = 100
-    posterior_resampling_seed: int = 1
+    n_posterior_samples: int = DEFAULT_N_POSTERIOR_SAMPLES
+    posterior_resampling_seed: int = DEFAULT_SAMPLING_SEED
     SliceSampler_settings: dict = field(default_factory=dict)
-    ultranest_seed: int = 1
+    ultranest_seed: int = DEFAULT_SAMPLING_SEED
     sampler_plot: bool = True
     popstepsampler: bool = False
 
@@ -95,17 +103,29 @@ class NestedSamplingSettings:
 
 
 @dataclass(frozen=True)
-class ColibriAnalyticFitSpecs:
+class AnalyticFitSettings:
     """
     Dataclass containing the specs for the analytic fit of a Colibri fit.
 
     Attributes
     ----------
-    analytic_fit_specs: dict
-        Dictionary containing the settings of the analytic fit.
+    n_posterior_samples: int
+        Number of posterior samples.
+    sampling_seed: int
+        Seed for the sampling.
+    full_sample_size: int
+        Size of the full sample.
+    optimal_prior: bool
+        Whether to use the optimal prior.
     """
 
-    analytic_settings: dict
+    n_posterior_samples: int = DEFAULT_N_POSTERIOR_SAMPLES
+    sampling_seed: int = DEFAULT_SAMPLING_SEED
+    full_sample_size: int = DEFAULT_FULL_SAMPLE_SIZE
+    optimal_prior: bool = DEFAULT_OPTIMAL_PRIOR
+
+    def to_dict(self):
+        return asdict(self)
 
 
 @dataclass(frozen=True)
@@ -131,7 +151,7 @@ class ColibriSpecs:
     loss_function_specs: Optional[ColibriLossFunctionSpecs]
     prior_settings: Optional[ColibriPriorSettings]
     ns_settings: Optional[NestedSamplingSettings]
-    analytic_settings: Optional[ColibriAnalyticFitSpecs]
+    analytic_settings: Optional[AnalyticFitSettings]
 
 
 @dataclass(frozen=True)

@@ -8,7 +8,14 @@ import logging
 from reportengine.configparser import ConfigError
 import os
 
-from colibri.core import NestedSamplingSettings, ColibriAnalyticFitSpecs
+from colibri.core import (
+    NestedSamplingSettings,
+    AnalyticFitSettings,
+    DEFAULT_N_POSTERIOR_SAMPLES,
+    DEFAULT_SAMPLING_SEED,
+    DEFAULT_FULL_SAMPLE_SIZE,
+    DEFAULT_OPTIMAL_PRIOR,
+)
 
 
 log = logging.getLogger(__name__)
@@ -56,12 +63,16 @@ def ns_settings_parser(
     ns_settings = {}
 
     # Set the ultranest seed
-    ns_settings["ultranest_seed"] = settings.get("ultranest_seed", 123456)
+    ns_settings["ultranest_seed"] = settings.get(
+        "ultranest_seed", DEFAULT_SAMPLING_SEED
+    )
 
     # Set the posterior resampling parameters
-    ns_settings["n_posterior_samples"] = settings.get("n_posterior_samples", 1000)
+    ns_settings["n_posterior_samples"] = settings.get(
+        "n_posterior_samples", DEFAULT_N_POSTERIOR_SAMPLES
+    )
     ns_settings["posterior_resampling_seed"] = settings.get(
-        "posterior_resampling_seed", 123456
+        "posterior_resampling_seed", DEFAULT_SAMPLING_SEED
     )
 
     # Parse internal settings, if they are not mentioned, set to empty dict
@@ -147,15 +158,23 @@ def analytic_settings_parser(
     analytic_settings = {}
 
     # Set the sampling seed
-    analytic_settings["sampling_seed"] = settings.get("sampling_seed", 123456)
+    analytic_settings["sampling_seed"] = settings.get(
+        "sampling_seed", DEFAULT_SAMPLING_SEED
+    )
 
     # Set the posterior resampling parameters
-    analytic_settings["n_posterior_samples"] = settings.get("n_posterior_samples", 100)
+    analytic_settings["n_posterior_samples"] = settings.get(
+        "n_posterior_samples", DEFAULT_N_POSTERIOR_SAMPLES
+    )
 
     # Set the full sample size
-    analytic_settings["full_sample_size"] = settings.get("full_sample_size", 1000)
+    analytic_settings["full_sample_size"] = settings.get(
+        "full_sample_size", DEFAULT_FULL_SAMPLE_SIZE
+    )
 
     # Set the optimal prior flag
-    analytic_settings["optimal_prior"] = settings.get("optimal_prior", False)
+    analytic_settings["optimal_prior"] = settings.get(
+        "optimal_prior", DEFAULT_OPTIMAL_PRIOR
+    )
 
-    return ColibriAnalyticFitSpecs(analytic_settings=analytic_settings)
+    return AnalyticFitSettings(**analytic_settings)

@@ -67,7 +67,7 @@ def analytic_fit(
     pdf_model: pdf_model.PDFModel
         PDF model to fit.
 
-    analytic_settings: dict
+    analytic_settings: dataclass, colibri.core.AnalyticFitSettings
         Settings for the analytic fit.
 
     FIT_XGRID: np.ndarray
@@ -109,13 +109,13 @@ def analytic_fit(
     sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
     sol_covmat = jla.inv(X.T @ Sigma @ X)
 
-    key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
+    key = jax.random.PRNGKey(analytic_settings.sampling_seed)
 
     full_samples = jax.random.multivariate_normal(
         key,
         sol_mean,
         sol_covmat,
-        shape=(analytic_settings["full_sample_size"],),
+        shape=(analytic_settings.full_sample_size,),
     )
     t1 = time.time()
     log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
@@ -125,7 +125,7 @@ def analytic_fit(
     # over the prior. The prior is uniform with width prior_width.
     log.info("Computing the evidence...")
 
-    if analytic_settings["optimal_prior"]:
+    if analytic_settings.optimal_prior:
         log.info("Using optimal prior")
         prior_lower = full_samples.min(axis=0)
         prior_upper = full_samples.max(axis=0)
@@ -167,10 +167,10 @@ def analytic_fit(
     log.info(f"Bayesian complexity = {Cb}")
 
     # Resample the posterior for PDF set
-    samples = full_samples[: analytic_settings["n_posterior_samples"]]
+    samples = full_samples[: analytic_settings.n_posterior_samples]
 
     return AnalyticFit(
-        analytic_specs=analytic_settings,
+        analytic_specs=analytic_settings.to_dict(),
         resampled_posterior=samples,
         param_names=parameters,
         full_posterior_samples=full_samples,
