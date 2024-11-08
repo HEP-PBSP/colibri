@@ -174,22 +174,10 @@ class colibriConfig(Config):
         ColibriSpecs
             A dataclass containing the colibri specifications
         """
-        known_keys = {"theory_specs", "loss_function_specs", "prior_settings"}
+        known_keys = {"loss_function_specs", "prior_settings"}
         kdiff = settings.keys() - known_keys
         for k in kdiff:
             log.warning(ConfigError(f"Key '{k}' in colibri not known.", k, known_keys))
-
-        # theory_specs namespace
-        theory_specs_settings = settings.get("theory_specs", {})
-        if "theoryid" not in theory_specs_settings:
-            raise ConfigError(
-                "theoryid needs to be specified in the theory_specs of the runcard."
-            )
-
-        theory_specs = ColibriTheorySpecs(
-            theoryid=theory_specs_settings["theoryid"],
-            use_cuts=theory_specs_settings.get("use_cuts", "internal"),
-        )
 
         # loss_function_specs namespace
         loss_function_specs_settings = settings.get("loss_function_specs", {})
@@ -205,7 +193,6 @@ class colibriConfig(Config):
 
         # create a colibri_specs instance
         col_spec = ColibriSpecs(
-            theory_specs=theory_specs,
             loss_function_specs=loss_function_specs,
             prior_settings=prior_specs,
         )
@@ -217,6 +204,18 @@ class colibriConfig(Config):
         Given the parsed colibri_specs, returns the prior settings.
         """
         return colibri_specs.prior_settings.prior_settings
+
+    def produce_t0pdfset(self, colibri_specs):
+        """
+        Given the parsed colibri_specs, returns the t0pdfset.
+        """
+        return colibri_specs.loss_function_specs.t0pdfset
+
+    def produce_use_fit_t0(self, colibri_specs):
+        """
+        Given the parsed colibri_specs, returns the use_fit_t0.
+        """
+        return colibri_specs.loss_function_specs.use_fit_t0
 
     def parse_ns_settings(
         self,

@@ -6,21 +6,6 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ColibriTheorySpecs:
-    """
-    Dataclass containing the theory settings of a Colibri fit.
-    The colibri theory is specified by
-        - theoryid: the name of the theory
-        - cuts: which cuts to be applied to the data
-
-    Note: currently in colibri cuts only supports: `use_cuts: internal`
-    """
-
-    theoryid: str
-    use_cuts: str
-
-
-@dataclass(frozen=True)
 class ColibriLossFunctionSpecs:
     """
     Dataclass containing the specs for loss function of a Colibri fit.
@@ -64,7 +49,6 @@ class ColibriSpecs:
         Dictionary containing the settings of the Colibri fit.
     """
 
-    theory_specs: ColibriTheorySpecs
     loss_function_specs: ColibriLossFunctionSpecs
     prior_settings: ColibriPriorSpecs
 
