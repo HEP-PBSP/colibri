@@ -17,7 +17,6 @@ from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import (
-    ColibriTheorySpecs,
     ColibriLossFunctionSpecs,
     ColibriPriorSpecs,
     ColibriSpecs,
