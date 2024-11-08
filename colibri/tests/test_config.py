@@ -1,7 +1,21 @@
+"""
+colibri/tests/test_config.py
+
+This module contains the tests for the config module of colibri.
+"""
+
 from unittest.mock import patch, mock_open
 from colibri.config import colibriConfig, Environment
 import unittest.mock as mock
 from pathlib import Path
+from colibri.core import (
+    ColibriPriorSettings,
+    NestedSamplingSettings,
+    DEFAULT_N_POSTERIOR_SAMPLES,
+    DEFAULT_SAMPLING_SEED,
+    DEFAULT_FULL_SAMPLE_SIZE,
+    DEFAULT_OPTIMAL_PRIOR,
+)
 
 
 def test_float32_precision_enabled():
@@ -107,3 +121,151 @@ def test_parse_positivity_penalty_settings(mock_warning):
 
     assert pos_settings == expected_settings
     assert mock_warning.called
+
+
+@patch("colibri.config.log.warning")
+def test_parse_colibri_specs_log_warning(mock_warning, tmp_path):
+    """
+    Test that warning is logged when unknown keys are present in the
+    colibri_specs.
+    """
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {
+        "unknown_key": 1,
+    }
+
+    # Call the function
+    config.parse_colibri_specs(settings, tmp_path)
+
+    assert mock_warning.called
+
+
+def test_parse_colibri_specs_defaults(tmp_path):
+    """
+    Test that the correct defaults are returned by colibri specs parser.
+    """
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {}
+
+    # Call the function
+    colibri_specs = config.parse_colibri_specs(settings, tmp_path)
+
+    # check loss function specs
+    loss_specs = colibri_specs.loss_function_specs
+    assert loss_specs.t0pdfset == None
+    assert loss_specs.use_fit_t0 == False
+
+    # check prior settings
+    prior_settings = colibri_specs.prior_settings
+    assert type(prior_settings) == ColibriPriorSettings
+    assert prior_settings.prior_distribution == None
+    assert prior_settings.max_val == None
+    assert prior_settings.min_val == None
+    assert prior_settings.prior_fit == None
+
+    # check nested sampling settings
+    ns_settings = colibri_specs.ns_settings
+    assert type(ns_settings) == NestedSamplingSettings
+
+    assert ns_settings.ReactiveNS_settings == {
+        "log_dir": str(tmp_path / "ultranest_logs"),
+        "resume": "overwrite",
+        "vectorized": False,
+    }
+    assert ns_settings.Run_settings == {}
+    assert ns_settings.SliceSampler_settings == {}
+    assert ns_settings.ultranest_seed == DEFAULT_SAMPLING_SEED
+    assert ns_settings.sampler_plot == True
+    assert ns_settings.popstepsampler == False
+    assert ns_settings.n_posterior_samples == DEFAULT_N_POSTERIOR_SAMPLES
+
+    # test analytic fit settings
+    analytic_settings = colibri_specs.analytic_settings
+    assert analytic_settings.n_posterior_samples == DEFAULT_N_POSTERIOR_SAMPLES
+    assert analytic_settings.sampling_seed == DEFAULT_SAMPLING_SEED
+    assert analytic_settings.optimal_prior == DEFAULT_OPTIMAL_PRIOR
+    assert analytic_settings.full_sample_size == DEFAULT_FULL_SAMPLE_SIZE
+
+
+def test_produce_prior_settings(tmp_path):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {}
+
+    colibri_specs = config.parse_colibri_specs(settings, tmp_path)
+    prior_settings = config.produce_prior_settings(colibri_specs)
+
+    assert type(prior_settings) == ColibriPriorSettings
+    assert prior_settings.prior_distribution == None
+    assert prior_settings.max_val == None
+    assert prior_settings.min_val == None
+    assert prior_settings.prior_fit == None
+
+
+def test_produce_ns_settings(tmp_path):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {}
+
+    colibri_specs = config.parse_colibri_specs(settings, tmp_path)
+    ns_settings = config.produce_ns_settings(colibri_specs)
+
+    assert type(ns_settings) == NestedSamplingSettings
+
+    assert ns_settings.ReactiveNS_settings == {
+        "log_dir": str(tmp_path / "ultranest_logs"),
+        "resume": "overwrite",
+        "vectorized": False,
+    }
+    assert ns_settings.Run_settings == {}
+    assert ns_settings.SliceSampler_settings == {}
+    assert ns_settings.ultranest_seed == DEFAULT_SAMPLING_SEED
+    assert ns_settings.sampler_plot == True
+    assert ns_settings.popstepsampler == False
+    assert ns_settings.n_posterior_samples == DEFAULT_N_POSTERIOR_SAMPLES
+
+
+def test_produce_analytic_settings(tmp_path):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {}
+
+    colibri_specs = config.parse_colibri_specs(settings, tmp_path)
+    analytic_settings = config.produce_analytic_settings(colibri_specs)
+
+    assert analytic_settings.n_posterior_samples == DEFAULT_N_POSTERIOR_SAMPLES
+    assert analytic_settings.sampling_seed == DEFAULT_SAMPLING_SEED
+    assert analytic_settings.optimal_prior == DEFAULT_OPTIMAL_PRIOR
+    assert analytic_settings.full_sample_size == DEFAULT_FULL_SAMPLE_SIZE
+
+
+def test_produce_vectorized(tmp_path):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {}
+
+    colibri_specs = config.parse_colibri_specs(settings, tmp_path)
+    ns_settings = config.produce_ns_settings(colibri_specs)
+    vectorized = config.produce_vectorized(ns_settings)
+
+    assert vectorized == False
