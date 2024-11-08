@@ -248,7 +248,7 @@ def analytic_fit(
             "avg_chi2": avg_chi2,
             "min_chi2": min_chi2,
             "logZ_laplace": logZ_laplace,
-            "logZ_analytic": logZ_analytical,
+            "logz": logZ_analytical,
             "log_occam_factor": log_occam_factor,
             "BIC": BIC,
             "AIC": AIC,
