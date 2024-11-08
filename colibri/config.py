@@ -16,7 +16,12 @@ import jax.numpy as jnp
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
-from colibri.core import ColibriTheorySpecs, ColibriLossFunctionSpecs
+from colibri.core import (
+    ColibriTheorySpecs,
+    ColibriLossFunctionSpecs,
+    ColibriPriorSpecs,
+    ColibriSpecs,
+)
 
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
@@ -163,7 +168,7 @@ class colibriConfig(Config):
         ----------
         settings: dict
             The colibri namespace from the runcard
-        
+
         Returns
         -------
         ColibriSpecs
@@ -173,7 +178,7 @@ class colibriConfig(Config):
         kdiff = settings.keys() - known_keys
         for k in kdiff:
             log.warning(ConfigError(f"Key '{k}' in colibri not known.", k, known_keys))
-        
+
         # theory_specs namespace
         theory_specs_settings = settings.get("theory_specs", {})
         if "theoryid" not in theory_specs_settings:
@@ -182,12 +187,13 @@ class colibriConfig(Config):
             )
 
         theory_specs = ColibriTheorySpecs(
-            theoryid=theory_specs_settings["theoryid"], use_cuts=theory_specs_settings.get("use_cuts", "internal")
+            theoryid=theory_specs_settings["theoryid"],
+            use_cuts=theory_specs_settings.get("use_cuts", "internal"),
         )
 
         # loss_function_specs namespace
         loss_function_specs_settings = settings.get("loss_function_specs", {})
-        
+
         loss_function_specs = ColibriLossFunctionSpecs(
             use_fit_t0=loss_function_specs_settings.get("use_fit_t0", False),
             t0pdfset=loss_function_specs_settings.get("t0pdfset", None),
@@ -196,9 +202,8 @@ class colibriConfig(Config):
         # prior_specs namespace
         prior_specs_settings = settings.get("prior_specs", {})
         prior_specs = ColibriPriorSpecs(prior_settings=prior_specs_settings)
-        
 
-        # create a colibri_specs instance 
+        # create a colibri_specs instance
         col_spec = ColibriSpecs(
             theory_specs=theory_specs,
             loss_function_specs=loss_function_specs,
@@ -206,7 +211,6 @@ class colibriConfig(Config):
         )
 
         return col_spec
-
 
     def parse_ns_settings(
         self,
