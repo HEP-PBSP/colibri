@@ -21,8 +21,31 @@ reduced_xgrid_data: True               # An artefact of the old grid_pdf impleme
                                        # ensuring we generate closure test data using the model.
 
 #####################
-# Loss function specs
+# Colibri Specs
 #####################
+
+colibri_specs:
+
+  loss_function_specs:
+    use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+    t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix. 
+  
+  prior_settings:
+    type: 'uniform_parameter_prior'
+    max_val: 2
+    min_val: -2
+
+  # Nested Sampling settings
+  ns_settings:
+    n_posterior_samples: 100
+    ReactiveNS_settings:
+      vectorized: False
+      ndraw_max: 500
+    Run_settings:
+      min_num_live_points: 500
+      min_ess: 50
+      frac_remain: 0.01
+
 
 positivity:                            # Positivity datasets, used in the positivity penalty.
   posdatasets:
@@ -33,9 +56,6 @@ positivity_penalty_settings:
   alpha: 1e-7                           
   lambda_positivity: 0               
 
-use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
-t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
-
 
 #############
 # Model specs
@@ -45,27 +65,6 @@ wmin_settings:
   wminpdfset: NNPDF31_nnlo_as_0118
   n_basis: 15
 
-
-###################
-# Methodology specs
-###################
-
-bayesian_fit: True
-# Nested Sampling settings
-ns_settings:
-  n_posterior_samples: 100
-  ReactiveNS_settings:
-    vectorized: False
-    ndraw_max: 500
-  Run_settings:
-    min_num_live_points: 500
-    min_ess: 50
-    frac_remain: 0.01
-
-prior_settings:
-  type: 'uniform_parameter_prior'
-  max_val: 2
-  min_val: -2
 
 actions_:
 - run_ultranest_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
