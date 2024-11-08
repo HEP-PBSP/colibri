@@ -16,6 +16,8 @@ import jax.numpy as jnp
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
+from colibri.core import ColibriTheorySpecs
+
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
@@ -151,6 +153,35 @@ class colibriConfig(Config):
             f"Fitting x-grid consists of {len(xgrid)} points, ranging from {xgrid[0]} to {xgrid[-1]}."
         )
         return xgrid
+
+    def parse_theory_specs(self, settings):
+        """
+        Parses the theory_specs namespace from the runcard,
+        and ensures the choice of settings is valid.
+
+        Parameters
+        ----------
+        settings: dict
+            The theory_specs namespace from the runcard
+
+        Returns
+        -------
+        ColibriTheorySpecs
+            A dataclass containing the theory specifications
+        """
+        known_keys = {"theoryid", "use_cuts"}
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(ConfigError(f"Key '{k}' in theory not known.", k, known_keys))
+
+        if "theoryid" not in settings:
+            raise ConfigError(
+                "theoryid needs to be specified in the theory_specs of the runcard."
+            )
+
+        return ColibriTheorySpecs(
+            theoryid=settings["theoryid"], use_cuts=settings.get("use_cuts", "internal")
+        )
 
     def parse_ns_settings(
         self,

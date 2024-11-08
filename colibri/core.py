@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ColibriTheory:
+class ColibriTheorySpecs:
     """
     Dataclass containing the theory settings of a Colibri fit.
     The colibri theory is specified by
@@ -61,6 +61,7 @@ class ColibriSpecs:
     """
     theory_specs: ColibriTheory
     loss_function_specs: ColibriLossFunctionSpecs
+    prior_specs: ColibriPriorSpecs
 
 
 @dataclass(frozen=True)
