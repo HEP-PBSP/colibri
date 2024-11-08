@@ -23,16 +23,16 @@ def bayesian_prior(prior_settings):
     prior_transform: @jax.jit CompiledFunction
         The prior transform function.
     """
-    if prior_settings["type"] == "uniform_parameter_prior":
-        max_val = prior_settings["max_val"]
-        min_val = prior_settings["min_val"]
+    if prior_settings.prior_distribution == "uniform_parameter_prior":
+        max_val = prior_settings.max_val
+        min_val = prior_settings.min_val
 
         @jax.jit
         def prior_transform(cube):
             return cube * (max_val - min_val) + min_val
 
-    elif prior_settings["type"] == "prior_from_gauss_posterior":
-        prior_fit = prior_settings["prior_fit"]
+    elif prior_settings.prior_distribution == "prior_from_gauss_posterior":
+        prior_fit = prior_settings.prior_fit
 
         df_fit = get_full_posterior(prior_fit)
 
@@ -52,5 +52,5 @@ def bayesian_prior(prior_settings):
             )
 
     else:
-        raise ValueError("Invalid prior type.")
+        raise ValueError("Invalid prior distribution.")
     return prior_transform

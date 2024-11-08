@@ -28,17 +28,32 @@ class ColibriLossFunctionSpecs:
 
 
 @dataclass(frozen=True)
-class ColibriPriorSpecs:
+class ColibriPriorSettings:
     """
     Dataclass containing the specs for the prior of a Colibri fit.
 
     Attributes
     ----------
-    prior_settings: dict
-        Dictionary containing the settings of the prior.
+    prior_distribution: str
+        The prior distribution to be used.
+
+    max_val: float
+        The maximum value of the prior.
+
+    min_val: float
+        The minimum value of the prior.
+
+    prior_fit: str
+        The prior fit to be used.
     """
 
-    prior_settings: dict
+    prior_distribution: str = None
+    max_val: float = None
+    min_val: float = None
+    prior_fit: str = None
+
+    def to_dict(self):
+        return asdict(self)
 
 
 @dataclass(frozen=True)
@@ -103,7 +118,7 @@ class ColibriSpecs:
     loss_function_specs: ColibriLossFunctionSpecs
         The specs for the loss function of the fit.
 
-    prior_settings: ColibriPriorSpecs
+    prior_settings: ColibriPriorSettings
         The specs for the prior of the fit.
 
     ns_settings: ColibriNestedSamplingSpecs
@@ -114,7 +129,7 @@ class ColibriSpecs:
     """
 
     loss_function_specs: Optional[ColibriLossFunctionSpecs]
-    prior_settings: Optional[ColibriPriorSpecs]
+    prior_settings: Optional[ColibriPriorSettings]
     ns_settings: Optional[NestedSamplingSettings]
     analytic_settings: Optional[ColibriAnalyticFitSpecs]
 

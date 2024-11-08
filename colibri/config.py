@@ -17,7 +17,7 @@ from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import (
     ColibriLossFunctionSpecs,
-    ColibriPriorSpecs,
+    ColibriPriorSettings,
     ColibriSpecs,
 )
 from colibri.config_utils import ns_settings_parser, analytic_settings_parser
@@ -188,7 +188,7 @@ class colibriConfig(Config):
 
         # prior_settings namespace
         prior_specs_settings = settings.get("prior_settings", {})
-        prior_specs = ColibriPriorSpecs(prior_settings=prior_specs_settings)
+        prior_settings = ColibriPriorSettings(**prior_specs_settings)
 
         # Nested Sampling settings
         ns_settings_settings = settings.get("ns_settings", {})
@@ -201,7 +201,7 @@ class colibriConfig(Config):
         # create a colibri_specs instance
         col_spec = ColibriSpecs(
             loss_function_specs=loss_function_specs,
-            prior_settings=prior_specs,
+            prior_settings=prior_settings,
             ns_settings=ns_settings,
             analytic_settings=analytic_settings,
         )
@@ -212,7 +212,7 @@ class colibriConfig(Config):
         """
         Given the parsed colibri_specs, returns the prior settings.
         """
-        return colibri_specs.prior_settings.prior_settings
+        return colibri_specs.prior_settings
 
     def produce_t0pdfset(self, colibri_specs):
         """
