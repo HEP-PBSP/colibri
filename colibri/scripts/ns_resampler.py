@@ -3,31 +3,18 @@ An executable for sampling and storing exportgrids from the stored ultranest log
 without having to re run the entire fit.
 """
 
-import os
-import pandas as pd
 import argparse
 import logging
 import pathlib
-import dill
-import numpy as np
 
 from reportengine import colors
 
-from colibri.utils import resample_from_ns_posterior
-from colibri.export_results import write_exportgrid
-from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
-
-from mpi4py import MPI
+from colibri.utils import ns_fit_resampler
 
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
-
-
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
 
 
 def main():
@@ -75,91 +62,11 @@ def main():
     # path of resampled fit
     resampled_fit_path = pathlib.Path(args.resampled_fit_name)
 
-    # Give names to other arguments
-    nreplicas = args.nreplicas
-    resampling_seed = args.resampling_seed
-
-    # check whether fit path exists
-    log.info(f"Loading pdf model from {fit_path}")
-    # load pdf_model from fit using dill
-    with open(fit_path / "pdf_model.pkl", "rb") as file:
-        pdf_model = dill.load(file)
-
-        # Check that the .txt file with posterior samples exists
-    if not os.path.exists(fit_path / "ultranest_logs/chains/equal_weighted_post.txt"):
-        raise FileNotFoundError(
-            f"{fit_path}/ultranest_logs/chains/equal_weighted_post.txt does not exist;"
-            "please run the bayesian fit first."
-        )
-
-    equal_weight_post_path = fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
-
-    samples = pd.read_csv(equal_weight_post_path, sep="\s+", dtype=float).values
-
-    if nreplicas > samples.shape[0]:
-        nreplicas = samples.shape[0]
-        log.warning(
-            f"The chosen number of posterior samples exceeds the number of posterior"
-            "samples computed by ultranest. Setting the number of resampled posterior"
-            f"samples to {nreplicas}"
-        )
-
-    resampled_posterior = resample_from_ns_posterior(
-        samples,
-        nreplicas,
-        resampling_seed,
+    ns_fit_resampler(
+        fit_path=fit_path,
+        resampled_fit_path=resampled_fit_path,
+        n_replicas=args.nreplicas,
+        resampling_seed=args.resampling_seed,
+        resampled_fit_name=args.resampled_fit_name,
+        parametrisation_scale=args.parametrisation_scale,
     )
-
-    if rank == 0:
-        # copy old fit to resampled fit
-        os.system(f"cp -r {fit_path} {resampled_fit_path}")
-
-        # remove old replicas from resampled fit
-        os.system(f"rm -r {resampled_fit_path}/replicas/*")
-
-        # overwrite old ns_result.csv with resampled posterior
-        parameters = pdf_model.param_names
-        df = pd.DataFrame(resampled_posterior, columns=parameters)
-        df.to_csv(str(resampled_fit_path) + "/ns_result.csv", float_format="%.5e")
-
-    comm.Barrier()
-
-    # Distribute indices among processes using scatter
-    indices_per_process = list(range(rank, nreplicas, size))
-
-    new_rep_path = resampled_fit_path / "replicas"
-
-    if not os.path.exists(new_rep_path):
-        os.mkdir(new_rep_path)
-
-    # Finish by writing the replicas to export grids, ready for evolution
-    for i in indices_per_process:
-
-        # Get the PDF grid in the evolution basis
-        parameters = resampled_posterior[i]
-        lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
-        grid_for_writing = np.array(lhapdf_interpolator(parameters))
-
-        replica_index = i + 1
-
-        replica_index_path = new_rep_path / f"replica_{replica_index}"
-        if not os.path.exists(replica_index_path):
-            os.mkdir(replica_index_path)
-
-        grid_name = replica_index_path / args.resampled_fit_name
-
-        log.info(f"Writing exportgrid for replica {replica_index}")
-        write_exportgrid(
-            grid_for_writing=grid_for_writing,
-            grid_name=grid_name,
-            replica_index=replica_index,
-            Q=args.parametrisation_scale,
-            xgrid=LHAPDF_XGRID,
-            export_labels=EXPORT_LABELS,
-        )
-        log.info(f"Writing exportgrid for replica {replica_index} on rank {rank}")
-
-    # Synchronize to ensure all processes have finished
-    comm.Barrier()
-    if rank == 0:
-        log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
