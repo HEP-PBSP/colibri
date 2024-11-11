@@ -211,6 +211,7 @@ def test_produce_prior_settings(tmp_path):
     assert prior_settings.max_val == None
     assert prior_settings.min_val == None
     assert prior_settings.prior_fit == None
+    assert type(prior_settings.to_dict()) == dict
 
 
 def test_produce_ns_settings(tmp_path):
