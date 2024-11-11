@@ -22,12 +22,6 @@ from colibri.export_results import write_exportgrid
 
 from validphys import convolution
 
-from mpi4py import MPI
-
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
-
 log = logging.getLogger(__name__)
 
 
@@ -359,20 +353,12 @@ def likelihood_float_type(
 
 def ns_fit_resampler(
     fit_path,
-    resampled_fit_path,
     n_replicas,
     resampling_seed,
-    resampled_fit_name,
-    parametrisation_scale,
 ):
     """
-    Function takes care of resampling from a nested sampling result posterior.
+    Function uses resample_from_ns_posterior to resample from a nested sampling result posterior.
     """
-
-    log.info(f"Loading pdf model from {fit_path}")
-    # load pdf_model from fit using dill
-    with open(fit_path / "pdf_model.pkl", "rb") as file:
-        pdf_model = dill.load(file)
 
     # Check that the .txt file with equally weighted posterior samples exists
     if not os.path.exists(fit_path / "ultranest_logs/chains/equal_weighted_post.txt"):
@@ -399,22 +385,47 @@ def ns_fit_resampler(
         resampling_seed,
     )
 
-    if rank == 0:
+    return resampled_posterior
+
+
+def write_resampled_ns_fit(
+    resampled_posterior,
+    fit_path,
+    resampled_fit_path,
+    n_replicas,
+    resampled_fit_name,
+    parametrisation_scale,
+    copy_fit_dir=True,
+    write_ns_results=True,
+    replica_range=None,
+):
+    """
+    Writes the resampled ns fit to `resampled_fit_path`.
+    """
+
+    log.info(f"Loading pdf model from {fit_path}")
+
+    # load pdf_model from fit using dill
+    with open(fit_path / "pdf_model.pkl", "rb") as file:
+        pdf_model = dill.load(file)
+
+    if copy_fit_dir:
         # copy old fit to resampled fit
         os.system(f"cp -r {fit_path} {resampled_fit_path}")
 
         # remove old replicas from resampled fit
         os.system(f"rm -r {resampled_fit_path}/replicas/*")
 
+    if write_ns_results:
         # overwrite old ns_result.csv with resampled posterior
         parameters = pdf_model.param_names
         df = pd.DataFrame(resampled_posterior, columns=parameters)
         df.to_csv(str(resampled_fit_path) + "/ns_result.csv", float_format="%.5e")
 
-    comm.Barrier()
-
-    # Distribute indices among processes using scatter
-    indices_per_process = list(range(rank, n_replicas, size))
+    if replica_range:
+        indices_per_process = replica_range
+    else:
+        indices_per_process = range(n_replicas)
 
     new_rep_path = resampled_fit_path / "replicas"
 
@@ -446,9 +457,5 @@ def ns_fit_resampler(
             xgrid=LHAPDF_XGRID,
             export_labels=EXPORT_LABELS,
         )
-        log.info(f"Writing exportgrid for replica {replica_index} on rank {rank}")
 
-    # Synchronize to ensure all processes have finished
-    comm.Barrier()
-    if rank == 0:
-        log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
+    log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
