@@ -403,6 +403,13 @@ def write_resampled_ns_fit(
     Writes the resampled ns fit to `resampled_fit_path`.
     """
 
+    # convert paths to Posix if they are not already
+    if (not type(fit_path) == pathlib.PosixPath) or (
+        not type(resampled_fit_path) == pathlib.PosixPath
+    ):
+        fit_path = pathlib.PosixPath(fit_path)
+        resampled_fit_path = pathlib.PosixPath(resampled_fit_path)
+
     log.info(f"Loading pdf model from {fit_path}")
 
     # load pdf_model from fit using dill
