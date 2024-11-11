@@ -7,11 +7,12 @@ Module containing functions for performing Bayesian model average.
 import logging
 import numpy as np
 
+from colibri.utils import ns_fit_resampler, write_resampled_ns_fit
 
 log = logging.getLogger()
 
 
-def selected_fits(fits, delta_logz=26.6):
+def selected_fits(fits, delta_logz=6.6):
     """
     Select a subset, A, of the models the set of models is defined as
 
@@ -65,15 +66,53 @@ def selected_fits_with_weights(selected_fits):
         p_k = np.exp(logz - mean_logZ) / (np.sum(np.exp(logz_values - mean_logZ)))
 
         fit.bayesian_metrics["bayesian_weight"] = p_k
-    import IPython
 
-    IPython.embed()
     return selected_fits
 
 
-def model_combination(selected_fits_with_weights, n_samples):
+def bayesian_model_combination(
+    selected_fits_with_weights,
+    n_samples,
+    model_avg_fit_path,
+    model_avg_fit_name,
+    parametrisation_scale=1.65,
+    resampling_seed=1,
+):
     """ """
     # get fraction of number of replicas for each fit
-    for fit in selected_fits_with_weights:
+    counter = 0
+
+    for i, fit in enumerate(selected_fits_with_weights):
         n_frac_samples = int(fit.bayesian_metrics["bayesian_weight"] * n_samples)
-        fit.bayesian_metrics["n_frac_samples"] = n_frac_samples
+
+        posterior_samples = ns_fit_resampler(
+            fit.fit_path,
+            n_replicas=n_frac_samples,
+            resampling_seed=resampling_seed,
+        )
+
+        # write to folder
+        if i == 0:
+            # copy folder only for the first fit
+            copy_fit_dir, write_ns_results, replica_range = True, True, None
+
+        else:
+            copy_fit_dir, write_ns_results, replica_range = (
+                False,
+                False,
+                range(counter, counter + n_frac_samples),
+            )
+
+        write_resampled_ns_fit(
+            resampled_posterior=posterior_samples,
+            fit_path=fit.fit_path,
+            resampled_fit_path=model_avg_fit_path,
+            n_replicas=n_frac_samples,
+            resampled_fit_name=model_avg_fit_name,
+            parametrisation_scale=parametrisation_scale,
+            copy_fit_dir=copy_fit_dir,
+            write_ns_results=write_ns_results,
+            replica_range=replica_range,
+        )
+
+        counter += n_frac_samples
