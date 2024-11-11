@@ -29,6 +29,7 @@ colibri_providers = [
     "colibri.bayes_prior",
     "colibri.mc_initialisation",
     "colibri.export_results",
+    "colibri.model_average",
     "reportengine.report",
 ]
 
