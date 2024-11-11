@@ -17,9 +17,16 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from colibri.loss_functions import chi2
+from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
+from colibri.export_results import write_exportgrid
 
 from validphys import convolution
 
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
 
 log = logging.getLogger(__name__)
 
@@ -162,7 +169,17 @@ def resample_from_ns_posterior(
     samples, n_posterior_samples=1000, posterior_resampling_seed=123456
 ):
     """
-    TODO
+    Sample uniformly without replacement from a distribution.
+
+    Parameters
+    ----------
+    samples: array of samples
+    n_posterior_samples: int
+    posterior_resampling_seed: int
+
+    Returns
+    -------
+    array of resampled samples
     """
 
     current_samples = samples.copy()
