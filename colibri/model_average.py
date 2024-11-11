@@ -4,23 +4,9 @@ colibri.model_average.py
 Module containing functions for performing Bayesian model average.
 """
 
-import os
 import logging
-import dill
-
 import numpy as np
-import pandas as pd
 
-from colibri.utils import resample_from_ns_posterior
-from colibri.export_results import write_exportgrid
-from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
-
-from mpi4py import MPI
-
-
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
 
 log = logging.getLogger()
 
