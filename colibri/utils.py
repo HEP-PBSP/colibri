@@ -355,3 +355,100 @@ def likelihood_float_type(
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:
         file.write(str(dtype))
+
+
+def ns_fit_resampler(
+    fit_path,
+    resampled_fit_path,
+    n_replicas,
+    resampling_seed,
+    resampled_fit_name,
+    parametrisation_scale,
+):
+    """
+    Function takes care of resampling from a nested sampling result posterior.
+    """
+
+    log.info(f"Loading pdf model from {fit_path}")
+    # load pdf_model from fit using dill
+    with open(fit_path / "pdf_model.pkl", "rb") as file:
+        pdf_model = dill.load(file)
+
+    # Check that the .txt file with equally weighted posterior samples exists
+    if not os.path.exists(fit_path / "ultranest_logs/chains/equal_weighted_post.txt"):
+        raise FileNotFoundError(
+            f"{fit_path}/ultranest_logs/chains/equal_weighted_post.txt does not exist;"
+            "please run the bayesian fit first."
+        )
+
+    equal_weight_post_path = fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
+
+    samples = pd.read_csv(equal_weight_post_path, sep="\s+", dtype=float).values
+
+    if n_replicas > samples.shape[0]:
+        n_replicas = samples.shape[0]
+        log.warning(
+            f"The chosen number of posterior samples exceeds the number of posterior"
+            "samples computed by ultranest. Setting the number of resampled posterior"
+            f"samples to {n_replicas}"
+        )
+
+    resampled_posterior = resample_from_ns_posterior(
+        samples,
+        n_replicas,
+        resampling_seed,
+    )
+
+    if rank == 0:
+        # copy old fit to resampled fit
+        os.system(f"cp -r {fit_path} {resampled_fit_path}")
+
+        # remove old replicas from resampled fit
+        os.system(f"rm -r {resampled_fit_path}/replicas/*")
+
+        # overwrite old ns_result.csv with resampled posterior
+        parameters = pdf_model.param_names
+        df = pd.DataFrame(resampled_posterior, columns=parameters)
+        df.to_csv(str(resampled_fit_path) + "/ns_result.csv", float_format="%.5e")
+
+    comm.Barrier()
+
+    # Distribute indices among processes using scatter
+    indices_per_process = list(range(rank, n_replicas, size))
+
+    new_rep_path = resampled_fit_path / "replicas"
+
+    if not os.path.exists(new_rep_path):
+        os.mkdir(new_rep_path)
+
+    # Finish by writing the replicas to export grids, ready for evolution
+    for i in indices_per_process:
+
+        # Get the PDF grid in the evolution basis
+        parameters = resampled_posterior[i]
+        lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+        grid_for_writing = np.array(lhapdf_interpolator(parameters))
+
+        replica_index = i + 1
+
+        replica_index_path = new_rep_path / f"replica_{replica_index}"
+        if not os.path.exists(replica_index_path):
+            os.mkdir(replica_index_path)
+
+        grid_name = replica_index_path / resampled_fit_name
+
+        log.info(f"Writing exportgrid for replica {replica_index}")
+        write_exportgrid(
+            grid_for_writing=grid_for_writing,
+            grid_name=grid_name,
+            replica_index=replica_index,
+            Q=parametrisation_scale,
+            xgrid=LHAPDF_XGRID,
+            export_labels=EXPORT_LABELS,
+        )
+        log.info(f"Writing exportgrid for replica {replica_index} on rank {rank}")
+
+    # Synchronize to ensure all processes have finished
+    comm.Barrier()
+    if rank == 0:
+        log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
