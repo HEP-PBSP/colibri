@@ -4,11 +4,15 @@ colibri.tests.test_model_average.py
 Module containing tests for the model_average module.
 """
 
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-
-from colibri.model_average import selected_fits, selected_fits_with_weights
 from colibri.core import ColibriFitSpec
-
+from colibri.model_average import (
+    bayesian_model_combination,
+    selected_fits,
+    selected_fits_with_weights,
+)
 
 LOGZ1 = 1.0
 LOGZ2 = 2.0
