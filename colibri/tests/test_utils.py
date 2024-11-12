@@ -33,6 +33,7 @@ from colibri.utils import (
     mask_luminosity_mapping,
     ns_fit_resampler,
     write_resampled_ns_fit,
+    compute_determinants_of_principal_minors,
 )
 from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from validphys.fkparser import load_fktable
@@ -256,7 +257,6 @@ def test_likelihood_float_type(
     assert os.path.exists(tmp_path / "dtype.txt")
 
 
-# Mock path and function objects
 @patch("os.path.exists")
 @patch("pandas.read_csv")
 @patch("colibri.utils.resample_from_ns_posterior")
@@ -426,3 +426,40 @@ def test_write_resampled_ns_fit(
     with patch("pandas.DataFrame.to_csv") as mock_to_csv:
         df.to_csv(expected_csv_path, float_format="%.5e")
         mock_to_csv.assert_called_once_with(expected_csv_path, float_format="%.5e")
+
+
+def test_identity_matrix():
+    C = np.identity(3)
+    expected = np.array([1.0, 1.0, 1.0, 1.0])
+    result = compute_determinants_of_principal_minors(C)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_single_element_matrix():
+    C = np.array([[2]])
+    expected = np.array([1.0, 2.0])
+    result = compute_determinants_of_principal_minors(C)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_non_psd_matrix():
+    C = np.array([[2, -3], [-3, 1]])
+    try:
+        compute_determinants_of_principal_minors(C)
+    except ValueError as e:
+        assert str(e) == "Matrix is not positive semi-definite or symmetric."
+
+
+def test_known_psd_matrix():
+    C = np.array([[4, 2], [2, 3]])
+    expected = np.array([1.0, 4.0, 8.0])
+    result = compute_determinants_of_principal_minors(C)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_large_psd_matrix():
+    C = np.array([[4, 2, 0], [2, 3, 1], [0, 1, 2]])
+    expected = np.array([1.0, 4.0, 8.0, 12.0])
+    result = compute_determinants_of_principal_minors(C)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
