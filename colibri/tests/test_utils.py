@@ -4,11 +4,13 @@ Module for testing the utils module.
 
 import os
 import pathlib
+from pathlib import Path
 import shutil
 from numpy.testing import assert_allclose
 import pytest
 from unittest.mock import patch, mock_open
 
+import pandas as pd
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -28,6 +30,7 @@ from colibri.utils import (
     likelihood_float_type,
     mask_fktable_array,
     mask_luminosity_mapping,
+    ns_fit_resampler,
 )
 from validphys.fkparser import load_fktable
 
@@ -248,3 +251,106 @@ def test_likelihood_float_type(
 
     # Assert that the dtype.txt file was created with correct dtype
     assert os.path.exists(tmp_path / "dtype.txt")
+
+
+# Mock path and function objects
+@patch("os.path.exists")
+@patch("pandas.read_csv")
+@patch("colibri.utils.resample_from_ns_posterior")
+def test_ns_fit_resampler_file_not_found(mock_resample, mock_read_csv, mock_exists):
+    # Test the case where the required posterior samples file does not exist
+    fit_path = Path("/fake/path")
+    n_replicas = 10
+    resampling_seed = 42
+
+    # Mock os.path.exists to return False, simulating missing file
+    mock_exists.return_value = False
+
+    with pytest.raises(FileNotFoundError) as exc_info:
+        ns_fit_resampler(fit_path, n_replicas, resampling_seed)
+
+    assert "please run the bayesian fit first" in str(exc_info.value)
+    mock_exists.assert_called_once_with(
+        fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
+    )
+    mock_read_csv.assert_not_called()
+    mock_resample.assert_not_called()
+
+
+@patch("colibri.utils.os.path.exists")
+@patch("pandas.read_csv")
+@patch("colibri.utils.resample_from_ns_posterior")
+def test_ns_fit_resampler_replicas_exceeding_samples(
+    mock_resample, mock_read_csv, mock_exists
+):
+    # Test the case where n_replicas exceeds the number of available posterior samples
+    fit_path = Path("/fake/path")
+    n_replicas = 15
+    resampling_seed = 42
+
+    # Mock os.path.exists to return True, simulating that the file exists
+    mock_exists.return_value = True
+
+    # Mock pandas.read_csv to return a dataframe with fewer rows than n_replicas
+    sample_data = np.array([[1, 2], [3, 4], [5, 6]])  # 3 samples
+    mock_read_csv.return_value = pd.DataFrame(sample_data)
+
+    # Mock resample_from_ns_posterior to return expected value
+    expected_resampled = np.array([[1, 2], [3, 4]])  # Example result
+    mock_resample.return_value = expected_resampled
+
+    result = ns_fit_resampler(fit_path, n_replicas, resampling_seed)
+
+    assert result is expected_resampled
+
+    mock_exists.assert_called_once_with(
+        fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
+    )
+    mock_read_csv.assert_called_once_with(
+        fit_path / "ultranest_logs/chains/equal_weighted_post.txt",
+        sep="\s+",
+        dtype=float,
+    )
+
+    # Ensure correct arguments were passed to mock_resample
+    assert np.array_equal(mock_resample.call_args[0][0], sample_data)
+    assert mock_resample.call_args[0][1] == len(sample_data)
+    assert mock_resample.call_args[0][2] == resampling_seed
+
+
+@patch("os.path.exists")
+@patch("pandas.read_csv")
+@patch("colibri.utils.resample_from_ns_posterior")
+def test_ns_fit_resampler_normal_case(mock_resample, mock_read_csv, mock_exists):
+    # Test the normal case where everything is as expected
+    fit_path = Path("/fake/path")
+    n_replicas = 2
+    resampling_seed = 42
+
+    # Mock os.path.exists to return True, simulating that the file exists
+    mock_exists.return_value = True
+
+    # Mock pandas.read_csv to return a dataframe with enough samples
+    sample_data = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])  # 4 samples
+    mock_read_csv.return_value = pd.DataFrame(sample_data)
+
+    # Mock resample_from_ns_posterior to return expected value
+    expected_resampled = np.array([[3, 4], [5, 6]])  # Example result
+    mock_resample.return_value = expected_resampled
+
+    result = ns_fit_resampler(fit_path, n_replicas, resampling_seed)
+
+    assert result is expected_resampled
+    mock_exists.assert_called_once_with(
+        fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
+    )
+    mock_read_csv.assert_called_once_with(
+        fit_path / "ultranest_logs/chains/equal_weighted_post.txt",
+        sep="\s+",
+        dtype=float,
+    )
+
+    # Ensure correct arguments were passed to mock_resample
+    assert np.array_equal(mock_resample.call_args[0][0], sample_data)
+    assert mock_resample.call_args[0][1] == n_replicas
+    assert mock_resample.call_args[0][2] == resampling_seed
