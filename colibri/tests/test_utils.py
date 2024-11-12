@@ -425,14 +425,13 @@ def test_write_resampled_ns_fit(
         mock_to_csv.assert_called_once_with(expected_csv_path, float_format="%.5e")
 
 
-@mock.patch("builtins.open", new_callable=mock.mock_open)
+# @mock.patch("builtins.open", mock.mock_open(read_data=b"binary data"), new_callable=mock.mock_open)
+@mock.patch("builtins.open", new_callable=mock.mock_open, read_data=b"binary data")
 @mock.patch("dill.load")
 @mock.patch("colibri.utils.os.system")
 @mock.patch("colibri.utils.os.path.exists")
 @mock.patch("colibri.utils.os.mkdir")
-@mock.patch(
-    "colibri.utils.write_exportgrid"
-)  # Replace with actual path to write_exportgrid
+@mock.patch("colibri.utils.write_exportgrid")
 def test_write_resampled_ns_fit_with_replica_range(
     mock_write_exportgrid,
     mock_mkdir,
@@ -460,7 +459,7 @@ def test_write_resampled_ns_fit_with_replica_range(
     mock_dill_load.return_value = mock_pdf_model
 
     # Ensure os.path.exists returns True for necessary paths
-    mock_exists.return_value = True
+    mock_exists.return_value = False
 
     # Mock Path().is_dir() to return True for the resampled path
     with patch.object(Path, "is_dir", return_value=True):
@@ -480,6 +479,16 @@ def test_write_resampled_ns_fit_with_replica_range(
     assert mock_write_exportgrid.call_count == len(
         replica_range
     ), f"Expected {len(replica_range)} calls to write_exportgrid, but got {mock_write_exportgrid.call_count}"
+
+    # Check that os.mkdir was called twice (once for new_rep_path and once for replica_index_path)
+    # `new_rep_path` is resampled_fit_path / "replicas"
+    new_rep_path = resampled_fit_path / "replicas"
+    # `replica_index_path` is new_rep_path / f"replica_{i+1}" for each replica (here we test for i=0)
+    replica_index_path = new_rep_path / "replica_1"
+
+    # Assert that os.mkdir was called for both directories
+    mock_mkdir.assert_any_call(new_rep_path)
+    mock_mkdir.assert_any_call(replica_index_path)
 
 
 def test_identity_matrix():
