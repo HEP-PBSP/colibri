@@ -99,3 +99,86 @@ def test_selected_fits_with_weights():
 
     for fit, exp in zip(sel_fit_w_2s, expected):
         assert np.isclose(fit.bayesian_metrics["bayesian_weight"], exp)
+
+
+@patch("colibri.model_average.ns_fit_resampler")
+@patch("colibri.model_average.write_resampled_ns_fit")
+def test_bayesian_model_combination(mock_write_resampled_ns_fit, mock_ns_fit_resampler):
+    # Mocked parameters for the test
+    n_samples = 10
+    model_avg_fit_path = "path/to/model_avg_fit"
+    model_avg_fit_name = "model_avg_fit_name"
+    parametrisation_scale = 1.65
+    resampling_seed = 1
+
+    # Sample input data with mock bayesian weights and fit paths
+    selected_fits_with_weights = [
+        MagicMock(bayesian_metrics={"bayesian_weight": 0.4}, fit_path="path/to/fit1"),
+        MagicMock(bayesian_metrics={"bayesian_weight": 0.6}, fit_path="path/to/fit2"),
+    ]
+
+    # Mock the ns_fit_resampler return value
+    mock_ns_fit_resampler.side_effect = [
+        ["sample_1_1", "sample_1_2", "sample_1_3", "sample_1_4"],
+        [
+            "sample_2_1",
+            "sample_2_2",
+            "sample_2_3",
+            "sample_2_4",
+            "sample_2_5",
+            "sample_2_6",
+        ],
+    ]
+
+    # Call the function under test
+    bayesian_model_combination(
+        selected_fits_with_weights=selected_fits_with_weights,
+        n_samples=n_samples,
+        model_avg_fit_path=model_avg_fit_path,
+        model_avg_fit_name=model_avg_fit_name,
+        parametrisation_scale=parametrisation_scale,
+        resampling_seed=resampling_seed,
+    )
+
+    # Verify ns_fit_resampler was called correctly
+    mock_ns_fit_resampler.assert_any_call(
+        selected_fits_with_weights[0].fit_path,
+        n_replicas=4,
+        resampling_seed=resampling_seed,
+    )
+    mock_ns_fit_resampler.assert_any_call(
+        selected_fits_with_weights[1].fit_path,
+        n_replicas=6,
+        resampling_seed=resampling_seed,
+    )
+
+    # Verify write_resampled_ns_fit was called with the expected arguments
+    mock_write_resampled_ns_fit.assert_any_call(
+        resampled_posterior=["sample_1_1", "sample_1_2", "sample_1_3", "sample_1_4"],
+        fit_path=selected_fits_with_weights[0].fit_path,
+        resampled_fit_path=model_avg_fit_path,
+        n_replicas=4,
+        resampled_fit_name=model_avg_fit_name,
+        parametrisation_scale=parametrisation_scale,
+        copy_fit_dir=True,
+        write_ns_results=True,
+        replica_range=None,
+    )
+    mock_write_resampled_ns_fit.assert_any_call(
+        resampled_posterior=[
+            "sample_2_1",
+            "sample_2_2",
+            "sample_2_3",
+            "sample_2_4",
+            "sample_2_5",
+            "sample_2_6",
+        ],
+        fit_path=selected_fits_with_weights[1].fit_path,
+        resampled_fit_path=model_avg_fit_path,
+        n_replicas=6,
+        resampled_fit_name=model_avg_fit_name,
+        parametrisation_scale=parametrisation_scale,
+        copy_fit_dir=False,
+        write_ns_results=False,
+        replica_range=range(4, 10),
+    )
