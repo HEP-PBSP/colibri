@@ -4,8 +4,14 @@ colibri.tests.test_model_average.py
 Module containing tests for the model_average module.
 """
 
-from colibri.model_average import selected_fits
+import numpy as np
+
+from colibri.model_average import selected_fits, selected_fits_with_weights
 from colibri.core import ColibriFitSpec
+
+
+LOGZ1 = 1.0
+LOGZ2 = 2.0
 
 
 def test_selected_fits():
@@ -16,11 +22,11 @@ def test_selected_fits():
     """
     fits = [
         ColibriFitSpec(
-            bayesian_metrics={"logz": 1.0},
+            bayesian_metrics={"logz": LOGZ1},
             fit_path=None,
         ),
         ColibriFitSpec(
-            bayesian_metrics={"logz": 2.0},
+            bayesian_metrics={"logz": LOGZ2},
             fit_path=None,
         ),
     ]
