@@ -364,9 +364,7 @@ def test_ns_fit_resampler_normal_case(mock_resample, mock_read_csv, mock_exists)
 @patch("colibri.utils.os.system")
 @patch("colibri.utils.os.path.exists")
 @patch("colibri.utils.write_exportgrid")
-@patch("colibri.export_results.yaml.dump")
 def test_write_resampled_ns_fit(
-    mock_yaml_dump,
     mock_write_exportgrid,
     mock_exists,
     mock_os_system,
@@ -391,12 +389,11 @@ def test_write_resampled_ns_fit(
     mock_dill_load.return_value = mock_pdf_model
 
     # Ensure os.path.exists returns True for necessary paths
-    def exists_side_effect(path):
-        if str(resampled_fit_path) in str(path) or str(fit_path) in str(path):
-            return True
-        return False
-
-    mock_exists.side_effect = exists_side_effect
+    mock_exists.side_effect = lambda path: (
+        True
+        if str(resampled_fit_path) in str(path) or str(fit_path) in str(path)
+        else False
+    )
 
     # Mock Path().is_dir() to return True for the resampled path
     with patch.object(Path, "is_dir", return_value=True):
@@ -426,6 +423,63 @@ def test_write_resampled_ns_fit(
     with patch("pandas.DataFrame.to_csv") as mock_to_csv:
         df.to_csv(expected_csv_path, float_format="%.5e")
         mock_to_csv.assert_called_once_with(expected_csv_path, float_format="%.5e")
+
+
+@mock.patch("builtins.open", new_callable=mock.mock_open)
+@mock.patch("dill.load")
+@mock.patch("colibri.utils.os.system")
+@mock.patch("colibri.utils.os.path.exists")
+@mock.patch("colibri.utils.os.mkdir")
+@mock.patch(
+    "colibri.utils.write_exportgrid"
+)  # Replace with actual path to write_exportgrid
+def test_write_resampled_ns_fit_with_replica_range(
+    mock_write_exportgrid,
+    mock_mkdir,
+    mock_exists,
+    mock_os_system,
+    mock_dill_load,
+    mock_open,
+):
+    # Setup mock parameters
+    fit_path = Path("/fake/fit/path")
+    resampled_fit_path = Path("/fake/resampled/path")
+    resampled_posterior = np.array([[0.1, 0.2], [0.3, 0.4]])
+    n_replicas = 2
+    resampled_fit_name = "test_grid"
+    parametrisation_scale = 1.0
+    replica_range = [0]  # Test with a specific range
+
+    # Mock pdf_model and parameter names
+    mock_pdf_model = MagicMock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func.return_value = lambda params: [
+        params[0] + 1,
+        params[1] + 1,
+    ]
+    mock_dill_load.return_value = mock_pdf_model
+
+    # Ensure os.path.exists returns True for necessary paths
+    mock_exists.return_value = True
+
+    # Mock Path().is_dir() to return True for the resampled path
+    with patch.object(Path, "is_dir", return_value=True):
+
+        # Run the function with the replica_range parameter
+        write_resampled_ns_fit(
+            resampled_posterior=resampled_posterior,
+            fit_path=fit_path,
+            resampled_fit_path=resampled_fit_path,
+            n_replicas=n_replicas,
+            resampled_fit_name=resampled_fit_name,
+            parametrisation_scale=parametrisation_scale,
+            replica_range=replica_range,  # Providing replica_range
+        )
+
+    # Ensure the correct range of replicas is processed
+    assert mock_write_exportgrid.call_count == len(
+        replica_range
+    ), f"Expected {len(replica_range)} calls to write_exportgrid, but got {mock_write_exportgrid.call_count}"
 
 
 def test_identity_matrix():
