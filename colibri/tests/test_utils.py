@@ -372,8 +372,8 @@ def test_write_resampled_ns_fit(
     mock_open,
 ):
     # Setup mock parameters
-    fit_path = Path("/fake/fit/path")
-    resampled_fit_path = Path("/fake/resampled/path")
+    fit_path = "/fake/fit/path"
+    resampled_fit_path = "/fake/resampled/path"
     resampled_posterior = np.array([[0.1, 0.2], [0.3, 0.4]])
     n_replicas = 2
     resampled_fit_name = "test_grid"
@@ -406,6 +406,9 @@ def test_write_resampled_ns_fit(
             resampled_fit_name=resampled_fit_name,
             parametrisation_scale=parametrisation_scale,
         )
+
+    fit_path = Path(fit_path)
+    resampled_fit_path = Path(resampled_fit_path)
 
     # Verify that open was called with pdf_model.pkl
     expected_open_call = mock.call(fit_path / "pdf_model.pkl", "rb")
