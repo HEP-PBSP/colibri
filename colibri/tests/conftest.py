@@ -444,7 +444,7 @@ class UltraNestLogLikelihoodMock:
             fit_xgrid, forward_map=forward_map
         )
 
-        if ns_settings["ReactiveNS_settings"]["vectorized"]:
+        if ns_settings.ReactiveNS_settings["vectorized"]:
             self.pred_and_pdf = jax.vmap(
                 self.pred_and_pdf, in_axes=(0, None), out_axes=(0, 0)
             )

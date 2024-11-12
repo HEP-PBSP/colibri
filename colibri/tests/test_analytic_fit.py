@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import jax.random
 from unittest.mock import Mock, patch
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
+from colibri.core import AnalyticFitSettings
 from colibri.tests.conftest import TEST_FK_ARRAYS
 import logging
 import pytest
@@ -16,6 +17,7 @@ analytic_settings = {
     "n_posterior_samples": 10,
     "optimal_prior": True,
 }
+analytic_settings = AnalyticFitSettings(**analytic_settings)
 
 # Define mock input parameters
 bayesian_prior = lambda x: x
@@ -74,21 +76,24 @@ def test_analytic_fit(caplog):
 
     assert isinstance(result, AnalyticFit)
 
-    assert result.analytic_specs == analytic_settings
-    assert (
-        result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]
-    )
+    assert result.analytic_specs == analytic_settings.to_dict()
+    assert result.resampled_posterior.shape[0] == analytic_settings.n_posterior_samples
     assert len(result.param_names) == len(mock_pdf_model.param_names)
 
     # Check that it works if optimal_prior is False
-    analytic_settings["optimal_prior"] = False
+    import copy
+
+    tmp_analytic_settings = copy.deepcopy(analytic_settings)
+    tmp_analytic_settings_dict = tmp_analytic_settings.to_dict()
+    tmp_analytic_settings_dict["optimal_prior"] = False
+    tmp_analytic_settings = AnalyticFitSettings(**tmp_analytic_settings_dict)
     # Run the analytic fit
     with caplog.at_level(logging.ERROR):  # Set the log level to ERROR
         result_2 = analytic_fit(
             mock_central_inv_covmat_index,
             _pred_data,
             mock_pdf_model,
-            analytic_settings,
+            tmp_analytic_settings,
             bayesian_prior,
             FIT_XGRID,
             TEST_FK_ARRAYS,
@@ -98,10 +103,9 @@ def test_analytic_fit(caplog):
     error_logged = any(record.levelno == logging.ERROR for record in caplog.records)
     assert error_logged, "No error message was logged"
 
-    assert result_2.analytic_specs == analytic_settings
+    assert result_2.analytic_specs == tmp_analytic_settings.to_dict()
     assert (
-        result_2.resampled_posterior.shape[0]
-        == analytic_settings["n_posterior_samples"]
+        result_2.resampled_posterior.shape[0] == analytic_settings.n_posterior_samples
     )
     assert len(result_2.param_names) == len(mock_pdf_model.param_names)
 
@@ -111,7 +115,7 @@ def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
 
     # Define mock analytic fit
     mock_analytic_fit = Mock()
-    mock_analytic_fit.analytic_specs = analytic_settings
+    mock_analytic_fit.analytic_specs = analytic_settings.to_dict()
     mock_analytic_fit.resampled_posterior = jax.random.normal(
         jax.random.PRNGKey(0), (10, 2)
     )
