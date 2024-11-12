@@ -313,3 +313,31 @@ def test_parse_positivity_penalty_settings(mock_warning):
 
     assert pos_settings == expected_settings
     assert mock_warning.called
+
+
+@patch("colibri.config.get_fit_path")
+@patch("colibri.config.pd.read_csv")
+def test_parse_fits(mock_read_csv, mock_get_fit_path):
+    """
+    Test that the correct defaults are returned by positivity penalty
+    parser.
+    """
+    mock_fit_path = Path("/mock/path")
+    mock_get_fit_path.return_value = mock_fit_path
+
+    mock_bayesian_metrics = {"metric1": 0.9, "metric2": 0.7}
+    mock_read_csv.return_value = pd.DataFrame([mock_bayesian_metrics])
+
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+    # Test default settings
+    settings = {"fits": ["fit"]}
+
+    # Call the function
+    fits = config.parse_fits(settings)
+
+    assert len(fits) == 1
+    assert fits[0].bayesian_metrics == mock_bayesian_metrics
+    assert fits[0].fit_path == mock_fit_path
