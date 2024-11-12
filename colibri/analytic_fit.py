@@ -12,9 +12,12 @@ import time
 import jax
 import jax.numpy as jnp
 import jax.numpy.linalg as jla
+import numpy as np
+import scipy.special as special
 
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 from colibri.checks import check_pdf_model_is_linear
+from colibri.utils import compute_determinants_of_principal_minors
 
 import logging
 
@@ -35,6 +38,61 @@ class AnalyticFit(BayesianFit):
     """
 
     analytic_specs: dict
+
+
+def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec):
+    """
+    Compute the log of the evidence for Gaussian likelihood and uniform prior.
+    The implementation is based on the following paper: https://arxiv.org/pdf/2301.13783
+    and consists in a small improvement of the Laplace approximation.
+
+    Parameters
+    ----------
+    sol_covmat: array
+        Covariance matrix of the posterior (X^T Sigma^-1 X)^-1.
+
+    sol_mean
+
+    a_vec: np.ndarray
+        Lower bounds of the Uniform prior.
+
+    b_vec: np.ndarray
+        Upper bounds of the Uniform prior.
+
+    Returns
+    -------
+    float: The log evidence.
+    """
+
+    # Take into account change of variables of type (x - mu) -> x
+    b_vec -= sol_mean
+    a_vec -= sol_mean
+
+    determinants = compute_determinants_of_principal_minors(sol_covmat)
+
+    sqrt_det_ratios = np.sqrt(determinants[:-1] / determinants[1:])
+
+    erf_arg_a = a_vec / np.sqrt(2) * sqrt_det_ratios
+    erf_arg_b = b_vec / np.sqrt(2) * sqrt_det_ratios
+
+    erf_a = special.erf(erf_arg_a)
+    erf_b = special.erf(erf_arg_b)
+
+    log_erf_terms = np.log(0.5 * (erf_b - erf_a)).sum()
+
+    occam_factor_num = np.sqrt(jla.det(sol_covmat))
+    occam_factor_denom = np.prod((b_vec - a_vec))
+
+    log_occam_factor = np.log(occam_factor_num / occam_factor_denom)
+
+    log_evidence = (
+        max_logl
+        + sol_covmat.shape[0] / 2 * np.log(2 * np.pi)
+        + log_occam_factor
+        + log_erf_terms
+    )
+
+    return log_evidence, log_occam_factor
 
 
 @check_pdf_model_is_linear
@@ -141,14 +199,25 @@ def analytic_fit(
     # Compute maximum log likelihood
     max_logl = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
 
-    logZ = gaussian_integral + max_logl + log_prior
+    logZ_laplace = gaussian_integral + max_logl + log_prior
 
-    log.info(f"LogZ = {logZ}")
-    log.info(f"Maximum log likelihood = {max_logl}")
+    log.info(f"LogZ (Laplace approximation) = {logZ_laplace}")
+
+    # computation of the evidence (analytic approximation)
+    logZ_analytical, log_occam_factor = analytic_evidence_uniform_prior(
+        sol_covmat, sol_mean, max_logl, prior_lower, prior_upper
+    )
+
+    log.info(f"LogZ (Analytic approximation) = {logZ_analytical}")
+    log.info(f"Log Occam factor = {log_occam_factor}")
+    log.info(f"Maximal log likelihood = {max_logl}")
 
     # Compute minimum chi2
     min_chi2 = -2 * max_logl
     log.info(f"Minimum chi2 = {min_chi2}")
+
+    BIC = min_chi2 + sol_covmat.shape[0] * np.log(Sigma.shape[0])
+    AIC = min_chi2 + 2 * sol_covmat.shape[0]
 
     # Check that the prior is wide enough
     if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
@@ -178,7 +247,11 @@ def analytic_fit(
             "bayes_complexity": Cb,
             "avg_chi2": avg_chi2,
             "min_chi2": min_chi2,
-            "logz": logZ,
+            "logZ_laplace": logZ_laplace,
+            "logz": logZ_analytical,
+            "log_occam_factor": log_occam_factor,
+            "BIC": BIC,
+            "AIC": AIC,
         },
     )
 
