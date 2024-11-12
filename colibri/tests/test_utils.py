@@ -8,7 +8,8 @@ from pathlib import Path
 import shutil
 from numpy.testing import assert_allclose
 import pytest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, MagicMock
+from unittest import mock
 
 import pandas as pd
 import jax
@@ -31,7 +32,9 @@ from colibri.utils import (
     mask_fktable_array,
     mask_luminosity_mapping,
     ns_fit_resampler,
+    write_resampled_ns_fit,
 )
+from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from validphys.fkparser import load_fktable
 
 
@@ -354,3 +357,72 @@ def test_ns_fit_resampler_normal_case(mock_resample, mock_read_csv, mock_exists)
     assert np.array_equal(mock_resample.call_args[0][0], sample_data)
     assert mock_resample.call_args[0][1] == n_replicas
     assert mock_resample.call_args[0][2] == resampling_seed
+
+
+@patch("builtins.open", new_callable=mock.mock_open)
+@patch("dill.load")
+@patch("colibri.utils.os.system")
+@patch("colibri.utils.os.path.exists")
+@patch("colibri.utils.write_exportgrid")
+@patch("colibri.export_results.yaml.dump")
+def test_write_resampled_ns_fit(
+    mock_yaml_dump,
+    mock_write_exportgrid,
+    mock_exists,
+    mock_os_system,
+    mock_dill_load,
+    mock_open,
+):
+    # Setup mock parameters
+    fit_path = Path("/fake/fit/path")
+    resampled_fit_path = Path("/fake/resampled/path")
+    resampled_posterior = np.array([[0.1, 0.2], [0.3, 0.4]])
+    n_replicas = 2
+    resampled_fit_name = "test_grid"
+    parametrisation_scale = 1.0
+
+    # Mock pdf_model and parameter names
+    mock_pdf_model = MagicMock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func.return_value = lambda params: [
+        params[0] + 1,
+        params[1] + 1,
+    ]
+    mock_dill_load.return_value = mock_pdf_model
+
+    # Ensure os.path.exists returns True for necessary paths
+    def exists_side_effect(path):
+        if str(resampled_fit_path) in str(path) or str(fit_path) in str(path):
+            return True
+        return False
+
+    mock_exists.side_effect = exists_side_effect
+
+    # Mock Path().is_dir() to return True for the resampled path
+    with patch.object(Path, "is_dir", return_value=True):
+        # Run the function
+        write_resampled_ns_fit(
+            resampled_posterior=resampled_posterior,
+            fit_path=fit_path,
+            resampled_fit_path=resampled_fit_path,
+            n_replicas=n_replicas,
+            resampled_fit_name=resampled_fit_name,
+            parametrisation_scale=parametrisation_scale,
+        )
+
+    # Verify that open was called with pdf_model.pkl
+    expected_open_call = mock.call(fit_path / "pdf_model.pkl", "rb")
+    assert (
+        expected_open_call in mock_open.call_args_list
+    ), "Expected open to be called with pdf_model.pkl in read mode, but it wasn't."
+
+    # Verify directory copy and removal of replicas
+    mock_os_system.assert_any_call(f"cp -r {fit_path} {resampled_fit_path}")
+    mock_os_system.assert_any_call(f"rm -r {resampled_fit_path}/replicas/*")
+
+    # Verify the correct data was written to CSV
+    df = pd.DataFrame(resampled_posterior, columns=mock_pdf_model.param_names)
+    expected_csv_path = str(resampled_fit_path) + "/ns_result.csv"
+    with patch("pandas.DataFrame.to_csv") as mock_to_csv:
+        df.to_csv(expected_csv_path, float_format="%.5e")
+        mock_to_csv.assert_called_once_with(expected_csv_path, float_format="%.5e")
