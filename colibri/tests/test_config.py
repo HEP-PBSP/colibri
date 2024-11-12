@@ -1,9 +1,17 @@
-from unittest.mock import patch, mock_open
-from reportengine.configparser import ConfigError
-from colibri.config import colibriConfig, Environment
+"""
+colibri.tests.test_config.py
+
+Module for testing of the config.py module
+"""
+
+import unittest
 import unittest.mock as mock
 from pathlib import Path
-import unittest
+from unittest.mock import mock_open, patch
+
+import pandas as pd
+from colibri.config import Environment, colibriConfig
+from reportengine.configparser import ConfigError
 
 
 def test_float32_precision_enabled():
