@@ -14,7 +14,9 @@ analytic_settings = {
     "sampling_seed": 123,
     "full_sample_size": 100,
     "n_posterior_samples": 10,
-    "optimal_prior": True,
+    "min_max_prior": True,
+    "n_sigma_prior": False,
+    "n_sigma_value": 5,
 }
 
 # Define mock input parameters
@@ -80,8 +82,8 @@ def test_analytic_fit(caplog):
     )
     assert len(result.param_names) == len(mock_pdf_model.param_names)
 
-    # Check that it works if optimal_prior is False
-    analytic_settings["optimal_prior"] = False
+    # Check that it works if min_max_prior is False
+    analytic_settings["min_max_prior"] = False
     # Run the analytic fit
     with caplog.at_level(logging.ERROR):  # Set the log level to ERROR
         result_2 = analytic_fit(
@@ -104,6 +106,43 @@ def test_analytic_fit(caplog):
         == analytic_settings["n_posterior_samples"]
     )
     assert len(result_2.param_names) == len(mock_pdf_model.param_names)
+
+
+def test_analytic_fit_nsigma_prior(caplog):
+
+    analytic_settings["min_max_prior"] = False
+    analytic_settings["n_sigma_prior"] = True
+
+    # Create mock pdf model
+    mock_pdf_model = Mock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
+        (14, len(xgrid))
+    )
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params, fkarrs: (params, jnp.ones((14, len(xgrid))))
+    )
+
+    _pred_data = None
+
+    # Run the analytic fit
+    result = analytic_fit(
+        mock_central_inv_covmat_index,
+        _pred_data,
+        mock_pdf_model,
+        analytic_settings,
+        bayesian_prior,
+        FIT_XGRID,
+        TEST_FK_ARRAYS,
+    )
+
+    assert isinstance(result, AnalyticFit)
+
+    assert result.analytic_specs == analytic_settings
+    assert (
+        result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]
+    )
+    assert len(result.param_names) == len(mock_pdf_model.param_names)
 
 
 @patch("colibri.export_results.write_exportgrid")

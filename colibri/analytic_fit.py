@@ -183,8 +183,17 @@ def analytic_fit(
     # over the prior. The prior is uniform with width prior_width.
     log.info("Computing the evidence...")
 
-    if analytic_settings["optimal_prior"]:
-        log.info("Using optimal prior")
+    if analytic_settings["n_sigma_prior"]:
+        nsigma = analytic_settings["n_sigma_value"]
+
+        log.info(f"Using +- {nsigma} sigma of covmat")
+        diags = np.sqrt(np.diag(sol_covmat))
+
+        prior_lower = sol_mean - nsigma * diags
+        prior_upper = sol_mean + nsigma * diags
+
+    elif analytic_settings["min_max_prior"]:
+        log.info("Using min-max prior")
         prior_lower = full_samples.min(axis=0)
         prior_upper = full_samples.max(axis=0)
     else:
