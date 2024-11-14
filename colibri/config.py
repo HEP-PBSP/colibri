@@ -298,6 +298,8 @@ class colibriConfig(Config):
             "sampling_seed",
             "full_sample_size",
             "optimal_prior",
+            "n_sigma_prior",
+            "n_sigma_value",
         }
 
         kdiff = settings.keys() - known_keys
@@ -323,6 +325,9 @@ class colibriConfig(Config):
 
         # Set the optimal prior flag
         analytic_settings["optimal_prior"] = settings.get("optimal_prior", False)
+
+        analytic_settings["n_sigma_prior"] = settings.get("n_sigma_prior", False)
+        analytic_settings["n_sigma_value"] = settings.get("n_sigma_value", 5)
 
         return analytic_settings
 
