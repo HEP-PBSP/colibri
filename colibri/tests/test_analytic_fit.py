@@ -14,7 +14,9 @@ analytic_settings = {
     "sampling_seed": 123,
     "full_sample_size": 100,
     "n_posterior_samples": 10,
-    "optimal_prior": True,
+    "min_max_prior": True,
+    "n_sigma_prior": False,
+    "n_sigma_value": 5,
 }
 
 # Define mock input parameters
@@ -80,8 +82,8 @@ def test_analytic_fit(caplog):
     )
     assert len(result.param_names) == len(mock_pdf_model.param_names)
 
-    # Check that it works if optimal_prior is False
-    analytic_settings["optimal_prior"] = False
+    # Check that it works if min_max_prior is False
+    analytic_settings["min_max_prior"] = False
     # Run the analytic fit
     with caplog.at_level(logging.ERROR):  # Set the log level to ERROR
         result_2 = analytic_fit(

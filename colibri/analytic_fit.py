@@ -192,8 +192,8 @@ def analytic_fit(
         prior_lower = sol_mean - nsigma * diags
         prior_upper = sol_mean + nsigma * diags
 
-    elif analytic_settings["optimal_prior"]:
-        log.info("Using optimal prior")
+    elif analytic_settings["min_max_prior"]:
+        log.info("Using min-max prior")
         prior_lower = full_samples.min(axis=0)
         prior_upper = full_samples.max(axis=0)
     else:

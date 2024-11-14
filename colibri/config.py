@@ -297,7 +297,7 @@ class colibriConfig(Config):
             "n_posterior_samples",
             "sampling_seed",
             "full_sample_size",
-            "optimal_prior",
+            "min_max_prior",
             "n_sigma_prior",
             "n_sigma_value",
         }
@@ -324,7 +324,7 @@ class colibriConfig(Config):
         analytic_settings["full_sample_size"] = settings.get("full_sample_size", 1000)
 
         # Set the optimal prior flag
-        analytic_settings["optimal_prior"] = settings.get("optimal_prior", False)
+        analytic_settings["min_max_prior"] = settings.get("min_max_prior", False)
 
         analytic_settings["n_sigma_prior"] = settings.get("n_sigma_prior", False)
         analytic_settings["n_sigma_value"] = settings.get("n_sigma_value", 5)
