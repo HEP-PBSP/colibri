@@ -108,6 +108,43 @@ def test_analytic_fit(caplog):
     assert len(result_2.param_names) == len(mock_pdf_model.param_names)
 
 
+def test_analytic_fit_nsigma_prior(caplog):
+
+    analytic_settings["min_max_prior"] = False
+    analytic_settings["n_sigma_prior"] = True
+
+    # Create mock pdf model
+    mock_pdf_model = Mock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
+        (14, len(xgrid))
+    )
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params, fkarrs: (params, jnp.ones((14, len(xgrid))))
+    )
+
+    _pred_data = None
+
+    # Run the analytic fit
+    result = analytic_fit(
+        mock_central_inv_covmat_index,
+        _pred_data,
+        mock_pdf_model,
+        analytic_settings,
+        bayesian_prior,
+        FIT_XGRID,
+        TEST_FK_ARRAYS,
+    )
+
+    assert isinstance(result, AnalyticFit)
+
+    assert result.analytic_specs == analytic_settings
+    assert (
+        result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]
+    )
+    assert len(result.param_names) == len(mock_pdf_model.param_names)
+
+
 @patch("colibri.export_results.write_exportgrid")
 def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
 
