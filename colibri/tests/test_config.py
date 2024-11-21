@@ -66,7 +66,6 @@ def test_parse_analytic_settings(mock_warning):
         "sampling_seed": 42,
         "n_posterior_samples": 500,
         "full_sample_size": 2000,
-        "min_max_prior": True,
         "unknown_key": "should_warn",
     }
 
@@ -78,9 +77,6 @@ def test_parse_analytic_settings(mock_warning):
         "sampling_seed": 42,
         "n_posterior_samples": 500,
         "full_sample_size": 2000,
-        "min_max_prior": True,
-        "n_sigma_prior": False,
-        "n_sigma_value": 5,
     }
     assert result == expected
 
@@ -107,9 +103,6 @@ def test_parse_analytic_settings_defaults():
         "sampling_seed": 123456,
         "n_posterior_samples": 100,
         "full_sample_size": 1000,
-        "min_max_prior": False,
-        "n_sigma_prior": False,
-        "n_sigma_value": 5,
     }
     assert result == expected
 
