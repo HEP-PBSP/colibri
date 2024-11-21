@@ -128,9 +128,15 @@ def analytic_fit(
     analytic_settings: dict
         Settings for the analytic fit.
 
+    prior_settings: PriorSettings
+        Settings for the prior.
+
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
+
+    fast_kernel_arrays: tuple
+        Tuple containing the fast kernel arrays.
     """
 
     log.warning("The prior is assumed to be flat in the parameters.")
@@ -184,7 +190,7 @@ def analytic_fit(
     # over the prior. The prior is uniform with width prior_width.
     log.info("Computing the evidence...")
 
-    if prior_settings.prior_distribution["n_sigma_prior"]:
+    if prior_settings.prior_distribution == "n_sigma_prior":
         nsigma = prior_settings.prior_distribution_specs["n_sigma_value"]
 
         log.info(f"Using +- {nsigma} sigma of covmat")
@@ -193,12 +199,12 @@ def analytic_fit(
         prior_lower = sol_mean - nsigma * diags
         prior_upper = sol_mean + nsigma * diags
 
-    elif prior_settings.prior_distribution["custom_uniform_parameter_prior"]:
+    elif prior_settings.prior_distribution == "custom_uniform_parameter_prior":
         log.info("Using custom uniform prior")
         prior_lower = prior_settings.prior_distribution_specs["lower_bounds"]
         prior_upper = prior_settings.prior_distribution_specs["upper_bounds"]
 
-    elif prior_settings.prior_distribution["min_max_prior"]:
+    elif prior_settings.prior_distribution == "min_max_prior":
         log.info("Using min-max prior")
         prior_lower = full_samples.min(axis=0)
         prior_upper = full_samples.max(axis=0)
