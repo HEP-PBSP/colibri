@@ -101,7 +101,7 @@ def analytic_fit(
     _pred_data,
     pdf_model,
     analytic_settings,
-    bayesian_prior,
+    prior_settings,
     FIT_XGRID,
     fast_kernel_arrays,
 ):
@@ -184,8 +184,8 @@ def analytic_fit(
     # over the prior. The prior is uniform with width prior_width.
     log.info("Computing the evidence...")
 
-    if analytic_settings["n_sigma_prior"]:
-        nsigma = analytic_settings["n_sigma_value"]
+    if prior_settings.prior_distribution["n_sigma_prior"]:
+        nsigma = prior_settings.prior_distribution_specs["n_sigma_value"]
 
         log.info(f"Using +- {nsigma} sigma of covmat")
         diags = np.sqrt(np.diag(sol_covmat))
@@ -193,14 +193,24 @@ def analytic_fit(
         prior_lower = sol_mean - nsigma * diags
         prior_upper = sol_mean + nsigma * diags
 
-    elif analytic_settings["min_max_prior"]:
+    elif prior_settings.prior_distribution["custom_uniform_parameter_prior"]:
+        log.info("Using custom uniform prior")
+        prior_lower = prior_settings.prior_distribution_specs["lower_bounds"]
+        prior_upper = prior_settings.prior_distribution_specs["upper_bounds"]
+
+    elif prior_settings.prior_distribution["min_max_prior"]:
         log.info("Using min-max prior")
         prior_lower = full_samples.min(axis=0)
         prior_upper = full_samples.max(axis=0)
+
     else:
         # Extract lower and upper bounds of the prior
-        prior_lower = bayesian_prior(jnp.zeros(len(parameters)))
-        prior_upper = bayesian_prior(jnp.ones(len(parameters)))
+        prior_lower = prior_settings.prior_distribution_specs["min_val"] * jnp.ones(
+            len(parameters)
+        )
+        prior_upper = prior_settings.prior_distribution_specs["max_val"] * jnp.ones(
+            len(parameters)
+        )
 
     prior_width = prior_upper - prior_lower
 
