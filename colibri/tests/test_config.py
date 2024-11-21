@@ -1,6 +1,7 @@
 from unittest.mock import patch, mock_open
 from reportengine.configparser import ConfigError
 from colibri.config import colibriConfig, Environment
+from colibri.core import PriorSettings
 import unittest.mock as mock
 from pathlib import Path
 import unittest
@@ -53,6 +54,33 @@ def test_init_output(mock_copy2, mock_open, mock_md5, tmp_path):
     # Check if md5 hash is generated and stored
     mock_open().write.assert_called_once_with("fake_md5_hash")
 
+@patch("colibri.config.log.warning")
+def test_parse_prior_settings(mock_warning):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+
+    # Define the settings input
+    settings1 = {
+        "prior_distribution": "uniform_parameter_prior",
+        "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
+        "unknown_key": "should_warn",
+    }
+
+    # Call the method
+    result1 = config.parse_prior_settings(settings)
+
+    # Assert the result is as expected
+    expected1 = PriorSettings(**{
+        "prior_distribution": "uniform_parameter_prior",
+        "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
+    }
+    )
+    assert result1 == expected1
+
+    # Check that the warning was called for the unknown key
+    mock_warning.assert_called_once()
 
 @patch("colibri.config.log.warning")
 def test_parse_analytic_settings(mock_warning):
