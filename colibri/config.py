@@ -307,10 +307,28 @@ class colibriConfig(Config):
 
         # Set the prior distribution
         prior_settings["prior_distribution"] = settings.get(
-            "prior_distribution", "flat"
+            "prior_distribution", "uniform_parameter_prior"
         )
 
         # Set the prior distribution specs
+        # log warning if the user has not provided the prior_distribution_specs and the prior distribution is uniform
+        if (settings["prior_distribution"] == "uniform_parameter_prior") and (
+            "prior_distribution_specs" not in settings
+        ):
+            log.warning(
+                ConfigError(
+                    "prior_distribution_specs not found in prior_settings. Using default [-1,1] values for uniform_parameter_prior.",
+                )
+            )
+
+        # raise error if prior_distribution_specs is not provided for prior_from_gauss_posterior
+        if (settings["prior_distribution"] == "prior_from_gauss_posterior") and (
+            "prior_distribution_specs" not in settings
+        ):
+            raise ConfigError(
+                "prior_distribution_specs not found in prior_settings. Please provide prior_distribution_specs for prior_from_gauss_posterior."
+            )
+
         prior_settings["prior_distribution_specs"] = settings.get(
             "prior_distribution_specs", {"max_val": 1.0, "min_val": -1.0}
         )
