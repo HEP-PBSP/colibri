@@ -31,18 +31,6 @@ def bayesian_prior(prior_settings):
         def prior_transform(cube):
             return cube * (max_val - min_val) + min_val
 
-    elif prior_settings.prior_distribution == "custom_uniform_parameter_prior":
-        upper_bounds = jnp.array(
-            prior_settings.prior_distribution_specs["upper_bounds"]
-        )
-        lower_bounds = jnp.array(
-            prior_settings.prior_distribution_specs["lower_bounds"]
-        )
-
-        @jax.jit
-        def prior_transform(cube):
-            return cube * (upper_bounds - lower_bounds) + lower_bounds
-
     elif prior_settings.prior_distribution == "prior_from_gauss_posterior":
         prior_fit = prior_settings.prior_distribution_specs["prior_fit"]
 
