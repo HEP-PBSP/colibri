@@ -16,6 +16,7 @@ import jax.numpy as jnp
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
+from colibri.core import PriorSettings
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
@@ -283,6 +284,38 @@ class colibriConfig(Config):
         )
 
         return positivity_penalty_settings
+
+    def parse_prior_settings(self, settings):
+        """
+        Parses the prior_settings namespace from the runcard,
+        into the core.PriorSettings dataclass.
+        """
+        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
+        known_keys = {
+            "prior_distribution",
+            "prior_distribution_specs",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in prior_settings not known.", k, known_keys)
+            )
+
+        # Now construct the prior_settings dictionary, checking the parameter combinations are valid
+        prior_settings = {}
+
+        # Set the prior distribution
+        prior_settings["prior_distribution"] = settings.get(
+            "prior_distribution", "flat"
+        )
+
+        # Set the prior distribution specs
+        prior_settings["prior_distribution_specs"] = settings.get(
+            "prior_distribution_specs", {"max_val": 1.0, "min_val": -1.0}
+        )
+
+        return PriorSettings(**prior_settings)
 
     def parse_analytic_settings(
         self,
