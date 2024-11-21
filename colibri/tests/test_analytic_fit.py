@@ -3,6 +3,7 @@ import jax.random
 from unittest.mock import Mock, patch
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 from colibri.tests.conftest import TEST_FK_ARRAYS
+from colibri.core import PriorSettings
 import logging
 import pytest
 
@@ -14,13 +15,15 @@ analytic_settings = {
     "sampling_seed": 123,
     "full_sample_size": 100,
     "n_posterior_samples": 10,
-    "min_max_prior": True,
-    "n_sigma_prior": False,
-    "n_sigma_value": 5,
 }
+PRIOR_SETTINGS = PriorSettings(
+    **{
+        "prior_distribution": "uniform_parameter_prior",
+        "prior_distribution_specs": {"max_val": 1.0, "min_val": -1.0},
+    }
+)
 
 # Define mock input parameters
-bayesian_prior = lambda x: x
 FIT_XGRID = jnp.logspace(-7, 0, 50)
 
 
@@ -44,7 +47,7 @@ def test_analytic_fit_flat_direction():
             _pred_data,
             mock_pdf_model,
             analytic_settings,
-            bayesian_prior,
+            PRIOR_SETTINGS,
             FIT_XGRID,
             TEST_FK_ARRAYS,
         )
@@ -69,7 +72,7 @@ def test_analytic_fit(caplog):
         _pred_data,
         mock_pdf_model,
         analytic_settings,
-        bayesian_prior,
+        PRIOR_SETTINGS,
         FIT_XGRID,
         TEST_FK_ARRAYS,
     )
@@ -91,7 +94,7 @@ def test_analytic_fit(caplog):
             _pred_data,
             mock_pdf_model,
             analytic_settings,
-            bayesian_prior,
+            PRIOR_SETTINGS,
             FIT_XGRID,
             TEST_FK_ARRAYS,
         )
@@ -110,8 +113,12 @@ def test_analytic_fit(caplog):
 
 def test_analytic_fit_nsigma_prior(caplog):
 
-    analytic_settings["min_max_prior"] = False
-    analytic_settings["n_sigma_prior"] = True
+    PRIOR_SETTINGS = PriorSettings(
+        **{
+            "prior_distribution": "n_sigma_prior",
+            "prior_distribution_specs": {"n_sigma_value": 2.0},
+        }
+    )
 
     # Create mock pdf model
     mock_pdf_model = Mock()
@@ -131,7 +138,7 @@ def test_analytic_fit_nsigma_prior(caplog):
         _pred_data,
         mock_pdf_model,
         analytic_settings,
-        bayesian_prior,
+        PRIOR_SETTINGS,
         FIT_XGRID,
         TEST_FK_ARRAYS,
     )
