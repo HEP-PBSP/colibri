@@ -6,6 +6,7 @@ Core module of colibri, containing the main (data) classes for the framework.
 
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class PriorSettings:
     """
