@@ -48,8 +48,8 @@ def test_check_pdf_models_equal_false_theoryid(
 ):
     # Setup
     prior_settings = {
-        "type": "prior_from_gauss_posterior",
-        "prior_fit": "fit1",
+        "prior_distribution": "prior_from_gauss_posterior",
+        "prior_distribution_specs": {"prior_fit" :"fit1"},
     }
     pdf_model = "model1"
 
@@ -81,8 +81,8 @@ def test_check_pdf_models_equal_false_t0pdf(
 ):
     # Setup
     prior_settings = {
-        "type": "prior_from_gauss_posterior",
-        "prior_fit": "fit1",
+        "prior_distribution": "prior_from_gauss_posterior",
+        "prior_distribution_specs": {"prior_fit": "fit1"},
     }
     pdf_model = "model1"
 
