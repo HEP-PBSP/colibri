@@ -169,6 +169,7 @@ def analytic_fit(
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
+    # full samples with no cuts from the prior bounds
     full_samples = jax.random.multivariate_normal(
         key,
         sol_mean,
@@ -202,6 +203,11 @@ def analytic_fit(
         prior_upper = bayesian_prior(jnp.ones(len(parameters)))
 
     prior_width = prior_upper - prior_lower
+
+    # discard samples outside the prior
+    full_samples = full_samples[
+        (full_samples > prior_lower).all(axis=1) & (full_samples < prior_upper).all(axis=1)
+    ]
 
     gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
     log_prior = jnp.log(1 / prior_width).sum()
