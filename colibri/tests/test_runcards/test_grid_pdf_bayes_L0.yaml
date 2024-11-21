@@ -78,9 +78,12 @@ ns_settings:
     frac_remain: 0.01
 
 prior_settings:
-  type: 'uniform_pdf_prior'            # The type of prior used in Nested Sampling (model dependent)
-  pdf_prior: NNPDF31_nnlo_as_0118      # For this prior type, uniform band around this PDF
-  nsigma: 5                           # Size of the uniform band around the PDF
+  prior_distribution: 'uniform_pdf_prior'            # The type of prior used in Nested Sampling (model dependent)
+  prior_distribution_specs:
+    {
+      pdf_prior: NNPDF31_nnlo_as_0118,      # For this prior type, uniform band around this PDF
+      nsigma: 5,                           # Size of the uniform band around the PDF
+    }
 
 actions_:
 - run_ultranest_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit

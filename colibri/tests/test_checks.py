@@ -49,7 +49,7 @@ def test_check_pdf_models_equal_false_theoryid(
     # Setup
     prior_settings = {
         "prior_distribution": "prior_from_gauss_posterior",
-        "prior_distribution_specs": {"prior_fit" :"fit1"},
+        "prior_distribution_specs": {"prior_fit": "fit1"},
     }
     pdf_model = "model1"
 
