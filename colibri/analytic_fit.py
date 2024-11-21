@@ -210,9 +210,12 @@ def analytic_fit(
             "The prior is not wide enough to cover the posterior samples. Increase the prior width."
         )
 
+    log.warning(f"Discarding samples outside the prior bounds.")
+
     # discard samples outside the prior
     full_samples = full_samples[
-        (full_samples > prior_lower).all(axis=1) & (full_samples < prior_upper).all(axis=1)
+        (full_samples > prior_lower).all(axis=1)
+        & (full_samples < prior_upper).all(axis=1)
     ]
 
     gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
