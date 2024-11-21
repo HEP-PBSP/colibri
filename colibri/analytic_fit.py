@@ -201,8 +201,8 @@ def analytic_fit(
 
     elif prior_settings.prior_distribution == "custom_uniform_parameter_prior":
         log.info("Using custom uniform prior")
-        prior_lower = prior_settings.prior_distribution_specs["lower_bounds"]
-        prior_upper = prior_settings.prior_distribution_specs["upper_bounds"]
+        prior_lower = jnp.array(prior_settings.prior_distribution_specs["lower_bounds"])
+        prior_upper = jnp.array(prior_settings.prior_distribution_specs["upper_bounds"])
 
     elif prior_settings.prior_distribution == "min_max_prior":
         log.info("Using min-max prior")
