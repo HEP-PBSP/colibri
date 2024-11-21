@@ -111,9 +111,9 @@ def test_analytic_fit(caplog):
     assert len(result_2.param_names) == len(mock_pdf_model.param_names)
 
 
-def test_analytic_fit_nsigma_prior(caplog):
+def test_analytic_fit_different_priors(caplog):
 
-    PRIOR_SETTINGS = PriorSettings(
+    PRIOR_SETTINGS1 = PriorSettings(
         **{
             "prior_distribution": "n_sigma_prior",
             "prior_distribution_specs": {"n_sigma_value": 2.0},
@@ -138,7 +138,7 @@ def test_analytic_fit_nsigma_prior(caplog):
         _pred_data,
         mock_pdf_model,
         analytic_settings,
-        PRIOR_SETTINGS,
+        PRIOR_SETTINGS1,
         FIT_XGRID,
         TEST_FK_ARRAYS,
     )
@@ -150,6 +150,24 @@ def test_analytic_fit_nsigma_prior(caplog):
         result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]
     )
     assert len(result.param_names) == len(mock_pdf_model.param_names)
+
+    PRIOR_SETTINGS2 = PriorSettings(
+        **{
+            "prior_distribution": "custom_uniform_parameter_prior",
+            "prior_distribution_specs": {"upper_bounds": [2.0], "lower_bounds": [-2.0]},
+        }
+    )
+
+    # Run the analytic fit with custom uniform prior
+    result = analytic_fit(
+        mock_central_inv_covmat_index,
+        _pred_data,
+        mock_pdf_model,
+        analytic_settings,
+        PRIOR_SETTINGS2,
+        FIT_XGRID,
+        TEST_FK_ARRAYS,
+    )
 
 
 @patch("colibri.export_results.write_exportgrid")
