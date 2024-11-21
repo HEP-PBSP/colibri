@@ -54,6 +54,7 @@ def test_init_output(mock_copy2, mock_open, mock_md5, tmp_path):
     # Check if md5 hash is generated and stored
     mock_open().write.assert_called_once_with("fake_md5_hash")
 
+
 @patch("colibri.config.log.warning")
 def test_parse_prior_settings(mock_warning):
     # Create input_params required for colibriConfig initialization
@@ -64,23 +65,31 @@ def test_parse_prior_settings(mock_warning):
     # Define the settings input
     settings1 = {
         "prior_distribution": "uniform_parameter_prior",
-        "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
         "unknown_key": "should_warn",
     }
 
     # Call the method
-    result1 = config.parse_prior_settings(settings)
+    result1 = config.parse_prior_settings(settings1)
 
     # Assert the result is as expected
-    expected1 = PriorSettings(**{
-        "prior_distribution": "uniform_parameter_prior",
-        "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
-    }
+    expected1 = PriorSettings(
+        **{
+            "prior_distribution": "uniform_parameter_prior",
+            "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
+        }
     )
     assert result1 == expected1
 
     # Check that the warning was called for the unknown key
-    mock_warning.assert_called_once()
+    assert len(mock_warning.mock_calls) == 2
+
+    # check that error is raised
+    settings2 = {
+        "prior_distribution": "prior_from_gauss_posterior",
+    }
+    with unittest.TestCase.assertRaises(unittest.TestCase(), ConfigError):
+        config.parse_prior_settings(settings2)
+
 
 @patch("colibri.config.log.warning")
 def test_parse_analytic_settings(mock_warning):
