@@ -204,6 +204,12 @@ def analytic_fit(
 
     prior_width = prior_upper - prior_lower
 
+    # Check that the prior is wide enough
+    if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
+        log.error(
+            "The prior is not wide enough to cover the posterior samples. Increase the prior width."
+        )
+
     # discard samples outside the prior
     full_samples = full_samples[
         (full_samples > prior_lower).all(axis=1) & (full_samples < prior_upper).all(axis=1)
@@ -233,12 +239,6 @@ def analytic_fit(
 
     BIC = min_chi2 + sol_covmat.shape[0] * np.log(Sigma.shape[0])
     AIC = min_chi2 + 2 * sol_covmat.shape[0]
-
-    # Check that the prior is wide enough
-    if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
-        log.error(
-            "The prior is not wide enough to cover the posterior samples. Increase the prior width."
-        )
 
     # Compute average chi2
     diffs = Y[:, None] - X @ full_samples.T
