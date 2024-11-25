@@ -11,11 +11,15 @@ import logging
 import os
 import shutil
 import jax
-
 import jax.numpy as jnp
+import pandas as pd
+
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
+from colibri.utils import get_fit_path
+from colibri.core import ColibriFitSpec
+
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
@@ -151,6 +155,33 @@ class colibriConfig(Config):
             f"Fitting x-grid consists of {len(xgrid)} points, ranging from {xgrid[0]} to {xgrid[-1]}."
         )
         return xgrid
+
+    def parse_fits(self, fits):
+        """
+        Parses a list of fits into a list of ColibriFitSpec's.
+        It does save the fit path as well as the Bayesian metrics.
+
+        Returns
+        -------
+        list
+            list containing ColibriFitSpec
+        """
+        fit_specs = []
+        for fit_name in fits:
+
+            fit_path = get_fit_path(fit_name)
+
+            # fit specs should include several things among which the bayesian metrics
+            # load bayesian metrics without index
+
+            bayesian_metrics = pd.read_csv(fit_path / "bayes_metrics.csv")
+            bayesian_metrics = bayesian_metrics.to_dict(orient="records")[0]
+
+            fit_specs.append(
+                ColibriFitSpec(bayesian_metrics=bayesian_metrics, fit_path=fit_path)
+            )
+
+        return fit_specs
 
     def parse_ns_settings(
         self,

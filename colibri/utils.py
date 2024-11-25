@@ -17,9 +17,10 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from colibri.loss_functions import chi2
+from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
+from colibri.export_results import write_exportgrid
 
 from validphys import convolution
-
 
 log = logging.getLogger(__name__)
 
@@ -162,7 +163,17 @@ def resample_from_ns_posterior(
     samples, n_posterior_samples=1000, posterior_resampling_seed=123456
 ):
     """
-    TODO
+    Sample uniformly without replacement from a distribution.
+
+    Parameters
+    ----------
+    samples: array of samples
+    n_posterior_samples: int
+    posterior_resampling_seed: int
+
+    Returns
+    -------
+    array of resampled samples
     """
 
     current_samples = samples.copy()
@@ -338,6 +349,123 @@ def likelihood_float_type(
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:
         file.write(str(dtype))
+
+
+def ns_fit_resampler(
+    fit_path,
+    n_replicas,
+    resampling_seed,
+):
+    """
+    Function uses resample_from_ns_posterior to resample from a nested sampling result posterior.
+    """
+
+    # Check that the .txt file with equally weighted posterior samples exists
+    if not os.path.exists(fit_path / "ultranest_logs/chains/equal_weighted_post.txt"):
+        raise FileNotFoundError(
+            f"{fit_path}/ultranest_logs/chains/equal_weighted_post.txt does not exist;"
+            "please run the bayesian fit first."
+        )
+
+    equal_weight_post_path = fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
+
+    samples = pd.read_csv(equal_weight_post_path, sep="\s+", dtype=float).values
+
+    if n_replicas > samples.shape[0]:
+        n_replicas = samples.shape[0]
+        log.warning(
+            f"The chosen number of posterior samples exceeds the number of posterior"
+            "samples computed by ultranest. Setting the number of resampled posterior"
+            f"samples to {n_replicas}"
+        )
+
+    resampled_posterior = resample_from_ns_posterior(
+        samples,
+        n_replicas,
+        resampling_seed,
+    )
+
+    return resampled_posterior
+
+
+def write_resampled_ns_fit(
+    resampled_posterior,
+    fit_path,
+    resampled_fit_path,
+    n_replicas,
+    resampled_fit_name,
+    parametrisation_scale,
+    copy_fit_dir=True,
+    write_ns_results=True,
+    replica_range=None,
+):
+    """
+    Writes the resampled ns fit to `resampled_fit_path`.
+    """
+
+    # convert paths to Posix if they are not already
+    if (not type(fit_path) == pathlib.PosixPath) or (
+        not type(resampled_fit_path) == pathlib.PosixPath
+    ):
+        fit_path = pathlib.PosixPath(fit_path)
+        resampled_fit_path = pathlib.PosixPath(resampled_fit_path)
+
+    log.info(f"Loading pdf model from {fit_path}")
+
+    # load pdf_model from fit using dill
+    with open(fit_path / "pdf_model.pkl", "rb") as file:
+        pdf_model = dill.load(file)
+
+    if copy_fit_dir:
+        # copy old fit to resampled fit
+        os.system(f"cp -r {fit_path} {resampled_fit_path}")
+
+        # remove old replicas from resampled fit
+        os.system(f"rm -r {resampled_fit_path}/replicas/*")
+
+    if write_ns_results:
+        # overwrite old ns_result.csv with resampled posterior
+        parameters = pdf_model.param_names
+        df = pd.DataFrame(resampled_posterior, columns=parameters)
+        df.to_csv(str(resampled_fit_path) + "/ns_result.csv", float_format="%.5e")
+
+    if replica_range:
+        indices_per_process = replica_range
+    else:
+        indices_per_process = range(n_replicas)
+
+    new_rep_path = resampled_fit_path / "replicas"
+
+    if not os.path.exists(new_rep_path):
+        os.mkdir(new_rep_path)
+
+    # Finish by writing the replicas to export grids, ready for evolution
+    for i in indices_per_process:
+
+        # Get the PDF grid in the evolution basis
+        parameters = resampled_posterior[i]
+        lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+        grid_for_writing = np.array(lhapdf_interpolator(parameters))
+
+        replica_index = i + 1
+
+        replica_index_path = new_rep_path / f"replica_{replica_index}"
+        if not os.path.exists(replica_index_path):
+            os.mkdir(replica_index_path)
+
+        grid_name = replica_index_path / resampled_fit_name
+
+        log.info(f"Writing exportgrid for replica {replica_index}")
+        write_exportgrid(
+            grid_for_writing=grid_for_writing,
+            grid_name=grid_name,
+            replica_index=replica_index,
+            Q=parametrisation_scale,
+            xgrid=LHAPDF_XGRID,
+            export_labels=EXPORT_LABELS,
+        )
+
+    log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
 
 
 def compute_determinants_of_principal_minors(C):
