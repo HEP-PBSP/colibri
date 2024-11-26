@@ -195,6 +195,48 @@ def log_likelihood(
     )
 
 
+def calibrate_stepsampler(
+    pdf_model,
+    bayesian_prior,
+    ns_settings,
+    log_likelihood,
+):
+    """
+
+    """
+    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+
+    # set the ultranest seed
+    np.random.seed(ns_settings["ultranest_seed"])
+
+    parameters = pdf_model.param_names
+
+    # Initialize the ultranest sampler
+    from ultranest import calibrator
+    sampler = calibrator.ReactiveNestedCalibrator(
+        parameters,
+        log_likelihood,
+        bayesian_prior,
+        **ns_settings["ReactiveNS_settings"],
+    )
+
+    sampler.stepsampler = ustepsampler.SliceSampler(
+        generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
+        **ns_settings["SliceSampler_settings"],
+    )
+
+    ultranest_result = sampler.run(**ns_settings["Run_settings"])
+
+    if ns_settings["calibrate_stepsampler"]:
+        for nsteps, res in ultranest_result:
+            # save the calibration results
+            import IPython; IPython.embed()
+            # with open(ns_settings["output_path"] / "calibration_results.yaml", "a") as f:
+            #     f.write(f"{res}\n")
+            # res["samples"] = res["samples"][:n_posterior_samples]
+        
+
+
 def ultranest_fit(
     pdf_model,
     bayesian_prior,
@@ -232,21 +274,12 @@ def ultranest_fit(
     parameters = pdf_model.param_names
 
     # Initialize the ultranest sampler
-    if ns_settings["calibrate_stepsampler"]:
-        sampler = ultranest.ReactiveNestedCalibrator(
-            parameters,
-            log_likelihood,
-            bayesian_prior,
-            **ns_settings["ReactiveNS_settings"],
-        )
-
-    else:
-        sampler = ultranest.ReactiveNestedSampler(
-            parameters,
-            log_likelihood,
-            bayesian_prior,
-            **ns_settings["ReactiveNS_settings"],
-        )
+    sampler = ultranest.ReactiveNestedSampler(
+        parameters,
+        log_likelihood,
+        bayesian_prior,
+        **ns_settings["ReactiveNS_settings"],
+    )
 
     if ns_settings["SliceSampler_settings"]:
         if ns_settings["popstepsampler"]:
@@ -269,8 +302,7 @@ def ultranest_fit(
     if rank == 0:
         log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
-    n_posterior_samples = ns_settings["n_posterior_samples"]
-
+    n_posterior_samples = ns_settings["n_posterior_samples"]  
     # Initialize fit_result to avoid UnboundLocalError
     fit_result = None
 
