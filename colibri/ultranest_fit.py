@@ -17,7 +17,7 @@ import logging
 import sys
 from functools import partial
 
-from colibri.utils import resample_from_ns_posterior, process_dict_to_yaml
+from colibri.utils import resample_from_ns_posterior
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 from colibri.loss_functions import chi2
 import numpy as np
@@ -226,12 +226,10 @@ def calibrate_stepsampler(
     ultranest_result = sampler.run(**ns_settings["Run_settings"])
 
     for nsteps, res in ultranest_result:
-        res = process_dict_to_yaml(res)
-
         res["nsteps"] = nsteps
 
     # only return the last result
-    return nsteps, res
+    return res
 
 
 def ultranest_fit(
