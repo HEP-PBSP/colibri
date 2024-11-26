@@ -227,14 +227,24 @@ def calibrate_stepsampler(
 
     ultranest_result = sampler.run(**ns_settings["Run_settings"])
 
-    if ns_settings["calibrate_stepsampler"]:
-        for nsteps, res in ultranest_result:
-            # save the calibration results
-            import IPython; IPython.embed()
-            # with open(ns_settings["output_path"] / "calibration_results.yaml", "a") as f:
-            #     f.write(f"{res}\n")
-            # res["samples"] = res["samples"][:n_posterior_samples]
-        
+
+    for nsteps, res in ultranest_result:
+        res = process_dict_to_yaml(res)
+
+        res['nsteps'] = nsteps
+    
+    # only return the last result
+    return nsteps, res
+
+
+def run_calibrate_stepsampler(calibrate_stepsampler, output_path):
+    """
+
+    """
+    import yaml
+    nsteps, res = calibrate_stepsampler
+    with open(output_path / "calibration_results.yaml", "w") as f:
+        yaml.dump(res, f)     
 
 
 def ultranest_fit(
@@ -302,7 +312,7 @@ def ultranest_fit(
     if rank == 0:
         log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
-    n_posterior_samples = ns_settings["n_posterior_samples"]  
+    n_posterior_samples = ns_settings["n_posterior_samples"]
     # Initialize fit_result to avoid UnboundLocalError
     fit_result = None
 
