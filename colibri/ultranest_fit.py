@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 import ultranest
+from ultranest import calibrator
 import ultranest.popstepsampler as popstepsampler
 import ultranest.stepsampler as ustepsampler
 import time
@@ -16,7 +17,7 @@ import logging
 import sys
 from functools import partial
 
-from colibri.utils import resample_from_ns_posterior
+from colibri.utils import resample_from_ns_posterior, process_dict_to_yaml
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 from colibri.loss_functions import chi2
 import numpy as np
