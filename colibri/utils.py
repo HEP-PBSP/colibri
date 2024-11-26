@@ -372,28 +372,3 @@ def compute_determinants_of_principal_minors(C):
     determinants.append(1.0)
 
     return np.array(determinants)[::-1]
-
-def process_dict_to_yaml(d):
-    """
-    Process a dictionary to a yaml file.
-    The function converts numpy arrays to lists and numpy floats to Python floats.
-
-    Parameters
-    ----------
-    d : dict
-        The dictionary to process.
-    
-    Returns
-    -------
-    dict
-        The processed dictionary.
-    """
-    for key, value in d.items():
-        if isinstance(value, dict):
-            process_dict_to_yaml(value)
-        elif isinstance(value, np.ndarray):
-            d[key] = value.tolist()
-        elif isinstance(value, np.float64):
-            d[key] = value.item()
-    
-    return d
