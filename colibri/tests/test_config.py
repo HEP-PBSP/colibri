@@ -1,6 +1,7 @@
 from unittest.mock import patch, mock_open
 from reportengine.configparser import ConfigError
 from colibri.config import colibriConfig, Environment
+from colibri.core import PriorSettings
 import unittest.mock as mock
 from pathlib import Path
 import unittest
@@ -55,6 +56,42 @@ def test_init_output(mock_copy2, mock_open, mock_md5, tmp_path):
 
 
 @patch("colibri.config.log.warning")
+def test_parse_prior_settings(mock_warning):
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+
+    # Define the settings input
+    settings1 = {
+        "prior_distribution": "uniform_parameter_prior",
+        "unknown_key": "should_warn",
+    }
+
+    # Call the method
+    result1 = config.parse_prior_settings(settings1)
+
+    # Assert the result is as expected
+    expected1 = PriorSettings(
+        **{
+            "prior_distribution": "uniform_parameter_prior",
+            "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
+        }
+    )
+    assert result1 == expected1
+
+    # Check that the warning was called for the unknown key
+    assert len(mock_warning.mock_calls) == 2
+
+    # check that error is raised
+    settings2 = {
+        "prior_distribution": "prior_from_gauss_posterior",
+    }
+    with unittest.TestCase.assertRaises(unittest.TestCase(), ConfigError):
+        config.parse_prior_settings(settings2)
+
+
+@patch("colibri.config.log.warning")
 def test_parse_analytic_settings(mock_warning):
     # Create input_params required for colibriConfig initialization
     input_params = {}
@@ -66,7 +103,6 @@ def test_parse_analytic_settings(mock_warning):
         "sampling_seed": 42,
         "n_posterior_samples": 500,
         "full_sample_size": 2000,
-        "min_max_prior": True,
         "unknown_key": "should_warn",
     }
 
@@ -78,9 +114,6 @@ def test_parse_analytic_settings(mock_warning):
         "sampling_seed": 42,
         "n_posterior_samples": 500,
         "full_sample_size": 2000,
-        "min_max_prior": True,
-        "n_sigma_prior": False,
-        "n_sigma_value": 5,
     }
     assert result == expected
 
@@ -107,9 +140,6 @@ def test_parse_analytic_settings_defaults():
         "sampling_seed": 123456,
         "n_posterior_samples": 100,
         "full_sample_size": 1000,
-        "min_max_prior": False,
-        "n_sigma_prior": False,
-        "n_sigma_value": 5,
     }
     assert result == expected
 
