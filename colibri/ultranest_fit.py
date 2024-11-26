@@ -213,7 +213,6 @@ def calibrate_stepsampler(
     parameters = pdf_model.param_names
 
     # Initialize the ultranest sampler
-    from ultranest import calibrator
     sampler = calibrator.ReactiveNestedCalibrator(
         parameters,
         log_likelihood,
