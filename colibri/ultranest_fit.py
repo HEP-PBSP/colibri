@@ -231,12 +231,22 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
-    sampler = ultranest.ReactiveNestedSampler(
-        parameters,
-        log_likelihood,
-        bayesian_prior,
-        **ns_settings["ReactiveNS_settings"],
-    )
+    # Initialize the ultranest sampler
+    if ns_settings["calibrator"]:
+        sampler = ultranest.ReactiveNestedCalibrator(
+            parameters,
+            log_likelihood,
+            bayesian_prior,
+            **ns_settings["ReactiveNS_settings"],
+        )
+
+    else:
+        sampler = ultranest.ReactiveNestedSampler(
+            parameters,
+            log_likelihood,
+            bayesian_prior,
+            **ns_settings["ReactiveNS_settings"],
+        )
 
     if ns_settings["SliceSampler_settings"]:
         if ns_settings["popstepsampler"]:
