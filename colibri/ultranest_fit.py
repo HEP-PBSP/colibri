@@ -232,7 +232,7 @@ def ultranest_fit(
     parameters = pdf_model.param_names
 
     # Initialize the ultranest sampler
-    if ns_settings["calibrator"]:
+    if ns_settings["calibrate_stepsampler"]:
         sampler = ultranest.ReactiveNestedCalibrator(
             parameters,
             log_likelihood,
