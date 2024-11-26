@@ -202,9 +202,7 @@ def calibrate_stepsampler(
     ns_settings,
     log_likelihood,
 ):
-    """
-
-    """
+    """ """
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
 
     # set the ultranest seed
@@ -227,24 +225,13 @@ def calibrate_stepsampler(
 
     ultranest_result = sampler.run(**ns_settings["Run_settings"])
 
-
     for nsteps, res in ultranest_result:
         res = process_dict_to_yaml(res)
 
-        res['nsteps'] = nsteps
-    
+        res["nsteps"] = nsteps
+
     # only return the last result
     return nsteps, res
-
-
-def run_calibrate_stepsampler(calibrate_stepsampler, output_path):
-    """
-
-    """
-    import yaml
-    nsteps, res = calibrate_stepsampler
-    with open(output_path / "calibration_results.yaml", "w") as f:
-        yaml.dump(res, f)     
 
 
 def ultranest_fit(
