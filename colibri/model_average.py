@@ -7,7 +7,7 @@ Module containing functions for performing Bayesian model average.
 import logging
 import numpy as np
 
-from colibri.utils import ns_fit_resampler, write_resampled_ns_fit
+from colibri.utils import ns_fit_resampler, write_resampled_ns_fit, analytics_fit_resampler
 
 log = logging.getLogger()
 
@@ -77,6 +77,7 @@ def bayesian_model_combination(
     model_avg_fit_name,
     parametrisation_scale=1.65,
     resampling_seed=1,
+    resample_analytic_fit=False,
 ):
     """ """
     # get fraction of number of replicas for each fit
@@ -85,11 +86,18 @@ def bayesian_model_combination(
     for i, fit in enumerate(selected_fits_with_weights):
         n_frac_samples = int(fit.bayesian_metrics["bayesian_weight"] * n_samples)
 
-        posterior_samples = ns_fit_resampler(
-            fit.fit_path,
-            n_replicas=n_frac_samples,
-            resampling_seed=resampling_seed,
-        )
+        if resample_analytic_fit:
+            posterior_samples = analytics_fit_resampler(
+                fit.fit_path,
+                n_replicas=n_frac_samples,
+                resampling_seed=resampling_seed,
+            )
+        else:
+            posterior_samples = ns_fit_resampler(
+                fit.fit_path,
+                n_replicas=n_frac_samples,
+                resampling_seed=resampling_seed,
+            )
 
         # write to folder
         if i == 0:
