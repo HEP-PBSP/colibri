@@ -7,7 +7,11 @@ Module containing functions for performing Bayesian model average.
 import logging
 import numpy as np
 
-from colibri.utils import ns_fit_resampler, write_resampled_ns_fit, analytics_fit_resampler
+from colibri.utils import (
+    ns_fit_resampler,
+    write_resampled_ns_fit,
+    analytics_fit_resampler,
+)
 
 log = logging.getLogger()
 
