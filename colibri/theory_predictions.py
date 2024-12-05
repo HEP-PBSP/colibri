@@ -351,8 +351,6 @@ def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
 
-    vectorized: bool, default is False
-
     Returns
     -------
     @jax.jit CompiledFunction
@@ -395,8 +393,6 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
-
-    vectorized: bool, default is False
 
     Returns
     -------
