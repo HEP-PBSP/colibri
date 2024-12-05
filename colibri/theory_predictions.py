@@ -200,7 +200,19 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
 
 def pred_funcs_from_dataset(dataset, FIT_XGRID, flavour_indices):
     """
-    TODO
+    Returns a list containing the forward maps associated with the fkspecs of a dataset.
+
+    Parameters
+    ----------
+    dataset: validphys.core.DataGroupSpec
+
+    FIT_XGRID: array
+
+    flavour_indices: list, default is None
+
+    Returns
+    -------
+    list of Mappings
     """
     pred_funcs = []
 
