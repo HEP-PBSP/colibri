@@ -421,9 +421,3 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
         )
 
     return pos_penalties
-
-
-def integ_test(integdatasets):
-    import IPython
-
-    IPython.embed()
