@@ -198,6 +198,24 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
     return had_prediction
 
 
+def pred_funcs_from_dataset(dataset, FIT_XGRID, flavour_indices):
+    """
+    TODO
+    """
+    pred_funcs = []
+
+    for fkspec in dataset.fkspecs:
+        fk = load_fktable(fkspec).with_cuts(dataset.cuts)
+
+        if fk.hadronic:
+            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices)
+        else:
+            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices)
+        pred_funcs.append(pred)
+
+    return pred_funcs
+
+
 def make_pred_dataset(dataset, FIT_XGRID, flavour_indices=None):
     """
     Compute theory prediction for a DataSetSpec
@@ -220,16 +238,7 @@ def make_pred_dataset(dataset, FIT_XGRID, flavour_indices=None):
         dataset
     """
 
-    pred_funcs = []
-
-    for fkspec in dataset.fkspecs:
-        fk = load_fktable(fkspec).with_cuts(dataset.cuts)
-
-        if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices)
-        else:
-            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices)
-        pred_funcs.append(pred)
+    pred_funcs = pred_funcs_from_dataset(dataset, FIT_XGRID, flavour_indices)
 
     def prediction(pdf, fk_dataset):
         return OP[dataset.op](
@@ -349,15 +358,7 @@ def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
 
     """
 
-    pred_funcs = []
-
-    for fkspec in posdataset.fkspecs:
-        fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
-        if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices)
-        else:
-            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices)
-        pred_funcs.append(pred)
+    pred_funcs = pred_funcs_from_dataset(posdataset, FIT_XGRID, flavour_indices)
 
     def pos_penalty(pdf, alpha, lambda_positivity, fk_dataset):
         return lambda_positivity * jax.nn.elu(
@@ -411,4 +412,6 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
 
 
 def integ_test(integdatasets):
-    import IPython; IPython.embed()
+    import IPython
+
+    IPython.embed()
