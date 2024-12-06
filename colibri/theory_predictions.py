@@ -100,8 +100,8 @@ def make_dis_prediction(fktable, FIT_XGRID, flavour_indices=None):
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
-    # atol is chosen to be 1e-7 as this is the order of magnitude of the difference between the smallest entries of the XGRID
-    fk_xgrid_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-7)
+    # atol is chosen to be default = 1e-8 as this is the order of magnitude of the difference between the smallest entries of the XGRID
+    fk_xgrid_indices = closest_indices(FIT_XGRID, fk_xgrid)
 
     def dis_prediction(pdf, fk_arr):
         """
@@ -161,8 +161,8 @@ def make_had_prediction(fktable, FIT_XGRID, flavour_indices=None):
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
-    # atol is chosen to be 1e-7 as this is the order of magnitude of the difference between the smallest entries of the XGRID
-    fk_xgrid_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-7)
+    # atol is chosen to be default = 1e-8 as this is the order of magnitude of the difference between the smallest entries of the XGRID
+    fk_xgrid_indices = closest_indices(FIT_XGRID, fk_xgrid)
 
     def had_prediction(pdf, fk_arr):
         """

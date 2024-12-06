@@ -340,6 +340,7 @@ def likelihood_float_type(
         file.write(str(dtype))
 
 
+
 def compute_determinants_of_principal_minors(C):
     """
     Computes the determinants of the principal minors of a symmetric, positive semi-definite matrix C.
@@ -374,7 +375,8 @@ def compute_determinants_of_principal_minors(C):
     return np.array(determinants)[::-1]
 
 
-def closest_indices(a, v, atol=1e-7):
+
+def closest_indices(a, v, atol=1e-8):
     """
     Returns the indices of the closest value in an array to a given value.
 
