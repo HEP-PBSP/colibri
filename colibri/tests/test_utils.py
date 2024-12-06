@@ -287,6 +287,7 @@ def test_large_psd_matrix():
     result = compute_determinants_of_principal_minors(C)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
+
 def test_single_value():
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([1.1])
