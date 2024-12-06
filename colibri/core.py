@@ -42,5 +42,5 @@ class IntegrabilitySettings:
         List of the flavours for which to impose integrability.
     """
 
-    integrability: bool = False
-    integrability_specs: dict = {}
+    integrability: bool
+    integrability_specs: dict
