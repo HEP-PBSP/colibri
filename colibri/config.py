@@ -308,9 +308,16 @@ class colibriConfig(Config):
                 )
             )
 
+        integrability_settings = {}
+
+        integrability_settings["integrability"] = settings.get("integrability", False)
+        integrability_settings["integrability_specs"] = settings.get(
+            "integrability_specs", {}
+        )
+
         # process integrability_specs if it was defined in the runcard
-        if "integrability_specs" in settings:
-            int_specs = settings["integrability_specs"]
+        if integrability_settings["integrability_specs"] != {}:
+            int_specs = integrability_settings["integrability_specs"]
 
             # assign default values
             int_specs.setdefault("lambda_integrability", 100)
@@ -335,9 +342,9 @@ class colibriConfig(Config):
                 # convert strings to numeric indexes
                 int_specs["evolution_flavours"] = ev_fls
 
-            settings["integrability_specs"] = int_specs
+            integrability_settings["integrability_specs"] = int_specs
 
-        return IntegrabilitySettings(**settings)
+        return IntegrabilitySettings(**integrability_settings)
 
     def parse_prior_settings(self, settings):
         """
