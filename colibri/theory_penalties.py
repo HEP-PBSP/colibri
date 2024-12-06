@@ -132,6 +132,10 @@ def integrability_penalty(pdf_grid, integrability_settings, FIT_XGRID):
     Returns
     -------
     """
+
+    if not integrability_settings.integrability:
+        return 0
+
     # only select a subset of flavours
     integ_flavours = jnp.array(
         integrability_settings.integrability_specs["evolution_flavours"]
@@ -139,12 +143,12 @@ def integrability_penalty(pdf_grid, integrability_settings, FIT_XGRID):
     integ_pdf_grid = pdf_grid[integ_flavours]
 
     # only select the smallest xgrid point of FIT_XGRID to impose Integrability on
-    x_idx = closest_indices(jnp.array(XGRID), FIT_XGRID[0])
+    x_idx = closest_indices(jnp.array(XGRID), jnp.array(FIT_XGRID[0]))
     integ_pdf_grid = integ_pdf_grid[:, x_idx]
 
     # compute integrability penalty term
     penalty = integrability_settings.integrability_specs[
         "lambda_integrability"
-    ] * jnp.sum((FIT_XGRID[0] * (integ_pdf_grid)) ** 2)
+    ] * jnp.sum(((integ_pdf_grid)) ** 2)
 
     return penalty
