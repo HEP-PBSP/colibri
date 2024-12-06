@@ -8,7 +8,8 @@ import jax
 import jax.numpy as jnp
 
 from colibri.theory_predictions import pred_funcs_from_dataset, OP
-from colibri.utils import mask_fktable_array
+from colibri.utils import mask_fktable_array, closest_indices
+from colibri.constants import XGRID
 
 from validphys.fkparser import load_fktable
 
@@ -113,3 +114,37 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
         )
 
     return pos_penalties
+
+
+def integrability_penalty(pdf_grid, integrability_settings, FIT_XGRID):
+    """
+    Compute the integrability penalty to be added to the loss function.
+
+    Parameters
+    ----------
+    pdf_grid: jnp.array of shape (14, 50)
+
+    integrability_settings: colibri.core.IntegrabilitySettings dataclass
+
+    FIT_XGRID: jnp array
+        contains the xgrid used in the fit.
+
+    Returns
+    -------
+    """
+    # only select a subset of flavours
+    integ_flavours = jnp.array(
+        integrability_settings.integrability_specs["evolution_flavours"]
+    )
+    integ_pdf_grid = pdf_grid[integ_flavours]
+
+    # only select the smallest xgrid point of FIT_XGRID to impose Integrability on
+    x_idx = closest_indices(jnp.array(XGRID), FIT_XGRID[0])
+    integ_pdf_grid = integ_pdf_grid[:, x_idx]
+
+    # compute integrability penalty term
+    penalty = integrability_settings.integrability_specs[
+        "lambda_integrability"
+    ] * jnp.sum((FIT_XGRID[0] * (integ_pdf_grid)) ** 2)
+
+    return penalty
