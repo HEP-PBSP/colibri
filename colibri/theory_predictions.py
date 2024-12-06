@@ -417,3 +417,34 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
         )
 
     return pos_penalties
+
+def make_penalty_integdataset(integdataset, FIT_XGRID, flavour_indices=None):
+    """
+    Given a ... compute the ... penalty
+    as a lagrange multiplier times ...
+
+    Parameters
+    ----------
+    integdataset: 
+
+    FIT_XGRID: np.ndarray
+        xgrid of the theory, computed by a production rule by taking
+        the sorted union of the xgrids of the datasets entering the fit.
+
+    Returns
+    -------
+    
+
+    """
+
+    pred_funcs = pred_funcs_from_dataset(integdataset, FIT_XGRID, flavour_indices)
+
+    def integ_penalty(pdf, lambda_integrability, fk_dataset):
+        return lambda_integrability * OP[integdataset.op](
+                *[f(pdf, fk_arr) for (f, fk_arr) in zip(pred_funcs, fk_dataset)]
+            ),
+
+    return integ_penalty
+
+def integ_test(integdatasets):
+    import IPython; IPython.embed()
