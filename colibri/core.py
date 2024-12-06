@@ -25,3 +25,22 @@ class PriorSettings:
 
     prior_distribution: str
     prior_distribution_specs: dict
+
+
+@dataclass(frozen=True)
+class IntegrabilitySettings:
+    """
+    Dataclass containing the settings for the Integrability constraints
+    to be imposed during a fit.
+
+    Attributes
+    ----------
+    lambda_integrability: float
+        The value of the Lagrange multiplier penalty.
+
+    evolution_pdf_flavours: list
+        List of the flavours for which to impose integrability.
+    """
+
+    lambda_integrability: float
+    evolution_pdf_flavours: list
