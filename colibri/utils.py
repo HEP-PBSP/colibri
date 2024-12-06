@@ -372,3 +372,36 @@ def compute_determinants_of_principal_minors(C):
     determinants.append(1.0)
 
     return np.array(determinants)[::-1]
+
+
+def closest_indices(a, v, atol=1e-8):
+    """
+    Returns the indices of the closest value in an array to a given value.
+
+    Note: the function is different from np.searchsorted.
+    The main difference is that np.searchsorted returns the index where each
+    element of v should be inserted in a in order to preserve the order (see example below).
+
+    Parameters
+    ----------
+    a : array-like
+
+    v : array-like or float
+
+    Returns
+    -------
+    array-like
+
+    Examples
+    --------
+    >>> a = np.array([1, 2, 3])
+    >>> v = np.array([1.1, 3.0])
+    >>> closest_indices(array, value, atol=0.1)
+    array([0, 2])
+
+    >>> np.searchsorted(a, v)
+    array([1, 2])
+
+    """
+
+    return jnp.where(jnp.isclose(a, v[:, None], atol=atol) == True)[1]
