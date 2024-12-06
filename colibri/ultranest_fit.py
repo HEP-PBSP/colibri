@@ -103,6 +103,9 @@ class UltraNestLogLikelihood(object):
             self.penalty_posdata = jax.vmap(
                 self.penalty_posdata, in_axes=(0, None, None, None), out_axes=0
             )
+            self.integrability_penalty = jax.vmap(
+                self.integrability_penalty, in_axes=(0,), out_axes=0
+            )
 
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
