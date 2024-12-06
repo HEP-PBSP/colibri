@@ -42,5 +42,5 @@ class IntegrabilitySettings:
         List of the flavours for which to impose integrability.
     """
 
-    lambda_integrability: float
-    evolution_pdf_flavours: list
+    integrability: bool = False
+    integrability_specs: dict = {}
