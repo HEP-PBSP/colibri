@@ -374,7 +374,7 @@ def compute_determinants_of_principal_minors(C):
     return np.array(determinants)[::-1]
 
 
-def closest_indices(a, v, atol=1e-4):
+def closest_indices(a, v, atol=1e-7):
     """
     Returns the indices of the closest value in an array to a given value.
 
