@@ -16,7 +16,7 @@ import jax.numpy as jnp
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
-from colibri.core import PriorSettings
+from colibri.core import PriorSettings, IntegrabilitySettings
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
@@ -284,6 +284,60 @@ class colibriConfig(Config):
         )
 
         return positivity_penalty_settings
+
+    def parse_integrability_settings(self, settings):
+        """
+        Parses the integrability settings defined in the runcard
+        into an IntegrabilitySettings dataclass.
+        """
+
+        known_keys = {
+            "integrability",
+            "integrability_specs",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            # raise error if key not in known keys as otherwise IntegrabilitySettigs would
+            # be passed an uknown key
+            raise (
+                ConfigError(
+                    f"Key '{k}' in integrability_settings not known.",
+                    k,
+                    known_keys,
+                )
+            )
+
+        # process integrability_specs if it was defined in the runcard
+        if "integrability_specs" in settings:
+            int_specs = settings["integrability_specs"]
+
+            # assign default values
+            int_specs.setdefault("lambda_integrability", 100)
+            int_specs.setdefault("evolution_flavours", [9, 10])  # T3 and T8 as default
+
+            if int_specs["evolution_flavours"] != [
+                9,
+                10,
+            ]:  # only process if not default
+
+                ev_fls = []
+
+                for ev_fl in int_specs["evolution_flavours"]:
+                    if ev_fl not in FLAVOUR_TO_ID_MAPPING.keys():
+                        raise (
+                            ConfigError(
+                                f"evolution_flavours ids can only be taken from  {FLAVOUR_TO_ID_MAPPING.keys()}"
+                            )
+                        )
+                    ev_fls.append(FLAVOUR_TO_ID_MAPPING[ev_fl])
+
+                # convert strings to numeric indexes
+                int_specs["evolution_flavours"] = ev_fls
+
+            settings["integrability_specs"] = int_specs
+
+        return IntegrabilitySettings(**settings)
 
     def parse_prior_settings(self, settings):
         """
