@@ -10,6 +10,7 @@ import os
 import pathlib
 import sys
 from functools import wraps
+from typing import Union
 
 import dill
 import jax
@@ -423,16 +424,35 @@ def analytic_fit_resampler(
 
 
 def write_resampled_bayesian_fit(
-    resampled_posterior,
-    fit_path,
-    resampled_fit_path,
-    resampled_fit_name,
-    parametrisation_scale,
+    resampled_posterior: np.ndarray,
+    fit_path: pathlib.Path,
+    resampled_fit_path: pathlib.Path,
+    resampled_fit_name: Union[str, pathlib.Path],
+    parametrisation_scale: float,
+    csv_results_name: str,
 ):
     """
     Writes the resampled ns fit to `resampled_fit_path`.
-    """
 
+    Parameters
+    ----------
+    resampled_posterior: np.ndarray
+        The resampled posterior.
+
+    fit_path: pathlib.Path
+        The path to the original fit.
+
+    resampled_fit_path: pathlib.Path
+        The path to the resampled fit.
+
+    resampled_fit_name: Union[str, pathlib.Path]
+        The name of the resampled fit.
+
+    parametrisation_scale: float
+
+    csv_results_name: str
+        The name of the csv file to store the resampled posterior.
+    """
     log.info(f"Loading pdf model from {fit_path}")
 
     # load pdf_model from fit using dill
@@ -448,7 +468,7 @@ def write_resampled_bayesian_fit(
     # overwrite old ns_result.csv with resampled posterior
     parameters = pdf_model.param_names
     df = pd.DataFrame(resampled_posterior, columns=parameters)
-    df.to_csv(str(resampled_fit_path) + "/ns_result.csv", float_format="%.5e")
+    df.to_csv(str(resampled_fit_path) + f"/{csv_results_name}.csv", float_format="%.5e")
 
     new_rep_path = resampled_fit_path / "replicas"
 
@@ -480,6 +500,46 @@ def write_resampled_bayesian_fit(
         )
 
     log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
+
+
+def write_resampled_ultranest_fit(
+    resampled_posterior: np.ndarray,
+    fit_path: pathlib.Path,
+    resampled_fit_path: pathlib.Path,
+    resampled_fit_name: Union[str, pathlib.Path],
+    parametrisation_scale: float,
+):
+    """
+    Wrapper for writing resampled ultranest fit.
+    """
+    return write_resampled_bayesian_fit(
+        resampled_posterior,
+        fit_path,
+        resampled_fit_path,
+        resampled_fit_name,
+        parametrisation_scale,
+        csv_results_name="ns_result",
+    )
+
+
+def write_resampled_analytic_fit(
+    resampled_posterior: np.ndarray,
+    fit_path: pathlib.Path,
+    resampled_fit_path: pathlib.Path,
+    resampled_fit_name: Union[str, pathlib.Path],
+    parametrisation_scale: float,
+):
+    """
+    Wrapper for writing resampled analytic fit.
+    """
+    return write_resampled_bayesian_fit(
+        resampled_posterior,
+        fit_path,
+        resampled_fit_path,
+        resampled_fit_name,
+        parametrisation_scale,
+        csv_results_name="analytic_result",
+    )
 
 
 def compute_determinants_of_principal_minors(C):

@@ -405,6 +405,7 @@ def test_write_resampled_bayesian_fit(
             resampled_fit_path=resampled_fit_path,
             resampled_fit_name=resampled_fit_name,
             parametrisation_scale=parametrisation_scale,
+            csv_results_name="ns_result.csv",
         )
 
     # Verify that open was called with pdf_model.pkl
