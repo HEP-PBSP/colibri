@@ -9,7 +9,7 @@ import pathlib
 
 from reportengine import colors
 
-from colibri.utils import ns_fit_resampler, write_resampled_ns_fit
+from colibri.utils import ultranest_ns_fit_resampler, write_resampled_ns_fit
 
 
 log = logging.getLogger()
@@ -62,7 +62,7 @@ def main():
     # path of resampled fit
     resampled_fit_path = pathlib.Path(args.resampled_fit_name)
 
-    resampled_posterior = ns_fit_resampler(
+    resampled_posterior = ultranest_ns_fit_resampler(
         fit_path,
         args.nreplicas,
         args.resampling_seed,

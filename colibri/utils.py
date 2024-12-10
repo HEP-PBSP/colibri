@@ -351,7 +351,7 @@ def likelihood_float_type(
         file.write(str(dtype))
 
 
-def ns_fit_resampler(
+def ultranest_ns_fit_resampler(
     fit_path,
     n_replicas,
     resampling_seed,

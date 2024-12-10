@@ -1,4 +1,6 @@
 """
+colibri.tests.test_utils.py
+
 Module for testing the utils module.
 """
 
@@ -31,7 +33,7 @@ from colibri.utils import (
     likelihood_float_type,
     mask_fktable_array,
     mask_luminosity_mapping,
-    ns_fit_resampler,
+    ultranest_ns_fit_resampler,
     write_resampled_ns_fit,
     compute_determinants_of_principal_minors,
 )
@@ -270,7 +272,7 @@ def test_ns_fit_resampler_file_not_found(mock_resample, mock_read_csv, mock_exis
     mock_exists.return_value = False
 
     with pytest.raises(FileNotFoundError) as exc_info:
-        ns_fit_resampler(fit_path, n_replicas, resampling_seed)
+        ultranest_ns_fit_resampler(fit_path, n_replicas, resampling_seed)
 
     assert "please run the bayesian fit first" in str(exc_info.value)
     mock_exists.assert_called_once_with(
@@ -302,7 +304,7 @@ def test_ns_fit_resampler_replicas_exceeding_samples(
     expected_resampled = np.array([[1, 2], [3, 4]])  # Example result
     mock_resample.return_value = expected_resampled
 
-    result = ns_fit_resampler(fit_path, n_replicas, resampling_seed)
+    result = ultranest_ns_fit_resampler(fit_path, n_replicas, resampling_seed)
 
     assert result is expected_resampled
 
@@ -341,7 +343,7 @@ def test_ns_fit_resampler_normal_case(mock_resample, mock_read_csv, mock_exists)
     expected_resampled = np.array([[3, 4], [5, 6]])  # Example result
     mock_resample.return_value = expected_resampled
 
-    result = ns_fit_resampler(fit_path, n_replicas, resampling_seed)
+    result = ultranest_ns_fit_resampler(fit_path, n_replicas, resampling_seed)
 
     assert result is expected_resampled
     mock_exists.assert_called_once_with(
