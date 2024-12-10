@@ -315,34 +315,32 @@ class colibriConfig(Config):
             "integrability_specs", {}
         )
 
-        # process integrability_specs if it was defined in the runcard
-        if integrability_settings["integrability_specs"] != {}:
-            int_specs = integrability_settings["integrability_specs"]
+        int_specs = integrability_settings["integrability_specs"]
 
-            # assign default values
-            int_specs.setdefault("lambda_integrability", 100)
-            int_specs.setdefault("evolution_flavours", [9, 10])  # T3 and T8 as default
+        # assign default values
+        int_specs.setdefault("lambda_integrability", 100)
+        int_specs.setdefault("evolution_flavours", [9, 10])  # T3 and T8 as default
 
-            if int_specs["evolution_flavours"] != [
-                9,
-                10,
-            ]:  # only process if not default
+        if int_specs["evolution_flavours"] != [
+            9,
+            10,
+        ]:  # only process if not default
 
-                ev_fls = []
+            ev_fls = []
 
-                for ev_fl in int_specs["evolution_flavours"]:
-                    if ev_fl not in FLAVOUR_TO_ID_MAPPING.keys():
-                        raise (
-                            ConfigError(
-                                f"evolution_flavours ids can only be taken from  {FLAVOUR_TO_ID_MAPPING.keys()}"
-                            )
+            for ev_fl in int_specs["evolution_flavours"]:
+                if ev_fl not in FLAVOUR_TO_ID_MAPPING.keys():
+                    raise (
+                        ConfigError(
+                            f"evolution_flavours ids can only be taken from  {FLAVOUR_TO_ID_MAPPING.keys()}"
                         )
-                    ev_fls.append(FLAVOUR_TO_ID_MAPPING[ev_fl])
+                    )
+                ev_fls.append(FLAVOUR_TO_ID_MAPPING[ev_fl])
 
-                # convert strings to numeric indexes
-                int_specs["evolution_flavours"] = ev_fls
+            # convert strings to numeric indexes
+            int_specs["evolution_flavours"] = ev_fls
 
-            integrability_settings["integrability_specs"] = int_specs
+        integrability_settings["integrability_specs"] = int_specs
 
         return IntegrabilitySettings(**integrability_settings)
 
