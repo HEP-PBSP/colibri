@@ -320,6 +320,9 @@ class colibriConfig(Config):
         # assign default values
         int_specs.setdefault("lambda_integrability", 100)
         int_specs.setdefault("evolution_flavours", [9, 10])  # T3 and T8 as default
+        int_specs.setdefault(
+            "integrability_xgrid", [2.00000000e-07]
+        )  # last point of XGRID as default
 
         if int_specs["evolution_flavours"] != [
             9,
