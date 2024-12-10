@@ -358,6 +358,7 @@ def resample_posterior_from_file(
     n_replicas: int,
     resampling_seed: int,
     use_all_columns: bool = False,
+    read_csv_args: dict = None,
 ):
     """
     Generic function to resample from a posterior using a specified file path.
@@ -370,7 +371,7 @@ def resample_posterior_from_file(
         )
 
     # Load the samples
-    samples = pd.read_csv(full_path, sep="\s+", dtype=float)
+    samples = pd.read_csv(full_path, **read_csv_args)
     if not use_all_columns:
         samples = samples.iloc[:, 1:]
 
@@ -405,6 +406,7 @@ def ultranest_ns_fit_resampler(
         n_replicas,
         resampling_seed,
         use_all_columns=True,
+        read_csv_args={"sep": "\s+", "dtype": float},
     )
 
 
@@ -420,6 +422,7 @@ def analytic_fit_resampler(
         n_replicas,
         resampling_seed,
         use_all_columns=False,
+        read_csv_args={"index_col": None, "dtype": float},
     )
 
 

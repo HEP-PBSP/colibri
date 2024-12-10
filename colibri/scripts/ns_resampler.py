@@ -9,7 +9,11 @@ import pathlib
 
 from reportengine import colors
 
-from colibri.utils import ultranest_ns_fit_resampler, write_resampled_bayesian_fit
+from colibri.utils import (
+    ultranest_ns_fit_resampler,
+    analytic_fit_resampler,
+    write_resampled_bayesian_fit,
+)
 
 
 log = logging.getLogger()
@@ -20,6 +24,13 @@ log.addHandler(colors.ColorHandler())
 def main():
     parser = argparse.ArgumentParser(description="Script to resample from NS posterior")
     parser.add_argument("fit_name", help="The colibri fit from which to sample.")
+    parser.add_argument(
+        "--fitype",
+        "-t",
+        type=str,
+        default="ultranest",
+        help="The type of fit to be resampled. Currently only ultranest and analytic are supported.",
+    )
     parser.add_argument(
         "--nreplicas",
         "-nrep",
@@ -62,11 +73,24 @@ def main():
     # path of resampled fit
     resampled_fit_path = pathlib.Path(args.resampled_fit_name)
 
-    resampled_posterior = ultranest_ns_fit_resampler(
-        fit_path,
-        args.nreplicas,
-        args.resampling_seed,
-    )
+    if args.fitype == "ultranest":
+        resampled_posterior = ultranest_ns_fit_resampler(
+            fit_path,
+            args.nreplicas,
+            args.resampling_seed,
+        )
+        csv_result_name = "ns_result"
+
+    elif args.fitype == "analytic":
+        resampled_posterior = analytic_fit_resampler(
+            fit_path,
+            args.nreplicas,
+            args.resampling_seed,
+        )
+        csv_result_name = "analytic_result"
+
+    else:
+        raise ValueError(f"Unknown fitype: {args.fitype}")
 
     write_resampled_bayesian_fit(
         resampled_posterior,
@@ -74,4 +98,5 @@ def main():
         resampled_fit_path,
         args.resampled_fit_name,
         args.parametrisation_scale,
+        csv_result_name,
     )
