@@ -274,7 +274,7 @@ def test_ns_fit_resampler_file_not_found(mock_resample, mock_read_csv, mock_exis
     with pytest.raises(FileNotFoundError) as exc_info:
         ultranest_ns_fit_resampler(fit_path, n_replicas, resampling_seed)
 
-    assert "please run the bayesian fit first" in str(exc_info.value)
+    assert "please run the appropriate fit first." in str(exc_info.value)
     mock_exists.assert_called_once_with(
         fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
     )
@@ -377,7 +377,6 @@ def test_write_resampled_bayesian_fit(
     fit_path = Path("/fake/fit/path")
     resampled_fit_path = Path("/fake/resampled/path")
     resampled_posterior = np.array([[0.1, 0.2], [0.3, 0.4]])
-    n_replicas = 2
     resampled_fit_name = "test_grid"
     parametrisation_scale = 1.0
 
@@ -404,7 +403,6 @@ def test_write_resampled_bayesian_fit(
             resampled_posterior=resampled_posterior,
             fit_path=fit_path,
             resampled_fit_path=resampled_fit_path,
-            n_replicas=n_replicas,
             resampled_fit_name=resampled_fit_name,
             parametrisation_scale=parametrisation_scale,
         )
@@ -425,72 +423,6 @@ def test_write_resampled_bayesian_fit(
     with patch("pandas.DataFrame.to_csv") as mock_to_csv:
         df.to_csv(expected_csv_path, float_format="%.5e")
         mock_to_csv.assert_called_once_with(expected_csv_path, float_format="%.5e")
-
-
-# @mock.patch("builtins.open", mock.mock_open(read_data=b"binary data"), new_callable=mock.mock_open)
-@mock.patch("builtins.open", new_callable=mock.mock_open, read_data=b"binary data")
-@mock.patch("dill.load")
-@mock.patch("colibri.utils.os.system")
-@mock.patch("colibri.utils.os.path.exists")
-@mock.patch("colibri.utils.os.mkdir")
-@mock.patch("colibri.utils.write_exportgrid")
-def test_write_resampled_bayesian_fit_with_replica_range(
-    mock_write_exportgrid,
-    mock_mkdir,
-    mock_exists,
-    mock_os_system,
-    mock_dill_load,
-    mock_open,
-):
-    # Setup mock parameters
-    fit_path = Path("/fake/fit/path")
-    resampled_fit_path = Path("/fake/resampled/path")
-    resampled_posterior = np.array([[0.1, 0.2], [0.3, 0.4]])
-    n_replicas = 2
-    resampled_fit_name = "test_grid"
-    parametrisation_scale = 1.0
-    replica_range = [0]  # Test with a specific range
-
-    # Mock pdf_model and parameter names
-    mock_pdf_model = MagicMock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func.return_value = lambda params: [
-        params[0] + 1,
-        params[1] + 1,
-    ]
-    mock_dill_load.return_value = mock_pdf_model
-
-    # Ensure os.path.exists returns True for necessary paths
-    mock_exists.return_value = False
-
-    # Mock Path().is_dir() to return True for the resampled path
-    with patch.object(Path, "is_dir", return_value=True):
-
-        # Run the function with the replica_range parameter
-        write_resampled_bayesian_fit(
-            resampled_posterior=resampled_posterior,
-            fit_path=fit_path,
-            resampled_fit_path=resampled_fit_path,
-            n_replicas=n_replicas,
-            resampled_fit_name=resampled_fit_name,
-            parametrisation_scale=parametrisation_scale,
-            replica_range=replica_range,  # Providing replica_range
-        )
-
-    # Ensure the correct range of replicas is processed
-    assert mock_write_exportgrid.call_count == len(
-        replica_range
-    ), f"Expected {len(replica_range)} calls to write_exportgrid, but got {mock_write_exportgrid.call_count}"
-
-    # Check that os.mkdir was called twice (once for new_rep_path and once for replica_index_path)
-    # `new_rep_path` is resampled_fit_path / "replicas"
-    new_rep_path = resampled_fit_path / "replicas"
-    # `replica_index_path` is new_rep_path / f"replica_{i+1}" for each replica (here we test for i=0)
-    replica_index_path = new_rep_path / "replica_1"
-
-    # Assert that os.mkdir was called for both directories
-    mock_mkdir.assert_any_call(new_rep_path)
-    mock_mkdir.assert_any_call(replica_index_path)
 
 
 def test_identity_matrix():

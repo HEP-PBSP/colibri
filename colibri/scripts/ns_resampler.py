@@ -67,11 +67,11 @@ def main():
         args.nreplicas,
         args.resampling_seed,
     )
+
     write_resampled_bayesian_fit(
         resampled_posterior,
         fit_path,
         resampled_fit_path,
-        args.nreplicas,
         args.resampled_fit_name,
         args.parametrisation_scale,
     )

@@ -426,12 +426,8 @@ def write_resampled_bayesian_fit(
     resampled_posterior,
     fit_path,
     resampled_fit_path,
-    n_replicas,
     resampled_fit_name,
     parametrisation_scale,
-    copy_fit_dir=True,
-    write_ns_results=True,
-    replica_range=None,
 ):
     """
     Writes the resampled ns fit to `resampled_fit_path`.
@@ -443,23 +439,16 @@ def write_resampled_bayesian_fit(
     with open(fit_path / "pdf_model.pkl", "rb") as file:
         pdf_model = dill.load(file)
 
-    if copy_fit_dir:
-        # copy old fit to resampled fit
-        os.system(f"cp -r {fit_path} {resampled_fit_path}")
+    # copy old fit to resampled fit
+    os.system(f"cp -r {fit_path} {resampled_fit_path}")
 
-        # remove old replicas from resampled fit
-        os.system(f"rm -r {resampled_fit_path}/replicas/*")
+    # remove old replicas from resampled fit
+    os.system(f"rm -r {resampled_fit_path}/replicas/*")
 
-    if write_ns_results:
-        # overwrite old ns_result.csv with resampled posterior
-        parameters = pdf_model.param_names
-        df = pd.DataFrame(resampled_posterior, columns=parameters)
-        df.to_csv(str(resampled_fit_path) + "/ns_result.csv", float_format="%.5e")
-
-    if replica_range:
-        indices_per_process = replica_range
-    else:
-        indices_per_process = range(n_replicas)
+    # overwrite old ns_result.csv with resampled posterior
+    parameters = pdf_model.param_names
+    df = pd.DataFrame(resampled_posterior, columns=parameters)
+    df.to_csv(str(resampled_fit_path) + "/ns_result.csv", float_format="%.5e")
 
     new_rep_path = resampled_fit_path / "replicas"
 
@@ -467,10 +456,8 @@ def write_resampled_bayesian_fit(
         os.mkdir(new_rep_path)
 
     # Finish by writing the replicas to export grids, ready for evolution
-    for i in indices_per_process:
-
+    for i, parameters in enumerate(resampled_posterior):
         # Get the PDF grid in the evolution basis
-        parameters = resampled_posterior[i]
         lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
         grid_for_writing = np.array(lhapdf_interpolator(parameters))
 
