@@ -116,7 +116,7 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
     return pos_penalties
 
 
-def integrability_penalty(integrability_settings, FIT_XGRID):
+def integrability_penalty(integrability_settings):
     """
     Compute the integrability penalty to be added to the loss function.
 
@@ -124,24 +124,29 @@ def integrability_penalty(integrability_settings, FIT_XGRID):
     ----------
     integrability_settings: colibri.core.IntegrabilitySettings dataclass
 
-    FIT_XGRID: jnp array
-        contains the xgrid used in the fit.
-
     Returns
     -------
     Callable
+        A function that takes the pdf grid (x f(x)) and returns the integrability penalty term.
     """
 
     if not integrability_settings.integrability:
         return lambda pdf: jnp.array([0])
 
-    # only select a subset of flavours
+    # only select the subset of specified flavours
     integ_flavours = jnp.array(
         integrability_settings.integrability_specs["evolution_flavours"]
     )
 
-    # only select the smallest xgrid point of FIT_XGRID to impose Integrability on
-    x_idx = closest_indices(jnp.array(XGRID), jnp.array(FIT_XGRID[0]))
+    integ_xgrid = integrability_settings.integrability_specs["integrability_xgrid"]
+    # ensure that the integrability xgrid points are included in the range of the fit xgrid
+    if any([x > XGRID[-1] or x < XGRID[0] for x in integ_xgrid]):
+        raise ValueError(
+            f"Integrability xgrid points are not included in the range of the fit xgrid, choose xgrid points within {XGRID[0]} and {XGRID[-1]}."
+        )
+
+    # select
+    x_idxs = closest_indices(jnp.array(XGRID), jnp.array(integ_xgrid))
 
     lambda_integrability = integrability_settings.integrability_specs[
         "lambda_integrability"
@@ -157,10 +162,14 @@ def integrability_penalty(integrability_settings, FIT_XGRID):
         ----------
         pdf: jnp.array of shape (14, 50)
 
+        Returns
+        -------
+        jnp.array of shape (len(integ_flavours), )
         """
-        integ_pdf_grid = pdf[integ_flavours, x_idx]
-        # compute integrability penalty term
-        penalty = lambda_integrability * (integ_pdf_grid) ** 2
+        integ_pdf_grid = pdf[integ_flavours, :][:, x_idxs]
+        # compute integrability penalty term and sum over xgrid points
+        penalty = lambda_integrability * jnp.sum((integ_pdf_grid) ** 2, axis=0)
+
         return penalty
 
     return integ_penalty
