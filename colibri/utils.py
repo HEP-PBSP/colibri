@@ -351,82 +351,75 @@ def likelihood_float_type(
         file.write(str(dtype))
 
 
-def ultranest_ns_fit_resampler(
-    fit_path,
-    n_replicas,
-    resampling_seed,
+def resample_posterior_from_file(
+    fit_path: pathlib.Path,
+    file_path: pathlib.Path,
+    n_replicas: int,
+    resampling_seed: int,
+    use_all_columns: bool = False,
 ):
     """
-    Function uses resample_from_ns_posterior to resample from a nested sampling result posterior.
+    Generic function to resample from a posterior using a specified file path.
     """
-
-    # Check that the .txt file with equally weighted posterior samples exists
-    if not os.path.exists(fit_path / "ultranest_logs/chains/equal_weighted_post.txt"):
+    # Check that the file exists
+    full_path = fit_path / file_path
+    if not os.path.exists(full_path):
         raise FileNotFoundError(
-            f"{fit_path}/ultranest_logs/chains/equal_weighted_post.txt does not exist;"
-            "please run the bayesian fit first."
+            f"{full_path} does not exist; please run the appropriate fit first."
         )
 
-    equal_weight_post_path = fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
+    # Load the samples
+    samples = pd.read_csv(full_path, sep="\s+", dtype=float)
+    if not use_all_columns:
+        samples = samples.iloc[:, 1:]
 
-    samples = pd.read_csv(equal_weight_post_path, sep="\s+", dtype=float).values
+    samples = samples.values
 
+    # Adjust number of replicas if necessary
     if n_replicas > samples.shape[0]:
         n_replicas = samples.shape[0]
         log.warning(
-            f"The chosen number of posterior samples exceeds the number of posterior"
-            "samples computed by ultranest. Setting the number of resampled posterior"
-            f"samples to {n_replicas}"
+            f"The chosen number of posterior samples exceeds the available posterior samples."
+            f" Setting the number of resampled posterior samples to {n_replicas}."
         )
 
+    # Resample from posterior
     resampled_posterior = resample_from_ns_posterior(
         samples,
         n_replicas,
         resampling_seed,
     )
-
     return resampled_posterior
+
+
+def ultranest_ns_fit_resampler(
+    fit_path: pathlib.Path, n_replicas: int, resampling_seed: int
+):
+    """
+    Wrapper for resampling from ultranest nested sampling result posterior.
+    """
+    return resample_posterior_from_file(
+        fit_path,
+        pathlib.Path("ultranest_logs/chains/equal_weighted_post.txt"),
+        n_replicas,
+        resampling_seed,
+        use_all_columns=True,
+    )
 
 
 def analytic_fit_resampler(
-    fit_path,
-    n_replicas,
-    resampling_seed,
+    fit_path: pathlib.Path, n_replicas: int, resampling_seed: int
 ):
     """
-    Function uses resample_from_ns_posterior to resample from analytic posterior.
+    Wrapper for resampling from analytic posterior.
     """
-
-    # Check that the .txt file with equally weighted posterior samples exists
-    if not os.path.exists(fit_path / "full_posterior_sample.csv"):
-        raise FileNotFoundError(
-            f"{fit_path}/full_posterior_sample.csv does not exist;"
-            "please run the analytic fit first."
-        )
-
-    equal_weight_post_path = fit_path / "full_posterior_sample.csv"
-
-    samples = (
-        pd.read_csv(equal_weight_post_path, index_col=None, dtype=float)
-        .iloc[:, 1:]
-        .values
-    )
-
-    if n_replicas > samples.shape[0]:
-        n_replicas = samples.shape[0]
-        log.warning(
-            f"The chosen number of posterior samples exceeds the number of posterior"
-            "samples computed by ultranest. Setting the number of resampled posterior"
-            f"samples to {n_replicas}"
-        )
-
-    resampled_posterior = resample_from_ns_posterior(
-        samples,
+    return resample_posterior_from_file(
+        fit_path,
+        "full_posterior_sample.csv",
         n_replicas,
         resampling_seed,
+        use_all_columns=False,
     )
-
-    return resampled_posterior
 
 
 def write_resampled_ns_fit(
