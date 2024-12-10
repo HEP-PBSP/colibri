@@ -431,4 +431,5 @@ def test_parse_integrability_settings_empty():
     assert result.integrability_specs == {
         "lambda_integrability": 100,
         "evolution_flavours": [9, 10],
+        "integrability_xgrid": [2.00000000e-07],
     }  # Default
