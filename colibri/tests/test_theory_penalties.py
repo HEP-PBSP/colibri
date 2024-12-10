@@ -4,20 +4,21 @@ colibri.tests.test_theory_penalties.py
 Test module for theory_penalties.py
 """
 
-from numpy.testing import assert_allclose
+from unittest.mock import MagicMock
+
 import jax.numpy as jnp
 import pytest
+from numpy.testing import assert_allclose
+from validphys.fkparser import load_fktable
 
 from colibri.api import API as colibriAPI
-
 from colibri.tests.conftest import (
     TEST_DATASETS,
     TEST_POS_DATASET,
     TEST_SINGLE_POS_DATASET,
     TEST_SINGLE_POS_DATASET_HAD,
 )
-
-from validphys.fkparser import load_fktable
+from colibri.theory_penalties import integrability_penalty
 
 
 def test_positivity_fast_kernel_arrays():
@@ -63,14 +64,6 @@ def test_make_penalty_posdata():
     )
 
     assert callable(penalty_posdata)
-
-
-import jax.numpy as jnp
-import pytest
-from unittest.mock import MagicMock
-from colibri.theory_penalties import (
-    integrability_penalty,
-)  # Replace `your_module` with the actual module name
 
 
 def test_integrability_penalty_no_integrability():
