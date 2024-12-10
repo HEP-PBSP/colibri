@@ -133,7 +133,7 @@ def integrability_penalty(integrability_settings, FIT_XGRID):
     """
 
     if not integrability_settings.integrability:
-        return lambda pdf: 0
+        return lambda pdf: jnp.array([0])
 
     # only select a subset of flavours
     integ_flavours = jnp.array(
