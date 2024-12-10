@@ -24,7 +24,7 @@ log.addHandler(colors.ColorHandler())
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Script to resample from NS posterior")
+    parser = argparse.ArgumentParser(description="Script to resample from Bayesian posterior")
     parser.add_argument("fit_name", help="The colibri fit from which to sample.")
     parser.add_argument(
         "--fitype",
