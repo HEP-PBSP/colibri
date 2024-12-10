@@ -388,6 +388,47 @@ def ultranest_ns_fit_resampler(
     return resampled_posterior
 
 
+def analytic_fit_resampler(
+    fit_path,
+    n_replicas,
+    resampling_seed,
+):
+    """
+    Function uses resample_from_ns_posterior to resample from analytic posterior.
+    """
+
+    # Check that the .txt file with equally weighted posterior samples exists
+    if not os.path.exists(fit_path / "full_posterior_sample.csv"):
+        raise FileNotFoundError(
+            f"{fit_path}/full_posterior_sample.csv does not exist;"
+            "please run the analytic fit first."
+        )
+
+    equal_weight_post_path = fit_path / "full_posterior_sample.csv"
+
+    samples = (
+        pd.read_csv(equal_weight_post_path, index_col=None, dtype=float)
+        .iloc[:, 1:]
+        .values
+    )
+
+    if n_replicas > samples.shape[0]:
+        n_replicas = samples.shape[0]
+        log.warning(
+            f"The chosen number of posterior samples exceeds the number of posterior"
+            "samples computed by ultranest. Setting the number of resampled posterior"
+            f"samples to {n_replicas}"
+        )
+
+    resampled_posterior = resample_from_ns_posterior(
+        samples,
+        n_replicas,
+        resampling_seed,
+    )
+
+    return resampled_posterior
+
+
 def write_resampled_ns_fit(
     resampled_posterior,
     fit_path,
