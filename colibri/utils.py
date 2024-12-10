@@ -505,46 +505,6 @@ def write_resampled_bayesian_fit(
     log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
 
 
-def write_resampled_ultranest_fit(
-    resampled_posterior: np.ndarray,
-    fit_path: pathlib.Path,
-    resampled_fit_path: pathlib.Path,
-    resampled_fit_name: Union[str, pathlib.Path],
-    parametrisation_scale: float,
-):
-    """
-    Wrapper for writing resampled ultranest fit.
-    """
-    return write_resampled_bayesian_fit(
-        resampled_posterior,
-        fit_path,
-        resampled_fit_path,
-        resampled_fit_name,
-        parametrisation_scale,
-        csv_results_name="ns_result",
-    )
-
-
-def write_resampled_analytic_fit(
-    resampled_posterior: np.ndarray,
-    fit_path: pathlib.Path,
-    resampled_fit_path: pathlib.Path,
-    resampled_fit_name: Union[str, pathlib.Path],
-    parametrisation_scale: float,
-):
-    """
-    Wrapper for writing resampled analytic fit.
-    """
-    return write_resampled_bayesian_fit(
-        resampled_posterior,
-        fit_path,
-        resampled_fit_path,
-        resampled_fit_name,
-        parametrisation_scale,
-        csv_results_name="analytic_result",
-    )
-
-
 def compute_determinants_of_principal_minors(C):
     """
     Computes the determinants of the principal minors of a symmetric, positive semi-definite matrix C.
