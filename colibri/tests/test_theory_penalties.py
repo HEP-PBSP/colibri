@@ -74,11 +74,8 @@ def test_integrability_penalty_no_integrability():
     integrability_settings = MagicMock()
     integrability_settings.integrability = False
 
-    # Define a dummy FIT_XGRID
-    FIT_XGRID = jnp.array([0.01, 0.1, 0.5])
-
     # Get the penalty function
-    penalty_fn = integrability_penalty(integrability_settings, FIT_XGRID)
+    penalty_fn = integrability_penalty(integrability_settings)
 
     # Check that it returns 0 for any input
     pdf_dummy = jnp.ones((14, 50))
@@ -93,28 +90,23 @@ def test_integrability_penalty_integrability():
     integrability_settings = MagicMock()
     integrability_settings.integrability = True
     integrability_settings.integrability_specs = {
-        "evolution_flavours": [1, 2, 3],
+        "evolution_flavours": [
+            1,
+            2,
+        ],
         "lambda_integrability": 2.0,
+        "integrability_xgrid": [
+            2.00000000e-07,
+            3.03430477e-07,
+        ],
     }
 
-    # # mock the closest indices function
-    # global closest_indices
-    # mock_closest_indices = lambda XGRID, FIT_XGRID: jnp.array([0]) # assume it selects the first index
-    # closest_indices = mock_closest_indices
-
-    # Define a dummy FIT_XGRID
-    FIT_XGRID = jnp.array([8.62783932e-01, 9.30944081e-01, 1.00000000e00])
-
-    # define a dummy XGRID (global variable in the module)
-    global XGRID
-    XGRID = [0.01, 0.1, 0.5]
-
     # Get the penalty function
-    penalty_fn = integrability_penalty(integrability_settings, FIT_XGRID)
+    penalty_fn = integrability_penalty(integrability_settings)
 
     pdf_dummy = jnp.ones((14, 50))  # assumed to be x * pdf
     penalty = penalty_fn(pdf_dummy)
 
     # expected penalty
-    expected_penalty = 2.0 * 3
+    expected_penalty = 2 * (2 * 2)
     assert jnp.sum(penalty, axis=-1) == expected_penalty
