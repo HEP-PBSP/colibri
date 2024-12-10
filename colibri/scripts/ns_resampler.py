@@ -1,5 +1,7 @@
 """
-An executable for sampling and storing exportgrids from the stored ultranest logs posterior samples
+colibri.scripts.bayesian_resampler.py
+
+An executable for sampling and storing exportgrids from the stored posterior samples
 without having to re run the entire fit.
 """
 
@@ -29,7 +31,7 @@ def main():
         "-t",
         type=str,
         default="ultranest",
-        help="The type of fit to be resampled. Currently only ultranest and analytic are supported.",
+        help="The type of fit to be resampled. Currently only `ultranest` and `analytic` are supported.",
     )
     parser.add_argument(
         "--nreplicas",
