@@ -34,7 +34,7 @@ from colibri.utils import (
     mask_fktable_array,
     mask_luminosity_mapping,
     ultranest_ns_fit_resampler,
-    write_resampled_ns_fit,
+    write_resampled_bayesian_fit,
     compute_determinants_of_principal_minors,
 )
 from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
@@ -366,7 +366,7 @@ def test_ns_fit_resampler_normal_case(mock_resample, mock_read_csv, mock_exists)
 @patch("colibri.utils.os.system")
 @patch("colibri.utils.os.path.exists")
 @patch("colibri.utils.write_exportgrid")
-def test_write_resampled_ns_fit(
+def test_write_resampled_bayesian_fit(
     mock_write_exportgrid,
     mock_exists,
     mock_os_system,
@@ -400,7 +400,7 @@ def test_write_resampled_ns_fit(
     # Mock Path().is_dir() to return True for the resampled path
     with patch.object(Path, "is_dir", return_value=True):
         # Run the function
-        write_resampled_ns_fit(
+        write_resampled_bayesian_fit(
             resampled_posterior=resampled_posterior,
             fit_path=fit_path,
             resampled_fit_path=resampled_fit_path,
@@ -434,7 +434,7 @@ def test_write_resampled_ns_fit(
 @mock.patch("colibri.utils.os.path.exists")
 @mock.patch("colibri.utils.os.mkdir")
 @mock.patch("colibri.utils.write_exportgrid")
-def test_write_resampled_ns_fit_with_replica_range(
+def test_write_resampled_bayesian_fit_with_replica_range(
     mock_write_exportgrid,
     mock_mkdir,
     mock_exists,
@@ -467,7 +467,7 @@ def test_write_resampled_ns_fit_with_replica_range(
     with patch.object(Path, "is_dir", return_value=True):
 
         # Run the function with the replica_range parameter
-        write_resampled_ns_fit(
+        write_resampled_bayesian_fit(
             resampled_posterior=resampled_posterior,
             fit_path=fit_path,
             resampled_fit_path=resampled_fit_path,

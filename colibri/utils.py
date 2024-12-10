@@ -422,7 +422,7 @@ def analytic_fit_resampler(
     )
 
 
-def write_resampled_ns_fit(
+def write_resampled_bayesian_fit(
     resampled_posterior,
     fit_path,
     resampled_fit_path,

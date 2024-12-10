@@ -9,7 +9,7 @@ import pathlib
 
 from reportengine import colors
 
-from colibri.utils import ultranest_ns_fit_resampler, write_resampled_ns_fit
+from colibri.utils import ultranest_ns_fit_resampler, write_resampled_bayesian_fit
 
 
 log = logging.getLogger()
@@ -67,7 +67,7 @@ def main():
         args.nreplicas,
         args.resampling_seed,
     )
-    write_resampled_ns_fit(
+    write_resampled_bayesian_fit(
         resampled_posterior,
         fit_path,
         resampled_fit_path,
