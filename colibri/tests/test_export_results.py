@@ -9,11 +9,14 @@ from unittest.mock import Mock, mock_open, patch
 import jax
 import numpy as np
 import pandas as pd
+import yaml
+import pathlib
 
 from colibri.export_results import (
     export_bayes_results,
     write_exportgrid,
     write_replicas,
+    read_exportgrid,
 )
 
 # Mock the objects and functions used in tests
@@ -126,3 +129,43 @@ def test_write_replicas(mock_log_info, mock_write_exportgrid, tmp_path):
 
     # Check if the log info was called for each sample
     assert mock_log_info.call_count == bayes_fit.resampled_posterior.shape[0]
+
+
+def test_read_exportgrid():
+    """
+    Test the read_exportgrid function to ensure it correctly reads and processes
+    an exportgrid file.
+    """
+    # Mock data for the test
+    mock_yaml_data = {"pdfgrid": [[1, 2], [3, 4]]}
+    mock_yaml_str = yaml.dump(mock_yaml_data)
+
+    # Mock the flavour_to_evolution_matrix
+    mock_flavour_to_evolution_matrix = np.array([[1, 0], [0, 1]])
+
+    # Expected output after applying the matrix multiplication
+    expected_pdfgrid = (
+        mock_flavour_to_evolution_matrix @ np.array(mock_yaml_data["pdfgrid"]).T
+    )
+    expected_result = {
+        "pdfgrid": expected_pdfgrid,
+    }
+
+    # Mock the open function and the flavour_to_evolution_matrix
+    with patch("builtins.open", mock_open(read_data=mock_yaml_str)) as mock_file, patch(
+        "colibri.export_results.flavour_to_evolution_matrix",
+        mock_flavour_to_evolution_matrix,
+    ):
+
+        # Call the function under test
+        exportgrid_path = pathlib.Path("mock_path/exportgrid.yaml")
+        result = read_exportgrid(exportgrid_path)
+
+        # Assertions
+        mock_file.assert_called_once_with(exportgrid_path, "r")
+        assert "pdfgrid" in result, "The key 'pdfgrid' is missing in the result."
+        np.testing.assert_array_equal(
+            result["pdfgrid"],
+            expected_result["pdfgrid"],
+            "The pdfgrid transformation result is incorrect.",
+        )
