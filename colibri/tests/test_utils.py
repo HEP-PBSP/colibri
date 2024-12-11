@@ -36,6 +36,7 @@ from colibri.utils import (
     ultranest_ns_fit_resampler,
     write_resampled_bayesian_fit,
     compute_determinants_of_principal_minors,
+    resample_posterior_from_file,
 )
 from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from validphys.fkparser import load_fktable
@@ -424,6 +425,54 @@ def test_write_resampled_bayesian_fit(
     with patch("pandas.DataFrame.to_csv") as mock_to_csv:
         df.to_csv(expected_csv_path, float_format="%.5e")
         mock_to_csv.assert_called_once_with(expected_csv_path, float_format="%.5e")
+
+
+def test_resample_posterior_not_use_all_columns():
+    """
+    Test resample_posterior_from_file when use_all_columns=False.
+    """
+    import pathlib
+
+    # Mock inputs
+    fit_path = pathlib.Path("/mock/path")
+    file_path = pathlib.Path("mock_file.csv")
+    n_replicas = 5
+    resampling_seed = 42
+    use_all_columns = False
+    mock_data = pd.DataFrame(
+        {
+            "Column0": [0, 1, 2, 3, 4],
+            "Column1": [10, 11, 12, 13, 14],
+            "Column2": [20, 21, 22, 23, 24],
+        }
+    )
+
+    # Mock the behavior of os.path.exists
+    with patch("os.path.exists", return_value=True), patch(
+        "pandas.read_csv", return_value=mock_data
+    ), patch("colibri.utils.resample_from_ns_posterior") as mock_resampler:
+
+        # Simulate the resampling function
+        mock_resampler.return_value = "mock_resampled_posterior"
+
+        # Call the function under test
+        result = resample_posterior_from_file(
+            fit_path=fit_path,
+            file_path=file_path,
+            n_replicas=n_replicas,
+            resampling_seed=resampling_seed,
+            use_all_columns=use_all_columns,
+            read_csv_args={"sep": ",", "dtype": float},
+        )
+
+        # Assertions
+        pd.testing.assert_frame_equal(
+            pd.DataFrame(mock_data.iloc[:, 1:].values),
+            pd.DataFrame([[10, 20], [11, 21], [12, 22], [13, 23], [14, 24]]),
+        )
+        assert mock_resampler.call_args[0][1] == n_replicas
+        assert mock_resampler.call_args[0][2] == resampling_seed
+        assert result == "mock_resampled_posterior"
 
 
 def test_identity_matrix():
