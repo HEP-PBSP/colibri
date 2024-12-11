@@ -17,6 +17,7 @@ from colibri.export_results import (
     write_exportgrid,
     write_replicas,
     read_exportgrid,
+    get_pdfgrid_from_exportgrids,
 )
 
 # Mock the objects and functions used in tests
@@ -168,4 +169,60 @@ def test_read_exportgrid():
             result["pdfgrid"],
             expected_result["pdfgrid"],
             "The pdfgrid transformation result is incorrect.",
+        )
+
+
+def test_get_pdfgrid_from_exportgrids():
+    """
+    Test the get_pdfgrid_from_exportgrids function to ensure it correctly reads and aggregates exportgrids.
+    """
+    # Mock data for the test
+    mock_exportgrid_1 = {
+        "pdfgrid": np.array([[1.0, 2.0], [3.0, 4.0]]),
+        "labels": ["label1", "label2"],
+        "xgrid": [0.1, 0.2],
+    }
+    mock_exportgrid_2 = {
+        "pdfgrid": np.array([[5.0, 6.0], [7.0, 8.0]]),
+        "labels": ["label1", "label2"],
+        "xgrid": [0.1, 0.2],
+    }
+
+    mock_flavour_to_evolution_matrix = np.array([[1, 0], [0, 1]])
+
+    expected_pdfgrid = np.array(
+        [
+            mock_flavour_to_evolution_matrix @ np.array(mock_exportgrid_1["pdfgrid"]),
+            mock_flavour_to_evolution_matrix @ np.array(mock_exportgrid_2["pdfgrid"]),
+        ]
+    )
+
+    # Mock the read_exportgrid function
+    def mock_read_exportgrid(path):
+        if "replica_1" in str(path):
+            return mock_exportgrid_1
+        elif "replica_2" in str(path):
+            return mock_exportgrid_2
+
+    # Mock the file system and read_exportgrid function
+    with patch(
+        "pathlib.Path.glob",
+        return_value=[
+            pathlib.Path("replica_1/mock.exportgrid"),
+            pathlib.Path("replica_2/mock.exportgrid"),
+        ],
+    ), patch(
+        "colibri.export_results.read_exportgrid", side_effect=mock_read_exportgrid
+    ), patch(
+        "colibri.export_results.flavour_to_evolution_matrix",
+        mock_flavour_to_evolution_matrix,
+    ):
+
+        # Call the function under test
+        fit_path = pathlib.Path("mock_path")
+        result = get_pdfgrid_from_exportgrids(fit_path)
+
+        # Assertions
+        np.testing.assert_array_equal(
+            result, expected_pdfgrid, "The aggregated pdf grid result is incorrect."
         )
