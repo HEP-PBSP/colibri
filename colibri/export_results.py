@@ -168,6 +168,42 @@ def read_exportgrid(exportgrid_path: pathlib.Path):
     return export_grid
 
 
+def get_pdfgrid_from_exportgrids(fit_path: pathlib.Path):
+    """
+    Reads the exportgrids contained in the replicas folder
+    of the fit_path and returns the pdf grid of shape
+    (Nrep, Nfl, Nx) in the evolution basis.
+
+    Parameters
+    ----------
+    fit_path: pathlib.Path
+        Path to the fit folder.
+
+    Returns
+    -------
+    pdf_grid: np.array
+        Array containing the pdf grid in the evolution basis.
+    """
+    # Get the list of all the exportgrids
+    replicas_path = fit_path / "replicas"
+    exportgrids = list(replicas_path.glob("replica_*/*.exportgrid"))
+
+    # Read the first exportgrid to get the grid shape
+    first_exportgrid = read_exportgrid(exportgrids[0])
+    Nrep = len(exportgrids)
+    Nfl = len(first_exportgrid["labels"])
+    Nx = len(first_exportgrid["xgrid"])
+
+    # Initialize the pdf grid
+    pdf_grid = np.zeros((Nrep, Nfl, Nx))
+
+    # Fill the pdf grid
+    for i, exportgrid in enumerate(exportgrids):
+        pdf_grid[i] = read_exportgrid(exportgrid)["pdfgrid"]
+
+    return pdf_grid
+
+
 def write_replicas(
     bayes_fit,
     output_path,
