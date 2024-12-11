@@ -8,13 +8,19 @@ This module contains the functions to export the results of the fit.
 from dataclasses import dataclass
 import yaml
 import numpy as np
+import pathlib
 from pathlib import Path
 
 import jax.numpy as jnp
 import pandas as pd
 from mpi4py import MPI
 
-from colibri.constants import LHAPDF_XGRID, evolution_to_flavour_matrix, EXPORT_LABELS
+from colibri.constants import (
+    LHAPDF_XGRID,
+    evolution_to_flavour_matrix,
+    EXPORT_LABELS,
+    flavour_to_evolution_matrix,
+)
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -133,6 +139,33 @@ def write_exportgrid(
 
     with open(f"{grid_name}.exportgrid", "w") as outfile:
         yaml.dump(export_grid, outfile)
+
+
+def read_exportgrid(exportgrid_path: pathlib.Path):
+    """
+    Reads an exportgrid file from the output path,
+    and returns a dictionary containing the pdf grid in the evolution basis.
+
+    Parameters
+    ----------
+    exportgrid_path: pathlib.Path
+        Path to the exportgrid file.
+
+    Returns
+    -------
+    export_grid: dict
+        Dictionary containing the pdf grid in the evolution basis.
+    """
+    with open(exportgrid_path, "r") as infile:
+        export_grid = yaml.safe_load(infile)
+
+    pdfgrid = np.array(export_grid["pdfgrid"])
+
+    # rotate from flavour to evolution basis
+    pdfgrid = flavour_to_evolution_matrix @ pdfgrid.T
+    export_grid["pdfgrid"] = pdfgrid
+
+    return export_grid
 
 
 def write_replicas(
