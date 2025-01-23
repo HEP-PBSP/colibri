@@ -3,6 +3,7 @@ colibri.pdf_model.py
 
 This module implements an abstract class PDFModel which is filled by the various models.
 
+Changed string
 """
 
 from abc import ABC, abstractmethod
