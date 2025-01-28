@@ -21,6 +21,7 @@ from colibri.tests.conftest import (
     TEST_DATASET,
 )
 from colibri.utils import (
+    resample_from_ns_posterior,
     cast_to_numpy,
     get_fit_path,
     get_full_posterior,
@@ -29,12 +30,57 @@ from colibri.utils import (
     mask_fktable_array,
     mask_luminosity_mapping,
     compute_determinants_of_principal_minors,
-    closest_indices,
+    closest_indices,  
 )
 from validphys.fkparser import load_fktable
 
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
+
+
+def test_resample_from_ns_posterior():
+    """
+    Test the resample_from_ns_posterior function.
+    Verifies:
+    - Output type is a JAX DeviceArray.
+    - Output size matches n_posterior_samples and is smaller than or equal to the input sample size.
+    - All elements in the output belong to the original sample.
+    - There are no duplicate elements in the output.
+    - If n_posterior_samples equals the input size, the output is identical to the input.
+    """
+    
+    # Create a sample to test the function
+    samples = jnp.array([1,2,3,4,5,6,7,8,9,10])
+    n_posterior_samples = 3
+    posterior_resampling_seed = 42
+
+    # Call the function
+    resampled_samples = resample_from_ns_posterior(
+        samples, n_posterior_samples=n_posterior_samples, posterior_resampling_seed=posterior_resampling_seed
+    )
+
+    # Check 1: Output type
+    assert isinstance(resampled_samples, jnp.ndarray)
+
+    # Check 2: Output size
+    assert len(resampled_samples) == n_posterior_samples
+    assert len(resampled_samples) <= len(samples)
+
+    # Check 3: All elements in output belong to the original samples
+    assert np.all(np.isin(resampled_samples, samples))
+
+    # Check 4: No duplicates
+    assert len(resampled_samples) == len(jnp.unique(resampled_samples))
+
+
+    # Case 2: n_posterior_samples equals the size of the input samples
+    n_posterior_samples = len(samples)
+    resampled_samples_full = resample_from_ns_posterior(
+        samples, n_posterior_samples=n_posterior_samples, posterior_resampling_seed=posterior_resampling_seed
+    )
+
+    # Check 5: Output is identical to the input when sizes match
+    assert jnp.array_equal(jnp.sort(resampled_samples_full), jnp.sort(samples))
 
 
 def test_cast_to_numpy():
