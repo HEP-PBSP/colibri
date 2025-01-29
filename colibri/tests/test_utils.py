@@ -30,7 +30,7 @@ from colibri.utils import (
     mask_fktable_array,
     mask_luminosity_mapping,
     compute_determinants_of_principal_minors,
-    closest_indices,  
+    closest_indices,
 )
 from validphys.fkparser import load_fktable
 
@@ -48,15 +48,17 @@ def test_resample_from_ns_posterior():
     - There are no duplicate elements in the output.
     - If n_posterior_samples equals the input size, the output is identical to the input.
     """
-    
+
     # Create a sample to test the function
-    samples = jnp.array([1,2,3,4,5,6,7,8,9,10])
+    samples = jnp.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     n_posterior_samples = 3
     posterior_resampling_seed = 42
 
     # Call the function
     resampled_samples = resample_from_ns_posterior(
-        samples, n_posterior_samples=n_posterior_samples, posterior_resampling_seed=posterior_resampling_seed
+        samples,
+        n_posterior_samples=n_posterior_samples,
+        posterior_resampling_seed=posterior_resampling_seed,
     )
 
     # Check 1: Output type
@@ -72,11 +74,12 @@ def test_resample_from_ns_posterior():
     # Check 4: No duplicates
     assert len(resampled_samples) == len(jnp.unique(resampled_samples))
 
-
     # Case 2: n_posterior_samples equals the size of the input samples
     n_posterior_samples = len(samples)
     resampled_samples_full = resample_from_ns_posterior(
-        samples, n_posterior_samples=n_posterior_samples, posterior_resampling_seed=posterior_resampling_seed
+        samples,
+        n_posterior_samples=n_posterior_samples,
+        posterior_resampling_seed=posterior_resampling_seed,
     )
 
     # Check 5: Output is identical to the input when sizes match
