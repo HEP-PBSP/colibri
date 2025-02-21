@@ -34,10 +34,11 @@ from colibri.utils import (
     closest_indices,
 )
 from validphys.fkparser import load_fktable
-import validphys    # for testing t0_pdf_grid
-from validphys import convolution   # for testing t0_pdf_grid
+import validphys
+from validphys import convolution
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
+
 
 def test_t0_pdf_grid():
     """
@@ -52,10 +53,9 @@ def test_t0_pdf_grid():
     # mock a valid PDF set
     inp = {"t0pdfset": "NNPDF40_nlo_as_01180"}
     t0pdfset = cAPI.t0pdfset(**inp)
-    # print(f"DEBUG: t0pdfset type is {type(t0pdfset)}") 
 
-    # check that t0pdfset is an instance of validphys.core.PDF 
-    assert isinstance(t0pdfset, validphys.core.PDF) 
+    # Check 1: t0pdfset is an instance of validphys.core.PDF
+    assert isinstance(t0pdfset, validphys.core.PDF)
 
     # define a test array
     FIT_XGRID = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
@@ -63,16 +63,16 @@ def test_t0_pdf_grid():
     # call the function
     t0_grid = t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65)
 
-    # check the type of the output is a jnp.array
+    # Check 2: type of the output is a jnp.array
     assert isinstance(t0_grid, jnp.ndarray)
 
     print(f"CHECK TYPE: {type(t0_grid)}")
 
-    # check the shape of the output
+    # Check 3: shape of the output
     N_rep = t0pdfset.get_members()  #   number of replicas
-    N_fl = len(convolution.FK_FLAVOURS)   # number of flavours   
-    
-    assert t0_grid.shape == (N_rep, N_fl, len(FIT_XGRID)) 
+    N_fl = len(convolution.FK_FLAVOURS)  # number of flavours
+
+    assert t0_grid.shape == (N_rep, N_fl, len(FIT_XGRID))
 
 
 def test_resample_from_ns_posterior():
@@ -138,8 +138,6 @@ def test_cast_to_numpy():
     assert type(test_func(x)) == np.ndarray
 
 
-
-
 def test_get_path_fit():
     """
     Tests the get_fit_path function.
@@ -147,10 +145,10 @@ def test_get_path_fit():
     and checks if the function returns the correct path.
     Finally, it removes the copied directory.
     """
-   
+
     print("Current working directory:", os.getcwd())
     print("Path exists?", os.path.exists("colibri/tests/regression/wmin_bayes_dis"))
-   
+
     conda_prefix = os.getenv("CONDA_PREFIX")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
