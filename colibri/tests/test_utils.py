@@ -34,8 +34,8 @@ from colibri.utils import (
     closest_indices,
 )
 from validphys.fkparser import load_fktable
-import validphys    # for testing t0_pdf_grid
-from validphys import convolution   # for testing t0_pdf_grid
+import validphys    
+from validphys import convolution   
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
