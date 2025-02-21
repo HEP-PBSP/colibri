@@ -144,7 +144,6 @@ def test_get_path_fit():
     Finally, it removes the copied directory.
     """
 
-
     conda_prefix = os.getenv("CONDA_PREFIX")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
