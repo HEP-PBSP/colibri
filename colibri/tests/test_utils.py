@@ -146,8 +146,6 @@ def test_get_path_fit():
     Finally, it removes the copied directory.
     """
 
-    print("Current working directory:", os.getcwd())
-    print("Path exists?", os.path.exists("colibri/tests/regression/wmin_bayes_dis"))
 
     conda_prefix = os.getenv("CONDA_PREFIX")
 
