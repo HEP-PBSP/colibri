@@ -66,8 +66,6 @@ def test_t0_pdf_grid():
     # Check 2: type of the output is a jnp.array
     assert isinstance(t0_grid, jnp.ndarray)
 
-    print(f"CHECK TYPE: {type(t0_grid)}")
-
     # Check 3: shape of the output
     N_rep = t0pdfset.get_members()  #   number of replicas
     N_fl = len(convolution.FK_FLAVOURS)  # number of flavours
