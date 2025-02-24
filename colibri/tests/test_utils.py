@@ -497,7 +497,7 @@ def test_pdf_model_from_colibri_model_success(
         def __init__(self, input_params):
             pass
 
-        def produce_pdf_model(self, **kwargs):
+        def produce_pdf_model(self, param1, param2, output_path=None, dump_model=False):
             return mock_colibri_model
 
     mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
@@ -505,8 +505,38 @@ def test_pdf_model_from_colibri_model_success(
     # Define valid model settings
     model_settings = {
         "model": "mock_colibri_model",
+        "param1": 1,
+        "param2": 2,
     }
 
     # Call the function and assert the result
     result = pdf_model_from_colibri_model(model_settings)
     assert result == mock_colibri_model
+
+
+@patch("importlib.import_module")
+@patch("inspect.getmembers")
+def test_pdf_model_from_colibri_model_incorrect_inputs(
+    mock_getmembers, mock_import_module, mock_colibri_model
+):
+    mock_import_module.return_value = MagicMock()
+    # Mock the colibriConfig class and its subclass
+    from colibri.config import colibriConfig
+
+    class MockColibriConfig(colibriConfig):
+        def __init__(self, input_params):
+            pass
+
+        def produce_pdf_model(self, param1, param2, output_path=None, dump_model=False):
+            return mock_colibri_model
+
+    mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
+
+    # Define model settings missing param2
+    model_settings = {
+        "model": "mock_colibri_model",
+        "param1": 1,
+    }
+
+    with pytest.raises(ValueError):
+        pdf_model_from_colibri_model(model_settings)
