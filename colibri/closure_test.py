@@ -3,7 +3,7 @@ import logging
 
 from validphys import convolution
 
-from colibri.utils import produce_pdf_model_from_colibri_model
+from colibri.utils import pdf_model_from_colibri_model
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +16,8 @@ def closure_test_pdf_grid(
 
     Parameters
     ----------
-    closure_test_pdf: validphys.core.PDF
+    closure_test_pdf: validphys.core.PDF or str
+        PDF object or string colibri_model.
 
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
@@ -30,14 +31,9 @@ def closure_test_pdf_grid(
         grid, is N_rep x N_fl x N_x
     """
     if isinstance(closure_test_pdf, str):
-        if closure_test_pdf == "colibri_model":
-            pdf = closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID)
-            return [pdf]
-        else:
-            raise ValueError(
-                f"Unknown closure test pdf '{closure_test_pdf}'. "
-                "Supported values are 'colibri_model' or LHAPDF sets."
-            )
+        pdf = closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID)
+        # return the pdf by adding a dimension to simulate the number of replicas
+        return jnp.array([pdf])
     else:
         grid = jnp.array(
             convolution.evolution.grid_values(
@@ -73,10 +69,7 @@ def closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID):
         The closure test pdf grid.
     """
     # Produce the pdf model
-    model_name = closure_test_model_settings["model"]
-    pdf_model = produce_pdf_model_from_colibri_model(
-        model_name, closure_test_model_settings
-    )
+    pdf_model = pdf_model_from_colibri_model(closure_test_model_settings)
 
     # Compute the pdf grid
     pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)

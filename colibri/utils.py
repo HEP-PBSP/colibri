@@ -308,15 +308,12 @@ def likelihood_float_type(
         file.write(str(dtype))
 
 
-def produce_pdf_model_from_colibri_model(model_name, model_settings):
+def pdf_model_from_colibri_model(model_settings):
     """
     Produce a PDF model from a colibri model.
 
     Parameters
     ----------
-    model_name: str
-        The name of the colibri model.
-
     model_settings: dict
         The settings to produce the PDF model.
 
@@ -324,6 +321,7 @@ def produce_pdf_model_from_colibri_model(model_name, model_settings):
     -------
     PDFModel
     """
+    model_name = model_settings["model"]
     # Dynamically import the module
     try:
         module = importlib.import_module(model_name)
