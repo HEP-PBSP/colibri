@@ -8,6 +8,7 @@ import shutil
 from numpy.testing import assert_allclose
 import pytest
 from unittest.mock import patch, mock_open, MagicMock
+from unittest import mock
 
 import jax
 import jax.numpy as jnp
@@ -39,6 +40,17 @@ import validphys
 from validphys import convolution
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
+
+
+@pytest.fixture
+def mock_colibri_model():
+    model = MagicMock()
+    model.grid_values_func = MagicMock(
+        return_value=lambda params: jnp.array(
+            [[p * x for x in range(1, 6)] for p in params]
+        )
+    )
+    return model
 
 
 def test_t0_pdf_grid():
@@ -470,3 +482,31 @@ def test_pdf_model_from_colibri_model_missing_config(mock_import_module):
     settings = {"model": "mock_model"}
     with pytest.raises(AttributeError):
         pdf_model_from_colibri_model(settings)
+
+
+@patch("importlib.import_module")
+@patch("inspect.getmembers")
+def test_pdf_model_from_colibri_model_success(
+    mock_getmembers, mock_import_module, mock_colibri_model
+):
+    mock_import_module.return_value = MagicMock()
+    # Mock the colibriConfig class and its subclass
+    from colibri.config import colibriConfig
+
+    class MockColibriConfig(colibriConfig):
+        def __init__(self, input_params):
+            pass
+
+        def produce_pdf_model(self, **kwargs):
+            return mock_colibri_model
+
+    mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
+
+    # Define valid model settings
+    model_settings = {
+        "model": "mock_colibri_model",
+    }
+
+    # Call the function and assert the result
+    result = pdf_model_from_colibri_model(model_settings)
+    assert result == mock_colibri_model
