@@ -8,7 +8,6 @@ import shutil
 from numpy.testing import assert_allclose
 import pytest
 from unittest.mock import patch, mock_open, MagicMock
-import inspect
 
 import jax
 import jax.numpy as jnp
@@ -42,7 +41,6 @@ from validphys import convolution
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
 
-
 @pytest.fixture
 def mock_colibri_model():
     model = MagicMock()
@@ -52,6 +50,7 @@ def mock_colibri_model():
         )
     )
     return model
+
 
 def test_t0_pdf_grid():
     """
@@ -132,7 +131,6 @@ def test_resample_from_ns_posterior():
 
     # Check 5: Output is identical to the input when sizes match
     assert jnp.array_equal(jnp.sort(resampled_samples_full), jnp.sort(samples))
-
 
 
 def test_cast_to_numpy():
