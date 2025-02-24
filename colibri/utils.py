@@ -162,7 +162,23 @@ def resample_from_ns_posterior(
     samples, n_posterior_samples=1000, posterior_resampling_seed=123456
 ):
     """
-    TODO
+    Resamples a subset of data points from a given set of samples without replacement.
+
+    Parameters
+    ----------
+    samples: jnp.ndarray
+        The input dataset to be resampled.
+
+    n_posterior_samples: int, default is 1000
+        The number of samples to draw from the input dataset.
+
+    posterior_resampling_seed: int, default is 123456
+        The random seed to ensure reproducibility of the resampling process.
+
+    Returns
+    -------
+    resampled_samples: jax.Array
+        The resampled subset of the input dataset, containing n_posterior_samples without selected replacement.
     """
 
     current_samples = samples.copy()

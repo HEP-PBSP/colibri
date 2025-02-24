@@ -21,6 +21,8 @@ from colibri.tests.conftest import (
     TEST_DATASET,
 )
 from colibri.utils import (
+    t0_pdf_grid,
+    resample_from_ns_posterior,
     cast_to_numpy,
     get_fit_path,
     get_full_posterior,
@@ -32,9 +34,91 @@ from colibri.utils import (
     closest_indices,
 )
 from validphys.fkparser import load_fktable
-
+import validphys
+from validphys import convolution
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
+
+
+def test_t0_pdf_grid():
+    """
+    Test the t0_pdf_grid function.
+
+    Verifies:
+    - Type of "t0pdfset" is validphys.core.PDF
+    - Output type is a jnp.array.
+    - The output shape is (N_rep, N_fl, N_x)
+    """
+
+    # mock a valid PDF set
+    inp = {"t0pdfset": "NNPDF40_nlo_as_01180"}
+    t0pdfset = cAPI.t0pdfset(**inp)
+
+    # Check 1: t0pdfset is an instance of validphys.core.PDF
+    assert isinstance(t0pdfset, validphys.core.PDF)
+
+    # define a test array
+    FIT_XGRID = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    # call the function
+    t0_grid = t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65)
+
+    # Check 2: type of the output is a jnp.array
+    assert isinstance(t0_grid, jnp.ndarray)
+
+    # Check 3: shape of the output
+    N_rep = t0pdfset.get_members()  #   number of replicas
+    N_fl = len(convolution.FK_FLAVOURS)  # number of flavours
+
+    assert t0_grid.shape == (N_rep, N_fl, len(FIT_XGRID))
+
+
+def test_resample_from_ns_posterior():
+    """
+    Test the resample_from_ns_posterior function.
+    Verifies:
+    - Output type is a JAX DeviceArray.
+    - Output size matches n_posterior_samples and is smaller than or equal to the input sample size.
+    - All elements in the output belong to the original sample.
+    - There are no duplicate elements in the output.
+    - If n_posterior_samples equals the input size, the output is identical to the input.
+    """
+
+    # Create a sample to test the function
+    samples = jnp.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    n_posterior_samples = 3
+    posterior_resampling_seed = 42
+
+    # Call the function
+    resampled_samples = resample_from_ns_posterior(
+        samples,
+        n_posterior_samples=n_posterior_samples,
+        posterior_resampling_seed=posterior_resampling_seed,
+    )
+
+    # Check 1: Output type
+    assert isinstance(resampled_samples, jnp.ndarray)
+
+    # Check 2: Output size
+    assert len(resampled_samples) == n_posterior_samples
+    assert len(resampled_samples) <= len(samples)
+
+    # Check 3: All elements in output belong to the original samples
+    assert np.all(np.isin(resampled_samples, samples))
+
+    # Check 4: No duplicates
+    assert len(resampled_samples) == len(jnp.unique(resampled_samples))
+
+    # Case 2: n_posterior_samples equals the size of the input samples
+    n_posterior_samples = len(samples)
+    resampled_samples_full = resample_from_ns_posterior(
+        samples,
+        n_posterior_samples=n_posterior_samples,
+        posterior_resampling_seed=posterior_resampling_seed,
+    )
+
+    # Check 5: Output is identical to the input when sizes match
+    assert jnp.array_equal(jnp.sort(resampled_samples_full), jnp.sort(samples))
 
 
 def test_cast_to_numpy():
@@ -59,6 +143,7 @@ def test_get_path_fit():
     and checks if the function returns the correct path.
     Finally, it removes the copied directory.
     """
+
     conda_prefix = os.getenv("CONDA_PREFIX")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
