@@ -497,7 +497,7 @@ def test_pdf_model_from_colibri_model_success(
         def __init__(self, input_params):
             pass
 
-        def produce_pdf_model(self, param1, param2, output_path=None, dump_model=False):
+        def produce_pdf_model(self, param1, param2, output_path, dump_model=False):
             return mock_colibri_model
 
     mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
@@ -527,8 +527,8 @@ def test_pdf_model_from_colibri_model_incorrect_inputs(
         def __init__(self, input_params):
             pass
 
-        def produce_pdf_model(self, param1, param2, output_path=None, dump_model=False):
-            return mock_colibri_model
+        def produce_pdf_model(self, param1, param2, output_path, dump_model=False):
+            pass
 
     mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
 
