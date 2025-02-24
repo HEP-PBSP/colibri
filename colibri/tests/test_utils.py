@@ -41,17 +41,6 @@ from validphys import convolution
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
 
-@pytest.fixture
-def mock_colibri_model():
-    model = MagicMock()
-    model.grid_values_func = MagicMock(
-        return_value=lambda params: jnp.array(
-            [[p * x for x in range(1, 6)] for p in params]
-        )
-    )
-    return model
-
-
 def test_t0_pdf_grid():
     """
     Test the t0_pdf_grid function.
