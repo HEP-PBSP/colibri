@@ -2,9 +2,6 @@
 colibri.data_batch.py
 
 Module containing data batches provider.
-
-Author: Mark N. Costantini
-Date: 11.11.2023
 """
 
 from typing import Callable

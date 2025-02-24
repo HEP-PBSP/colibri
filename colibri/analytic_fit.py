@@ -12,9 +12,12 @@ import time
 import jax
 import jax.numpy as jnp
 import jax.numpy.linalg as jla
+import numpy as np
+import scipy.special as special
 
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 from colibri.checks import check_pdf_model_is_linear
+from colibri.utils import compute_determinants_of_principal_minors
 
 import logging
 
@@ -37,13 +40,68 @@ class AnalyticFit(BayesianFit):
     analytic_specs: dict
 
 
+def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec):
+    """
+    Compute the log of the evidence for Gaussian likelihood and uniform prior.
+    The implementation is based on the following paper: https://arxiv.org/pdf/2301.13783
+    and consists in a small improvement of the Laplace approximation.
+
+    Parameters
+    ----------
+    sol_covmat: array
+        Covariance matrix of the posterior (X^T Sigma^-1 X)^-1.
+
+    sol_mean
+
+    a_vec: np.ndarray
+        Lower bounds of the Uniform prior.
+
+    b_vec: np.ndarray
+        Upper bounds of the Uniform prior.
+
+    Returns
+    -------
+    float: The log evidence.
+    """
+
+    # Take into account change of variables of type (x - mu) -> x
+    b_vec -= sol_mean
+    a_vec -= sol_mean
+
+    determinants = compute_determinants_of_principal_minors(sol_covmat)
+
+    sqrt_det_ratios = np.sqrt(determinants[:-1] / determinants[1:])
+
+    erf_arg_a = a_vec / np.sqrt(2) * sqrt_det_ratios
+    erf_arg_b = b_vec / np.sqrt(2) * sqrt_det_ratios
+
+    erf_a = special.erf(erf_arg_a)
+    erf_b = special.erf(erf_arg_b)
+
+    log_erf_terms = np.log(0.5 * (erf_b - erf_a)).sum()
+
+    occam_factor_num = np.sqrt(jla.det(sol_covmat))
+    occam_factor_denom = np.prod((b_vec - a_vec))
+
+    log_occam_factor = np.log(occam_factor_num / occam_factor_denom)
+
+    log_evidence = (
+        max_logl
+        + sol_covmat.shape[0] / 2 * np.log(2 * np.pi)
+        + log_occam_factor
+        + log_erf_terms
+    )
+
+    return log_evidence, log_occam_factor
+
+
 @check_pdf_model_is_linear
 def analytic_fit(
     central_inv_covmat_index,
     _pred_data,
     pdf_model,
     analytic_settings,
-    bayesian_prior,
+    prior_settings,
     FIT_XGRID,
     fast_kernel_arrays,
 ):
@@ -70,9 +128,15 @@ def analytic_fit(
     analytic_settings: dict
         Settings for the analytic fit.
 
+    prior_settings: PriorSettings
+        Settings for the prior.
+
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
+
+    fast_kernel_arrays: tuple
+        Tuple containing the fast kernel arrays.
     """
 
     log.warning("The prior is assumed to be flat in the parameters.")
@@ -111,6 +175,7 @@ def analytic_fit(
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
+    # full samples with no cuts from the prior bounds
     full_samples = jax.random.multivariate_normal(
         key,
         sol_mean,
@@ -125,36 +190,74 @@ def analytic_fit(
     # over the prior. The prior is uniform with width prior_width.
     log.info("Computing the evidence...")
 
-    if analytic_settings["optimal_prior"]:
-        log.info("Using optimal prior")
+    if prior_settings.prior_distribution == "n_sigma_prior":
+        nsigma = prior_settings.prior_distribution_specs["n_sigma_value"]
+
+        log.info(f"Using +- {nsigma} sigma of covmat")
+        diags = np.sqrt(np.diag(sol_covmat))
+
+        prior_lower = sol_mean - nsigma * diags
+        prior_upper = sol_mean + nsigma * diags
+
+    elif prior_settings.prior_distribution == "custom_uniform_parameter_prior":
+        log.info("Using custom uniform prior")
+        prior_lower = jnp.array(prior_settings.prior_distribution_specs["lower_bounds"])
+        prior_upper = jnp.array(prior_settings.prior_distribution_specs["upper_bounds"])
+
+    elif prior_settings.prior_distribution == "min_max_prior":
+        log.info("Using min-max prior")
         prior_lower = full_samples.min(axis=0)
         prior_upper = full_samples.max(axis=0)
+
     else:
         # Extract lower and upper bounds of the prior
-        prior_lower = bayesian_prior(jnp.zeros(len(parameters)))
-        prior_upper = bayesian_prior(jnp.ones(len(parameters)))
+        prior_lower = prior_settings.prior_distribution_specs["min_val"] * jnp.ones(
+            len(parameters)
+        )
+        prior_upper = prior_settings.prior_distribution_specs["max_val"] * jnp.ones(
+            len(parameters)
+        )
 
     prior_width = prior_upper - prior_lower
-
-    gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
-    log_prior = jnp.log(1 / prior_width).sum()
-    # Compute maximum log likelihood
-    max_logl = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
-
-    logZ = gaussian_integral + max_logl + log_prior
-
-    log.info(f"LogZ = {logZ}")
-    log.info(f"Maximum log likelihood = {max_logl}")
-
-    # Compute minimum chi2
-    min_chi2 = -2 * max_logl
-    log.info(f"Minimum chi2 = {min_chi2}")
 
     # Check that the prior is wide enough
     if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
         log.error(
             "The prior is not wide enough to cover the posterior samples. Increase the prior width."
         )
+
+    log.warning(f"Discarding samples outside the prior bounds.")
+
+    # discard samples outside the prior
+    full_samples = full_samples[
+        (full_samples > prior_lower).all(axis=1)
+        & (full_samples < prior_upper).all(axis=1)
+    ]
+
+    gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
+    log_prior = jnp.log(1 / prior_width).sum()
+    # Compute maximum log likelihood
+    max_logl = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
+
+    logZ_laplace = gaussian_integral + max_logl + log_prior
+
+    log.info(f"LogZ (Laplace approximation) = {logZ_laplace}")
+
+    # computation of the evidence (analytic approximation)
+    logZ_analytical, log_occam_factor = analytic_evidence_uniform_prior(
+        sol_covmat, sol_mean, max_logl, prior_lower, prior_upper
+    )
+
+    log.info(f"LogZ (Analytic approximation) = {logZ_analytical}")
+    log.info(f"Log Occam factor = {log_occam_factor}")
+    log.info(f"Maximal log likelihood = {max_logl}")
+
+    # Compute minimum chi2
+    min_chi2 = -2 * max_logl
+    log.info(f"Minimum chi2 = {min_chi2}")
+
+    BIC = min_chi2 + sol_covmat.shape[0] * np.log(Sigma.shape[0])
+    AIC = min_chi2 + 2 * sol_covmat.shape[0]
 
     # Compute average chi2
     diffs = Y[:, None] - X @ full_samples.T
@@ -174,10 +277,16 @@ def analytic_fit(
         resampled_posterior=samples,
         param_names=parameters,
         full_posterior_samples=full_samples,
-        bayes_complexity=Cb,
-        avg_chi2=avg_chi2,
-        min_chi2=min_chi2,
-        logz=logZ,
+        bayesian_metrics={
+            "bayes_complexity": Cb,
+            "avg_chi2": avg_chi2,
+            "min_chi2": min_chi2,
+            "logZ_laplace": logZ_laplace,
+            "logz": logZ_analytical,
+            "log_occam_factor": log_occam_factor,
+            "BIC": BIC,
+            "AIC": AIC,
+        },
     )
 
 

@@ -1,4 +1,11 @@
+"""
+colibri.tests.test_checks
+
+Tests for the checks module of the colibri package.
+"""
+
 from colibri.checks import check_pdf_models_equal, check_pdf_model_is_linear
+from colibri.core import PriorSettings
 from unittest.mock import patch, MagicMock, mock_open
 import pytest
 import jax.numpy as jnp
@@ -16,10 +23,12 @@ def test_check_pdf_models_equal_true(
     mock_pdf_models_equal, mock_get_pdf_model, mock_exists, mock_open
 ):
     # Setup
-    prior_settings = {
-        "type": "prior_from_gauss_posterior",
-        "prior_fit": "fit1",
-    }
+    prior_settings = PriorSettings(
+        **{
+            "prior_distribution": "prior_from_gauss_posterior",
+            "prior_distribution_specs": {"prior_fit": "fit1"},
+        }
+    )
     pdf_model = "model1"
 
     theoryid = MagicMock()
@@ -47,10 +56,12 @@ def test_check_pdf_models_equal_false_theoryid(
     mock_pdf_models_equal, mock_get_pdf_model, mock_exists, mock_open
 ):
     # Setup
-    prior_settings = {
-        "type": "prior_from_gauss_posterior",
-        "prior_fit": "fit1",
-    }
+    prior_settings = PriorSettings(
+        **{
+            "prior_distribution": "prior_from_gauss_posterior",
+            "prior_distribution_specs": {"prior_fit": "fit1"},
+        }
+    )
     pdf_model = "model1"
 
     theoryid = MagicMock()
@@ -81,8 +92,8 @@ def test_check_pdf_models_equal_false_t0pdf(
 ):
     # Setup
     prior_settings = {
-        "type": "prior_from_gauss_posterior",
-        "prior_fit": "fit1",
+        "prior_distribution": "prior_from_gauss_posterior",
+        "prior_distribution_specs": {"prior_fit": "fit1"},
     }
     pdf_model = "model1"
 

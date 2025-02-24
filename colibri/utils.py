@@ -378,3 +378,70 @@ def pdf_model_from_colibri_model(model_settings):
                 return pdf_model
     else:
         raise AttributeError(f"The model '{model_name}' has no 'config' module.")
+
+
+def compute_determinants_of_principal_minors(C):
+    """
+    Computes the determinants of the principal minors of a symmetric, positive semi-definite matrix C.
+
+    Parameters
+    ----------
+    C (np.ndarray): An nxn covariance matrix (symmetric, positive semi-definite)
+
+    Returns
+    -------
+    List[float]: A list of determinants of the principal minors from C_n down to C_0
+    """
+    n = C.shape[0]
+    determinants = []
+
+    # Perform the Cholesky decomposition of the full matrix C
+    try:
+        L = np.linalg.cholesky(C)
+    except np.linalg.LinAlgError:
+        raise ValueError("Matrix is not positive semi-definite or symmetric.")
+
+    # Compute determinants of principal minors by iteratively removing rows/columns from the Cholesky factor
+    for k in range(n, 0, -1):
+        # Compute determinant of C_k using the product of diagonal entries of the top-left kxk submatrix of L
+        L_k = L[:k, :k]
+        det_C_k = np.prod(np.diag(L_k)) ** 2  # Square of product of diagonals
+        determinants.append(det_C_k)
+
+    # C_0 is defined to have determinant 1
+    determinants.append(1.0)
+
+    return np.array(determinants)[::-1]
+
+
+def closest_indices(a, v, atol=1e-8):
+    """
+    Returns the indices of the closest value in an array to a given value.
+
+    Note: the function is different from np.searchsorted.
+    The main difference is that np.searchsorted returns the index where each
+    element of v should be inserted in a in order to preserve the order (see example below).
+
+    Parameters
+    ----------
+    a : array-like
+
+    v : array-like or float
+
+    Returns
+    -------
+    array-like
+
+    Examples
+    --------
+    >>> a = np.array([1, 2, 3])
+    >>> v = np.array([1.1, 3.0])
+    >>> closest_indices(array, value, atol=0.1)
+    array([0, 2])
+
+    >>> np.searchsorted(a, v)
+    array([1, 2])
+
+    """
+
+    return jnp.where(jnp.isclose(a, v[:, None], atol=atol) == True)[1]

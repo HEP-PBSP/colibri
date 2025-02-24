@@ -8,13 +8,19 @@ This module contains the functions to export the results of the fit.
 from dataclasses import dataclass
 import yaml
 import numpy as np
+import pathlib
 from pathlib import Path
 
 import jax.numpy as jnp
 import pandas as pd
 from mpi4py import MPI
 
-from colibri.constants import LHAPDF_XGRID, evolution_to_flavour_matrix, EXPORT_LABELS
+from colibri.constants import (
+    LHAPDF_XGRID,
+    evolution_to_flavour_matrix,
+    EXPORT_LABELS,
+    flavour_to_evolution_matrix,
+)
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -51,10 +57,7 @@ class BayesianFit:
     param_names: list
     resampled_posterior: jnp.array
     full_posterior_samples: jnp.array
-    bayes_complexity: float
-    avg_chi2: float
-    min_chi2: float
-    logz: float
+    bayesian_metrics: dict
 
 
 def export_bayes_results(
@@ -87,11 +90,12 @@ def export_bayes_results(
     df = pd.DataFrame(bayes_fit.resampled_posterior, columns=bayes_fit.param_names)
     df.to_csv(str(output_path) + f"/{results_name}.csv", float_format="%.5e")
 
-    # Write the results to file
-    with open(str(output_path) + "/bayes_metrics.csv", "w") as f:
-        f.write(
-            f"logz,min_chi2,avg_chi2,Cb\n{bayes_fit.logz},{bayes_fit.min_chi2},{bayes_fit.avg_chi2},{bayes_fit.bayes_complexity}\n"
-        )
+    # Save bayesian metrics to csv file
+    pd.DataFrame.from_dict([bayes_fit.bayesian_metrics]).to_csv(
+        str(output_path) + f"/bayes_metrics.csv",
+        float_format="%.5e",
+        index=False,
+    )
 
 
 def write_exportgrid(
@@ -135,6 +139,69 @@ def write_exportgrid(
 
     with open(f"{grid_name}.exportgrid", "w") as outfile:
         yaml.dump(export_grid, outfile)
+
+
+def read_exportgrid(exportgrid_path: pathlib.Path):
+    """
+    Reads an exportgrid file from the output path,
+    and returns a dictionary containing the pdf grid in the evolution basis.
+
+    Parameters
+    ----------
+    exportgrid_path: pathlib.Path
+        Path to the exportgrid file.
+
+    Returns
+    -------
+    export_grid: dict
+        Dictionary containing the pdf grid in the evolution basis.
+    """
+    with open(exportgrid_path, "r") as infile:
+        export_grid = yaml.safe_load(infile)
+
+    pdfgrid = np.array(export_grid["pdfgrid"])
+
+    # rotate from flavour to evolution basis
+    pdfgrid = flavour_to_evolution_matrix @ pdfgrid.T
+    export_grid["pdfgrid"] = pdfgrid
+
+    return export_grid
+
+
+def get_pdfgrid_from_exportgrids(fit_path: pathlib.Path):
+    """
+    Reads the exportgrids contained in the replicas folder
+    of the fit_path and returns the pdf grid of shape
+    (Nrep, Nfl, Nx) in the evolution basis.
+
+    Parameters
+    ----------
+    fit_path: pathlib.Path
+        Path to the fit folder.
+
+    Returns
+    -------
+    pdf_grid: np.array
+        Array containing the pdf grid in the evolution basis.
+    """
+    # Get the list of all the exportgrids
+    replicas_path = fit_path / "replicas"
+    exportgrids = list(replicas_path.glob("replica_*/*.exportgrid"))
+
+    # Read the first exportgrid to get the grid shape
+    first_exportgrid = read_exportgrid(exportgrids[0])
+    Nrep = len(exportgrids)
+    Nfl = len(first_exportgrid["labels"])
+    Nx = len(first_exportgrid["xgrid"])
+
+    # Initialize the pdf grid
+    pdf_grid = np.zeros((Nrep, Nfl, Nx))
+
+    # Fill the pdf grid
+    for i, exportgrid in enumerate(exportgrids):
+        pdf_grid[i] = read_exportgrid(exportgrid)["pdfgrid"]
+
+    return pdf_grid
 
 
 def write_replicas(

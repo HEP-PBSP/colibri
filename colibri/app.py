@@ -1,8 +1,7 @@
 """
 colibri.app.py
 
-Author: Mark N. Costantini
-Date: 11.11.2023
+Module contains the main class for the colibri app.
 """
 
 from validphys.app import App

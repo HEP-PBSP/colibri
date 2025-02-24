@@ -20,9 +20,9 @@ def check_pdf_models_equal(prior_settings, pdf_model, theoryid, t0pdfset):
     matches the PDF model used in the current fit (pdf_model).
     """
 
-    if prior_settings["type"] == "prior_from_gauss_posterior":
+    if prior_settings.prior_distribution == "prior_from_gauss_posterior":
 
-        prior_fit = prior_settings["prior_fit"]
+        prior_fit = prior_settings.prior_distribution_specs["prior_fit"]
         prior_pdf_model = get_pdf_model(prior_fit)
 
         if not pdf_models_equal(prior_pdf_model, pdf_model):
