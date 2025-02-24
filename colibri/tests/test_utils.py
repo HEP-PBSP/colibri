@@ -7,7 +7,8 @@ import pathlib
 import shutil
 from numpy.testing import assert_allclose
 import pytest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, MagicMock
+import inspect
 
 import jax
 import jax.numpy as jnp
@@ -30,11 +31,23 @@ from colibri.utils import (
     mask_luminosity_mapping,
     compute_determinants_of_principal_minors,
     closest_indices,
+    pdf_model_from_colibri_model,
 )
 from validphys.fkparser import load_fktable
 
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
+
+
+@pytest.fixture
+def mock_colibri_model():
+    model = MagicMock()
+    model.grid_values_func = MagicMock(
+        return_value=lambda params: jnp.array(
+            [[p * x for x in range(1, 6)] for p in params]
+        )
+    )
+    return model
 
 
 def test_cast_to_numpy():
@@ -366,3 +379,21 @@ def test_large_psd_matrix():
     expected = np.array([1.0, 4.0, 8.0, 12.0])
     result = compute_determinants_of_principal_minors(C)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_pdf_model_from_colibri_model_not_found():
+    with patch("importlib.import_module", side_effect=ModuleNotFoundError):
+        settings = {"model": "nonexistent_model"}
+        with pytest.raises(ModuleNotFoundError):
+            pdf_model_from_colibri_model(settings)
+
+
+@patch("importlib.import_module")
+def test_pdf_model_from_colibri_model_missing_config(mock_import_module):
+    # Explicitly remove the 'config' attribute
+    mock_module = MagicMock()
+    del mock_module.config  # Ensure 'config' attribute doesn't exist
+    mock_import_module.return_value = mock_module
+    settings = {"model": "mock_model"}
+    with pytest.raises(AttributeError):
+        pdf_model_from_colibri_model(settings)
