@@ -168,7 +168,7 @@ def integrability_penalty(integrability_settings):
         """
         integ_pdf_grid = pdf[integ_flavours, :][:, x_idxs]
         # compute integrability penalty term and sum over xgrid points
-        penalty = lambda_integrability * jnp.sum((integ_pdf_grid) ** 2, axis=0)
+        penalty = lambda_integrability * jnp.sum((integ_pdf_grid) ** 2, axis=1)
 
         return penalty
 
