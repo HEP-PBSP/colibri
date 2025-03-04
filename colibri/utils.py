@@ -162,7 +162,23 @@ def resample_from_ns_posterior(
     samples, n_posterior_samples=1000, posterior_resampling_seed=123456
 ):
     """
-    TODO
+    Resamples a subset of data points from a given set of samples without replacement.
+
+    Parameters
+    ----------
+    samples: jnp.ndarray
+        The input dataset to be resampled.
+
+    n_posterior_samples: int, default is 1000
+        The number of samples to draw from the input dataset.
+
+    posterior_resampling_seed: int, default is 123456
+        The random seed to ensure reproducibility of the resampling process.
+
+    Returns
+    -------
+    resampled_samples: jax.Array
+        The resampled subset of the input dataset, containing n_posterior_samples without selected replacement.
     """
 
     current_samples = samples.copy()
@@ -340,7 +356,41 @@ def likelihood_float_type(
         file.write(str(dtype))
 
 
-def closest_indices(a, v, atol=1e-7):
+def compute_determinants_of_principal_minors(C):
+    """
+    Computes the determinants of the principal minors of a symmetric, positive semi-definite matrix C.
+
+    Parameters
+    ----------
+    C (np.ndarray): An nxn covariance matrix (symmetric, positive semi-definite)
+
+    Returns
+    -------
+    List[float]: A list of determinants of the principal minors from C_n down to C_0
+    """
+    n = C.shape[0]
+    determinants = []
+
+    # Perform the Cholesky decomposition of the full matrix C
+    try:
+        L = np.linalg.cholesky(C)
+    except np.linalg.LinAlgError:
+        raise ValueError("Matrix is not positive semi-definite or symmetric.")
+
+    # Compute determinants of principal minors by iteratively removing rows/columns from the Cholesky factor
+    for k in range(n, 0, -1):
+        # Compute determinant of C_k using the product of diagonal entries of the top-left kxk submatrix of L
+        L_k = L[:k, :k]
+        det_C_k = np.prod(np.diag(L_k)) ** 2  # Square of product of diagonals
+        determinants.append(det_C_k)
+
+    # C_0 is defined to have determinant 1
+    determinants.append(1.0)
+
+    return np.array(determinants)[::-1]
+
+
+def closest_indices(a, v, atol=1e-8):
     """
     Returns the indices of the closest value in an array to a given value.
 

@@ -309,10 +309,12 @@ def ultranest_fit(
             param_names=parameters,
             resampled_posterior=resampled_posterior,
             full_posterior_samples=full_samples,
-            bayes_complexity=Cb,
-            avg_chi2=avg_chi2,
-            min_chi2=min_chi2,
-            logz=ultranest_result["logz"],
+            bayesian_metrics={
+                "bayes_complexity": Cb,
+                "avg_chi2": avg_chi2,
+                "min_chi2": min_chi2,
+                "logz": ultranest_result["logz"],
+            },
         )
 
     # Synchronize to ensure all processes have finished

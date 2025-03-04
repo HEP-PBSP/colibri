@@ -3,6 +3,7 @@ import jax.random
 from unittest.mock import Mock, patch
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 from colibri.tests.conftest import TEST_FK_ARRAYS
+from colibri.core import PriorSettings
 import logging
 import pytest
 
@@ -14,11 +15,15 @@ analytic_settings = {
     "sampling_seed": 123,
     "full_sample_size": 100,
     "n_posterior_samples": 10,
-    "optimal_prior": True,
 }
+PRIOR_SETTINGS = PriorSettings(
+    **{
+        "prior_distribution": "uniform_parameter_prior",
+        "prior_distribution_specs": {"max_val": 1.0, "min_val": -1.0},
+    }
+)
 
 # Define mock input parameters
-bayesian_prior = lambda x: x
 FIT_XGRID = jnp.logspace(-7, 0, 50)
 
 
@@ -42,7 +47,7 @@ def test_analytic_fit_flat_direction():
             _pred_data,
             mock_pdf_model,
             analytic_settings,
-            bayesian_prior,
+            PRIOR_SETTINGS,
             FIT_XGRID,
             TEST_FK_ARRAYS,
         )
@@ -67,7 +72,7 @@ def test_analytic_fit(caplog):
         _pred_data,
         mock_pdf_model,
         analytic_settings,
-        bayesian_prior,
+        PRIOR_SETTINGS,
         FIT_XGRID,
         TEST_FK_ARRAYS,
     )
@@ -80,8 +85,8 @@ def test_analytic_fit(caplog):
     )
     assert len(result.param_names) == len(mock_pdf_model.param_names)
 
-    # Check that it works if optimal_prior is False
-    analytic_settings["optimal_prior"] = False
+    # Check that it works if min_max_prior is False
+    analytic_settings["min_max_prior"] = False
     # Run the analytic fit
     with caplog.at_level(logging.ERROR):  # Set the log level to ERROR
         result_2 = analytic_fit(
@@ -89,7 +94,7 @@ def test_analytic_fit(caplog):
             _pred_data,
             mock_pdf_model,
             analytic_settings,
-            bayesian_prior,
+            PRIOR_SETTINGS,
             FIT_XGRID,
             TEST_FK_ARRAYS,
         )
@@ -104,6 +109,65 @@ def test_analytic_fit(caplog):
         == analytic_settings["n_posterior_samples"]
     )
     assert len(result_2.param_names) == len(mock_pdf_model.param_names)
+
+
+def test_analytic_fit_different_priors(caplog):
+
+    PRIOR_SETTINGS1 = PriorSettings(
+        **{
+            "prior_distribution": "n_sigma_prior",
+            "prior_distribution_specs": {"n_sigma_value": 2.0},
+        }
+    )
+
+    # Create mock pdf model
+    mock_pdf_model = Mock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
+        (14, len(xgrid))
+    )
+    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params, fkarrs: (params, jnp.ones((14, len(xgrid))))
+    )
+
+    _pred_data = None
+
+    # Run the analytic fit
+    result = analytic_fit(
+        mock_central_inv_covmat_index,
+        _pred_data,
+        mock_pdf_model,
+        analytic_settings,
+        PRIOR_SETTINGS1,
+        FIT_XGRID,
+        TEST_FK_ARRAYS,
+    )
+
+    assert isinstance(result, AnalyticFit)
+
+    assert result.analytic_specs == analytic_settings
+    assert (
+        result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]
+    )
+    assert len(result.param_names) == len(mock_pdf_model.param_names)
+
+    PRIOR_SETTINGS2 = PriorSettings(
+        **{
+            "prior_distribution": "custom_uniform_parameter_prior",
+            "prior_distribution_specs": {"upper_bounds": [2.0], "lower_bounds": [-2.0]},
+        }
+    )
+
+    # Run the analytic fit with custom uniform prior
+    result = analytic_fit(
+        mock_central_inv_covmat_index,
+        _pred_data,
+        mock_pdf_model,
+        analytic_settings,
+        PRIOR_SETTINGS2,
+        FIT_XGRID,
+        TEST_FK_ARRAYS,
+    )
 
 
 @patch("colibri.export_results.write_exportgrid")
