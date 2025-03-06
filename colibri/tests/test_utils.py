@@ -71,8 +71,6 @@ def test_t0_pdf_grid():
     N_rep = t0pdfset.get_members()  #   number of replicas
     N_fl = len(convolution.FK_FLAVOURS)  # number of flavours
 
-    print(f"FK_FLAVOURS: {convolution.FK_FLAVOURS}")
-
     assert t0_grid.shape == (N_rep, N_fl, len(FIT_XGRID))
 
 
