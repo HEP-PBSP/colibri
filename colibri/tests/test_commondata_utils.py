@@ -12,7 +12,7 @@ from colibri.tests.conftest import (
     TEST_DATASETS,
 )
 from numpy.testing import assert_allclose
-from validphys.coredata import CommonData
+from nnpdf_data.coredata import CommonData
 
 TEST_COMMONDATA_FOLDER = pathlib.Path(__file__).with_name("test_commondata")
 
