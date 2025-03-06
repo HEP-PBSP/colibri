@@ -22,7 +22,7 @@ from colibri.tests.conftest import (
 )
 from colibri.utils import (
     t0_pdf_grid,
-    closure_test_pdf_grid,   
+    closure_test_pdf_grid,
     resample_from_ns_posterior,
     cast_to_numpy,
     get_fit_path,
@@ -75,6 +75,7 @@ def test_t0_pdf_grid():
 
     assert t0_grid.shape == (N_rep, N_fl, len(FIT_XGRID))
 
+
 def test_closure_test_pdf_grid():
     """
     Test the closure_test_pdf_grid function.
@@ -84,7 +85,7 @@ def test_closure_test_pdf_grid():
     - Output type is a jnp.array.
     - The output shape is (N_rep, N_fl, N_x)
     """
-     # mock a valid PDF set
+    # mock a valid PDF set
     inp = {"closure_test_pdf": "NNPDF40_nlo_as_01180"}
     cltest_pdf_set = cAPI.closure_test_pdf(**inp)
 
