@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    Generate the theory csv using validphys functions
+Generate the theory csv using validphys functions
 """
 from argparse import ArgumentParser
 from pathlib import Path

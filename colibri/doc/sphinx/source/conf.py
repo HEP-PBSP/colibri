@@ -155,7 +155,15 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "colibridocumentation", "COLIBRI Documentation Documentation", [author], 1)]
+man_pages = [
+    (
+        master_doc,
+        "colibridocumentation",
+        "COLIBRI Documentation Documentation",
+        [author],
+        1,
+    )
+]
 
 
 # -- Options for Texinfo output ----------------------------------------------
