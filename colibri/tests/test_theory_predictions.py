@@ -80,19 +80,46 @@ def test_fktable_xgrid_indices_no_matches():
 
 def test_fast_kernel_arrays():
     """
-    Test that the fast kernel arrays are correctly loaded
+    Test that fast_kernel_arrays correctly loads FK tables and handles different parameters.
     """
+    # Load data
+    dataset = colibriAPI.data(**TEST_DATASETS)
+    ds = dataset.datasets[0]
+
+    # Base test: Default behavior
     fk_arrays = colibriAPI.fast_kernel_arrays(**TEST_DATASETS)
+    assert isinstance(fk_arrays, tuple)
+    assert len(fk_arrays) == len(dataset.datasets)
+    assert isinstance(fk_arrays[0], tuple)
 
-    assert len(fk_arrays) == 1
-    assert type(fk_arrays) == tuple
-    assert type(fk_arrays[0]) == tuple
+    # Manually load expected FK table
+    fk_arr_expected = jnp.array(
+        load_fktable(ds.fkspecs[0]).with_cuts(ds.cuts).get_np_fktable()
+    )
+    assert_allclose(fk_arrays[0][0], fk_arr_expected)
 
-    data = colibriAPI.data(**TEST_DATASETS)
-    ds = data.datasets[0]
-    fk_arr = jnp.array(load_fktable(ds.fkspecs[0]).with_cuts(ds.cuts).get_np_fktable())
+    # Test with specific flavour indices
+    flavour_indices = ["g", "V"]  # Example: selecting specific flavours
+    fk_arrays_flav = colibriAPI.fast_kernel_arrays(
+        **{**TEST_DATASETS, "flavour_mapping": flavour_indices}
+    )
+    assert fk_arrays_flav[0][0].shape[1] == len(
+        flavour_indices
+    )  # Ensure correct number of flavours
 
-    assert_allclose(fk_arrays[0][0], fk_arr)
+    # Test with fill_fk_xgrid_with_zeros=True
+    fk_arrays_filled = colibriAPI.fast_kernel_arrays(
+        **{**TEST_DATASETS, "fill_fk_xgrid_with_zeros": True}
+    )
+    FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS)
+    assert fk_arrays_filled[0][0].shape[-1] == len(FIT_XGRID)  # Check x-grid size
+
+    # Ensure non-zero indices are properly mapped
+    from colibri.utils import closest_indices
+
+    fk_xgrid = load_fktable(ds.fkspecs[0]).xgrid
+    non_zero_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-8)
+    assert jnp.any(fk_arrays_filled[0][0][:, :, non_zero_indices] != 0)
 
 
 def test_positivity_fast_kernel_arrays():
