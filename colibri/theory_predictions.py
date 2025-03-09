@@ -163,7 +163,7 @@ def make_dis_prediction(
     fk_xgrid_indices = fktable_xgrid_indices(
         fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros
     )
- 
+
     def dis_prediction(pdf, fk_arr):
         """
         Function to compute the theory prediction for a DIS observable.
