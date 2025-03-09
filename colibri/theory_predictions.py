@@ -44,7 +44,7 @@ def fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False):
 
     # Extract xgrid of the FK table and find the indices
     fk_xgrid = fktable.xgrid
-    # atol is chosen to be 1e-7 as this is the order of magnitude of the difference between the smallest entries of the XGRID
+    # atol is chosen to be 1e-8 as this is the order of magnitude of the difference between the smallest entries of the XGRID
     fk_xgrid_indices = closest_indices(jnp.array(FIT_XGRID), fk_xgrid, atol=1e-8)
 
     return fk_xgrid_indices
