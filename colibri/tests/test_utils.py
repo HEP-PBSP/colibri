@@ -336,6 +336,7 @@ def test_likelihood_float_type(
     # Assert that the dtype.txt file was created with correct dtype
     assert os.path.exists(tmp_path / "dtype.txt")
 
+
 def test_single_value():
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([1.1])
