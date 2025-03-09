@@ -27,7 +27,7 @@ def experimental_commondata_tuple(data):
     Returns
     -------
     tuple
-        tuple of validphys.coredata.CommonData instances
+        tuple of nnpdf_data.coredata.CommonData instances
     """
     return tuple(data.load_commondata_instance())
 
@@ -67,7 +67,7 @@ def level_0_commondata_tuple(
     Returns
     -------
     tuple
-        tuple of validphys.coredata.CommonData instances
+        tuple of nnpdf_data.coredata.CommonData instances
     """
 
     fake_data = []
@@ -103,7 +103,7 @@ def level_1_commondata_tuple(
 
     Parameters
     ----------
-    level_0_commondata_tuple: tuple of validphys.coredata.CommonData instances
+    level_0_commondata_tuple: tuple of nnpdf_data.coredata.CommonData instances
         A tuple of level_0 closure test data.
 
     data_generation_covariance_matrix: jnp.array
@@ -115,7 +115,7 @@ def level_1_commondata_tuple(
     Returns
     -------
     tuple
-        tuple of validphys.coredata.CommonData instances
+        tuple of nnpdf_data.coredata.CommonData instances
     """
 
     # First, construct a jax array from the level_0_commondata_tuple

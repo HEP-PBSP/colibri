@@ -1,5 +1,5 @@
 """
-Main scope of this module is to test that the union of the xgrid of the fktables of the 
+Main scope of this module is to test that the union of the xgrid of the fktables of the
 DIS and Hadronic datasets are the the same as the XGRID stored in the constants.py file.
 """
 
