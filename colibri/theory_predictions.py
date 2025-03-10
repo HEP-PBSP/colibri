@@ -139,7 +139,7 @@ def make_dis_prediction(
     Parameters
     ----------
     fktable : validphys.coredata.FKTableData
-            The fktable should be a colibri.coredata.FKTableData instance
+            The fktable should be a validphys.coredata.FKTableData instance
             and with cuts and masked flavours already applied.
 
     FIT_XGRID: np.ndarray
