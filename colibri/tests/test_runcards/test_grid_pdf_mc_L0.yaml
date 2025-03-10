@@ -19,7 +19,7 @@ closure_test_level: 0                  # The closure test level: False for exper
 closure_test_pdf: NNPDF31_nnlo_as_0118 # The closure test PDF used if closure_level is not False
 reduced_xgrid_data: True               # An artefact of the old grid_pdf implementation,
                                        # ensuring we generate closure test data using the model.
-fill_fk_xgrid_with_zeros: true
+
 #####################
 # Loss function specs
 #####################
