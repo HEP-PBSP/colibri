@@ -61,8 +61,19 @@ def level_0_commondata_tuple(
     closure_test_central_pdf_grid: jnp.array
         grid is of shape N_fl x N_x
 
+    fast_kernel_arrays: tuple
+        tuple of jnp.array of shape (Ndat, Nfl, Nfk_xgrid)
+        containing the fast kernel arrays for each dataset in data.
+
     flavour_indices: list, default is None
         Subset of flavour (evolution basis) indices to be used.
+
+    fill_fk_xgrid_with_zeros: bool, default is False
+        If True, then the missing xgrid points in the FK table
+        will be filled with zeros. This is useful when the FK table
+        is needed as tensor of shape (Ndat, Nfl, Nfk_xgrid) with Nfk_xgrid and Nfl fixed
+        for all datasets.
+
 
     Returns
     -------
