@@ -7,7 +7,8 @@ import pathlib
 import shutil
 from numpy.testing import assert_allclose
 import pytest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, MagicMock
+from unittest import mock
 
 import jax
 import jax.numpy as jnp
@@ -33,12 +34,24 @@ from colibri.utils import (
     mask_luminosity_mapping,
     compute_determinants_of_principal_minors,
     closest_indices,
+    pdf_model_from_colibri_model,
 )
 from validphys.fkparser import load_fktable
 import validphys
 from validphys import convolution
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
+
+
+@pytest.fixture
+def mock_colibri_model():
+    model = MagicMock()
+    model.grid_values_func = MagicMock(
+        return_value=lambda params: jnp.array(
+            [[p * x for x in range(1, 6)] for p in params]
+        )
+    )
+    return model
 
 
 def test_t0_pdf_grid():
@@ -486,3 +499,79 @@ def test_large_psd_matrix():
     expected = np.array([1.0, 4.0, 8.0, 12.0])
     result = compute_determinants_of_principal_minors(C)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_pdf_model_from_colibri_model_not_found():
+    with patch("importlib.import_module", side_effect=ModuleNotFoundError):
+        settings = {"model": "nonexistent_model"}
+        with pytest.raises(ModuleNotFoundError):
+            pdf_model_from_colibri_model(settings)
+
+
+@patch("importlib.import_module")
+def test_pdf_model_from_colibri_model_missing_config(mock_import_module):
+    # Explicitly remove the 'config' attribute
+    mock_module = MagicMock()
+    del mock_module.config  # Ensure 'config' attribute doesn't exist
+    mock_import_module.return_value = mock_module
+    settings = {"model": "mock_model"}
+    with pytest.raises(AttributeError):
+        pdf_model_from_colibri_model(settings)
+
+
+@patch("importlib.import_module")
+@patch("inspect.getmembers")
+def test_pdf_model_from_colibri_model_success(
+    mock_getmembers, mock_import_module, mock_colibri_model
+):
+    mock_import_module.return_value = MagicMock()
+    # Mock the colibriConfig class and its subclass
+    from colibri.config import colibriConfig
+
+    class MockColibriConfig(colibriConfig):
+        def __init__(self, input_params):
+            pass
+
+        def produce_pdf_model(self, param1, param2, output_path, dump_model=False):
+            return mock_colibri_model
+
+    mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
+
+    # Define valid model settings
+    model_settings = {
+        "model": "mock_colibri_model",
+        "param1": 1,
+        "param2": 2,
+    }
+
+    # Call the function and assert the result
+    result = pdf_model_from_colibri_model(model_settings)
+    assert result == mock_colibri_model
+
+
+@patch("importlib.import_module")
+@patch("inspect.getmembers")
+def test_pdf_model_from_colibri_model_incorrect_inputs(
+    mock_getmembers, mock_import_module, mock_colibri_model
+):
+    mock_import_module.return_value = MagicMock()
+    # Mock the colibriConfig class and its subclass
+    from colibri.config import colibriConfig
+
+    class MockColibriConfig(colibriConfig):
+        def __init__(self, input_params):
+            pass
+
+        def produce_pdf_model(self, param1, param2, output_path, dump_model=False):
+            return mock_colibri_model
+
+    mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
+
+    # Define model settings missing param2
+    model_settings = {
+        "model": "mock_colibri_model",
+        "param1": 1,
+    }
+
+    with pytest.raises(ValueError):
+        pdf_model_from_colibri_model(model_settings)

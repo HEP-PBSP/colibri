@@ -339,3 +339,14 @@ def test_parse_positivity_penalty_settings(mock_warning):
 
     assert pos_settings == expected_settings
     assert mock_warning.called
+
+
+def test_parse_closure_test_pdf_colibri_model():
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+
+    # test for colibri_model input
+    closure_test_pdf = "colibri_model"
+    assert config.parse_closure_test_pdf(closure_test_pdf) == "colibri_model"
