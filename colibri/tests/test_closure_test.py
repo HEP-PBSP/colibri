@@ -7,6 +7,9 @@ from colibri.closure_test import (
     closure_test_central_pdf_grid,
     closure_test_colibri_model_pdf,
 )
+from colibri.api import API as cAPI
+import validphys
+from validphys import convolution
 
 
 @pytest.fixture
@@ -19,6 +22,40 @@ def mock_pdf():
     pdf = MagicMock()
     pdf.grid_values = jnp.ones((1, 13, 5, 1))
     return pdf
+
+
+def test_closure_test_pdf_grid():
+    """
+    Test the closure_test_pdf_grid function.
+
+    Verifies:
+    - Type of "closure_test_pdf" is validphys.core.PDF
+    - Output type is a jnp.array.
+    - The output shape is (N_rep, N_fl, N_x)
+    """
+    # mock a valid PDF set
+    inp = {"closure_test_pdf": "NNPDF40_nlo_as_01180"}
+    cltest_pdf_set = cAPI.closure_test_pdf(**inp)
+
+    # Check 1: closure_test_pdf is an instance of validphys.core.PDF
+    assert isinstance(cltest_pdf_set, validphys.core.PDF)
+
+    # define a test array
+    FIT_XGRID = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    # call the function
+    grid = closure_test_pdf_grid(cltest_pdf_set, FIT_XGRID, Q0=1.65)
+
+    # Check 2: type of the output is a jnp.array
+    assert isinstance(grid, jnp.ndarray)
+
+    # Check 3: shape of the output
+    N_rep = cltest_pdf_set.get_members()  #   number of replicas
+    N_fl = len(convolution.FK_FLAVOURS)  # number of flavours
+
+    print(f"FK_FLAVOURS: {convolution.FK_FLAVOURS}")
+
+    assert grid.shape == (N_rep, N_fl, len(FIT_XGRID))
 
 
 @pytest.fixture
