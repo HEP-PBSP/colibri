@@ -49,6 +49,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxcontrib.bibtex",
     "sphinx.ext.autosectionlabel",
+    "sphinx_copybutton",
 ]
 
 
