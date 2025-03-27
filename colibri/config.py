@@ -315,23 +315,27 @@ class colibriConfig(Config):
             "integrability_specs", {}
         )
 
-        int_specs = integrability_settings["integrability_specs"]
-
         # assign default values
-        int_specs.setdefault("lambda_integrability", 100)
-        int_specs.setdefault("evolution_flavours", [9, 10])  # T3 and T8 as default
-        int_specs.setdefault(
+        integrability_settings["integrability_specs"].setdefault(
+            "lambda_integrability", 100
+        )
+        integrability_settings["integrability_specs"].setdefault(
+            "evolution_flavours", [9, 10]
+        )  # T3 and T8 as default
+        integrability_settings["integrability_specs"].setdefault(
             "integrability_xgrid", [2.00000000e-07]
         )  # last point of XGRID as default
 
-        if int_specs["evolution_flavours"] != [
+        if integrability_settings["integrability_specs"]["evolution_flavours"] != [
             9,
             10,
         ]:  # only process if not default
 
             ev_fls = []
 
-            for ev_fl in int_specs["evolution_flavours"]:
+            for ev_fl in integrability_settings["integrability_specs"][
+                "evolution_flavours"
+            ]:
                 if ev_fl not in FLAVOUR_TO_ID_MAPPING.keys():
                     raise (
                         ConfigError(
@@ -341,9 +345,7 @@ class colibriConfig(Config):
                 ev_fls.append(FLAVOUR_TO_ID_MAPPING[ev_fl])
 
             # convert strings to numeric indexes
-            int_specs["evolution_flavours"] = ev_fls
-
-        integrability_settings["integrability_specs"] = int_specs
+            integrability_settings["integrability_specs"]["evolution_flavours"] = ev_fls
 
         return IntegrabilitySettings(**integrability_settings)
 
