@@ -254,6 +254,8 @@ def pred_funcs_from_dataset(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool
+
     Returns
     -------
     list of Mappings
