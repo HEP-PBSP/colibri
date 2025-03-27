@@ -367,7 +367,7 @@ MOCK_PDF_MODEL.pred_and_pdf_func = (
     )
 )
 
-TEST_XGRID = jnp.ones(2)
+TEST_XGRID = jnp.array([0.1, 0.2])
 TEST_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0]
