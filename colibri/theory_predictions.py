@@ -240,7 +240,9 @@ def make_had_prediction(
     return had_prediction
 
 
-def pred_funcs_from_dataset(dataset, FIT_XGRID, flavour_indices):
+def pred_funcs_from_dataset(
+    dataset, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+):
     """
     Returns a list containing the forward maps associated with the fkspecs of a dataset.
 
@@ -262,9 +264,13 @@ def pred_funcs_from_dataset(dataset, FIT_XGRID, flavour_indices):
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
 
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices)
+            pred = make_had_prediction(
+                fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+            )
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices)
+            pred = make_dis_prediction(
+                fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+            )
         pred_funcs.append(pred)
 
     return pred_funcs
@@ -293,7 +299,9 @@ def make_pred_dataset(
     Callable
     """
 
-    pred_funcs = pred_funcs_from_dataset(dataset, FIT_XGRID, flavour_indices)
+    pred_funcs = pred_funcs_from_dataset(
+        dataset, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+    )
 
     def prediction(pdf, fk_dataset):
         return OP[dataset.op](
