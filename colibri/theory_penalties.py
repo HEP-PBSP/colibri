@@ -9,7 +9,6 @@ import jax.numpy as jnp
 
 from colibri.theory_predictions import pred_funcs_from_dataset, OP
 from colibri.utils import mask_fktable_array, closest_indices
-from colibri.constants import XGRID
 
 from validphys.fkparser import load_fktable
 
@@ -116,7 +115,7 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
     return pos_penalties
 
 
-def integrability_penalty(integrability_settings):
+def integrability_penalty(integrability_settings, FIT_XGRID):
     """
     Compute the integrability penalty to be added to the loss function.
 
@@ -140,13 +139,13 @@ def integrability_penalty(integrability_settings):
 
     integ_xgrid = integrability_settings.integrability_specs["integrability_xgrid"]
     # ensure that the integrability xgrid points are included in the range of the fit xgrid
-    if any([x > XGRID[-1] or x < XGRID[0] for x in integ_xgrid]):
+    if any([x > FIT_XGRID[-1] or x < FIT_XGRID[0] for x in integ_xgrid]):
         raise ValueError(
-            f"Integrability xgrid points are not included in the range of the fit xgrid, choose xgrid points within {XGRID[0]} and {XGRID[-1]}."
+            f"Integrability xgrid points are not included in the range of the fit xgrid, choose xgrid points within {FIT_XGRID[0]} and {FIT_XGRID[-1]}."
         )
 
     # select
-    x_idxs = closest_indices(jnp.array(XGRID), jnp.array(integ_xgrid))
+    x_idxs = closest_indices(jnp.array(FIT_XGRID), jnp.array(integ_xgrid))
 
     lambda_integrability = integrability_settings.integrability_specs[
         "lambda_integrability"
