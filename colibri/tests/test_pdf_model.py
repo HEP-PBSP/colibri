@@ -25,7 +25,7 @@ def test_grid_values_func():
     func = model.grid_values_func(TEST_XGRID)
     params = jnp.array([2, 3])
 
-    expected_output = jnp.array([5, 5])
+    expected_output = sum([param * TEST_XGRID for param in params])
 
     assert_array_equal(func(params), expected_output)
 
@@ -38,7 +38,7 @@ def test_pred_and_pdf_func():
 
     params = jnp.array([2, 3])
     predictions, pdf = pred_and_pdf(params, TEST_FK_ARRAYS)
-    expected_pdf = jnp.array([5, 5])
+    expected_pdf = sum([param * TEST_XGRID for param in params])
 
     expected_predictions = expected_pdf * TEST_FK_ARRAYS[0]
     assert_array_equal(pdf, expected_pdf)
