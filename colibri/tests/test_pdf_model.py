@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_pdf_model
+
+Tests for the PDFModel class.
+"""
+
 import jax.numpy as jnp
 from numpy.testing import assert_array_equal
 from colibri.tests.conftest import (
