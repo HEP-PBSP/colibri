@@ -4,7 +4,11 @@ import pytest
 import jaxlib
 
 from colibri.api import API as colibriAPI
-from colibri.theory_predictions import make_dis_prediction, make_had_prediction
+from colibri.theory_predictions import (
+    make_dis_prediction,
+    make_had_prediction,
+    fktable_xgrid_indices,
+)
 
 from colibri.tests.conftest import (
     TEST_DATASET,
@@ -20,21 +24,102 @@ from colibri.tests.conftest import (
 from validphys.fkparser import load_fktable
 
 
+# Mock FKTableData class to simulate the 'fktable' object
+class FKTableDataMock:
+    def __init__(self, xgrid):
+        self.xgrid = xgrid
+
+
+def test_fktable_xgrid_indices_fill_with_zeros():
+    # Case where fill_fk_xgrid_with_zeros is True
+    fktable = FKTableDataMock(xgrid=jnp.array([0.1, 0.2, 0.3]))
+    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
+
+    expected_indices = jnp.arange(
+        len(FIT_XGRID)
+    )  # Should return indices for the entire FIT_XGRID
+    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=True)
+
+    assert jnp.array_equal(result, expected_indices)
+
+
+def test_fktable_xgrid_indices_no_fill():
+    # Case where fill_fk_xgrid_with_zeros is False
+    fktable = FKTableDataMock(xgrid=jnp.array([0.1, 0.2, 0.3]))
+    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
+
+    expected_indices = jnp.array([1, 3, 5])  # Indices where fk_xgrid matches FIT_XGRID
+    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+
+    assert jnp.array_equal(result, expected_indices)
+
+
+def test_fktable_xgrid_indices_with_tolerance():
+    # Case where some points are close within tolerance
+    fktable = FKTableDataMock(xgrid=jnp.array([0.10000001, 0.2, 0.30000001]))
+    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
+
+    # Due to tolerance, the indices should match as if they were the same
+    expected_indices = jnp.array([1, 3, 5])
+    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+
+    assert jnp.array_equal(result, expected_indices)
+
+
+def test_fktable_xgrid_indices_no_matches():
+    # Case where no FK table xgrid matches FIT_XGRID
+    fktable = FKTableDataMock(xgrid=jnp.array([0.6, 0.7, 0.8]))
+    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
+
+    expected_indices = jnp.array(
+        []
+    )  # No matching indices, closest_indices returns empty array
+    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+    assert jnp.array_equal(result, expected_indices)
+
+
 def test_fast_kernel_arrays():
     """
-    Test that the fast kernel arrays are correctly loaded
+    Test that fast_kernel_arrays correctly loads FK tables and handles different parameters.
     """
+    # Load data
+    dataset = colibriAPI.data(**TEST_DATASETS)
+    ds = dataset.datasets[0]
+
+    # Base test: Default behavior
     fk_arrays = colibriAPI.fast_kernel_arrays(**TEST_DATASETS)
+    assert isinstance(fk_arrays, tuple)
+    assert len(fk_arrays) == len(dataset.datasets)
+    assert isinstance(fk_arrays[0], tuple)
 
-    assert len(fk_arrays) == 1
-    assert type(fk_arrays) == tuple
-    assert type(fk_arrays[0]) == tuple
+    # Manually load expected FK table
+    fk_arr_expected = jnp.array(
+        load_fktable(ds.fkspecs[0]).with_cuts(ds.cuts).get_np_fktable()
+    )
+    assert_allclose(fk_arrays[0][0], fk_arr_expected)
 
-    data = colibriAPI.data(**TEST_DATASETS)
-    ds = data.datasets[0]
-    fk_arr = jnp.array(load_fktable(ds.fkspecs[0]).with_cuts(ds.cuts).get_np_fktable())
+    # Test with specific flavour indices
+    flavour_indices = ["g", "V"]  # Example: selecting specific flavours
+    fk_arrays_flav = colibriAPI.fast_kernel_arrays(
+        **{**TEST_DATASETS, "flavour_mapping": flavour_indices}
+    )
+    assert fk_arrays_flav[0][0].shape[1] == len(
+        flavour_indices
+    )  # Ensure correct number of flavours
 
-    assert_allclose(fk_arrays[0][0], fk_arr)
+    # Test with fill_fk_xgrid_with_zeros=True
+    fk_arrays_filled = colibriAPI.fast_kernel_arrays(
+        **{**TEST_DATASETS, "fill_fk_xgrid_with_zeros": True}
+    )
+    FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS)
+    assert fk_arrays_filled[0][0].shape[-1] == len(FIT_XGRID)  # Check x-grid size
+
+    # Ensure non-zero indices are properly mapped
+    from colibri.utils import closest_indices
+
+    fk_xgrid = load_fktable(ds.fkspecs[0]).xgrid
+    non_zero_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-8)
+    assert jnp.any(fk_arrays_filled[0][0][:, :, non_zero_indices] != 0)
 
 
 def test_positivity_fast_kernel_arrays():
