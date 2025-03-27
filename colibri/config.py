@@ -504,7 +504,10 @@ class colibriConfig(Config):
 
     def parse_closure_test_pdf(self, name):
         """PDF set used to generate fakedata"""
-        return self.parse_pdf(name)
+        if name == "colibri_model":
+            return name
+        else:
+            return self.parse_pdf(name)
 
     def produce_flavour_indices(self, flavour_mapping=None):
         """

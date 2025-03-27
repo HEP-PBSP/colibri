@@ -433,3 +433,13 @@ def test_parse_integrability_settings_empty():
         "evolution_flavours": [9, 10],
         "integrability_xgrid": [2.00000000e-07],
     }  # Default
+
+def test_parse_closure_test_pdf_colibri_model():
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+
+    # test for colibri_model input
+    closure_test_pdf = "colibri_model"
+    assert config.parse_closure_test_pdf(closure_test_pdf) == "colibri_model"
