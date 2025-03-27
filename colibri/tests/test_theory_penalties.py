@@ -97,13 +97,13 @@ def test_integrability_penalty_integrability():
         ],
         "lambda_integrability": 2.0,
         "integrability_xgrid": [
-            2.00000000e-07,
-            3.03430477e-07,
+            0.1,
+            0.2,
         ],
     }
 
     # Get the penalty function
-    penalty_fn = integrability_penalty(integrability_settings)
+    penalty_fn = integrability_penalty(integrability_settings, TEST_XGRID)
 
     pdf_dummy = jnp.ones((14, 50))  # assumed to be x * pdf
     penalty = penalty_fn(pdf_dummy)
