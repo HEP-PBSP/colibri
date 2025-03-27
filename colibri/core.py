@@ -35,11 +35,18 @@ class IntegrabilitySettings:
 
     Attributes
     ----------
-    lambda_integrability: float
-        The value of the Lagrange multiplier penalty.
+    integrability: bool
+        Whether to impose integrability constraints.
 
-    evolution_pdf_flavours: list
-        List of the flavours for which to impose integrability.
+    integrability_specs: dict
+        The settings for the integrability constraints.
+
+    Example
+    -------
+    integrability_settings:
+        integrability: True
+        evolution_flavours: [V, V3, V8, T3, T8]
+        lambda_integrability: 1000
     """
 
     integrability: bool
