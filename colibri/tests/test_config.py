@@ -434,6 +434,7 @@ def test_parse_integrability_settings_empty():
         "integrability_xgrid": [2.00000000e-07],
     }  # Default
 
+
 def test_parse_closure_test_pdf_colibri_model():
     # Create input_params required for colibriConfig initialization
     input_params = {}
