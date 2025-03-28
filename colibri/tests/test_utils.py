@@ -7,38 +7,39 @@ Module for testing the utils module.
 import os
 import pathlib
 import shutil
-from numpy.testing import assert_allclose
-import pytest
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas
+import pytest
+import validphys
+from numpy.testing import assert_allclose
+from validphys import convolution
+from validphys.fkparser import load_fktable
+
 from colibri.api import API as cAPI
 from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     MOCK_PDF_MODEL,
-    TEST_DATASET_HAD,
     TEST_DATASET,
+    TEST_DATASET_HAD,
 )
 from colibri.utils import (
-    t0_pdf_grid,
-    resample_from_ns_posterior,
     cast_to_numpy,
+    closest_indices,
+    compute_determinants_of_principal_minors,
     get_fit_path,
     get_full_posterior,
     get_pdf_model,
     likelihood_float_type,
     mask_fktable_array,
     mask_luminosity_mapping,
-    compute_determinants_of_principal_minors,
-    closest_indices,
     pdf_model_from_colibri_model,
+    resample_from_ns_posterior,
+    t0_pdf_grid,
 )
-from validphys.fkparser import load_fktable
-import validphys
-from validphys import convolution
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
