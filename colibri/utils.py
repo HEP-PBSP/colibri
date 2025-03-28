@@ -445,6 +445,9 @@ def closest_indices(a, v, atol=1e-8):
 
     v : array-like or float
 
+    atol : float, default is 1e-8
+        absolute tolerance used to find closest indices.
+
     Returns
     -------
     array-like
