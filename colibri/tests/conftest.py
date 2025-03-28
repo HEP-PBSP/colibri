@@ -16,10 +16,16 @@ Intrinsic charm theory used in the tests.
 """
 TEST_THEORYID = 40000000
 
+"""
+Default cuts to be used when testing.
+"""
+TEST_USECUTS = "internal"
+
+
 TEST_DATASET = {
     "dataset_input": {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"},
     "theoryid": TEST_THEORYID,
-    "use_cuts": "internal",
+    "use_cuts": TEST_USECUTS,
 }
 
 """
@@ -31,13 +37,13 @@ TEST_DATASETS = {
         {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}
     ],
     "theoryid": TEST_THEORYID,
-    "use_cuts": "internal",
+    "use_cuts": TEST_USECUTS,
 }
 
 TEST_DATASET_HAD = {
     "dataset_input": {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
     "theoryid": TEST_THEORYID,
-    "use_cuts": "internal",
+    "use_cuts": TEST_USECUTS,
 }
 
 """
@@ -47,7 +53,7 @@ the "dataset_inputs" key instead of "dataset_input"
 TEST_DATASETS_HAD = {
     "dataset_inputs": [{"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"}],
     "theoryid": TEST_THEORYID,
-    "use_cuts": "internal",
+    "use_cuts": TEST_USECUTS,
 }
 
 """
@@ -59,7 +65,7 @@ TEST_DATASETS_DIS_HAD = {
         {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
     ],
     "theoryid": TEST_THEORYID,
-    "use_cuts": "internal",
+    "use_cuts": TEST_USECUTS,
 }
 
 """
@@ -133,7 +139,7 @@ TEST_FULL_DIS_DATASET = {
         {"dataset": "HERA_NC_318GEV_EAVG_CHARM-SIGMARED", "variant": "legacy"},
     ],
     "theoryid": TEST_THEORYID,
-    "use_cuts": "internal",
+    "use_cuts": TEST_USECUTS,
 }
 
 
@@ -200,7 +206,7 @@ TEST_FULL_HAD_DATASET = {
         {"dataset": "LHCB_Z0_13TEV_DIELECTRON-Y"},
     ],
     "theoryid": TEST_THEORYID,
-    "use_cuts": "internal",
+    "use_cuts": TEST_USECUTS,
 }
 
 
@@ -294,7 +300,7 @@ TEST_FULL_GLOBAL_DATASET = {
         {"dataset": "LHCB_Z0_13TEV_DIELECTRON-Y"},
     ],
     "theoryid": TEST_THEORYID,
-    "use_cuts": "internal",
+    "use_cuts": TEST_USECUTS,
 }
 
 
@@ -325,7 +331,7 @@ TEST_FULL_POS_DATASET = {
         ]
     },
     "theoryid": TEST_THEORYID,
-    "use_cuts": "internal",
+    "use_cuts": TEST_USECUTS,
 }
 
 
