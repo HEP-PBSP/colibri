@@ -241,7 +241,7 @@ def make_had_prediction(
 
 
 def pred_funcs_from_dataset(
-    dataset, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+    dataset, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros=False
 ):
     """
     Returns a list containing the forward maps associated with the fkspecs of a dataset.
@@ -254,7 +254,7 @@ def pred_funcs_from_dataset(
 
     flavour_indices: list, default is None
 
-    fill_fk_xgrid_with_zeros: bool
+    fill_fk_xgrid_with_zeros: bool, default is False
 
     Returns
     -------
