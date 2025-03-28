@@ -47,6 +47,9 @@ def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
 
+    flavour_indices: list
+        list of indices of the flavours to be considered in the fit.
+
     Returns
     -------
     @jax.jit CompiledFunction
@@ -64,7 +67,9 @@ def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
 
     """
 
-    pred_funcs = pred_funcs_from_dataset(posdataset, FIT_XGRID, flavour_indices)
+    pred_funcs = pred_funcs_from_dataset(
+        posdataset, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros=False
+    )
 
     def pos_penalty(pdf, alpha, lambda_positivity, fk_dataset):
         return lambda_positivity * jax.nn.elu(
@@ -89,6 +94,10 @@ def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
+
+    flavour_indices: list
+        list of indices of the flavours to be considered in
+        the fit.
 
     Returns
     -------
