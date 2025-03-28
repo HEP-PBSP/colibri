@@ -121,9 +121,10 @@ def test_integrability_penalty_integrability():
     assert jnp.sum(penalty, axis=-1) == expected_penalty
 
 
-def test_make_penalty_posdataset():
+def test_make_penalty_posdataset_pos_penalty():
     """
-    Test that penalty is small negative number when PDF is positive.
+    Tests the callable that the make_penalty_posdataset function returns.
+    Tests that penalty is small negative number when PDF is positive.
     """
     # Mock inputs
     posdatasets = cAPI.posdatasets(
