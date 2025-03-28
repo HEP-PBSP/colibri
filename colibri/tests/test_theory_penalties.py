@@ -11,15 +11,23 @@ import pytest
 from numpy.testing import assert_allclose
 from validphys.fkparser import load_fktable
 
+from colibri.api import API as cAPI
 from colibri.api import API as colibriAPI
+from colibri.constants import XGRID
 from colibri.tests.conftest import (
     TEST_DATASETS,
     TEST_POS_DATASET,
     TEST_SINGLE_POS_DATASET,
     TEST_SINGLE_POS_DATASET_HAD,
+    TEST_THEORYID,
+    TEST_USECUTS,
     TEST_XGRID,
 )
-from colibri.theory_penalties import integrability_penalty
+from colibri.theory_penalties import (
+    integrability_penalty,
+    make_penalty_posdataset,
+    positivity_fast_kernel_arrays,
+)
 
 
 def test_positivity_fast_kernel_arrays():
@@ -113,48 +121,29 @@ def test_integrability_penalty_integrability():
     assert jnp.sum(penalty, axis=-1) == expected_penalty
 
 
-import numpy as np
-import jax
-import jax.numpy as jnp
-import pytest
-from unittest.mock import MagicMock, patch
-
-# Mock dependencies
-from validphys.core import PositivitySetSpec
-from colibri.theory_predictions import pred_funcs_from_dataset  # Adjust import as necessary
-from colibri.theory_penalties import make_penalty_posdataset  # Adjust import as necessary
-
 def test_make_penalty_posdataset():
     """
-    Test that penalty is zero when PDF are POS
+    Test that penalty is small negative number when PDF is positive.
     """
     # Mock inputs
-    posdataset = MagicMock(spec=PositivitySetSpec)
-    posdataset.fkspecs = MagicMock()
-    FIT_XGRID = np.array([0.1, 0.2, 0.3])
+    posdatasets = cAPI.posdatasets(
+        **{**TEST_POS_DATASET, "theoryid": TEST_THEORYID, "use_cuts": TEST_USECUTS}
+    )
+    posdataset = posdatasets[0]
+
+    FIT_XGRID = XGRID
     flavour_indices = None
 
-    # Mock pred_funcs_from_dataset
-    def mock_pred_func(pdf, fk_arr):
-        return pdf * fk_arr
-    
-    pred_funcs_from_dataset.return_value = [mock_pred_func, mock_pred_func]
-    
-    with patch("colibri.theory_penalties.OP", new_callable=lambda: {"NULL": lambda *args: sum(args)}):
-        posdataset.op = "NULL"
-        penalty_func = make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices)
-        
-        # Define test inputs
-        pdf = jnp.array([1.0, 2.0, 3.0])
-        alpha = 1.0
-        lambda_positivity = 2.0
-        fk_dataset = [jnp.array([0.5, 0.5, 0.5]), jnp.array([0.5, 0.5, 0.5])]
-        
-        # Compute result
-        result = penalty_func(pdf, alpha, lambda_positivity, fk_dataset)
-        
-        # Expected result (manually computed)
-        expected = lambda_positivity * jax.nn.elu(-((pdf * 0.5) + (pdf * 0.5)), alpha)
-        import IPython; IPython.embed()
-        
-        assert jnp.allclose(result, expected), "Penalty function computation is incorrect"
+    penalty_func = make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices)
+
+    # Define positive mock PDF that should not yield a penalty.
+    pdf = jnp.ones((14, 50))
+    alpha = 1e-7
+    lambda_positivity = 2.0
+    fk_tuple = positivity_fast_kernel_arrays(posdatasets, flavour_indices=None)[0]
+
+    # Compute result
+    result = penalty_func(pdf, alpha, lambda_positivity, fk_tuple).sum()
+
+    # Expected result: small negative number because of elu function
+    assert result < 0, "Penalty function computation seems incorrect."
