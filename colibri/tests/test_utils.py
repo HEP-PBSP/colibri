@@ -353,6 +353,9 @@ def test_likelihood_float_type(
 
 
 def test_single_value():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([1.1])
     result = closest_indices(a, v, atol=0.2)
@@ -361,6 +364,9 @@ def test_single_value():
 
 
 def test_multiple_values():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([1.1, 3.0])
     result = closest_indices(a, v, atol=0.2)
@@ -369,6 +375,9 @@ def test_multiple_values():
 
 
 def test_no_close_values():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([4.0])
     result = closest_indices(a, v, atol=0.2)
@@ -377,6 +386,9 @@ def test_no_close_values():
 
 
 def test_exact_match():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([1.0, 2.0, 3.0])
     result = closest_indices(a, v, atol=1e-7)
@@ -385,6 +397,9 @@ def test_exact_match():
 
 
 def test_atol_effect():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([2.1])
     result = closest_indices(a, v, atol=0.09)  # Should not match 2.0 due to tight atol
@@ -394,6 +409,17 @@ def test_atol_effect():
     result = closest_indices(a, v, atol=0.11)  # Now 2.1 is close enough to 2.0
     expected = np.array([1])
     np.testing.assert_array_equal(result, expected)
+
+
+def test_scalar_v_input():
+    """
+    Test for utils.closest_indices.
+    """
+    a = np.array([1, 2, 3])
+    v = np.array([1])
+    expected = 0
+    result = closest_indices(a, v)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
 def test_identity_matrix():
