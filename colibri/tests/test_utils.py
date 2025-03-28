@@ -416,7 +416,7 @@ def test_scalar_v_input():
     Test for utils.closest_indices.
     """
     a = np.array([1, 2, 3])
-    v = np.array([1])
+    v = np.float32(1.0)
     expected = 0
     result = closest_indices(a, v)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
