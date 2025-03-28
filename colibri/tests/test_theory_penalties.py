@@ -120,6 +120,27 @@ def test_integrability_penalty_integrability():
     assert jnp.sum(penalty, axis=-1) == expected_penalty
 
 
+def test_integrability_penalty_raises_error():
+    """
+    Tests that the error is raised as should in the integrability penalty function.
+    """
+
+    integrability_settings = MagicMock()
+    integrability_settings.integrability = True
+    integrability_settings.integrability_specs = {
+        "evolution_flavours": [0, 1, 2],
+        "integrability_xgrid": [0.05, 0.15, 0.35],  # Out of FIT_XGRID range
+        "lambda_integrability": 1.0,
+    }
+    FIT_XGRID = jnp.array([0.1, 0.2, 0.3])
+
+    with pytest.raises(
+        ValueError,
+        match="Integrability xgrid points are not included in the range of the fit xgrid",
+    ):
+        integrability_penalty(integrability_settings, FIT_XGRID)
+
+
 def test_make_penalty_posdataset_pos_penalty():
     """
     Tests the callable that the make_penalty_posdataset function returns.
