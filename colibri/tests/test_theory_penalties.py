@@ -174,20 +174,18 @@ def test_make_penalty_posdataset_pos_penalty():
 def test_make_penalty_posdata_pos_penalties():
     """
     Tests the callable that the make_penalty_posdata function returns.
-    Tests that result is smaller than zero 
+    Tests that result is smaller than zero
     """
     test_inp = {**TEST_POS_DATASET, **TEST_DATASETS, "fill_fk_xgrid_with_zeros": True}
-    penalty_posdata_func = colibriAPI.make_penalty_posdata(
-        **test_inp
-    )
+    penalty_posdata_func = colibriAPI.make_penalty_posdata(**test_inp)
 
     fk_arrays = colibriAPI.fast_kernel_arrays(**test_inp)
 
-    pdf = jnp.ones((14,50))
+    pdf = jnp.ones((14, 50))
     alpha = 1e-7
     lambda_positivity = 2.0
 
-    result = penalty_posdata_func(pdf, alpha, lambda_positivity, fk_arrays)
+    result = penalty_posdata_func(pdf, alpha, lambda_positivity, fk_arrays).sum()
 
     assert result < 0, "Penalty function computation seems incorrect."
     assert abs(result) < 1e-2
