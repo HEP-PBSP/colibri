@@ -11,7 +11,6 @@ import pytest
 from numpy.testing import assert_allclose
 from validphys.fkparser import load_fktable
 
-from colibri.api import API as cAPI
 from colibri.api import API as colibriAPI
 from colibri.constants import XGRID
 from colibri.tests.conftest import (
@@ -127,7 +126,7 @@ def test_make_penalty_posdataset_pos_penalty():
     Tests that penalty is small negative number when PDF is positive.
     """
     # Mock inputs
-    posdatasets = cAPI.posdatasets(
+    posdatasets = colibriAPI.posdatasets(
         **{**TEST_POS_DATASET, "theoryid": TEST_THEORYID, "use_cuts": TEST_USECUTS}
     )
     posdataset = posdatasets[0]
