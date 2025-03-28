@@ -2,12 +2,13 @@
 Module containing standard pytest data configurations for testing purposes.
 """
 
-import jax
-import jax.numpy as jnp
-from colibri.pdf_model import PDFModel
-import numpy as np
 from unittest.mock import Mock
 
+import jax
+import jax.numpy as jnp
+import numpy as np
+
+from colibri.pdf_model import PDFModel
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
