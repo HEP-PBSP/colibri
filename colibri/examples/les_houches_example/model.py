@@ -154,31 +154,55 @@ class ExamplePDFModel(PDFModel):
             alpha_sigma = params[11]
             beta_sigma = params[12]
             pdf_grid = []
-            
+
             # Compute the PDFs for each flavour
-            gluon_pdf = self._pdf_gluon(xgrid, alpha_gluon, beta_gluon, norm_sigma, alpha_sigma, beta_sigma)
+            gluon_pdf = self._pdf_gluon(
+                xgrid, alpha_gluon, beta_gluon, norm_sigma, alpha_sigma, beta_sigma
+            )
             sigma_pdf = self._pdf_sigma(xgrid, norm_sigma, alpha_sigma, beta_sigma)
-            valence_pdf = self._pdf_valence(xgrid, alpha_up, beta_up, epsilon_up, gamma_up, alpha_down, beta_down, epsilon_down, gamma_down)
-            valence3_pdf = self._pdf_valence3(xgrid, alpha_up, beta_up, epsilon_up, gamma_up, alpha_down, beta_down, epsilon_down, gamma_down)
+            valence_pdf = self._pdf_valence(
+                xgrid,
+                alpha_up,
+                beta_up,
+                epsilon_up,
+                gamma_up,
+                alpha_down,
+                beta_down,
+                epsilon_down,
+                gamma_down,
+            )
+            valence3_pdf = self._pdf_valence3(
+                xgrid,
+                alpha_up,
+                beta_up,
+                epsilon_up,
+                gamma_up,
+                alpha_down,
+                beta_down,
+                epsilon_down,
+                gamma_down,
+            )
             t8_pdf = 0.4 * sigma_pdf  # T8 is a scaled version of Sigma
 
             # Build the PDF grid
-            pdf_grid = jnp.array([
-                jnp.zeros_like(xgrid),  # Photon
-                sigma_pdf,              # Σ
-                gluon_pdf,              # g
-                valence_pdf,            # V
-                valence3_pdf,           # V3
-                valence_pdf,            # V8 = V 
-                jnp.zeros_like(xgrid),  # V15
-                jnp.zeros_like(xgrid),  # V24
-                jnp.zeros_like(xgrid),  # V35
-                valence3_pdf,           # T3 = V3
-                t8_pdf,                 # T8
-                jnp.zeros_like(xgrid),  # T15
-                jnp.zeros_like(xgrid),  # T24
-                jnp.zeros_like(xgrid),  # T35
-            ])
+            pdf_grid = jnp.array(
+                [
+                    jnp.zeros_like(xgrid),  # Photon
+                    sigma_pdf,  # Σ
+                    gluon_pdf,  # g
+                    valence_pdf,  # V
+                    valence3_pdf,  # V3
+                    valence_pdf,  # V8 = V
+                    jnp.zeros_like(xgrid),  # V15
+                    jnp.zeros_like(xgrid),  # V24
+                    jnp.zeros_like(xgrid),  # V35
+                    valence3_pdf,  # T3 = V3
+                    t8_pdf,  # T8
+                    jnp.zeros_like(xgrid),  # T15
+                    jnp.zeros_like(xgrid),  # T24
+                    jnp.zeros_like(xgrid),  # T35
+                ]
+            )
             return pdf_grid
 
         return pdf_func
