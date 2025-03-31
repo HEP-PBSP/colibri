@@ -432,9 +432,10 @@ def compute_determinants_of_principal_minors(C):
 
 def closest_indices(a, v, atol=1e-8):
     """
-    Returns the indices of the closest value in an array to a given value.
+    Finds the indices of values in `a` that are closest to the given value(s) `v`.
 
-    Note: the function is different from np.searchsorted.
+    Unlike `np.searchsorted`, this function identifies indices where the values in `v`
+    are approximately equal to those in `a` within the specified tolerance.
     The main difference is that np.searchsorted returns the index where each
     element of v should be inserted in a in order to preserve the order (see example below).
 
@@ -443,6 +444,9 @@ def closest_indices(a, v, atol=1e-8):
     a : array-like
 
     v : array-like or float
+
+    atol : float, default is 1e-8
+        absolute tolerance used to find closest indices.
 
     Returns
     -------
@@ -459,5 +463,8 @@ def closest_indices(a, v, atol=1e-8):
     array([1, 2])
 
     """
+    # Handle scalar input for v
+    if v.ndim == 0:
+        return jnp.where(jnp.isclose(a, v, atol=atol) == True)[0]
 
     return jnp.where(jnp.isclose(a, v[:, None], atol=atol) == True)[1]

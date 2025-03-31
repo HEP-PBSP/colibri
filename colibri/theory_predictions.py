@@ -107,29 +107,6 @@ def fast_kernel_arrays(
     return tuple(fk_arrays)
 
 
-def positivity_fast_kernel_arrays(posdatasets, flavour_indices=None):
-    """
-    Similar to fast_kernel_arrays but for Positivity datasets.
-    Note: no fill_fk_xgrid_with_zeros should be needed here as the xgrid
-    of the positivity fast-kernel arrays is the same as XGRID.
-    """
-    pos_fk_arrays = []
-
-    for posdataset in posdatasets:
-        fk_dataset_arr = []
-        for fkspec in posdataset.fkspecs:
-            # load fktable and apply flavour mask
-            fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
-
-            # get FK-array with masked flavours
-            fk_arr = mask_fktable_array(fk, flavour_indices)
-
-            fk_dataset_arr.append(fk_arr)
-        pos_fk_arrays.append(tuple(fk_dataset_arr))
-
-    return tuple(pos_fk_arrays)
-
-
 def make_dis_prediction(
     fktable, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
 ):
@@ -263,6 +240,44 @@ def make_had_prediction(
     return had_prediction
 
 
+def pred_funcs_from_dataset(
+    dataset, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros=False
+):
+    """
+    Returns a list containing the forward maps associated with the fkspecs of a dataset.
+
+    Parameters
+    ----------
+    dataset: validphys.core.DataGroupSpec
+
+    FIT_XGRID: array
+
+    flavour_indices: list, default is None
+
+    fill_fk_xgrid_with_zeros: bool, default is False
+
+    Returns
+    -------
+    list of Mappings
+    """
+    pred_funcs = []
+
+    for fkspec in dataset.fkspecs:
+        fk = load_fktable(fkspec).with_cuts(dataset.cuts)
+
+        if fk.hadronic:
+            pred = make_had_prediction(
+                fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+            )
+        else:
+            pred = make_dis_prediction(
+                fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+            )
+        pred_funcs.append(pred)
+
+    return pred_funcs
+
+
 def make_pred_dataset(
     dataset, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
 ):
@@ -286,26 +301,9 @@ def make_pred_dataset(
     Callable
     """
 
-    pred_funcs = []
-
-    for fkspec in dataset.fkspecs:
-        fk = load_fktable(fkspec).with_cuts(dataset.cuts)
-
-        if fk.hadronic:
-            pred = make_had_prediction(
-                fk,
-                FIT_XGRID,
-                flavour_indices,
-                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
-            )
-        else:
-            pred = make_dis_prediction(
-                fk,
-                FIT_XGRID,
-                flavour_indices,
-                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
-            )
-        pred_funcs.append(pred)
+    pred_funcs = pred_funcs_from_dataset(
+        dataset, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+    )
 
     def prediction(pdf, fk_dataset):
         return OP[dataset.op](
@@ -405,110 +403,3 @@ def make_pred_t0data(
         ]
 
     return eval_preds
-
-
-def make_penalty_posdataset(
-    posdataset,
-    FIT_XGRID,
-    flavour_indices=None,
-):
-    """
-    Given a PositivitySetSpec compute the positivity penalty
-    as a lagrange multiplier times elu of minus the theory prediction
-
-    Parameters
-    ----------
-    posdataset : validphys.core.PositivitySetSpec
-
-    FIT_XGRID: np.ndarray
-        xgrid of the theory, computed by a production rule by taking
-        the sorted union of the xgrids of the datasets entering the fit.
-
-    vectorized: bool, default is False
-
-    Returns
-    -------
-    @jax.jit CompiledFunction
-        Compiled function taking pdf grid and alpha parameter
-        of jax.nn.elu function in input and returning
-        elu function evaluated on minus the theory prediction
-
-        Note: this is needed in order to compute the positivity
-        loss function. Elu function is used to avoid a big discontinuity
-        in the derivative at 0 when the lagrange multiplier is very big.
-
-        In practice this function can produce results in the range (-alpha, inf)
-
-        see also nnpdf.n3fit.src.layers.losses.LossPositivity
-
-    """
-
-    pred_funcs = []
-
-    for fkspec in posdataset.fkspecs:
-        fk = load_fktable(fkspec).with_cuts(posdataset.cuts)
-        if fk.hadronic:
-            pred = make_had_prediction(
-                fk,
-                FIT_XGRID,
-                flavour_indices,
-                fill_fk_xgrid_with_zeros=False,
-            )
-        else:
-            pred = make_dis_prediction(
-                fk,
-                FIT_XGRID,
-                flavour_indices,
-                fill_fk_xgrid_with_zeros=False,
-            )
-        pred_funcs.append(pred)
-
-    def pos_penalty(pdf, alpha, lambda_positivity, fk_dataset):
-        return lambda_positivity * jax.nn.elu(
-            -OP[posdataset.op](
-                *[f(pdf, fk_arr) for (f, fk_arr) in zip(pred_funcs, fk_dataset)]
-            ),
-            alpha,
-        )
-
-    return pos_penalty
-
-
-def make_penalty_posdata(posdatasets, FIT_XGRID, flavour_indices=None):
-    """
-    Compute positivity penalty for list of PositivitySetSpec
-
-    Parameters
-    ----------
-    posdatasets: list
-            list of PositivitySetSpec
-
-    FIT_XGRID: np.ndarray
-        xgrid of the theory, computed by a production rule by taking
-        the sorted union of the xgrids of the datasets entering the fit.
-
-    vectorized: bool, default is False
-
-    Returns
-    -------
-    @jax.jit CompiledFunction
-
-    """
-
-    predictions = []
-
-    for posdataset in posdatasets:
-        predictions.append(
-            make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices)
-        )
-
-    def pos_penalties(pdf, alpha, lambda_positivity, fast_kernel_arrays):
-        return jnp.concatenate(
-            [
-                f(pdf, alpha, lambda_positivity, fk_dataset)
-                for (f, fk_dataset) in zip(predictions, fast_kernel_arrays)
-            ],
-            axis=-1,
-        )
-
-    return pos_penalties
