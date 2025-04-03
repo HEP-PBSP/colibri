@@ -6,3 +6,9 @@
     background: #77C3EC;
 }
 
+.math {
+    text-align: left;
+}
+.eqno {
+    float: right;
+}
