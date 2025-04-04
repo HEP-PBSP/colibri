@@ -5,7 +5,7 @@ example_pdf_model.config.py
 
 import dill
 import logging
-from example_pdf_model.model import ExamplePDFModel
+from les_houches_example.model import ExamplePDFModel
 
 from colibri.config import Environment, colibriConfig
 from colibri.constants import FLAVOUR_TO_ID_MAPPING

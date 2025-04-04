@@ -23,4 +23,4 @@ doc = [
 ]
 
 [tool.poetry.scripts]
-run_colibri = "les_houches.app:main"
+run_colibri = "les_houches_example.app:main"
