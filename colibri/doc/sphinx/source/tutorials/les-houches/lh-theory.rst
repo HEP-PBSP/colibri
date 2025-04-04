@@ -1,8 +1,8 @@
+.. _lh_theory:
 
-
-============================================================
-Simple Les Houches Parametrisation
-============================================================
+======
+Theory
+======
 
 .. raw:: latex
 
@@ -16,8 +16,6 @@ As an example, let us use Colibri to perform a fit using as our model the simple
 
 First, we will...
 
-The Les Houches Parametrisation
--------------------------------
 Free parameters in the Les Houches Parametrisation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
