@@ -1,5 +1,5 @@
 """
-les_houches.app.py
+les_houches_example.app.py
 
 """
 
@@ -8,7 +8,7 @@ from les_houches_example.config import ExampleConfig
 
 
 ex_pdf_providers = [
-    "example_pdf_model.model",
+    "les_houches_example.model",
 ]
 
 
