@@ -12,7 +12,7 @@ Simple Les Houches Parametrisation
 
    \tableofcontents
 
-As an example, let us use Colibri to performa fit using as our model the simple Les Houches parametrisation, as described in reference :cite:`Alekhin:2005xgg`.
+As an example, let us use Colibri to perform a fit using as our model the simple Les Houches parametrisation, as described in reference :cite:`Alekhin:2005xgg`.
 
 First, we will...
 
