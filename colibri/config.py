@@ -153,6 +153,23 @@ class colibriConfig(Config):
         )
         return xgrid
 
+    def produce_theoryid(self, theory):
+        """
+        Returns the theory ID from the theory spec.
+
+        Parameters
+        ----------
+        theory: dict
+            Theory spec defined in the runcard.
+
+        Returns
+        -------
+        int
+        """
+        if theory is None:
+            raise ValueError("theory needs to be defined in the runcard.")
+        return theory["theoryid"]
+
     def parse_ns_settings(
         self,
         settings,
