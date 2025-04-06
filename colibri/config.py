@@ -10,18 +10,19 @@ import hashlib
 import logging
 import os
 import shutil
-import jax
 
+import jax
 import jax.numpy as jnp
-from colibri import commondata_utils
-from colibri import covmats as colibri_covmats
-from colibri.constants import FLAVOUR_TO_ID_MAPPING
-from colibri.core import PriorSettings, IntegrabilitySettings
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
 from validphys.config import Config, Environment
 from validphys.fkparser import load_fktable
+
+from colibri import commondata_utils
+from colibri import covmats as colibri_covmats
+from colibri.constants import FLAVOUR_TO_ID_MAPPING
+from colibri.core import IntegrabilitySettings, PriorSettings
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
