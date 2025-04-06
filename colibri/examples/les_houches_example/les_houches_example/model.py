@@ -8,7 +8,7 @@ import jax.scipy.special as jsp  # import this module to compute gamma functions
 from colibri.pdf_model import PDFModel
 
 
-class ExamplePDFModel(PDFModel):
+class LesHouchesPDF(PDFModel):
     """ """
 
     def __init__(self, fitted_flavours):
