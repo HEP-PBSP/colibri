@@ -5,7 +5,7 @@ les_houches.config.py
 
 import dill
 import logging
-from les_houches_example.model import ExamplePDFModel
+from les_houches_example.model import LesHouchesPDF
 
 from colibri.config import Environment, colibriConfig
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
@@ -28,9 +28,9 @@ class ExampleConfig(colibriConfig):
 
     def produce_pdf_model(self, output_path, fitted_flavours):
         """
-        Produce the example PDF model.
+        Produce the Les Houches model.
         """
-        model = ExamplePDFModel(fitted_flavours)
+        model = LesHouchesPDF(fitted_flavours)
         # dump model to output_path using dill
         # this is mainly needed by scripts/ns_resampler.py
         with open(output_path / "pdf_model.pkl", "wb") as file:
