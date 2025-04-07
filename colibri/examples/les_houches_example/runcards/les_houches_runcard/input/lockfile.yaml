@@ -1,10 +1,10 @@
-meta: 'An example fit using Colibri, reduced DIS dataset.'
+meta: An example fit using Colibri, reduced DIS dataset.
 
 #######################
 # Data and theory specs
 #######################
 
-dataset_inputs:    
+dataset_inputs:
   # DIS          
 - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy}
 
@@ -27,10 +27,10 @@ positivity:                            # Positivity datasets, used in the positi
 
 positivity_penalty_settings:
   positivity_penalty: false
-  alpha: 1e-7                           
-  lambda_positivity: 0                 
+  alpha: 1e-7
+  lambda_positivity: 0
 
-use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+use_fit_t0: true                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
 
 #############
@@ -49,15 +49,18 @@ prior_settings:
   prior_distribution_specs:
     max_val: 3.4
     min_val: 0.0
-  
+
 
 # Nested Sampling settings
 ns_settings:
   sampler_plot: true
   n_posterior_samples: 10
   ReactiveNS_settings:
-    vectorized: False
+    vectorized: false
     ndraw_max: 500
+    log_dir: 
+      /Users/Valentina/codes/colibri/colibri/examples/les_houches_example/runcards/les_houches_runcard/ultranest_logs
+    resume: overwrite
   Run_settings:
     min_num_live_points: 400
     min_ess: 50

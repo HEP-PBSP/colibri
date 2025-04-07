@@ -1,5 +1,5 @@
 """
-les_houches.model.py
+les_houches_example.model.py
 
 """
 
@@ -13,7 +13,6 @@ class LesHouchesPDF(PDFModel):
 
     def __init__(self, fitted_flavours):
         self.fitted_flavours = fitted_flavours
-        print("Fitted Flavours in this run:", self.fitted_flavours)
 
     @property
     def param_names(self):
