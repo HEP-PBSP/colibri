@@ -2,6 +2,7 @@
 A wrapper around n3fit/scripts/evolven3fit.py.
 
 """
+
 import os
 import sys
 
@@ -16,7 +17,7 @@ def main():
     if len(sys.argv) != 3:
         print("Usage: evolve_fit <command> name_fit")
         sys.exit(1)
-    
+
     fit_dir = sys.argv[2]
     replicas_path = os.path.join(fit_dir, "replicas")
     symlink_path = os.path.join(fit_dir, "nnfit")
