@@ -23,7 +23,7 @@ closure_test_model_settings:
   fitted_flavours: [\Sigma, g, V, V3]
   parameters:
     - 2.0    # alpha_gluon
-    - 5.0    # beta_gluon
+    - 0.1    # beta_gluon
     - 0.5    # alpha_up
     - 3.0    # beta_up
     - 0.1    # epsilon_up
