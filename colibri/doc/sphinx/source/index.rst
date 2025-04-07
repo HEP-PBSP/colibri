@@ -19,7 +19,7 @@ If you are a new user head along to :ref:`get-started` and check out the :ref:`T
 
 The Colibri team
 ================
-Colibri has been dvelopped by the following people:
+Colibri has been developed by the following people:
 
 * Mark N. Costantini - DAMTP, University of Cambridge
 * Luca Mantani - Universidad de Valencia-CSIC
