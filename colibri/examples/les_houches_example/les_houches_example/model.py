@@ -1,6 +1,5 @@
 """
 les_houches_example.model.py
-
 """
 
 import jax.numpy as jnp
@@ -9,7 +8,9 @@ from colibri.pdf_model import PDFModel
 
 
 class LesHouchesPDF(PDFModel):
-    """ """
+    """ 
+    A PDFModel implementation for the Les Houches parametrisation.
+    """
 
     def __init__(self, fitted_flavours):
         self.fitted_flavours = fitted_flavours
