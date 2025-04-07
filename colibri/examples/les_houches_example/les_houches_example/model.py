@@ -1,5 +1,5 @@
 """
-example_pdf_model.model.py
+les_houches.model.py
 
 """
 
