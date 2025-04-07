@@ -3,16 +3,16 @@ A wrapper around n3fit/scripts/evolven3fit.py.
 
 """
 
+import logging
 import os
 import sys
-import logging
 
 from n3fit.scripts.evolven3fit import main as evolven3fit_main
+from reportengine import colors
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-log.addHandler(logging.StreamHandler(sys.stdout))
-log.handlers[0].setLevel(logging.INFO)
+log.addHandler(colors.ColorHandler())
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
     creates a symlink called `nnfit` to replicas folder.
     """
     if len(sys.argv) != 3:
-        log.info("Usage: evolve_fit <command> name_fit")
+        log.error("Usage: evolve_fit <command> name_fit")
         sys.exit(1)
 
     fit_dir = sys.argv[2]
@@ -40,6 +40,12 @@ def main():
     # try:
     evolven3fit_main()
 
+    # TODO: symlink fit folder to environment NNPDF results folder
+
+    # TODO: symlinking of lhapdf folder
+
     # finally:
     #     if os.path.islink(symlink_path):
     #         os.remove(symlink_path)
+
+    # symlink evolved fit to lhapdf repository
