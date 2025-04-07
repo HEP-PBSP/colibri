@@ -31,8 +31,9 @@ def main():
     except FileExistsError:
         print(f"Warning: symlink {symlink_path} already exists")
 
-    try:
-        evolven3fit_main()
-    finally:
-        if os.path.islink(symlink_path):
-            os.remove(symlink_path)
+    # try:
+    evolven3fit_main()
+
+    # finally:
+    #     if os.path.islink(symlink_path):
+    #         os.remove(symlink_path)
