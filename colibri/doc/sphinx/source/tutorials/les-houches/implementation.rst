@@ -21,7 +21,7 @@ Then run:
     
     pip install -e .
 
-This will enable an exexutable called ``run_colibri``. 
+This will enable an exexutable called ``les_houches_exe``. 
 
 In the directory ``les_houches_example/les_houches_example`` you will find a file named ``model.py``, in which the Les Houches parametrisation is implemented, follwing the
 description in the :ref:`theory section <lh_theory>`. 
