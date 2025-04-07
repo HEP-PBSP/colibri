@@ -8,7 +8,7 @@ from colibri.pdf_model import PDFModel
 
 
 class LesHouchesPDF(PDFModel):
-    """ 
+    """
     A PDFModel implementation for the Les Houches parametrisation.
     """
 
