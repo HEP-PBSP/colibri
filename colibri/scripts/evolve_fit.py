@@ -5,8 +5,14 @@ A wrapper around n3fit/scripts/evolven3fit.py.
 
 import os
 import sys
+import logging
 
 from n3fit.scripts.evolven3fit import main as evolven3fit_main
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
+log.addHandler(logging.StreamHandler(sys.stdout))
+log.handlers[0].setLevel(logging.INFO)
 
 
 def main():
@@ -15,7 +21,7 @@ def main():
     creates a symlink called `nnfit` to replicas folder.
     """
     if len(sys.argv) != 3:
-        print("Usage: evolve_fit <command> name_fit")
+        log.info("Usage: evolve_fit <command> name_fit")
         sys.exit(1)
 
     fit_dir = sys.argv[2]
