@@ -37,7 +37,7 @@ t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covari
 # Model specs
 #############
 # defines which PDF flavours are used in the fit
-flavour_mapping: [\Sigma, g, V, V3, T3]
+flavour_mapping: [\Sigma, g, V, V3]
 
   
 
