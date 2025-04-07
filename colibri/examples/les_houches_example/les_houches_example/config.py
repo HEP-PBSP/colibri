@@ -1,5 +1,5 @@
 """
-les_houches.config.py
+les_houches_example.config.py
 
 """
 
@@ -8,7 +8,6 @@ import logging
 from les_houches_example.model import LesHouchesPDF
 
 from colibri.config import Environment, colibriConfig
-from colibri.constants import FLAVOUR_TO_ID_MAPPING
 
 
 log = logging.getLogger(__name__)
@@ -18,13 +17,10 @@ class LesHouchesEnvironment(Environment):
     pass
 
 
-class ExampleConfig(colibriConfig):
+class LesHouchesConfig(colibriConfig):
     """
     GPConfig class Inherits from colibri.config.colibriConfig
     """
-
-    def produce_fitted_flavours(self, flavour_mapping):
-        return flavour_mapping
 
     def produce_pdf_model(self, output_path, fitted_flavours):
         """

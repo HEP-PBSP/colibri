@@ -4,20 +4,20 @@ les_houches_example.app.py
 """
 
 from colibri.app import colibriApp
-from les_houches_example.config import ExampleConfig
+from les_houches_example.config import LesHouchesConfig
 
 
-ex_pdf_providers = [
+lh_pdf_providers = [
     "les_houches_example.model",
 ]
 
 
-class ExPdfApp(colibriApp):
-    config_class = ExampleConfig
+class LesHouchesApp(colibriApp):
+    config_class = LesHouchesConfig
 
 
 def main():
-    a = ExPdfApp(name="gp", providers=ex_pdf_providers)
+    a = LesHouchesApp(name="gp", providers=lh_pdf_providers)
     a.main()
 
 
