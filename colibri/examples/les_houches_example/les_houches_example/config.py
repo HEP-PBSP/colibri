@@ -14,7 +14,7 @@ from colibri.constants import FLAVOUR_TO_ID_MAPPING
 log = logging.getLogger(__name__)
 
 
-class Environment(Environment):
+class LesHouchesEnvironment(Environment):
     pass
 
 
