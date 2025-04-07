@@ -9,7 +9,8 @@ you can follow this tutorial to use Colibri to implement the Les Houches paramet
 
 The first step is to download the package for this tutorial. 
 
-In your colibri-dev conda environment, go to the les_houches_example directory, found in:
+In your ``colibri-dev`` conda environment, go to the ``les_houches_example`` directory, found in:
+
 .. code-block:: bash
     
     cd colibri/examples/les_houches_example 
@@ -20,7 +21,7 @@ Then run:
     
     pip install -e .
 
-This will enable an exexutable called `run_colibri`. 
+This will enable an exexutable called ``run_colibri``. 
 
 In the directory ``les_houches_example/les_houches_example`` you will find a file named ``model.py``, in which the Les Houches parametrisation is implemented, follwing the
 description in the :ref:`theory section <lh_theory>`. 
