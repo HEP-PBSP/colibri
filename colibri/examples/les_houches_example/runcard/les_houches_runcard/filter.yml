@@ -15,7 +15,26 @@ use_cuts: internal                     # The kinematic cuts to be applied to the
 closure_test_level: 0                  # The closure test level: False for experimental, level 0
                                        # for pseudodata with no noise, level 1 for pseudodata with
                                        # noise.
-closure_test_pdf: NNPDF40_nnlo_as_01180 # The closure test PDF used if closure_level is not False
+
+# MODEL-SPECIFIC CLOSURE TEST:
+closure_test_pdf: colibri_model
+closure_test_model_settings:
+  model: les_houches_example
+  fitted_flavours: [\Sigma, g, V, V3]
+  parameters:
+    - 2.0    # alpha_gluon
+    - 5.0    # beta_gluon
+    - 0.5    # alpha_up
+    - 3.0    # beta_up
+    - 0.1    # epsilon_up
+    - 0.1    # gamma_up
+    - 0.3    # alpha_down
+    - 0.5    # beta_down
+    - 0.05   # epsilon_down
+    - 0.05   # gamma_down
+    - 1.0    # norm_sigma
+    - 0.1    # alpha_sigma
+    - 3.0    # beta_sigma
 
 #####################
 # Loss function specs

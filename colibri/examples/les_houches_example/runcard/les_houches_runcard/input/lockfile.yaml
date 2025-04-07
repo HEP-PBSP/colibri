@@ -1,10 +1,10 @@
-meta: 'An example fit using Colibri, reduced DIS dataset.'
+meta: An example fit using Colibri, reduced DIS dataset.
 
 #######################
 # Data and theory specs
 #######################
 
-dataset_inputs:    
+dataset_inputs:
   # DIS          
 - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy}
 
@@ -22,19 +22,19 @@ closure_test_model_settings:
   model: les_houches_example
   fitted_flavours: [\Sigma, g, V, V3]
   parameters:
-    - 2.0    # alpha_gluon
-    - 5.0    # beta_gluon
-    - 0.5    # alpha_up
-    - 3.0    # beta_up
-    - 0.1    # epsilon_up
-    - 0.1    # gamma_up
-    - 0.3    # alpha_down
-    - 0.5    # beta_down
-    - 0.05   # epsilon_down
-    - 0.05   # gamma_down
-    - 1.0    # norm_sigma
-    - 0.1    # alpha_sigma
-    - 3.0    # beta_sigma
+  - 2.0      # alpha_gluon
+  - 5.0      # beta_gluon
+  - 0.5      # alpha_up
+  - 3.0      # beta_up
+  - 0.1      # epsilon_up
+  - 0.1      # gamma_up
+  - 0.3      # alpha_down
+  - 0.5      # beta_down
+  - 0.05     # epsilon_down
+  - 0.05     # gamma_down
+  - 1.0      # norm_sigma
+  - 0.1      # alpha_sigma
+  - 3.0      # beta_sigma
 
 #####################
 # Loss function specs
@@ -46,10 +46,10 @@ positivity:                            # Positivity datasets, used in the positi
 
 positivity_penalty_settings:
   positivity_penalty: false
-  alpha: 1e-7                           
-  lambda_positivity: 0                 
+  alpha: 1e-7
+  lambda_positivity: 0
 
-use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+use_fit_t0: true                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
 
 #############
@@ -68,15 +68,18 @@ prior_settings:
   prior_distribution_specs:
     max_val: 3.4
     min_val: 0.0
-  
+
 
 # Nested Sampling settings
 ns_settings:
   sampler_plot: true
   n_posterior_samples: 10
   ReactiveNS_settings:
-    vectorized: False
+    vectorized: false
     ndraw_max: 500
+    log_dir: 
+      /Users/Valentina/codes/colibri/colibri/examples/les_houches_example/runcard/les_houches_runcard/ultranest_logs
+    resume: overwrite
   Run_settings:
     min_num_live_points: 400
     min_ess: 50

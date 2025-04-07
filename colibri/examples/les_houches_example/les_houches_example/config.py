@@ -22,13 +22,14 @@ class LesHouchesConfig(colibriConfig):
     GPConfig class Inherits from colibri.config.colibriConfig
     """
 
-    def produce_pdf_model(self, output_path, fitted_flavours):
+    def produce_pdf_model(self, output_path, fitted_flavours, dump_model=True):
         """
         Produce the Les Houches model.
         """
         model = LesHouchesPDF(fitted_flavours)
         # dump model to output_path using dill
         # this is mainly needed by scripts/ns_resampler.py
-        with open(output_path / "pdf_model.pkl", "wb") as file:
-            dill.dump(model, file)
+        if dump_model:
+            with open(output_path / "pdf_model.pkl", "wb") as file:
+                dill.dump(model, file)
         return model
