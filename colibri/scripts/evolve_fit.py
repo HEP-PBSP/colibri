@@ -5,15 +5,17 @@ A wrapper around n3fit/scripts/evolven3fit.py.
 
 import logging
 import os
-import sys
 import pathlib
 import shutil
+import sys
 from glob import glob
 
+import lhapdf
 from n3fit.scripts.evolven3fit import main as evolven3fit_main
-from validphys.scripts.postfit import set_lhapdf_info, relative_symlink
-
 from reportengine import colors
+from validphys import lhio
+from validphys.core import PDF
+from validphys.scripts.postfit import PostfitError, relative_symlink, set_lhapdf_info
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -27,13 +29,16 @@ if len(sys.argv) != 3:
 FIT_DIR = sys.argv[2]
 FIT_PATH = pathlib.Path(FIT_DIR).resolve()
 
+
 def _postfit_emulator():
     """
-    Emulates the postfit script from validphys/scripts/postfit.py.
-    What it does:
-    - Creates a postfit folder in the root of the fit directory.
-    - Generates the central replica.
-    - Creates an LHAPDF folder in the standard LHAPDF location of the environment.
+    Emulates the postfit script from validphys/scripts/postfit.py
+    by creating the symlinks, central replica and LHAPDF set
+    within the postfit directory.
+    
+    It does not perform any selection of replicas, so it is
+    equivalent to the postfit script but without the selection
+    of replicas.
     """
     fitname = FIT_PATH.name
     
