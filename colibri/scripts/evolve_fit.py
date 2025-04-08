@@ -23,8 +23,8 @@ log.addHandler(colors.ColorHandler())
 
 
 if len(sys.argv) != 3:
-        log.error("Usage: evolve_fit <command> name_fit")
-        sys.exit(1)
+    log.error("Usage: evolve_fit <command> name_fit")
+    sys.exit(1)
 
 FIT_DIR = sys.argv[2]
 FIT_PATH = pathlib.Path(FIT_DIR).resolve()
@@ -35,31 +35,31 @@ def _postfit_emulator():
     Emulates the postfit script from validphys/scripts/postfit.py
     by creating the symlinks, central replica and LHAPDF set
     within the postfit directory.
-    
+
     It does not perform any selection of replicas, so it is
     equivalent to the postfit script but without the selection
     of replicas.
     """
     fitname = FIT_PATH.name
-    
+
     # Paths
-    postfit_path = FIT_PATH / 'postfit'
-    LHAPDF_path  = postfit_path/fitname     # Path for LHAPDF grid output
-    replicas_path = FIT_PATH / 'replicas'   # Path for replicas output
+    postfit_path = FIT_PATH / "postfit"
+    LHAPDF_path = postfit_path / fitname  # Path for LHAPDF grid output
+    replicas_path = FIT_PATH / "replicas"  # Path for replicas output
 
     # Generate postfit and LHAPDF directory
     if postfit_path.is_dir():
         log.warning(f"Removing existing postfit directory: {postfit_path}")
         shutil.rmtree(postfit_path)
-    os.mkdir(LHAPDF_path)
+    os.makedirs(LHAPDF_path, exist_ok=True)
 
     # Perform dummy postfit selection
-    all_replicas   = sorted(glob(f"{replicas_path}/replica_*/"))
+    all_replicas = sorted(glob(f"{replicas_path}/replica_*/"))
     selected_paths = all_replicas
-    
+
     # Copy info file
-    info_source_path = replicas_path.joinpath(f'{fitname}.info')
-    info_target_path = LHAPDF_path.joinpath(f'{fitname}.info')
+    info_source_path = replicas_path.joinpath(f"{fitname}.info")
+    info_target_path = LHAPDF_path.joinpath(f"{fitname}.info")
     shutil.copy2(info_source_path, info_target_path)
     set_lhapdf_info(info_target_path, len(selected_paths))
 
@@ -67,15 +67,37 @@ def _postfit_emulator():
     for drep, source_path in enumerate(selected_paths, 1):
         # Symlink results to postfit directory
         source_dir = pathlib.Path(source_path).resolve()
-        target_dir = postfit_path.joinpath(f'replica_{drep}')
+        target_dir = postfit_path.joinpath(f"replica_{drep}")
         relative_symlink(source_dir, target_dir)
 
         # Symlink results to pdfset directory
-        source_grid = source_dir.joinpath(fitname+'.dat')
-        target_file = f'{fitname}_{drep:04d}.dat'
+        source_grid = source_dir.joinpath(fitname + ".dat")
+        target_file = f"{fitname}_{drep:04d}.dat"
         target_grid = LHAPDF_path.joinpath(target_file)
         relative_symlink(source_grid, target_grid)
-    
+
+    log.info(f"{len(selected_paths)} replicas written to the postfit folder")
+
+    # Generate final PDF with replica 0
+    log.info("Beginning construction of replica 0")
+    # It's important that this is prepended, so that any existing instance of
+    # `fitname` is not read from some other path
+    lhapdf.pathsPrepend(str(postfit_path))
+    generatingPDF = PDF(fitname)
+    lhio.generate_replica0(generatingPDF)
+
+    # Test replica 0
+    try:
+        lhapdf.mkPDF(fitname, 0)
+    except RuntimeError as e:
+        raise PostfitError("CRITICAL ERROR: Failure in reading replica zero") from e
+    log.info("\n\n*****************************************************************\n")
+    log.info("Postfit complete")
+    log.info("Please upload your results with:")
+    log.info(f"\tvp-upload {FIT_PATH}\n")
+    log.info("and install with:")
+    log.info(f"\tvp-get fit {fitname}\n")
+    log.info("*****************************************************************\n\n")
 
 
 def main():
@@ -97,6 +119,9 @@ def main():
 
     # try:
     evolven3fit_main()
+
+    # Run postfit emulator
+    _postfit_emulator()
 
     # TODO: option to create postfit folder in the case of a Bayesian fit
 
