@@ -46,8 +46,10 @@ def bayesian_prior(prior_settings):
                 return cube * (max_val - min_val) + min_val
 
         else:
-            raise ValueError("prior_distribution_specs must define either 'bounds' or 'min_val' and 'max_val'")
-   
+            raise ValueError(
+                "prior_distribution_specs must define either 'bounds' or 'min_val' and 'max_val'"
+            )
+
     elif prior_settings.prior_distribution == "prior_from_gauss_posterior":
         prior_fit = prior_settings.prior_distribution_specs["prior_fit"]
 
