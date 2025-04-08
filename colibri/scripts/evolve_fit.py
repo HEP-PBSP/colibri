@@ -15,6 +15,9 @@ log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
 
 
+def _postfit_emulator():
+    pass
+
 def main():
     """
     Before running `evolven3fit` from n3fit/scripts/evolven3fit.py,
@@ -40,6 +43,9 @@ def main():
     # try:
     evolven3fit_main()
 
+    # TODO: option to create postfit folder in the case of a Bayesian fit
+
+    # TODO: option on whether to generate central replica or not (useful for wmin basis generation)
     # TODO: symlink fit folder to environment NNPDF results folder
 
     # TODO: symlinking of lhapdf folder
