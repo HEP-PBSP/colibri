@@ -22,7 +22,7 @@ closure_test_model_settings:
   model: les_houches_example
   fitted_flavours: [\Sigma, g, V, V3]
   parameters:
-    - 2.0    # alpha_gluon
+    - 0.5    # alpha_gluon
     - 2.0    # beta_gluon
     - 2.0    # alpha_up
     - 2.0    # beta_up
@@ -30,8 +30,8 @@ closure_test_model_settings:
     - 2.0    # gamma_up
     - 2.0    # alpha_down
     - 2.0    # beta_down
-    - 2.0   # epsilon_down
-    - 2.0   # gamma_down
+    - 2.0    # epsilon_down
+    - 2.0    # gamma_down
     - 2.0    # norm_sigma
     - 2.0    # alpha_sigma
     - 2.0    # beta_sigma
@@ -66,8 +66,21 @@ fitted_flavours: [\Sigma, g, V, V3]
 prior_settings:
   prior_distribution: uniform_parameter_prior
   prior_distribution_specs:
-    max_val: 2.1
-    min_val: 1.9
+    bounds:
+     - [0.4, 0.6]   # alpha_gluon
+     - [1.9, 2.1]   # beta_gluon
+     - [1.9, 2.1]   # alpha_up
+     - [1.9, 2.1]   # beta_up
+     - [1.9, 2.1]   # epsilon_up
+     - [1.9, 2.1]   # gamma_up
+     - [1.9, 2.1]   # alpha_down
+     - [1.9, 2.1]   # beta_down
+     - [1.9, 2.1]   # epsilon_down
+     - [1.9, 2.1]   # gamma_down
+     - [1.9, 2.1]   # norm_sigma
+     - [1.9, 2.1]   # alpha_sigma
+     - [1.9, 2.1]   # beta_sigma
+
   
 
 # Nested Sampling settings
