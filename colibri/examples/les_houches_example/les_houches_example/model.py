@@ -55,7 +55,7 @@ class LesHouchesPDF(PDFModel):
         return A_g * x**alpha_gluon * (1 - x) ** beta_gluon
 
     def _pdf_sigma(self, x, norm_sigma, alpha_sigma, beta_sigma):
-        """Compute the Sigma pdf. """
+        """Compute the Sigma pdf."""
         return norm_sigma * x**alpha_sigma * (1 - x) ** beta_sigma
 
     def _A_uv(self, alpha_up, beta_up, epsilon_up, gamma_up):
