@@ -10,29 +10,44 @@ from unittest.mock import patch
 import pandas as pd
 
 
-def test_uniform_prior():
+@pytest.mark.parametrize(
+    "description, prior_distribution_specs, cube_shape, expected_fn",
+    [
+        (
+            "global bounds",
+            {"min_val": -1.0, "max_val": 1.0},
+            (3,),
+            lambda cube, specs: cube * (specs["max_val"] - specs["min_val"])
+            + specs["min_val"],
+        ),
+        (
+            "per-parameter bounds",
+            {"bounds": [[-1.0, 1.0], [0.0, 2.0], [10.0, 20.0]]},  # Shape: (3, 2)
+            (3,),
+            lambda cube, specs: cube
+            * (np.array(specs["bounds"])[:, 1] - np.array(specs["bounds"])[:, 0])
+            + np.array(specs["bounds"])[:, 0],
+        ),
+    ],
+)
+def test_uniform_prior(description, prior_distribution_specs, cube_shape, expected_fn):
     prior_settings = PriorSettings(
         **{
             "prior_distribution": "uniform_parameter_prior",
-            "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
+            "prior_distribution_specs": prior_distribution_specs,
         }
     )
     prior_transform = bayesian_prior(prior_settings)
 
     key = random.PRNGKey(0)
-    cube = random.uniform(key, shape=(10,))
+    cube = random.uniform(key, shape=cube_shape)
 
     transformed = prior_transform(cube)
-    expected = (
-        cube
-        * (
-            prior_settings.prior_distribution_specs["max_val"]
-            - prior_settings.prior_distribution_specs["min_val"]
-        )
-        + prior_settings.prior_distribution_specs["min_val"]
-    )
+    expected = expected_fn(cube, prior_distribution_specs)
 
-    assert np.allclose(transformed, expected), "Uniform prior transformation failed."
+    assert np.allclose(
+        transformed, expected
+    ), f"Uniform prior transformation failed for {description}"
 
 
 @patch("colibri.bayes_prior.get_full_posterior")
