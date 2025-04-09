@@ -24,12 +24,31 @@ def bayesian_prior(prior_settings):
         The prior transform function.
     """
     if prior_settings.prior_distribution == "uniform_parameter_prior":
-        max_val = prior_settings.prior_distribution_specs["max_val"]
-        min_val = prior_settings.prior_distribution_specs["min_val"]
+        prior_specs = prior_settings.prior_distribution_specs
 
-        @jax.jit
-        def prior_transform(cube):
-            return cube * (max_val - min_val) + min_val
+        if "bounds" in prior_specs:
+            # Per-parameter bounds
+            bounds = jnp.array(prior_specs["bounds"])  # shape (n_params, 2)
+            mins = bounds[:, 0]
+            maxs = bounds[:, 1]
+
+            @jax.jit
+            def prior_transform(cube):
+                return cube * (maxs - mins) + mins
+
+        elif "min_val" in prior_specs and "max_val" in prior_specs:
+            # Global bounds for all parameters
+            min_val = prior_specs["min_val"]
+            max_val = prior_specs["max_val"]
+
+            @jax.jit
+            def prior_transform(cube):
+                return cube * (max_val - min_val) + min_val
+
+        else:
+            raise ValueError(
+                "prior_distribution_specs must define either 'bounds' or 'min_val' and 'max_val'"
+            )
 
     elif prior_settings.prior_distribution == "prior_from_gauss_posterior":
         prior_fit = prior_settings.prior_distribution_specs["prior_fit"]
