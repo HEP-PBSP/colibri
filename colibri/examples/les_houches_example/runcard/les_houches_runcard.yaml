@@ -22,19 +22,19 @@ closure_test_model_settings:
   model: les_houches_example
   fitted_flavours: [\Sigma, g, V, V3]
   parameters:
-    - 2.0    # alpha_gluon
-    - 2.0    # beta_gluon
-    - 2.0    # alpha_up
-    - 2.0    # beta_up
-    - 2.0    # epsilon_up
-    - 2.0    # gamma_up
-    - 2.0    # alpha_down
-    - 2.0    # beta_down
-    - 2.0   # epsilon_down
-    - 2.0   # gamma_down
-    - 2.0    # norm_sigma
-    - 2.0    # alpha_sigma
-    - 2.0    # beta_sigma
+    - 0.356    # alpha_gluon
+    - 10.9     # beta_gluon
+    - 0.718    # alpha_up
+    - 3.81     # beta_up
+    - -1.56    # epsilon_up
+    - 3.30     # gamma_up
+    - 1.71     # alpha_down
+    - 10.0     # beta_down
+    - -3.83    # epsilon_down
+    - 4.64     # gamma_down
+    - 0.211    # norm_sigma
+    - -0.048   # alpha_sigma
+    - 2.20     # beta_sigma
 
 #####################
 # Loss function specs
@@ -66,9 +66,21 @@ fitted_flavours: [\Sigma, g, V, V3]
 prior_settings:
   prior_distribution: uniform_parameter_prior
   prior_distribution_specs:
-    max_val: 2.1
-    min_val: 1.9
-  
+    bounds:
+      - [0.025, 0.045]  # alpha_gluon
+      - [10.8, 11.0]    # beta_gluon
+      - [0.62, 0.82]    # alpha_up
+      - [3.7, 3.9]      # beta_up
+      - [-1.66, -1.46]  # epsilon_up
+      - [3.2, 3.4]      # gamma_up
+      - [1.61, 1.81]    # alpha_down
+      - [9.9, 10.1]     # beta_down
+      - [-3.93, -3.73]  # epsilon_down
+      - [4.54, 4.74]    # gamma_down
+      - [0.111, 0.311]  # norm_sigma
+      - [-0.148, 0.048]  # alpha_sigma
+      - [2.10, 2.30]    # beta_sigma
+
 
 # Nested Sampling settings
 ns_settings:
