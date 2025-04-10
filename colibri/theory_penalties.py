@@ -168,7 +168,7 @@ def integrability_penalty(integrability_settings, FIT_XGRID):
 
         Parameters
         ----------
-        pdf: jnp.array of shape (14, 50)
+        pdf: jnp.array of shape (Nfl, Nx)
 
         Returns
         -------

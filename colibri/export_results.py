@@ -116,7 +116,7 @@ def write_exportgrid(
     Parameters
     ----------
     grid_for_writing: jnp.array
-        An array of shape (14,Nx) containing the PDF values.
+        An array of shape (Nfl,Nx) containing the PDF values.
         Note that the grid should be in the evolution basis.
 
     grid_name: str
