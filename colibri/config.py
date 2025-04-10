@@ -486,22 +486,6 @@ class colibriConfig(Config):
         else:
             return colibri_covmats.dataset_inputs_covmat_from_systematics
 
-    def produce_dataset_inputs_t0_predictions(
-        self, data, t0set, use_fit_t0, use_gen_t0
-    ):
-        """
-        Produce t0 predictions for all datasets in data
-        """
-
-        if (not use_fit_t0) or (not use_gen_t0):
-            raise ConfigError(
-                f"use_fit_t0 or use_gen_t0 need to be set to True so that dataset_inputs_t0_predictions can be generated"
-            )
-        t0_predictions = []
-        for dataset in data.datasets:
-            t0_predictions.append(covmats.dataset_t0_predictions(dataset, t0set))
-        return t0_predictions
-
     def parse_closure_test_pdf(self, name):
         """PDF set used to generate fakedata"""
         if name == "colibri_model":
