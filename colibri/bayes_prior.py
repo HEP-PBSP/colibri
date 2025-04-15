@@ -28,7 +28,7 @@ def bayesian_prior(prior_settings):
 
         if "bounds" in prior_specs:
             # Per-parameter bounds
-            bounds = jnp.array(prior_specs["bounds"])  # shape (n_params, 2)
+            bounds = jnp.array(list(prior_specs["bounds"].values()))  # shape (n_params, 2)
             mins = bounds[:, 0]
             maxs = bounds[:, 1]
 

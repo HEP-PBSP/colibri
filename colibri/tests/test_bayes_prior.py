@@ -22,11 +22,11 @@ import pandas as pd
         ),
         (
             "per-parameter bounds",
-            {"bounds": [[-1.0, 1.0], [0.0, 2.0], [10.0, 20.0]]},  # Shape: (3, 2)
+            {"bounds": {"param1": [-1.0, 1.0], "param2": [0.0, 2.0], "param3": [10.0, 20.0]}},
             (3,),
-            lambda cube, specs: cube
-            * (np.array(specs["bounds"])[:, 1] - np.array(specs["bounds"])[:, 0])
-            + np.array(specs["bounds"])[:, 0],
+            lambda cube, specs: (
+                lambda bounds: cube * (bounds[:, 1] - bounds[:, 0]) + bounds[:, 0]
+            )(np.array(list(specs["bounds"].values())))
         ),
     ],
 )
