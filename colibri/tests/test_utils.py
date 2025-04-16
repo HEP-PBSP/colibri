@@ -33,6 +33,7 @@ from colibri.utils import (
     mask_luminosity_mapping,
     compute_determinants_of_principal_minors,
     closest_indices,
+    closure_test_central_pdf_grid,
 )
 from validphys.fkparser import load_fktable
 import validphys
@@ -93,7 +94,6 @@ def test_closure_test_pdf_grid():
     # define a test array
     FIT_XGRID = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
-    # call the function
     grid = closure_test_pdf_grid(cltest_pdf_set, FIT_XGRID, Q0=1.65)
 
     # Check 2: type of the output is a jnp.array
@@ -102,10 +102,9 @@ def test_closure_test_pdf_grid():
     # Check 3: shape of the output
     N_rep = cltest_pdf_set.get_members()  #   number of replicas
     N_fl = len(convolution.FK_FLAVOURS)  # number of flavours
+    N_x = len(FIT_XGRID)  # number of x values
 
-    print(f"FK_FLAVOURS: {convolution.FK_FLAVOURS}")
-
-    assert grid.shape == (N_rep, N_fl, len(FIT_XGRID))
+    assert grid.shape == (N_rep, N_fl, N_x)
 
 
 def test_resample_from_ns_posterior():
@@ -154,6 +153,32 @@ def test_resample_from_ns_posterior():
 
     # Check 5: Output is identical to the input when sizes match
     assert jnp.array_equal(jnp.sort(resampled_samples_full), jnp.sort(samples))
+
+
+def test_closure_test_central_pdf_grid():
+    """
+    Test the closure_test_central_pdf_grid_function.
+
+    Verifies:
+    - The returned grid is a JAX array
+    - The shape matches N_x x N_fl, i.e., no replicas
+    """
+
+    inp = {"closure_test_pdf": "NNPDF40_nlo_as_01180"}
+    cltest_pdf_set = cAPI.closure_test_pdf(**inp)
+
+    FIT_XGRID = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    grid = closure_test_pdf_grid(cltest_pdf_set, FIT_XGRID, Q0=1.65)
+    central_replica = closure_test_central_pdf_grid(grid)
+
+    # Check 1: type of the output is a jnp.array
+    assert isinstance(central_replica, jnp.ndarray)
+
+    N_fl = len(convolution.FK_FLAVOURS)
+    N_x = len(FIT_XGRID)
+
+    # Check 2: shape of the output is (N_fl, N_x)
+    assert central_replica.shape == (N_fl, N_x)
 
 
 def test_cast_to_numpy():
