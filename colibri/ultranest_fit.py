@@ -19,6 +19,7 @@ from functools import partial
 from colibri.utils import resample_from_ns_posterior
 from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
 from colibri.loss_functions import chi2
+
 import numpy as np
 from mpi4py import MPI
 
@@ -53,6 +54,7 @@ class UltraNestLogLikelihood(object):
         chi2,
         penalty_posdata,
         positivity_penalty_settings,
+        integrability_penalty,
     ):
         """
         Parameters
@@ -77,6 +79,8 @@ class UltraNestLogLikelihood(object):
 
         positivity_penalty_settings: dict, default {}
 
+        integrability_penalty: Callable
+
         """
         self.central_values = central_inv_covmat_index.central_values
         self.inv_covmat = central_inv_covmat_index.inv_covmat
@@ -84,6 +88,7 @@ class UltraNestLogLikelihood(object):
         self.chi2 = chi2
         self.penalty_posdata = penalty_posdata
         self.positivity_penalty_settings = positivity_penalty_settings
+        self.integrability_penalty = integrability_penalty
 
         self.pred_and_pdf = pdf_model.pred_and_pdf_func(
             fit_xgrid, forward_map=forward_map
@@ -97,6 +102,9 @@ class UltraNestLogLikelihood(object):
             self.chi2 = jax.vmap(self.chi2, in_axes=(None, 0, None), out_axes=0)
             self.penalty_posdata = jax.vmap(
                 self.penalty_posdata, in_axes=(0, None, None, None), out_axes=0
+            )
+            self.integrability_penalty = jax.vmap(
+                self.integrability_penalty, in_axes=(0,), out_axes=0
             )
 
         self.fast_kernel_arrays = fast_kernel_arrays
@@ -144,7 +152,18 @@ class UltraNestLogLikelihood(object):
         else:
             pos_penalty = 0
 
-        return -0.5 * (self.chi2(central_values, predictions, inv_covmat) + pos_penalty)
+        integ_penalty = jnp.sum(
+            self.integrability_penalty(
+                pdf,
+            ),
+            axis=-1,
+        )
+
+        return -0.5 * (
+            self.chi2(central_values, predictions, inv_covmat)
+            + pos_penalty
+            + integ_penalty
+        )
 
 
 @dataclass(frozen=True)
@@ -174,6 +193,7 @@ def log_likelihood(
     ns_settings,
     _penalty_posdata,
     positivity_penalty_settings,
+    integrability_penalty,
 ):
     """
     Instantiates the UltraNestLogLikelihood class.
@@ -192,6 +212,7 @@ def log_likelihood(
         chi2,
         _penalty_posdata,
         positivity_penalty_settings,
+        integrability_penalty,
     )
 
 

@@ -13,7 +13,7 @@ from colibri.utils import get_fit_path, get_pdf_model, pdf_models_equal
 
 
 @make_argcheck
-def check_pdf_models_equal(prior_settings, pdf_model, theoryid, t0pdfset):
+def check_pdf_models_equal(prior_settings, pdf_model, theoryid):
     """
     Decorator that can be added to functions to check that the
     PDF model used as prior (eg when using prior_settings["type"] == "prior_from_gauss_posterior")
@@ -40,12 +40,6 @@ def check_pdf_models_equal(prior_settings, pdf_model, theoryid, t0pdfset):
                 f"Theory id {theoryid} does not match theory id of prior {prior_filter['theoryid']}"
             )
 
-        # check that t0pdfset used in prior fit is the same as the one used in the current fit
-        if prior_filter["t0pdfset"] != t0pdfset.name:
-            raise ValueError(
-                f"t0pdfset {theoryid.t0pdfset} does not match t0pdfset of prior {prior_filter['t0pdfset']}"
-            )
-
 
 @make_argcheck
 def check_pdf_model_is_linear(pdf_model, FIT_XGRID, data):
@@ -55,7 +49,7 @@ def check_pdf_model_is_linear(pdf_model, FIT_XGRID, data):
     """
 
     pred_data = make_pred_data(data, FIT_XGRID)
-    fk = fast_kernel_arrays(data)
+    fk = fast_kernel_arrays(data, FIT_XGRID)
 
     parameters = pdf_model.param_names
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)

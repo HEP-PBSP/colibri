@@ -25,3 +25,30 @@ class PriorSettings:
 
     prior_distribution: str
     prior_distribution_specs: dict
+
+
+@dataclass(frozen=True)
+class IntegrabilitySettings:
+    """
+    Dataclass containing the settings for the Integrability constraints
+    to be imposed during a fit.
+
+    Attributes
+    ----------
+    integrability: bool
+        Whether to impose integrability constraints.
+
+    integrability_specs: dict
+        The settings for the integrability constraints.
+
+    Example
+    -------
+    integrability_settings:
+        integrability: True
+        integrability_specs:
+            evolution_flavours: [V, V3, V8, T3, T8]
+            lambda_integrability: 1000
+    """
+
+    integrability: bool
+    integrability_specs: dict

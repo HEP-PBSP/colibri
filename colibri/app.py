@@ -11,6 +11,7 @@ import pathlib
 
 colibri_providers = [
     "colibri.theory_predictions",
+    "colibri.theory_penalties",
     "colibri.loss_functions",
     "colibri.mc_loss_functions",
     "colibri.optax_optimizer",
@@ -29,6 +30,7 @@ colibri_providers = [
     "colibri.bayes_prior",
     "colibri.mc_initialisation",
     "colibri.export_results",
+    "colibri.closure_test",
     "reportengine.report",
 ]
 

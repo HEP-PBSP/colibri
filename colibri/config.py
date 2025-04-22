@@ -16,7 +16,7 @@ import jax.numpy as jnp
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
-from colibri.core import PriorSettings
+from colibri.core import PriorSettings, IntegrabilitySettings
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
@@ -285,6 +285,70 @@ class colibriConfig(Config):
 
         return positivity_penalty_settings
 
+    def parse_integrability_settings(self, settings):
+        """
+        Parses the integrability settings defined in the runcard
+        into an IntegrabilitySettings dataclass.
+        """
+
+        known_keys = {
+            "integrability",
+            "integrability_specs",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            # raise error if key not in known keys as otherwise IntegrabilitySettigs would
+            # be passed an uknown key
+            raise (
+                ConfigError(
+                    f"Key '{k}' in integrability_settings not known.",
+                    k,
+                    known_keys,
+                )
+            )
+
+        integrability_settings = {}
+
+        integrability_settings["integrability"] = settings.get("integrability", False)
+        integrability_settings["integrability_specs"] = settings.get(
+            "integrability_specs", {}
+        )
+
+        # assign default values
+        integrability_settings["integrability_specs"].setdefault(
+            "lambda_integrability", 100
+        )
+        integrability_settings["integrability_specs"].setdefault(
+            "evolution_flavours", [9, 10]
+        )  # T3 and T8 as default
+        integrability_settings["integrability_specs"].setdefault(
+            "integrability_xgrid", [2.00000000e-07]
+        )  # last point of XGRID as default
+
+        if integrability_settings["integrability_specs"]["evolution_flavours"] != [
+            9,
+            10,
+        ]:  # only process if not default
+
+            ev_fls = []
+
+            for ev_fl in integrability_settings["integrability_specs"][
+                "evolution_flavours"
+            ]:
+                if ev_fl not in FLAVOUR_TO_ID_MAPPING.keys():
+                    raise (
+                        ConfigError(
+                            f"evolution_flavours ids can only be taken from  {FLAVOUR_TO_ID_MAPPING.keys()}"
+                        )
+                    )
+                ev_fls.append(FLAVOUR_TO_ID_MAPPING[ev_fl])
+
+            # convert strings to numeric indexes
+            integrability_settings["integrability_specs"]["evolution_flavours"] = ev_fls
+
+        return IntegrabilitySettings(**integrability_settings)
+
     def parse_prior_settings(self, settings):
         """
         Parses the prior_settings namespace from the runcard,
@@ -440,7 +504,10 @@ class colibriConfig(Config):
 
     def parse_closure_test_pdf(self, name):
         """PDF set used to generate fakedata"""
-        return self.parse_pdf(name)
+        if name == "colibri_model":
+            return name
+        else:
+            return self.parse_pdf(name)
 
     def produce_flavour_indices(self, flavour_mapping=None):
         """
