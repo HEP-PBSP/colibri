@@ -7,15 +7,25 @@ meta: 'An example fit using Colibri, reduced DIS dataset.'
 dataset_inputs:    
   # DIS          
 - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
-# - {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
-# - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
-# - {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
-# - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
-# - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
-# - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
-# - {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw}
-# - {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}
-# - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
+- {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+- {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
+- {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
+- {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
+- {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw}
+- {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}  
+- {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy}
+# - {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
+
 
 
 theoryid: 40000000                          # The theory from which the predictions are drawn.
@@ -30,37 +40,37 @@ closure_test_pdf: colibri_model
 closure_test_model_settings:
   model: les_houches_example
   fitted_flavours: [\Sigma, g, V, V3]
-  parameters: 
-    alpha_gluon: 0.356
-    beta_gluon: 10.9
-    alpha_up: 0.718
-    beta_up: 3.81
-    epsilon_up: -1.56
-    gamma_up: 3.30
-    alpha_down: 1.71
-    beta_down: 10.0
-    epsilon_down: -3.83
-    gamma_down: 4.64
-    norm_sigma: 0.211
-    alpha_sigma: -0.048
-    beta_sigma: 2.20
+  #parameters: 
+    # alpha_gluon: 0.356
+    # beta_gluon: 10.9
+    # alpha_up: 0.718
+    # beta_up: 3.81
+    # epsilon_up: -1.56
+    # gamma_up: 3.30
+    # alpha_down: 1.71
+    # beta_down: 10.0
+    # epsilon_down: -3.83
+    # gamma_down: 4.64
+    # norm_sigma: 0.211
+    # alpha_sigma: -0.048
+    # beta_sigma: 2.20
   # The parameters of the model. The order of the parameters is important; 
   # it needs to match the order of model.py .
 
-  # parameters:
-  #   - 0.356    # alpha_gluon
-  #   - 10.9     # beta_gluon
-  #   - 0.718    # alpha_up
-  #   - 3.81     # beta_up
-  #   - -1.56    # epsilon_up
-  #   - 3.30     # gamma_up
-  #   - 1.71     # alpha_down
-  #   - 10.0     # beta_down
-  #   - -3.83    # epsilon_down
-  #   - 4.64     # gamma_down
-  #   - 0.211    # norm_sigma
-  #   - -0.048   # alpha_sigma
-  #   - 2.20     # beta_sigma
+  parameters:
+    - 0.356    # alpha_gluon
+    - 10.9     # beta_gluon
+    - 0.718    # alpha_up
+    - 3.81     # beta_up
+    - -1.56    # epsilon_up
+    - 3.30     # gamma_up
+    - 1.71     # alpha_down
+    - 10.0     # beta_down
+    - -3.83    # epsilon_down
+    - 4.64     # gamma_down
+    - 0.211    # norm_sigma
+    - -0.048   # alpha_sigma
+    - 2.20     # beta_sigma
 
 #####################
 # Loss function specs
@@ -93,18 +103,18 @@ prior_settings:
   prior_distribution: uniform_parameter_prior
   prior_distribution_specs:
     bounds:
-      - [0.22, 0.5]     # alpha_gluon
+      - [-2, 2]     # alpha_gluon
       - [9.8, 12]       # beta_gluon
-      - [0.46, 0.86]    # alpha_up
+      - [-3, 3]    # alpha_up
       - [3.25, 4.15]    # beta_up
       - [-2.5, 2.5]     # epsilon_up
       - [1.6, 5.5]      # gamma_up
-      - [1.3, 1.95]     # alpha_down
+      - [-2, 4]     # alpha_down
       - [8.4, 11.2]     # beta_down
       - [-4.05, -3.45]  # epsilon_down
       - [4, 5.3]        # gamma_down
       - [0.12, 0.3]     # norm_sigma
-      - [-0.16, 0.08]   # alpha_sigma
+      - [-2, 2]   # alpha_sigma
       - [1.7, 2.6]      # beta_sigma
 
 
