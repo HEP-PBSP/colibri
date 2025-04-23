@@ -30,6 +30,6 @@ In order to run the example, go to the directory ``les_houches_example/runcards`
 
 .. code-block:: bash
     
-    run_colibri les_houches_runcard.yaml -o les_houches_output
+    les_houches_exe les_houches_runcard.yaml -o les_houches_output
 
 This will run colibri and create a directory called ``les_houches_output``, where you will find the output of the run.
