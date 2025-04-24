@@ -32,25 +32,25 @@ It is also assumed that there is no difference between :math:`\bar{u}` and :math
 .. math::
     :label: eq:flavour-basis-set
 
-    xf_g(x,Q_0) &= A_g\,x^{a_g}\,(1 - x)^{b_g}, \notag \\
-    xf_{u_v}(x,Q_0) &=  A_{u_v}\,x^{a_{u_v}}\,(1 - x)^{b_{u_v}}\, (1+\epsilon_{u_v}\sqrt{x}+\gamma_{u_v} x), \\
-    xf_{d_v}(x,Q_0) &= A_{d_v}\,x^{a_{d_v}}\,(1 - x)^{b_{d_v}}\, (1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x),  \notag \\
-    xf_\Sigma(x,Q_0) &=  A_\Sigma\,x^{a_\Sigma}\,(1 - x)^{b_\Sigma}.\notag
+    xf_g(x,Q_0) &= A_g\,x^{\alpha_g}\,(1 - x)^{\beta_g}, \notag \\
+    xf_{u_v}(x,Q_0) &=  A_{u_v}\,x^{\alpha_{u_v}}\,(1 - x)^{\beta_{u_v}}\, (1+\epsilon_{u_v}\sqrt{x}+\gamma_{u_v} x), \\
+    xf_{d_v}(x,Q_0) &= A_{d_v}\,x^{\alpha_{d_v}}\,(1 - x)^{\beta_{d_v}}\, (1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x),  \notag \\
+    xf_\Sigma(x,Q_0) &=  A_\Sigma\,x^{\alpha_\Sigma}\,(1 - x)^{\beta_\Sigma}.\notag
 
 This amounts to 16 parameters. Moreover, not all parameters are independent. :math:`A_g` is related to :math:`A_\Sigma` by the momentum sum rules:
 
 .. math::
     :label: eq:gluon-sum-rule
 
-    A_g\int_0^1 x^{a_g}\,(1 - x)^{b_g} dx + A_\Sigma \int_0^1 x^{a_\Sigma}\,(1 - x)^{b_\Sigma}\, dx = 1,
+    A_g\int_0^1 x^{\alpha_g}\,(1 - x)^{\beta_g} dx + A_\Sigma \int_0^1 x^{\alpha_\Sigma}\,(1 - x)^{\beta_\Sigma}\, dx = 1,
 
 and the :math:`A_{u_v}` and :math:`A_{d_v}` parameters are determined by the valence sum rules:
 
 .. math::
     :label: eq:valence-sum-rules
 
-    & A_{u_v}\,\int\, x^{a_{u_v}-1}\,(1 - x)^{b_{u_v}}\, (1+\epsilon_{u_v}\sqrt{x}+\gamma_{u_v} x)  dx = 2, \notag \\
-    & A_{d_v}\,\int\,x^{a_{d_v}-1}\,(1 - x)^{b_{d_v}}\, (1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x) dx = 1,
+    & A_{u_v}\,\int\, x^{\alpha_{u_v}-1}\,(1 - x)^{\beta_{u_v}}\, (1+\epsilon_{u_v}\sqrt{x}+\gamma_{u_v} x)  dx = 2, \notag \\
+    & A_{d_v}\,\int\,x^{\alpha_{d_v}-1}\,(1 - x)^{\beta_{d_v}}\, (1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x) dx = 1,
 
 leaving 13 free parameters [#]_ .
 
@@ -78,15 +78,15 @@ We find that:
 
 .. math::
 
-    A_g = \frac{\Gamma(a_g + b_g + 2)}{\Gamma(a_g+1)\Gamma(b_g+1)}\left[ 1 - A_{\Sigma} \frac{\Gamma(a_\Sigma + 1) \Gamma(b_\Sigma + 1)}{\Gamma(a_\Sigma + b_\Sigma +2)} \right],
+    A_g = \frac{\Gamma(\alpha_g + \beta_g + 2)}{\Gamma(\alpha_g+1)\Gamma(\beta_g+1)}\left[ 1 - A_{\Sigma} \frac{\Gamma(\alpha_\Sigma + 1) \Gamma(\beta_\Sigma + 1)}{\Gamma(\alpha_\Sigma + \beta_\Sigma +2)} \right],
 
 .. math::
 
-    A_{u_v} = \frac{2}{\Gamma(b_{u_v}+1)}\left[ \frac{\Gamma(a_{u_v})}{\Gamma(a_{u_v} + b_{u_v} + 1)}  + \epsilon_{u_v} \frac{\Gamma(a_{u_v} + 1 / 2)}{\Gamma(a_{u_v} + b_{u_v} + 3 / 2)} + \gamma_{u_v} \frac{\Gamma(a_{u_v} + 1)}{\Gamma(a_{u_v} + b_{u_v} + 2)} \right]^{-1},
+    A_{u_v} = \frac{2}{\Gamma(\beta_{u_v}+1)}\left[ \frac{\Gamma(\alpha_{u_v})}{\Gamma(\alpha_{u_v} + \beta_{u_v} + 1)}  + \epsilon_{u_v} \frac{\Gamma(\alpha_{u_v} + 1 / 2)}{\Gamma(\alpha_{u_v} + \beta_{u_v} + 3 / 2)} + \gamma_{u_v} \frac{\Gamma(\alpha_{u_v} + 1)}{\Gamma(\alpha_{u_v} + \beta_{u_v} + 2)} \right]^{-1},
 
 .. math::
 
-    A_{d_v} = \frac{1}{\Gamma(b_{d_v}+1)}\left[ \frac{\Gamma(a_{d_v})}{\Gamma(a_{d_v} + b_{d_v} + 1)}  + \epsilon_{d_v} \frac{\Gamma(a_{d_v} + 1 / 2)}{\Gamma(a_{d_v} + b_{d_v} + 3 / 2)} + \gamma_{d_v} \frac{\Gamma(a_{d_v} + 1)}{\Gamma(a_{d_v} + b_{d_v} + 2)} \right]^{-1}.
+    A_{d_v} = \frac{1}{\Gamma(\beta_{d_v}+1)}\left[ \frac{\Gamma(\alpha_{d_v})}{\Gamma(\alpha_{d_v} + \beta_{d_v} + 1)}  + \epsilon_{d_v} \frac{\Gamma(\alpha_{d_v} + 1 / 2)}{\Gamma(\alpha_{d_v} + \beta_{d_v} + 3 / 2)} + \gamma_{d_v} \frac{\Gamma(\alpha_{d_v} + 1)}{\Gamma(\alpha_{d_v} + \beta_{d_v} + 2)} \right]^{-1}.
 
 
 The Les Houches Parametrisation in the evolution basis
@@ -122,10 +122,11 @@ We already have an explicit parametrisation for :math:`f_\Sigma` and :math:`f_g`
     :label: eq:f_V
 
     x f_V &= x f_{u_v} + x f_{d_v} \\
-    &= A_{u_v}\,x^{a_{u_v}}\,(1 - x)^{b_{u_v}}\, (1+\epsilon_{u_v}\sqrt{x}+\gamma_{u_v} x) + A_{d_v}\,x^{a_{d_v}}\,(1 - x)^{b_{d_v}}(1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x), \notag  
+    &= A_{u_v}\,x^{\alpha_{u_v}}\,(1 - x)^{\beta_{u_v}}\, (1+\epsilon_{u_v}\sqrt{x}+\gamma_{u_v} x) + A_{d_v}\,x^{\alpha_{d_v}}\,(1 - x)^{\beta_{d_v}}(1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x), \notag    
 
 .. math::
     :label: eq:f_V3
 
     x f_{V_3} &= x f_{u_v} - x f_{d_v} \\
-    &= A_{u_v}\,x^{a_{u_v}}\,(1 - x)^{b_{u_v}}\, (1+\epsilon_{u_v}\sqrt{x}+\gamma_{u_v} x) - A_{d_v}\,x^{a_{d_v}}\,(1 - x)^{b_{d_v}}(1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x). \notag
+    &= A_{u_v}\,x^{\alpha_{u_v}}\,(1 - x)^{\beta_{u_v}}\, (1+\epsilon_{u_v}\sqrt{x}+\gamma_{u_v} x) - A_{d_v}\,x^{\alpha_{d_v}}\,(1 - x)^{\beta_{d_v}}(1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x). \notag
+
