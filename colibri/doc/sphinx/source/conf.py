@@ -102,7 +102,7 @@ html_static_path = ["_static"]
 
 html_css_files = ["css/custom.css"]
 
-html_logo = "_static/colibri-logo.png"
+html_logo = "_static/colibri-logo-name.png"
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -137,6 +137,7 @@ latex_elements = {
     #
     # 'figure_align': 'htbp',
 }
+
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,

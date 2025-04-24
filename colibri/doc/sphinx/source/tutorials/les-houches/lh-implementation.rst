@@ -5,7 +5,29 @@ Implementation
 ==============
 
 If you have followed the :ref:`installation instructions <installation>`,
-you can follow this tutorial to use Colibri to implement the Les Houches parametrisation model, which is described in the :ref:`theory section <lh_theory>`.
+you can follow this tutorial to use Colibri to implement the Les Houches 
+parametrisation model, which is described in the :ref:`theory section <lh_theory>`.
+
+First, we will have a look at :ref:`how the model is implemented <lh-model-implementation>`, 
+and then, we will use it to do a model-specific and closure test and a closure test 
+with a PDF grid. TODO: add relevant references to sections.
+
+.. _lh-model-implementation:
+
+Building the Les Houches model in Colibri
+-----------------------------------------
+
+To understand how a model is implemented in Colibri, let's have a look at how the Les Houches
+example model. In the ``colibri/examples/les_houches_example/les_houches_example`` directory,
+you will find a script called ``model.py``. It looks like this: 
+
+
+
+
+.. _lh-model-specific-closure-test:
+
+Model-Specific Closure Test 
+---------------------------
 
 The first step is to download the package for this tutorial. 
 

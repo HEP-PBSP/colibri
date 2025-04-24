@@ -12,3 +12,7 @@
 .eqno {
     float: right;
 }
+
+.section-title {
+    margin-top: 2em;
+}

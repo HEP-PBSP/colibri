@@ -4,20 +4,10 @@
 Theory
 ======
 
-.. raw:: latex
-
-   \maketitle
-
-.. raw:: latex
-
-   \tableofcontents
-
-As an example, let us use Colibri to perform a fit using as our model the simple Les Houches parametrisation, as described in reference :cite:`Alekhin:2005xgg`.
-
-First, we will...
+We follow the Les Houches parametrisation as presented in reference :cite:`Alekhin:2005xgg`.
 
 Free parameters in the Les Houches Parametrisation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------
 
 As described in reference :cite:`Alekhin:2005xgg`, the Les Houches parametrisation assumes that the total sea, :math:`\Sigma=u+\bar{u}+d+\bar{d}+s+\bar{s}`, is constrained to be made 40% by up and anti-up, 40% by down and anti-down, and 20% by strange and anti-strange, which means that we can write:
 
@@ -57,7 +47,7 @@ leaving 13 free parameters [#]_ .
 .. [#] In ref. :cite:`Alekhin:2005xgg`, :math:`\epsilon_{u_v}` is fixed to its best-fit value, :math:`\epsilon_{u_v} = -1.56`, in order to avoid instability due to a very high correlation between :math:`u_v` parameters. They therefore left only 12 parameters free to vary. We decide to leave :math:`\epsilon_{u_v}` free because we don't believe we will encounter this problem.
 
 Normalisations
-~~~~~~~~~~~~~~
+--------------
 
 In order to be able to perform a fit, we would like to write all PDFs explicitly in terms of free parameters, `x` and `Q_0`. 
 
@@ -89,8 +79,16 @@ We find that:
     A_{d_v} = \frac{1}{\Gamma(\beta_{d_v}+1)}\left[ \frac{\Gamma(\alpha_{d_v})}{\Gamma(\alpha_{d_v} + \beta_{d_v} + 1)}  + \epsilon_{d_v} \frac{\Gamma(\alpha_{d_v} + 1 / 2)}{\Gamma(\alpha_{d_v} + \beta_{d_v} + 3 / 2)} + \gamma_{d_v} \frac{\Gamma(\alpha_{d_v} + 1)}{\Gamma(\alpha_{d_v} + \beta_{d_v} + 2)} \right]^{-1}.
 
 
+.. raw:: html
+
+   <div class="section-title"></div>
+
+.. _lh-evolution-basis:
+
 The Les Houches Parametrisation in the evolution basis
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------------
+
+
 Colibri works in the evolution basis, whose elements can be written as a linear combination of the elements of the flavour basis. 
 
 We start by writting the elements of the evolution basis in terms of quark flavours, which is as follows:
