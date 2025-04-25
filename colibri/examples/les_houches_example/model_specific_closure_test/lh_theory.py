@@ -3,13 +3,14 @@ generate PDF grid based on the Les Houches parametrisation theoretical model.
 """
 
 import jax.numpy as jnp
-import jax.scipy.special as jsp  
+import jax.scipy.special as jsp
 from colibri.pdf_model import PDFModel
 from colibri.export_results import write_exportgrid
 from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 import os
 import pathlib
 import yaml
+
 
 class LesHouchesPDF(PDFModel):
     """
@@ -215,7 +216,7 @@ class LesHouchesPDF(PDFModel):
 # ----------- Generate a grid for the Les Houches parametrisation ----------- #
 # The following code generates a PDF grid from the results of the Les Houches
 # parametrisation defined above. This is useful to be able to compare the n
-# underlying law with the results of the fit. For exmaple in the case of a 
+# underlying law with the results of the fit. For exmaple in the case of a
 # closure test.
 
 # Define the xgrid - values of x at which the PDFs are evaluated.
@@ -226,24 +227,24 @@ lh_pdf_model = LesHouchesPDF(fitted_flavours=fitted_flavours)
 
 pdf_grid_func = lh_pdf_model.grid_values_func(FIT_XGRID)
 
-params =  [
+params = [
     0.356,  # alpha_gluon
-    10.9,   # beta_gluon
+    10.9,  # beta_gluon
     0.718,  # alpha_up
-    3.81,   # beta_up
+    3.81,  # beta_up
     -1.56,  # epsilon_up
-    3.30,   # gamma_up
-    1.71,   # alpha_down
-    10.0,   # beta_down
+    3.30,  # gamma_up
+    1.71,  # alpha_down
+    10.0,  # beta_down
     -3.83,  # epsilon_down
-    4.64,   # gamma_down
+    4.64,  # gamma_down
     0.211,  # norm_sigma
-    -0.048, # alpha_sigma
-    2.20,   # beta_sigma
-]  
+    -0.048,  # alpha_sigma
+    2.20,  # beta_sigma
+]
 pdf_grid = pdf_grid_func(params)
 
-WRITE_GRID = jnp.array(pdf_grid)[jnp.newaxis, :, :] 
+WRITE_GRID = jnp.array(pdf_grid)[jnp.newaxis, :, :]
 fit_name = "les_houches_theory"
 
 # Create directories if they do not exist
@@ -262,16 +263,15 @@ if not os.path.exists(replicas_path):
     os.makedirs(replicas_path)
 
 # Loop to create 3 identical replicas. We create 3 so that evolve_fit
-# runs with no errors, since it will want to compute a central value. 
+# runs with no errors, since it will want to compute a central value.
 for replica_index in range(1, 3 + 1):
-    
+
     grid_for_writing = WRITE_GRID[0]
 
     rep_path = replicas_path / f"replica_{replica_index}"
     rep_path.mkdir(exist_ok=True)
     grid_name = rep_path / fit_name
 
-    
     write_exportgrid(
         grid_for_writing=grid_for_writing,
         grid_name=str(grid_name),

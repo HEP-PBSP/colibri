@@ -3,8 +3,9 @@ les_houches_example.model.py
 """
 
 import jax.numpy as jnp
-import jax.scipy.special as jsp  
+import jax.scipy.special as jsp
 from colibri.pdf_model import PDFModel
+
 
 class LesHouchesPDF(PDFModel):
     """
@@ -205,4 +206,3 @@ class LesHouchesPDF(PDFModel):
             return pdf_grid
 
         return pdf_func
-
