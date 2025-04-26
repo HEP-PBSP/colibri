@@ -408,3 +408,31 @@ def test_produce_theoryid():
     theory = {"theoryid": "not_an_int_error"}
     with pytest.raises(ConfigError):
         BASE_CONFIG.produce_theoryid(theory)
+
+
+def test_produce_commondata_tuple():
+    """
+    Tests that the production rule (explicit node) produce_commondata_tuple
+    behaves as expected by always returning a reportengine explicit node.
+
+    NOTE: specific tests for the functions returned by this explicit node
+    can be found in the test_commondata_utils.py file.
+    """
+    # test default behaviour
+    closure_test_level = False
+    explicit_node_exp = BASE_CONFIG.produce_commondata_tuple(closure_test_level)
+    assert type(explicit_node_exp) == reportengine.configparser.ExplicitNode
+
+    # test closure test levels
+    closure_test_level = 0
+    explicit_node_0 = BASE_CONFIG.produce_commondata_tuple(closure_test_level)
+    assert type(explicit_node_0) == reportengine.configparser.ExplicitNode
+
+    closure_test_level = 1
+    explicit_node_1 = BASE_CONFIG.produce_commondata_tuple(closure_test_level)
+    assert type(explicit_node_1) == reportengine.configparser.ExplicitNode
+
+    # test that ConfigError is raised when an invalid value for closure_test_level is passed
+    closure_test_level = 2
+    with pytest.raises(ConfigError):
+        BASE_CONFIG.produce_commondata_tuple(closure_test_level)
