@@ -3,11 +3,11 @@ A wrapper around n3fit/scripts/evolven3fit.py.
 
 """
 
+import argparse
 import logging
 import os
 import pathlib
 import shutil
-import sys
 from glob import glob
 
 import lhapdf
@@ -22,11 +22,18 @@ log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
 
 
-if len(sys.argv) != 3:
-    log.error("Usage: evolve_fit <command> name_fit")
-    sys.exit(1)
+parser = argparse.ArgumentParser(
+    description="A wrapper around n3fit/scripts/evolven3fit.py.\n"
+    "Usage for evolution: `evolve_fit evolve <fit_name>`\n"
+    "For more details, run `evolven3fit --help`.",
+    formatter_class=argparse.RawTextHelpFormatter,
+)
 
-FIT_DIR = sys.argv[2]
+parser.add_argument("action", help="The action to run, e.g. evolve")
+parser.add_argument("name_fit", help="The name of the fit directory")
+args = parser.parse_args()
+
+FIT_DIR = args.name_fit
 FIT_PATH = pathlib.Path(FIT_DIR).resolve()
 
 
@@ -109,8 +116,7 @@ def main():
     symlink_path = os.path.join(FIT_DIR, "nnfit")
 
     if not os.path.exists(replicas_path):
-        print(f"Error: replicas folder not found at {replicas_path}")
-        sys.exit(1)
+        raise FileNotFoundError(f"Error: replicas folder not found at {replicas_path}")
 
     try:
         os.symlink("replicas", symlink_path)
