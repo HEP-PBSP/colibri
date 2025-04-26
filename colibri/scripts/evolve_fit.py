@@ -17,6 +17,12 @@ from validphys import lhio
 from validphys.core import PDF
 from validphys.scripts.postfit import PostfitError, relative_symlink, set_lhapdf_info
 
+# Clear any existing handlers from root logger
+root_logger = logging.getLogger()
+root_logger.handlers.clear()
+root_logger.setLevel(logging.WARNING)  # Set higher threshold globally
+
+# Set up module-specific logger
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
@@ -126,7 +132,7 @@ def main():
     # Run evolven3fit
     evolven3fit_main()
 
-    # Run postfit emulator for bayesian fits
+    # Run postfit emulator only for bayesian fits
     if "bayes_metrics.csv" in os.listdir(FIT_PATH):
         log.info("Running postfit emulator")
         _postfit_emulator()
