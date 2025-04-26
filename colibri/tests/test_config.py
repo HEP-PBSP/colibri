@@ -15,6 +15,7 @@ from reportengine.configparser import ConfigError
 from colibri.config import Environment, colibriConfig
 from colibri.core import IntegrabilitySettings, PriorSettings
 
+BASE_CONFIG = colibriConfig({})
 
 def test_float32_precision_enabled():
     with mock.patch("colibri.config.jax") as mock_jax:
@@ -66,11 +67,6 @@ def test_init_output(mock_copy2, mock_open, mock_md5, tmp_path):
 
 @patch("colibri.config.log.warning")
 def test_parse_prior_settings(mock_warning):
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
-
     # Define the settings input
     settings1 = {
         "prior_distribution": "uniform_parameter_prior",
@@ -78,7 +74,7 @@ def test_parse_prior_settings(mock_warning):
     }
 
     # Call the method
-    result1 = config.parse_prior_settings(settings1)
+    result1 = BASE_CONFIG.parse_prior_settings(settings1)
 
     # Assert the result is as expected
     expected1 = PriorSettings(
@@ -97,16 +93,11 @@ def test_parse_prior_settings(mock_warning):
         "prior_distribution": "prior_from_gauss_posterior",
     }
     with unittest.TestCase.assertRaises(unittest.TestCase(), ConfigError):
-        config.parse_prior_settings(settings2)
+        BASE_CONFIG.parse_prior_settings(settings2)
 
 
 @patch("colibri.config.log.warning")
 def test_parse_analytic_settings(mock_warning):
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
-
     # Define the settings input
     settings = {
         "sampling_seed": 42,
@@ -116,7 +107,7 @@ def test_parse_analytic_settings(mock_warning):
     }
 
     # Call the method
-    result = config.parse_analytic_settings(settings)
+    result = BASE_CONFIG.parse_analytic_settings(settings)
 
     # Assert the result is as expected
     expected = {
@@ -133,16 +124,11 @@ def test_parse_analytic_settings(mock_warning):
 
 
 def test_parse_analytic_settings_defaults():
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
-
     # Define the settings input with no values to test defaults
     settings = {}
 
     # Call the method
-    result = config.parse_analytic_settings(settings)
+    result = BASE_CONFIG.parse_analytic_settings(settings)
 
     # Assert the result is as expected with default values
     expected = {
@@ -157,10 +143,6 @@ def test_parse_analytic_settings_defaults():
 @patch("colibri.config.log.warning")
 @patch("colibri.config.log.info")
 def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
     # Test known key settings
     settings = {
         "n_posterior_samples": 500,
@@ -179,7 +161,7 @@ def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
     mock_exists.return_value = True
 
     # Call the function
-    ns_settings = config.parse_ns_settings(settings, tmp_path)
+    ns_settings = BASE_CONFIG.parse_ns_settings(settings, tmp_path)
 
     # Check that the settings were parsed correctly
     expected_settings = {
@@ -204,10 +186,6 @@ def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
 @patch("colibri.config.os.path.exists")
 @patch("colibri.config.log.warning")
 def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path):
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
     # Test with unknown keys in settings
     settings = {
         "unknown_key": "value",
@@ -219,7 +197,7 @@ def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path
     mock_exists.return_value = False
 
     # Call the function
-    ns_settings = config.parse_ns_settings(settings, tmp_path)
+    ns_settings = BASE_CONFIG.parse_ns_settings(settings, tmp_path)
 
     # Check that the settings were parsed correctly
     expected_settings = {
@@ -244,10 +222,6 @@ def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path
 @patch("colibri.config.os.path.exists")
 @patch("colibri.config.log.info")
 def test_parse_ns_settings_with_missing_log_dir(mock_info, mock_exists, tmp_path):
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
     # Test missing log directory
     settings = {
         "ReactiveNS_settings": {
@@ -260,19 +234,15 @@ def test_parse_ns_settings_with_missing_log_dir(mock_info, mock_exists, tmp_path
     mock_exists.return_value = False
 
     with unittest.TestCase.assertRaises(unittest.TestCase(), FileNotFoundError):
-        config.parse_ns_settings(settings, tmp_path)
+        BASE_CONFIG.parse_ns_settings(settings, tmp_path)
 
 
 def test_parse_ns_settings_with_defaults(tmp_path):
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
     # Test default settings
     settings = {}
 
     # Call the function
-    ns_settings = config.parse_ns_settings(settings, tmp_path)
+    ns_settings = BASE_CONFIG.parse_ns_settings(settings, tmp_path)
 
     # Check that the settings were parsed correctly
     expected_settings = {
@@ -298,15 +268,11 @@ def test_parse_positivity_penalty_settings_defaults():
     Test that the correct defaults are returned by positivity penalty
     parser.
     """
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
     # Test default settings
     settings = {}
 
     # Call the function
-    pos_settings = config.parse_positivity_penalty_settings(settings)
+    pos_settings = BASE_CONFIG.parse_positivity_penalty_settings(settings)
 
     # Check that the settings were parsed correctly
     expected_settings = {
@@ -324,10 +290,6 @@ def test_parse_positivity_penalty_settings(mock_warning):
     Test that the inputs are parsed as expected by positivity penalty
     settings parser.
     """
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
     # Test default settings
     settings = {
         "unknown_key": 1,
@@ -337,7 +299,7 @@ def test_parse_positivity_penalty_settings(mock_warning):
     }
 
     # Call the function
-    pos_settings = config.parse_positivity_penalty_settings(settings)
+    pos_settings = BASE_CONFIG.parse_positivity_penalty_settings(settings)
 
     # Check that the settings were parsed correctly
     expected_settings = {
@@ -352,9 +314,6 @@ def test_parse_positivity_penalty_settings(mock_warning):
 
 def test_parse_integrability_settings_valid():
     """Test with valid settings."""
-    input_params = {}
-    config = colibriConfig(input_params)
-
     settings = {
         "integrability": True,
         "integrability_specs": {
@@ -363,7 +322,7 @@ def test_parse_integrability_settings_valid():
         },
     }
 
-    result = config.parse_integrability_settings(settings)
+    result = BASE_CONFIG.parse_integrability_settings(settings)
 
     assert result.integrability == True
     assert result.integrability_specs["lambda_integrability"] == 50
@@ -372,14 +331,11 @@ def test_parse_integrability_settings_valid():
 
 def test_parse_integrability_settings_default_values():
     """Test with missing optional settings to check defaults."""
-    input_params = {}
-    config = colibriConfig(input_params)
-
     settings = {
         "integrability": True,
     }
 
-    result = config.parse_integrability_settings(settings)
+    result = BASE_CONFIG.parse_integrability_settings(settings)
 
     assert result.integrability == True
     assert result.integrability_specs["lambda_integrability"] == 100
@@ -388,8 +344,6 @@ def test_parse_integrability_settings_default_values():
 
 def test_parse_integrability_settings_unknown_key():
     """Test with an unknown key in the settings."""
-    input_params = {}
-    config = colibriConfig(input_params)
     settings = {
         "integrability": True,
         "unknown_key": "some_value",
@@ -398,13 +352,11 @@ def test_parse_integrability_settings_unknown_key():
     with pytest.raises(
         ConfigError, match="Key 'unknown_key' in integrability_settings not known."
     ):
-        config.parse_integrability_settings(settings)
+        BASE_CONFIG.parse_integrability_settings(settings)
 
 
 def test_parse_integrability_settings_invalid_evolution_flavours():
     """Test with an invalid evolution_flavours value."""
-    input_params = {}
-    config = colibriConfig(input_params)
     settings = {
         "integrability": True,
         "integrability_specs": {
@@ -416,16 +368,14 @@ def test_parse_integrability_settings_invalid_evolution_flavours():
     with pytest.raises(
         ConfigError, match="evolution_flavours ids can only be taken from"
     ):
-        config.parse_integrability_settings(settings)
+        BASE_CONFIG.parse_integrability_settings(settings)
 
 
 def test_parse_integrability_settings_empty():
     """Test with empty settings."""
-    input_params = {}
-    config = colibriConfig(input_params)
     settings = {}
 
-    result = config.parse_integrability_settings(settings)
+    result = BASE_CONFIG.parse_integrability_settings(settings)
 
     assert result.integrability == False
     assert result.integrability_specs == {
