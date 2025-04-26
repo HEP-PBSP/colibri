@@ -10,7 +10,8 @@ dataset_inputs:
   - {'dataset': 'SLAC_NC_NOTFIXED_P_DW_EM-F2', 'variant': 'legacy'}
   - {'dataset': 'SLAC_NC_NOTFIXED_D_DW_EM-F2', 'variant': 'legacy'}
 
-theoryid: 401                         # The theory from which the predictions are drawn.
+theory:
+  theoryid: 401                         # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
 closure_test_level: 0                  # The closure test level: False for experimental, level 0
