@@ -10,10 +10,11 @@ from pathlib import Path
 from unittest.mock import mock_open, patch
 
 import pytest
+import reportengine
 from reportengine.configparser import ConfigError
 
 from colibri.config import Environment, colibriConfig
-from colibri.core import IntegrabilitySettings, PriorSettings
+from colibri.core import PriorSettings
 
 BASE_CONFIG = colibriConfig({})
 
