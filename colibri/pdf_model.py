@@ -17,7 +17,7 @@ class PDFModel(ABC):
 
     @property
     @abstractmethod
-    def param_names(self):
+    def param_names(self) -> list:
         """This should return a list of names for the fitted parameters of the model.
         The order of the names is important as it will be assumed to be the order of the parameters
         fed to the model.
@@ -25,7 +25,9 @@ class PDFModel(ABC):
         pass
 
     @abstractmethod
-    def grid_values_func(self, xgrid):
+    def grid_values_func(
+        self, xgrid: jnp.ndarray
+    ) -> Callable[[jnp.array], jnp.ndarray]:
         """This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
         The grid values function should be a function of the parameters and return
@@ -51,8 +53,10 @@ class PDFModel(ABC):
         pass
 
     def pred_and_pdf_func(
-        self, xgrid, forward_map
-    ) -> Callable[[jnp.array], Tuple[jnp.ndarray, jnp.ndarray]]:
+        self,
+        xgrid: jnp.ndarray,
+        forward_map: Callable[[jnp.ndarray, jnp.ndarray], jnp.ndarray],
+    ) -> Callable[[jnp.ndarray, jnp.ndarray], Tuple[jnp.ndarray, jnp.ndarray]]:
         """Creates a function that returns a tuple of two arrays, given the model parameters and the fast kernel arrays as input.
 
         The returned function produces:
