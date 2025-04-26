@@ -10,9 +10,10 @@ from pathlib import Path
 from unittest.mock import mock_open, patch
 
 import pytest
+from reportengine.configparser import ConfigError
+
 from colibri.config import Environment, colibriConfig
 from colibri.core import IntegrabilitySettings, PriorSettings
-from reportengine.configparser import ConfigError
 
 BASE_CONFIG = colibriConfig({})
 
@@ -392,10 +393,18 @@ def test_parse_closure_test_pdf_colibri_model():
 
 
 def test_produce_theoryid():
-    theory = {"theoryid": "test_id"}
-    assert BASE_CONFIG.produce_theoryid(theory) == "test_id"
+    theory = {"theoryid": 1}
+    assert BASE_CONFIG.produce_theoryid(theory) == 1
 
-    # test ValueError raised
+    # test ConfigError(s) are raised when needed
     theory = None
-    with pytest.raises(ValueError):
+    with pytest.raises(ConfigError):
+        BASE_CONFIG.produce_theoryid(theory)
+
+    theory = {"no_theoryid_error": 1}
+    with pytest.raises(ConfigError):
+        BASE_CONFIG.produce_theoryid(theory)
+
+    theory = {"theoryid": "not_an_int_error"}
+    with pytest.raises(ConfigError):
         BASE_CONFIG.produce_theoryid(theory)

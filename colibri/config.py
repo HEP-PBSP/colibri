@@ -168,11 +168,11 @@ class colibriConfig(Config):
         int
         """
         if theory is None:
-            raise ValueError("theory needs to be defined in the runcard.")
+            raise ConfigError("theory needs to be defined in the runcard.")
         if "theoryid" not in theory:
-            raise ValueError("theoryid needs to be defined in the runcard.")
+            raise ConfigError("theoryid needs to be defined in the runcard.")
         if not isinstance(theory["theoryid"], int):
-            raise ValueError("theoryid needs to be an integer.")
+            raise ConfigError("theoryid needs to be an integer.")
         return theory["theoryid"]
 
     def parse_ns_settings(
@@ -478,7 +478,7 @@ class colibriConfig(Config):
         elif closure_test_level == 1:
             return commondata_utils.level_1_commondata_tuple
         else:
-            raise ValueError(
+            raise ConfigError(
                 "closure_test_level must be either False, 0 or 1, if not specified in the runcard then Experimental data is used."
             )
 
