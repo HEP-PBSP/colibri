@@ -17,6 +17,7 @@ from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
 from validphys.config import Config, Environment
+from validphys.core import TheoryIDSpec
 from validphys.fkparser import load_fktable
 
 from colibri import commondata_utils
@@ -154,7 +155,7 @@ class colibriConfig(Config):
         )
         return xgrid
 
-    def produce_theoryid(self, theory: dict) -> int:
+    def produce_theoryid(self, theory: dict) -> TheoryIDSpec:
         """
         Returns the theory ID from the theory spec.
 
@@ -165,14 +166,12 @@ class colibriConfig(Config):
 
         Returns
         -------
-        int
+        TheoryIDSpec
         """
         if theory is None:
             raise ConfigError("theory needs to be defined in the runcard.")
         if "theoryid" not in theory:
             raise ConfigError("theoryid needs to be defined in the runcard.")
-        if not isinstance(theory["theoryid"], int):
-            raise ConfigError("theoryid needs to be an integer.")
         return theory["theoryid"]
 
     def parse_ns_settings(
