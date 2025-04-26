@@ -115,23 +115,14 @@ def main():
     try:
         os.symlink("replicas", symlink_path)
     except FileExistsError:
-        print(f"Warning: symlink {symlink_path} already exists")
+        log.warning(f"Warning: symlink {symlink_path} already exists")
 
-    # try:
+    # Run evolven3fit
     evolven3fit_main()
 
-    # Run postfit emulator
-    _postfit_emulator()
-
-    # TODO: option to create postfit folder in the case of a Bayesian fit
-
-    # TODO: option on whether to generate central replica or not (useful for wmin basis generation)
-    # TODO: symlink fit folder to environment NNPDF results folder
-
-    # TODO: symlinking of lhapdf folder
-
-    # finally:
-    #     if os.path.islink(symlink_path):
-    #         os.remove(symlink_path)
-
-    # symlink evolved fit to lhapdf repository
+    # Run postfit emulator for bayesian fits
+    if "bayesian_metrics.csv" in os.listdir(FIT_PATH):
+        log.info("Running postfit emulator")
+        _postfit_emulator()
+    else:
+        log.info("Skipping postfit emulator")
