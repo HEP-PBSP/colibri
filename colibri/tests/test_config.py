@@ -10,12 +10,12 @@ from pathlib import Path
 from unittest.mock import mock_open, patch
 
 import pytest
-from reportengine.configparser import ConfigError
-
 from colibri.config import Environment, colibriConfig
 from colibri.core import IntegrabilitySettings, PriorSettings
+from reportengine.configparser import ConfigError
 
 BASE_CONFIG = colibriConfig({})
+
 
 def test_float32_precision_enabled():
     with mock.patch("colibri.config.jax") as mock_jax:
@@ -386,11 +386,16 @@ def test_parse_integrability_settings_empty():
 
 
 def test_parse_closure_test_pdf_colibri_model():
-    # Create input_params required for colibriConfig initialization
-    input_params = {}
-    # Create an instance of the class
-    config = colibriConfig(input_params)
-
     # test for colibri_model input
     closure_test_pdf = "colibri_model"
-    assert config.parse_closure_test_pdf(closure_test_pdf) == "colibri_model"
+    assert BASE_CONFIG.parse_closure_test_pdf(closure_test_pdf) == "colibri_model"
+
+
+def test_produce_theoryid():
+    theory = {"theoryid": "test_id"}
+    assert BASE_CONFIG.produce_theoryid(theory) == "test_id"
+
+    # test ValueError raised
+    theory = None
+    with pytest.raises(ValueError):
+        BASE_CONFIG.produce_theoryid(theory)
