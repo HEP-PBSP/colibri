@@ -127,7 +127,7 @@ def main():
     evolven3fit_main()
 
     # Run postfit emulator for bayesian fits
-    if "bayesian_metrics.csv" in os.listdir(FIT_PATH):
+    if "bayes_metrics.csv" in os.listdir(FIT_PATH):
         log.info("Running postfit emulator")
         _postfit_emulator()
     else:
