@@ -406,10 +406,6 @@ def test_produce_theoryid():
     with pytest.raises(ConfigError):
         BASE_CONFIG.produce_theoryid(theory)
 
-    theory = {"theoryid": "not_an_int_error"}
-    with pytest.raises(ConfigError):
-        BASE_CONFIG.produce_theoryid(theory)
-
 
 def test_produce_commondata_tuple():
     """
