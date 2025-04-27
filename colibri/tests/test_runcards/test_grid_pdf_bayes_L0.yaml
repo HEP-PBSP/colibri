@@ -10,7 +10,7 @@ dataset_inputs:
   - {'dataset': 'SLACP_dwsh'}
   - {'dataset': 'SLACD_dw_ite'}
 
-theoryid: 401                         # The theory from which the predictions are drawn.
+theoryid: 40_000_000                         # The theory from which the predictions are drawn.
 
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
@@ -71,7 +71,8 @@ grid_pdf_settings:
 bayesian_fit: True
 # Nested Sampling settings
 ns_settings:
-  n_posterior_samples: 100
+  sampler_plot: False
+  n_posterior_samples: 1
   ReactiveNS_settings:
     vectorized: False
     ndraw_max: 500
