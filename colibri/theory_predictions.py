@@ -155,7 +155,7 @@ def make_dis_prediction(
         Parameters
         ----------
         pdf: jnp.ndarray
-            pdf grid (shape is 14,50)
+            pdf grid (shape is Nfl,Nx)
 
         fk_arr: jnp.ndarray
             fktable array
@@ -220,7 +220,7 @@ def make_had_prediction(
         Parameters
         ----------
         pdf: jnp.ndarray
-            pdf grid (shape is 14,50)
+            pdf grid (shape is Nfl,Nx)
 
         fk_arr: jnp.ndarray
             fktable array
