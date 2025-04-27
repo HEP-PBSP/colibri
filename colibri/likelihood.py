@@ -36,7 +36,7 @@ class LogLikelihood(object):
     """
     This class takes care of constructing the log-likelihood that is passed to
     the bayesian samplers.
-    
+
     TODO: class should be generalised so as to be suited for MC replica fits.
     """
 
@@ -139,7 +139,7 @@ class LogLikelihood(object):
         """
         This function takes care of computing the log_likelihood that is defined in LogLikelihood.
         Function is jax.jit compiled for better performance.
-        
+
         Parameters
         ----------
         params: jnp.array
@@ -147,7 +147,7 @@ class LogLikelihood(object):
         inv_covmat: jnp.array
         fast_kernel_arrays: tuple
         positivity_fast_kernel_arrays: tuple
-        
+
         Returns
         -------
         jnp.array
