@@ -34,7 +34,10 @@ ultranest_logger.addHandler(handler)
 
 class LogLikelihood(object):
     """
-    TODO: describe class.
+    This class takes care of constructing the log-likelihood that is passed to
+    the bayesian samplers.
+    
+    TODO: class should be generalised so as to be suited for MC replica fits.
     """
 
     def __init__(
@@ -52,8 +55,6 @@ class LogLikelihood(object):
         integrability_penalty,
     ):
         """
-        TODO: Instantiation of the ...
-
         Parameters
         ----------
         central_inv_covmat_index: commondata_utils.CentralInvCovmatIndex
@@ -129,12 +130,29 @@ class LogLikelihood(object):
     @partial(jax.jit, static_argnames=("self",))
     def log_likelihood(
         self,
-        params,
-        central_values,
-        inv_covmat,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
-    ):
+        params: jnp.array,
+        central_values: jnp.array,
+        inv_covmat: jnp.array,
+        fast_kernel_arrays: tuple,
+        positivity_fast_kernel_arrays: tuple,
+    ) -> jnp.array:
+        """
+        This function takes care of computing the log_likelihood that is defined in LogLikelihood.
+        Function is jax.jit compiled for better performance.
+        
+        Parameters
+        ----------
+        params: jnp.array
+        central_values: jnp.array
+        inv_covmat: jnp.array
+        fast_kernel_arrays: tuple
+        positivity_fast_kernel_arrays: tuple
+        
+        Returns
+        -------
+        jnp.array
+            jax array with the value of the log-likelihood.
+        """
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
 
         if self.positivity_penalty_settings["positivity_penalty"]:
@@ -178,9 +196,9 @@ def log_likelihood(
 ):
     """
     Instantiates the LogLikelihood class.
-    This function is used to create the log likelihood function for the UltraNest sampler.
+    This function is used to create the log likelihood function for the sampler.
     The function, being a node of the reportengine graph, can be overriden by the user for
-    model specific applications by changing the log_likelihood method of the UltraNestLogLikelihood class.
+    model specific applications by changing the log_likelihood method of the LogLikelihood class.
     """
     return LogLikelihood(
         central_inv_covmat_index,
