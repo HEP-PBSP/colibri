@@ -126,7 +126,9 @@ def _postfit_emulator():
     log.info(f"\tvp-upload {FIT_PATH}\n")
     log.info("and install with:")
     log.info(f"\tvp-get fit {fitname}\n")
-    log.info("*****************************************************************\n\n")
+    log.info(
+        "\n\n*****************************************************************\n\n"
+    )
 
 
 def main():
