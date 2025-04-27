@@ -121,6 +121,7 @@ def _postfit_emulator():
         raise PostfitError("CRITICAL ERROR: Failure in reading replica zero") from e
     log.info("\n\n*****************************************************************\n")
     log.info("Postfit complete")
+    log.info(f"Your LHAPDF set can be found in: {LHAPDF_path}")
     log.info("Please upload your results with:")
     log.info(f"\tvp-upload {FIT_PATH}\n")
     log.info("and install with:")
