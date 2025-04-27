@@ -4,28 +4,25 @@ colibri.tests.test_ultranest_fit.py
 Tests for the UltraNest fitting module.
 """
 
-from unittest.mock import Mock, patch, MagicMock
-import pytest
 import copy
+from unittest.mock import MagicMock, Mock, patch
+
 import jax
 import jax.numpy as jnp
+import pytest
 from numpy.testing import assert_allclose
-from colibri.ultranest_fit import (
-    UltranestFit,
-    run_ultranest_fit,
-    ultranest_fit,
-    UltraNestLogLikelihood,
-    log_likelihood,
-)
+
+from colibri.likelihood import LogLikelihood, log_likelihood
 from colibri.loss_functions import chi2
 from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     MOCK_PDF_MODEL,
-    TEST_FORWARD_MAP,
     TEST_FK_ARRAYS,
+    TEST_FORWARD_MAP,
     TEST_POS_FK_ARRAYS,
     UltraNestLogLikelihoodMock,
 )
+from colibri.ultranest_fit import UltranestFit, run_ultranest_fit, ultranest_fit
 
 jax.config.update("jax_enable_x64", True)
 
@@ -61,9 +58,9 @@ vect_ns_settings["ReactiveNS_settings"]["vectorized"] = True
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_UltraNestLogLikelihood_class(pos_penalty):
     """
-    Tests the UltraNestLogLikelihood class.
+    Tests the LogLikelihood class.
     """
-    ultranest_loglike = UltraNestLogLikelihood(
+    ultranest_loglike = LogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=FIT_XGRID,
@@ -95,10 +92,10 @@ def test_UltraNestLogLikelihood_class(pos_penalty):
 @patch("colibri.ultranest_fit.jax.vmap")
 def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
     """
-    Tests the UltraNestLogLikelihood class with vectorized ReactiveNS settings.
+    Tests the LogLikelihood class with vectorized ReactiveNS settings.
     """
 
-    ultranest_loglike = UltraNestLogLikelihood(
+    ultranest_loglike = LogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=FIT_XGRID,
@@ -131,12 +128,12 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
 def test_log_likelihood(pos_penalty):
     """
     Tests that the log_likeliihodd function just returns an
-    UltraNestLogLikelihood instance.
+    LogLikelihood instance.
     """
     POS_PENALTY_SETTINGS = (
         {"positivity_penalty": pos_penalty, "alpha": 1e-7, "lambda_positivity": 1000},
     )
-    ultranest_loglike = UltraNestLogLikelihood(
+    ultranest_loglike = LogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=FIT_XGRID,
@@ -442,7 +439,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
     }
 
     # Instantiate the class
-    log_likelihood_class = UltraNestLogLikelihood(
+    log_likelihood_class = LogLikelihood(
         central_inv_covmat_index,
         pdf_model,
         jnp.array([0.1, 0.2]),  # dummy fit_xgrid
@@ -479,7 +476,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
     }
 
     # Instantiate the class
-    log_likelihood_class = UltraNestLogLikelihood(
+    log_likelihood_class = LogLikelihood(
         central_inv_covmat_index,
         pdf_model,
         jnp.array([0.1, 0.2]),  # dummy fit_xgrid
