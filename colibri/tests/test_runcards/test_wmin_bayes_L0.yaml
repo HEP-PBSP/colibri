@@ -6,13 +6,12 @@ meta: 'A runcard to test a bayesian fit.'
 
 dataset_inputs:    
   # DIS                
-  - {'dataset': 'NMC'}
-  - {'dataset': 'SLACP_dwsh'}
-  - {'dataset': 'SLACD_dw_ite'}
+  - {'dataset': 'NMC_NC_NOTFIXED_P_EM-SIGMARED'}
+  - {'dataset': 'SLAC_NC_NOTFIXED_P_EM-F2'}
+  - {'dataset': 'SLAC_NC_NOTFIXED_D_EM-F2'}
 
 
-theory:
-  theoryid: 40_000_000                          # The theory from which the predictions are drawn.
+theoryid: 40_000_000                          # The theory from which the predictions are drawn.
 
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 

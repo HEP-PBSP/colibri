@@ -10,7 +10,9 @@ import pathlib
 import shutil
 from glob import glob
 
+import evolven3fit
 import lhapdf
+from evolven3fit.utils import read_runcard
 from n3fit.scripts.evolven3fit import main as evolven3fit_main
 from reportengine import colors
 from validphys import lhio
@@ -41,6 +43,19 @@ args = parser.parse_args()
 
 FIT_DIR = args.name_fit
 FIT_PATH = pathlib.Path(FIT_DIR).resolve()
+
+
+def my_custom_get_theoryID_from_runcard(usr_path):
+    """
+    Does the same as `evolven3fit.utils.get_theoryID_from_runcard`
+    but assumes that `theoryid` is defined in the runcard.
+    """
+    my_runcard = read_runcard(usr_path)
+    return my_runcard["theoryid"]
+
+
+# override (monkey patch) the function
+evolven3fit.utils.get_theoryID_from_runcard = my_custom_get_theoryID_from_runcard
 
 
 def _postfit_emulator():

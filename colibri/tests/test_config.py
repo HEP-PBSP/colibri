@@ -11,10 +11,9 @@ from unittest.mock import mock_open, patch
 
 import pytest
 import reportengine
-from reportengine.configparser import ConfigError
-
 from colibri.config import Environment, colibriConfig
 from colibri.core import PriorSettings
+from reportengine.configparser import ConfigError
 
 BASE_CONFIG = colibriConfig({})
 
@@ -391,20 +390,6 @@ def test_parse_closure_test_pdf_colibri_model():
     # test for colibri_model input
     closure_test_pdf = "colibri_model"
     assert BASE_CONFIG.parse_closure_test_pdf(closure_test_pdf) == "colibri_model"
-
-
-def test_produce_theoryid():
-    theory = {"theoryid": 1}
-    assert BASE_CONFIG.produce_theoryid(theory) == 1
-
-    # test ConfigError(s) are raised when needed
-    theory = None
-    with pytest.raises(ConfigError):
-        BASE_CONFIG.produce_theoryid(theory)
-
-    theory = {"no_theoryid_error": 1}
-    with pytest.raises(ConfigError):
-        BASE_CONFIG.produce_theoryid(theory)
 
 
 def test_produce_commondata_tuple():

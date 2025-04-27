@@ -10,8 +10,8 @@ dataset_inputs:
   - {'dataset': 'SLAC_NC_NOTFIXED_P_DW_EM-F2', 'variant': 'legacy'}
   - {'dataset': 'SLAC_NC_NOTFIXED_D_DW_EM-F2', 'variant': 'legacy'}
 
-theory:
-  theoryid: 40_000_000                         # The theory from which the predictions are drawn.
+
+theoryid: 40_000_000                         # The theory from which the predictions are drawn.
 
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 

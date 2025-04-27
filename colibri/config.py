@@ -13,17 +13,15 @@ import shutil
 
 import jax
 import jax.numpy as jnp
-from mpi4py import MPI
-from reportengine.configparser import ConfigError, explicit_node
-from validphys import covmats
-from validphys.config import Config, Environment
-from validphys.core import TheoryIDSpec
-from validphys.fkparser import load_fktable
-
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
+from mpi4py import MPI
+from reportengine.configparser import ConfigError, explicit_node
+from validphys import covmats
+from validphys.config import Config, Environment
+from validphys.fkparser import load_fktable
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -154,25 +152,6 @@ class colibriConfig(Config):
             f"Fitting x-grid consists of {len(xgrid)} points, ranging from {xgrid[0]} to {xgrid[-1]}."
         )
         return xgrid
-
-    def produce_theoryid(self, theory: dict) -> TheoryIDSpec:
-        """
-        Returns the theory ID from the theory spec.
-
-        Parameters
-        ----------
-        theory: dict
-            Theory spec defined in the runcard.
-
-        Returns
-        -------
-        TheoryIDSpec
-        """
-        if theory is None:
-            raise ConfigError("theory needs to be defined in the runcard.")
-        if "theoryid" not in theory:
-            raise ConfigError("theoryid needs to be defined in the runcard.")
-        return theory["theoryid"]
 
     def parse_ns_settings(
         self,
