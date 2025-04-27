@@ -46,7 +46,7 @@ t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covaria
 # Weight minimisation settings
 wmin_settings:
   wminpdfset: NNPDF31_nnlo_as_0118
-  n_basis: 15
+  n_basis: 5
 
 
 ###################
@@ -62,9 +62,9 @@ ns_settings:
     vectorized: False
     ndraw_max: 500
   Run_settings:
-    min_num_live_points: 500
+    min_num_live_points: 200
     min_ess: 50
-    frac_remain: 0.01
+    frac_remain: 0.5
 
 prior_settings:
   prior_distribution: 'uniform_parameter_prior'
