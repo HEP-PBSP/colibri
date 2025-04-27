@@ -4,32 +4,11 @@ colibri.likelihood.py
 Module containing the likelihood class for the colibri fit.
 """
 
-import logging
-import sys
 from functools import partial
 
 import jax
 import jax.numpy as jnp
-from mpi4py import MPI
-
 from colibri.loss_functions import chi2
-
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
-
-log = logging.getLogger(__name__)
-
-# Check if --debug flag is present
-debug_flag = "--debug" in sys.argv
-
-# Set the Ultranest logging level based on the presence of --debug flag
-ultranest_logger = logging.getLogger("ultranest")
-ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
-
-# Configure the handler and formatter
-handler = logging.StreamHandler(sys.stdout)
-ultranest_logger.addHandler(handler)
 
 
 class LogLikelihood(object):
