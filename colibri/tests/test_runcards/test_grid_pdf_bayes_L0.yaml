@@ -77,9 +77,9 @@ ns_settings:
     vectorized: False
     ndraw_max: 500
   Run_settings:
-    min_num_live_points: 500
+    min_num_live_points: 200
     min_ess: 50
-    frac_remain: 0.01
+    frac_remain: 0.5
 
 prior_settings:
   prior_distribution: 'uniform_pdf_prior'            # The type of prior used in Nested Sampling (model dependent)
