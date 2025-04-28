@@ -52,10 +52,9 @@ def test_closure_test_pdf_grid():
     # Check 3: shape of the output
     N_rep = cltest_pdf_set.get_members()  #   number of replicas
     N_fl = len(convolution.FK_FLAVOURS)  # number of flavours
+    N_x = len(FIT_XGRID)  # number of x values
 
-    print(f"FK_FLAVOURS: {convolution.FK_FLAVOURS}")
-
-    assert grid.shape == (N_rep, N_fl, len(FIT_XGRID))
+    assert grid.shape == (N_rep, N_fl, N_x)
 
 
 @pytest.fixture
