@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 import ultranest
+from ultranest import calibrator
 import ultranest.popstepsampler as popstepsampler
 import ultranest.stepsampler as ustepsampler
 import time
@@ -216,6 +217,42 @@ def log_likelihood(
     )
 
 
+def calibrate_stepsampler(
+    pdf_model,
+    bayesian_prior,
+    ns_settings,
+    log_likelihood,
+):
+    """ """
+    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+
+    # set the ultranest seed
+    np.random.seed(ns_settings["ultranest_seed"])
+
+    parameters = pdf_model.param_names
+
+    # Initialize the ultranest sampler
+    sampler = calibrator.ReactiveNestedCalibrator(
+        parameters,
+        log_likelihood,
+        bayesian_prior,
+        **ns_settings["ReactiveNS_settings"],
+    )
+
+    sampler.stepsampler = ustepsampler.SliceSampler(
+        generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
+        **ns_settings["SliceSampler_settings"],
+    )
+
+    ultranest_result = sampler.run(**ns_settings["Run_settings"])
+
+    for nsteps, res in ultranest_result:
+        res["nsteps"] = nsteps
+
+    # only return the last result
+    return res
+
+
 def ultranest_fit(
     pdf_model,
     bayesian_prior,
@@ -252,6 +289,7 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
+    # Initialize the ultranest sampler
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
         log_likelihood,
@@ -281,7 +319,6 @@ def ultranest_fit(
         log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
     n_posterior_samples = ns_settings["n_posterior_samples"]
-
     # Initialize fit_result to avoid UnboundLocalError
     fit_result = None
 
