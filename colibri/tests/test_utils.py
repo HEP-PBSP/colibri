@@ -1,30 +1,35 @@
 """
+colibri.tests.test_utils.py
+
 Module for testing the utils module.
 """
 
 import os
 import pathlib
 import shutil
-from numpy.testing import assert_allclose
-import pytest
-from unittest.mock import patch, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas
+import pytest
+import validphys
+from numpy.testing import assert_allclose
+from validphys import convolution
+from validphys.fkparser import load_fktable
+
 from colibri.api import API as cAPI
 from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     MOCK_PDF_MODEL,
-    TEST_DATASET_HAD,
     TEST_DATASET,
+    TEST_DATASET_HAD,
 )
 from colibri.utils import (
-    t0_pdf_grid,
-    closure_test_pdf_grid,
-    resample_from_ns_posterior,
     cast_to_numpy,
+    closest_indices,
+    compute_determinants_of_principal_minors,
     get_fit_path,
     get_full_posterior,
     get_pdf_model,
@@ -34,12 +39,23 @@ from colibri.utils import (
     compute_determinants_of_principal_minors,
     closest_indices,
     closure_test_central_pdf_grid,
+    pdf_model_from_colibri_model,
+    resample_from_ns_posterior,
+    t0_pdf_grid,
 )
-from validphys.fkparser import load_fktable
-import validphys
-from validphys import convolution
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
+
+
+@pytest.fixture
+def mock_colibri_model():
+    model = MagicMock()
+    model.grid_values_func = MagicMock(
+        return_value=lambda params: jnp.array(
+            [[p * x for x in range(1, 6)] for p in params]
+        )
+    )
+    return model
 
 
 def test_t0_pdf_grid():
@@ -105,7 +121,6 @@ def test_closure_test_pdf_grid():
     N_x = len(FIT_XGRID)  # number of x values
 
     assert grid.shape == (N_rep, N_fl, N_x)
-
 
 def test_resample_from_ns_posterior():
     """
@@ -397,43 +412,10 @@ def test_likelihood_float_type(
     assert os.path.exists(tmp_path / "dtype.txt")
 
 
-def test_identity_matrix():
-    C = np.identity(3)
-    expected = np.array([1.0, 1.0, 1.0, 1.0])
-    result = compute_determinants_of_principal_minors(C)
-    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
-
-
-def test_single_element_matrix():
-    C = np.array([[2]])
-    expected = np.array([1.0, 2.0])
-    result = compute_determinants_of_principal_minors(C)
-    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
-
-
-def test_non_psd_matrix():
-    C = np.array([[2, -3], [-3, 1]])
-    try:
-        compute_determinants_of_principal_minors(C)
-    except ValueError as e:
-        assert str(e) == "Matrix is not positive semi-definite or symmetric."
-
-
-def test_known_psd_matrix():
-    C = np.array([[4, 2], [2, 3]])
-    expected = np.array([1.0, 4.0, 8.0])
-    result = compute_determinants_of_principal_minors(C)
-    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
-
-
-def test_large_psd_matrix():
-    C = np.array([[4, 2, 0], [2, 3, 1], [0, 1, 2]])
-    expected = np.array([1.0, 4.0, 8.0, 12.0])
-    result = compute_determinants_of_principal_minors(C)
-    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
-
-
 def test_single_value():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([1.1])
     result = closest_indices(a, v, atol=0.2)
@@ -442,6 +424,9 @@ def test_single_value():
 
 
 def test_multiple_values():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([1.1, 3.0])
     result = closest_indices(a, v, atol=0.2)
@@ -450,6 +435,9 @@ def test_multiple_values():
 
 
 def test_no_close_values():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([4.0])
     result = closest_indices(a, v, atol=0.2)
@@ -458,6 +446,9 @@ def test_no_close_values():
 
 
 def test_exact_match():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([1.0, 2.0, 3.0])
     result = closest_indices(a, v, atol=1e-7)
@@ -466,6 +457,9 @@ def test_exact_match():
 
 
 def test_atol_effect():
+    """
+    Test for utils.closest_indices.
+    """
     a = np.array([1.0, 2.0, 3.0])
     v = np.array([2.1])
     result = closest_indices(a, v, atol=0.09)  # Should not match 2.0 due to tight atol
@@ -477,6 +471,17 @@ def test_atol_effect():
     np.testing.assert_array_equal(result, expected)
 
 
+def test_scalar_v_input():
+    """
+    Test for utils.closest_indices.
+    """
+    a = np.array([1, 2, 3])
+    v = np.float32(1.0)
+    expected = 0
+    result = closest_indices(a, v)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
 def test_identity_matrix():
     C = np.identity(3)
     expected = np.array([1.0, 1.0, 1.0, 1.0])
@@ -511,3 +516,79 @@ def test_large_psd_matrix():
     expected = np.array([1.0, 4.0, 8.0, 12.0])
     result = compute_determinants_of_principal_minors(C)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_pdf_model_from_colibri_model_not_found():
+    with patch("importlib.import_module", side_effect=ModuleNotFoundError):
+        settings = {"model": "nonexistent_model"}
+        with pytest.raises(ModuleNotFoundError):
+            pdf_model_from_colibri_model(settings)
+
+
+@patch("importlib.import_module")
+def test_pdf_model_from_colibri_model_missing_config(mock_import_module):
+    # Explicitly remove the 'config' attribute
+    mock_module = MagicMock()
+    del mock_module.config  # Ensure 'config' attribute doesn't exist
+    mock_import_module.return_value = mock_module
+    settings = {"model": "mock_model"}
+    with pytest.raises(AttributeError):
+        pdf_model_from_colibri_model(settings)
+
+
+@patch("importlib.import_module")
+@patch("inspect.getmembers")
+def test_pdf_model_from_colibri_model_success(
+    mock_getmembers, mock_import_module, mock_colibri_model
+):
+    mock_import_module.return_value = MagicMock()
+    # Mock the colibriConfig class and its subclass
+    from colibri.config import colibriConfig
+
+    class MockColibriConfig(colibriConfig):
+        def __init__(self, input_params):
+            pass
+
+        def produce_pdf_model(self, param1, param2, output_path, dump_model=False):
+            return mock_colibri_model
+
+    mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
+
+    # Define valid model settings
+    model_settings = {
+        "model": "mock_colibri_model",
+        "param1": 1,
+        "param2": 2,
+    }
+
+    # Call the function and assert the result
+    result = pdf_model_from_colibri_model(model_settings)
+    assert result == mock_colibri_model
+
+
+@patch("importlib.import_module")
+@patch("inspect.getmembers")
+def test_pdf_model_from_colibri_model_incorrect_inputs(
+    mock_getmembers, mock_import_module, mock_colibri_model
+):
+    mock_import_module.return_value = MagicMock()
+    # Mock the colibriConfig class and its subclass
+    from colibri.config import colibriConfig
+
+    class MockColibriConfig(colibriConfig):
+        def __init__(self, input_params):
+            pass
+
+        def produce_pdf_model(self, param1, param2, output_path, dump_model=False):
+            return mock_colibri_model
+
+    mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
+
+    # Define model settings missing param2
+    model_settings = {
+        "model": "mock_colibri_model",
+        "param1": 1,
+    }
+
+    with pytest.raises(ValueError):
+        pdf_model_from_colibri_model(model_settings)

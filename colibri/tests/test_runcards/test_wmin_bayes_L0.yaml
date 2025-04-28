@@ -33,6 +33,9 @@ positivity_penalty_settings:
   alpha: 1e-7                           
   lambda_positivity: 0               
 
+integrability_settings:
+  integrability: false
+
 use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
 

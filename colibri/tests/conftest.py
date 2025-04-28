@@ -2,19 +2,31 @@
 Module containing standard pytest data configurations for testing purposes.
 """
 
-import jax
-import jax.numpy as jnp
-from colibri.pdf_model import PDFModel
-import numpy as np
 from unittest.mock import Mock
 
+import jax
+import jax.numpy as jnp
+import numpy as np
+
+from colibri.pdf_model import PDFModel
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
+"""
+Intrinsic charm theory used in the tests.
+"""
+TEST_THEORYID = 40000000
+
+"""
+Default cuts to be used when testing.
+"""
+TEST_USECUTS = "internal"
+
+
 TEST_DATASET = {
     "dataset_input": {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"},
-    "theoryid": 708,
-    "use_cuts": "internal",
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
 }
 
 """
@@ -25,14 +37,14 @@ TEST_DATASETS = {
     "dataset_inputs": [
         {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}
     ],
-    "theoryid": 708,
-    "use_cuts": "internal",
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
 }
 
 TEST_DATASET_HAD = {
     "dataset_input": {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
-    "theoryid": 708,
-    "use_cuts": "internal",
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
 }
 
 """
@@ -41,8 +53,8 @@ the "dataset_inputs" key instead of "dataset_input"
 """
 TEST_DATASETS_HAD = {
     "dataset_inputs": [{"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"}],
-    "theoryid": 708,
-    "use_cuts": "internal",
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
 }
 
 """
@@ -53,8 +65,8 @@ TEST_DATASETS_DIS_HAD = {
         {"dataset": "HERA_NC_318GEV_EP-SIGMARED", "variant": "legacy"},
         {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
     ],
-    "theoryid": 708,
-    "use_cuts": "internal",
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
 }
 
 """
@@ -127,8 +139,8 @@ TEST_FULL_DIS_DATASET = {
         {"dataset": "HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED", "variant": "legacy"},
         {"dataset": "HERA_NC_318GEV_EAVG_CHARM-SIGMARED", "variant": "legacy"},
     ],
-    "theoryid": 708,
-    "use_cuts": "internal",
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
 }
 
 
@@ -194,8 +206,8 @@ TEST_FULL_HAD_DATASET = {
         {"dataset": "LHCB_Z0_13TEV_DIMUON-Y"},
         {"dataset": "LHCB_Z0_13TEV_DIELECTRON-Y"},
     ],
-    "theoryid": 708,
-    "use_cuts": "internal",
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
 }
 
 
@@ -288,8 +300,8 @@ TEST_FULL_GLOBAL_DATASET = {
         {"dataset": "LHCB_Z0_13TEV_DIMUON-Y"},
         {"dataset": "LHCB_Z0_13TEV_DIELECTRON-Y"},
     ],
-    "theoryid": 708,
-    "use_cuts": "internal",
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
 }
 
 
@@ -319,8 +331,8 @@ TEST_FULL_POS_DATASET = {
             {"dataset": "NNPDF_POS_2P24GEV_XGL", "maxlambda": 1e6},
         ]
     },
-    "theoryid": 708,
-    "use_cuts": "internal",
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
 }
 
 
@@ -367,7 +379,7 @@ MOCK_PDF_MODEL.pred_and_pdf_func = (
     )
 )
 
-TEST_XGRID = jnp.ones(2)
+TEST_XGRID = jnp.array([0.1, 0.2])
 TEST_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0]

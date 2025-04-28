@@ -1,10 +1,19 @@
-from unittest.mock import patch, mock_open
-from reportengine.configparser import ConfigError
-from colibri.config import colibriConfig, Environment
-from colibri.core import PriorSettings
+"""
+colibri.tests.test_config.py
+
+Test module for config.py
+"""
+
+import unittest
 import unittest.mock as mock
 from pathlib import Path
-import unittest
+from unittest.mock import mock_open, patch
+
+import pytest
+from reportengine.configparser import ConfigError
+
+from colibri.config import Environment, colibriConfig
+from colibri.core import IntegrabilitySettings, PriorSettings
 
 
 def test_float32_precision_enabled():
@@ -339,3 +348,99 @@ def test_parse_positivity_penalty_settings(mock_warning):
 
     assert pos_settings == expected_settings
     assert mock_warning.called
+
+
+def test_parse_integrability_settings_valid():
+    """Test with valid settings."""
+    input_params = {}
+    config = colibriConfig(input_params)
+
+    settings = {
+        "integrability": True,
+        "integrability_specs": {
+            "lambda_integrability": 50,
+            "evolution_flavours": ["V", "T8"],
+        },
+    }
+
+    result = config.parse_integrability_settings(settings)
+
+    assert result.integrability == True
+    assert result.integrability_specs["lambda_integrability"] == 50
+    assert result.integrability_specs["evolution_flavours"] == [3, 10]  # Translated IDs
+
+
+def test_parse_integrability_settings_default_values():
+    """Test with missing optional settings to check defaults."""
+    input_params = {}
+    config = colibriConfig(input_params)
+
+    settings = {
+        "integrability": True,
+    }
+
+    result = config.parse_integrability_settings(settings)
+
+    assert result.integrability == True
+    assert result.integrability_specs["lambda_integrability"] == 100
+    assert result.integrability_specs["evolution_flavours"] == [9, 10]  # Defaults
+
+
+def test_parse_integrability_settings_unknown_key():
+    """Test with an unknown key in the settings."""
+    input_params = {}
+    config = colibriConfig(input_params)
+    settings = {
+        "integrability": True,
+        "unknown_key": "some_value",
+    }
+
+    with pytest.raises(
+        ConfigError, match="Key 'unknown_key' in integrability_settings not known."
+    ):
+        config.parse_integrability_settings(settings)
+
+
+def test_parse_integrability_settings_invalid_evolution_flavours():
+    """Test with an invalid evolution_flavours value."""
+    input_params = {}
+    config = colibriConfig(input_params)
+    settings = {
+        "integrability": True,
+        "integrability_specs": {
+            "lambda_integrability": 50,
+            "evolution_flavours": ["Invalid"],
+        },
+    }
+
+    with pytest.raises(
+        ConfigError, match="evolution_flavours ids can only be taken from"
+    ):
+        config.parse_integrability_settings(settings)
+
+
+def test_parse_integrability_settings_empty():
+    """Test with empty settings."""
+    input_params = {}
+    config = colibriConfig(input_params)
+    settings = {}
+
+    result = config.parse_integrability_settings(settings)
+
+    assert result.integrability == False
+    assert result.integrability_specs == {
+        "lambda_integrability": 100,
+        "evolution_flavours": [9, 10],
+        "integrability_xgrid": [2.00000000e-07],
+    }  # Default
+
+
+def test_parse_closure_test_pdf_colibri_model():
+    # Create input_params required for colibriConfig initialization
+    input_params = {}
+    # Create an instance of the class
+    config = colibriConfig(input_params)
+
+    # test for colibri_model input
+    closure_test_pdf = "colibri_model"
+    assert config.parse_closure_test_pdf(closure_test_pdf) == "colibri_model"

@@ -34,14 +34,11 @@ def test_check_pdf_models_equal_true(
     theoryid = MagicMock()
     theoryid.id = 123
 
-    t0pdfset = MagicMock()
-    t0pdfset.name = "t0pdfset1"
-
     # Configure mock behavior
     mock_pdf_models_equal.side_effect = lambda x, y: x == y
 
     # Act
-    check_pdf_models_equal.__wrapped__(prior_settings, pdf_model, theoryid, t0pdfset)
+    check_pdf_models_equal.__wrapped__(prior_settings, pdf_model, theoryid)
 
 
 @patch(

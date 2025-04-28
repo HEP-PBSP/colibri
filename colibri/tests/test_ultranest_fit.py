@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_ultranest_fit.py
+
+Tests for the UltraNest fitting module.
+"""
+
 from unittest.mock import Mock, patch, MagicMock
 import pytest
 import copy
@@ -36,6 +42,8 @@ _penalty_posdata = (
     )
 )
 
+integrability_penalty = lambda pdf: jnp.array([0.0])
+
 ns_settings = {
     "ultranest_seed": 42,
     "ReactiveNS_settings": {"vectorized": False},
@@ -70,6 +78,7 @@ def test_UltraNestLogLikelihood_class(pos_penalty):
             "alpha": 1e-7,
             "lambda_positivity": 1000,
         },
+        integrability_penalty=integrability_penalty,
     )
 
     assert_allclose(
@@ -104,6 +113,7 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
             "alpha": 1e-7,
             "lambda_positivity": 1000,
         },
+        integrability_penalty=integrability_penalty,
     )
 
     assert_allclose(
@@ -114,7 +124,7 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
     )
     assert MOCK_PDF_MODEL == ultranest_loglike.pdf_model
 
-    assert mock_jax_vmap.call_count == 3
+    assert mock_jax_vmap.call_count == 4
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
@@ -137,6 +147,7 @@ def test_log_likelihood(pos_penalty):
         chi2=mock_chi2,
         penalty_posdata=_penalty_posdata,
         positivity_penalty_settings=POS_PENALTY_SETTINGS,
+        integrability_penalty=integrability_penalty,
     )
     log_like = log_likelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
@@ -148,6 +159,7 @@ def test_log_likelihood(pos_penalty):
         ns_settings,
         _penalty_posdata,
         positivity_penalty_settings=POS_PENALTY_SETTINGS,
+        integrability_penalty=integrability_penalty,
     )
 
     assert type(ultranest_loglike) == type(log_like)
@@ -441,6 +453,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
         chi2_mock,
         penalty_posdata_mock,
         positivity_penalty_settings,
+        integrability_penalty=integrability_penalty,
     )
 
     # Mock the params
@@ -477,6 +490,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
         chi2_mock,
         penalty_posdata_mock,
         positivity_penalty_settings,
+        integrability_penalty=integrability_penalty,
     )
 
     ll_value_without_penalty = log_likelihood_class.log_likelihood(
