@@ -7,7 +7,9 @@ This module implements an abstract class PDFModel which is filled by the various
 
 from abc import ABC, abstractmethod
 from typing import Callable, Tuple
+
 import jax.numpy as jnp
+from jax.typing import ArrayLike
 
 
 class PDFModel(ABC):
@@ -25,9 +27,7 @@ class PDFModel(ABC):
         pass
 
     @abstractmethod
-    def grid_values_func(
-        self, xgrid: jnp.ndarray
-    ) -> Callable[[jnp.array], jnp.ndarray]:
+    def grid_values_func(self, xgrid: ArrayLike) -> Callable[[jnp.array], jnp.ndarray]:
         """This function should produce a grid values function, which takes
         in the model parameters, and produces the PDF values on the grid xgrid.
         The grid values function should be a function of the parameters and return
@@ -54,7 +54,7 @@ class PDFModel(ABC):
 
     def pred_and_pdf_func(
         self,
-        xgrid: jnp.ndarray,
+        xgrid: ArrayLike,
         forward_map: Callable[[jnp.ndarray, jnp.ndarray], jnp.ndarray],
     ) -> Callable[[jnp.ndarray, jnp.ndarray], Tuple[jnp.ndarray, jnp.ndarray]]:
         """Creates a function that returns a tuple of two arrays, given the model parameters and the fast kernel arrays as input.
