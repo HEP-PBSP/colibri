@@ -20,7 +20,7 @@ closure_test_level: 0                  # The closure test level: False for exper
                                        # for pseudodata with no noise, level 1 for pseudodata with
                                        # noise.
 
-closure_test_pdf: les_houches_runcard  # The closure test PDF used if closure_test_level is not False
+closure_test_pdf: LH_PARAM_20250429  # The closure test PDF used if closure_test_level is not False
 
 #####################
 # Loss function specs
