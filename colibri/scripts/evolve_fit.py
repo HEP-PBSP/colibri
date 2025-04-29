@@ -1,232 +1,158 @@
 """
-An executable for performing evolution of exportgrids, producing
-an LHAPDF grid.
+A wrapper around n3fit/scripts/evolven3fit.py.
+
 """
 
-import os
 import argparse
-import yaml
 import logging
-import numpy as np
+import os
+import pathlib
+import shutil
+from glob import glob
 
-from pathlib import Path
-
-from scipy.interpolate import interp1d
-
-import eko
-from eko import basis_rotation
-from ekobox import info_file, genpdf, apply
-from validphys.pdfbases import PIDS_DICT
-
+import evolven3fit
 import lhapdf
-
-from validphys.loader import Loader
-from colibri.constants import LHAPDF_XGRID
-
-from collections import defaultdict
-
-from validphys.lhio import generate_replica0
-
+from evolven3fit.utils import read_runcard
+from n3fit.scripts.evolven3fit import main as evolven3fit_main
 from reportengine import colors
+from validphys import lhio
+from validphys.core import PDF
+from validphys.scripts.postfit import PostfitError, relative_symlink, set_lhapdf_info
 
-from mpi4py import MPI
+# Clear any existing handlers from root logger
+root_logger = logging.getLogger()
+root_logger.handlers.clear()
+root_logger.setLevel(logging.WARNING)  # Set higher threshold globally
 
-log = logging.getLogger()
+# Set up module-specific logger
+log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
 
 
-def lhapdf_path():
-    """Returns the path to the share/LHAPDF directory"""
-    return lhapdf.paths()[0]
+parser = argparse.ArgumentParser(
+    description="A wrapper around n3fit/scripts/evolven3fit.py.\n"
+    "Usage for evolution: `evolve_fit evolve <fit_name>`\n"
+    "For more details, run `evolven3fit --help`.",
+    formatter_class=argparse.RawTextHelpFormatter,
+)
+
+parser.add_argument("action", help="The action to run, e.g. evolve")
+parser.add_argument("name_fit", help="The name of the fit directory")
+args = parser.parse_args()
+
+FIT_DIR = args.name_fit
+FIT_PATH = pathlib.Path(FIT_DIR).resolve()
 
 
-def process_replica(replica, pdf_data, eko_op, lhapdf_destination):
-    evolved_blocks = evolve_exportgrid(pdf_data, eko_op, LHAPDF_XGRID)
-    replica_num = replica.removeprefix("replica_")
-    genpdf.export.dump_blocks(
-        Path(lhapdf_destination),
-        int(replica_num),
-        evolved_blocks,
-        pdf_type=f"PdfType: replica\nFromMCReplica: {replica_num}\n",
+def my_custom_get_theoryID_from_runcard(usr_path):
+    """
+    Does the same as `evolven3fit.utils.get_theoryID_from_runcard`
+    but assumes that `theoryid` is defined in the runcard.
+    """
+    my_runcard = read_runcard(usr_path)
+    return my_runcard["theoryid"]
+
+
+# override (monkey patch) the function
+evolven3fit.utils.get_theoryID_from_runcard = my_custom_get_theoryID_from_runcard
+
+
+def _postfit_emulator():
+    """
+    Emulates the postfit script from validphys/scripts/postfit.py
+    by creating the symlinks, central replica and LHAPDF set
+    within the postfit directory.
+
+    It does not perform any selection of replicas, so it is
+    equivalent to the postfit script but without the selection
+    of replicas.
+    """
+    fitname = FIT_PATH.name
+
+    # Paths
+    postfit_path = FIT_PATH / "postfit"
+    LHAPDF_path = postfit_path / fitname  # Path for LHAPDF grid output
+    replicas_path = FIT_PATH / "replicas"  # Path for replicas output
+
+    # Generate postfit and LHAPDF directory
+    if postfit_path.is_dir():
+        log.warning(f"Removing existing postfit directory: {postfit_path}")
+        shutil.rmtree(postfit_path)
+    os.makedirs(LHAPDF_path, exist_ok=True)
+
+    # Perform dummy postfit selection
+    all_replicas = sorted(glob(f"{replicas_path}/replica_*/"))
+    selected_paths = all_replicas
+
+    # Copy info file
+    info_source_path = replicas_path.joinpath(f"{fitname}.info")
+    info_target_path = LHAPDF_path.joinpath(f"{fitname}.info")
+    shutil.copy2(info_source_path, info_target_path)
+    set_lhapdf_info(info_target_path, len(selected_paths))
+
+    # Generate symlinks
+    for drep, source_path in enumerate(selected_paths, 1):
+        # Symlink results to postfit directory
+        source_dir = pathlib.Path(source_path).resolve()
+        target_dir = postfit_path.joinpath(f"replica_{drep}")
+        relative_symlink(source_dir, target_dir)
+
+        # Symlink results to pdfset directory
+        source_grid = source_dir.joinpath(fitname + ".dat")
+        target_file = f"{fitname}_{drep:04d}.dat"
+        target_grid = LHAPDF_path.joinpath(target_file)
+        relative_symlink(source_grid, target_grid)
+
+    log.info(f"{len(selected_paths)} replicas written to the postfit folder")
+
+    # Generate final PDF with replica 0
+    log.info("Beginning construction of replica 0")
+    # It's important that this is prepended, so that any existing instance of
+    # `fitname` is not read from some other path
+    lhapdf.pathsPrepend(str(postfit_path))
+    generatingPDF = PDF(fitname)
+    lhio.generate_replica0(generatingPDF)
+
+    # Test replica 0
+    try:
+        lhapdf.mkPDF(fitname, 0)
+    except RuntimeError as e:
+        raise PostfitError("CRITICAL ERROR: Failure in reading replica zero") from e
+    log.info("\n\n*****************************************************************\n")
+    log.info("Postfit complete")
+    log.info(f"Your LHAPDF set can be found in: {LHAPDF_path}")
+    log.info("Please upload your results with:")
+    log.info(f"\tvp-upload {FIT_PATH}\n")
+    log.info("and install with:")
+    log.info(f"\tvp-get fit {fitname}\n")
+    log.info(
+        "\n\n*****************************************************************\n\n"
     )
-
-    log.info(f"Evolved replica {replica_num}.")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Script to evolve PDF exportgrids")
-    parser.add_argument("fit_name", help="The colibri fit to evolve.")
-    args = parser.parse_args()
-
-    # Read theory from fit runcard, and load eko
-    with open(args.fit_name + "/input/runcard.yaml", "r") as file:
-        runcard = yaml.safe_load(file)
-    theoryid = runcard["theoryid"]
-
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    size = comm.Get_size()
-
-    eko_path = (Loader().check_theoryID(theoryid).path) / "eko.tar"
-
-    with eko.EKO.edit(eko_path) as eko_op:
-        x_grid_obj = eko.interpolation.XGrid(LHAPDF_XGRID)
-        eko.io.manipulate.xgrid_reshape(
-            eko_op, targetgrid=x_grid_obj, inputgrid=x_grid_obj
-        )
-
-    # Load all replicas into a dictionary
-    initial_PDFs_dict = {}
-    replicas_path = args.fit_name + "/replicas"
-    for yaml_file in Path(replicas_path).glob(f"replica_*/{args.fit_name}.exportgrid"):
-        data = yaml.safe_load(yaml_file.read_text(encoding="UTF-8"))
-        initial_PDFs_dict[yaml_file.parent.stem] = data
-
-    # Apply the evolution
-    with eko.EKO.read(eko_path) as eko_op:
-        # Read the cards directly from the eko to make sure they are consistent
-        theory = eko_op.theory_card
-        op = eko_op.operator_card
-
-        # Modify the info file with the fit-specific info
-        info = info_file.build(theory, op, 1, info_update={})
-        info["NumMembers"] = len(initial_PDFs_dict)
-        info["ErrorType"] = "replicas"  # Needs to be modified if Hessian!
-        info["XMin"] = float(LHAPDF_XGRID[0])
-        info["XMax"] = float(LHAPDF_XGRID[-1])
-        info["Flavors"] = basis_rotation.flavor_basis_pids
-
-        # If no LHAPDF folder exists, create one
-        lhapdf_destination = lhapdf_path() + "/" + args.fit_name
-        if rank == 0 and not os.path.exists(lhapdf_destination):
-            os.mkdir(lhapdf_destination)
-        # Synchronize to ensure all processes have finished
-        comm.Barrier()
-
-        genpdf.export.dump_info(lhapdf_destination, info)
-
-        # Create a list of replicas
-        replicas = [replica for replica in initial_PDFs_dict.items()]
-
-        # Sort the replicas
-        replicas = sorted(replicas, key=lambda x: int(x[0].split("_")[-1]))
-
-        # Distribute replicas among processes
-        local_replicas = [
-            replica for i, replica in enumerate(replicas) if i % size == rank
-        ]
-
-        # Process local replicas
-        for replica, pdf_data in local_replicas:
-            process_replica(replica, pdf_data, eko_op, lhapdf_destination)
-
-        # Synchronize to ensure all processes have finished
-        comm.Barrier()
-
-        if rank == 0:
-            log.info(
-                f"Evolution complete. Evolved grids can be found in {lhapdf_destination}."
-            )
-            # Produce the central replica
-            log.info("Producing central replica.")
-            l = Loader()
-            pdf = l.check_pdf(args.fit_name)
-            generate_replica0(pdf)
-
-
-# This class is copied directly from evolven3fit_new
-class LhapdfLike:
     """
-    Class which emulates lhapdf but only for an initial condition PDF (i.e. with only one q2 value).
-
-    Q20 is the fitting scale fo the pdf and it is the only available scale for the objects of this class.
-
-    X_GRID is the grid of x values on top of which the pdf is interpolated.
-
-    PDF_GRID is a dictionary containing the pdf grids at fitting scale for each pid.
+    Before running `evolven3fit` from n3fit/scripts/evolven3fit.py,
+    creates a symlink called `nnfit` to replicas folder.
     """
+    replicas_path = os.path.join(FIT_DIR, "replicas")
+    symlink_path = os.path.join(FIT_DIR, "nnfit")
 
-    def __init__(self, pdf_grid, q20, x_grid):
-        self.pdf_grid = pdf_grid
-        self.q20 = q20
-        self.x_grid = x_grid
-        self.funcs = [
-            interp1d(self.x_grid, self.pdf_grid[pid], kind="cubic")
-            for pid in range(len(PIDS_DICT))
-        ]
+    if not os.path.exists(replicas_path):
+        raise FileNotFoundError(f"Error: replicas folder not found at {replicas_path}")
 
-    def xfxQ2(self, pid, x, q2):
-        """Return the value of the PDF for the requested pid, x value and, whatever the requested
-        q2 value, for the fitting q2.
+    try:
+        os.symlink("replicas", symlink_path)
+    except FileExistsError:
+        log.warning(f"Warning: symlink {symlink_path} already exists")
 
-        Parameters
-        ----------
+    # Run evolven3fit
+    evolven3fit_main()
 
-            pid: int
-                pid index of particle
-            x: float
-                x-value
-            q2: float
-                Q square value
-
-        Returns
-        -------
-            : float
-            x * PDF value
-        """
-        return self.funcs[list(PIDS_DICT.values()).index(PIDS_DICT[pid])](x)
-
-    def hasFlavor(self, pid):
-        """Check if the requested pid is in the PDF."""
-        return pid in PIDS_DICT
-
-
-# This function is copied directly from evolven3fit_new
-def evolve_exportgrid(exportgrid, eko, x_grid):
-    """
-    Evolves the provided exportgrid for the desired replica with the eko and returns the evolved block
-
-    Parameters
-    ----------
-        exportgrid: dict
-            exportgrid of pdf at fitting scale
-        eko: eko object
-            eko operator for evolution
-        xgrid: list
-            xgrid to be used as the targetgrid
-    Returns
-    -------
-        : list(np.array)
-        list of evolved blocks
-    """
-    # construct LhapdfLike object
-    pdf_grid = np.array(exportgrid["pdfgrid"]).transpose()
-    pdf_to_evolve = LhapdfLike(pdf_grid, exportgrid["q20"], x_grid)
-    # evolve pdf
-    evolved_pdf = apply.apply_pdf(eko, pdf_to_evolve)
-    # generate block to dump
-    targetgrid = eko.bases.targetgrid.tolist()
-
-    # Finally separate by nf block (and order per nf/q)
-    by_nf = defaultdict(list)
-    for q, nf in sorted(eko.evolgrid, key=lambda ep: ep[1]):
-        by_nf[nf].append(q)
-    q2block_per_nf = {nf: sorted(qs) for nf, qs in by_nf.items()}
-
-    blocks = []
-    for nf, q2grid in q2block_per_nf.items():
-
-        def pdf_xq2(pid, x, Q2):
-            x_idx = targetgrid.index(x)
-            return x * evolved_pdf[(Q2, nf)]["pdfs"][pid][x_idx]
-
-        block = genpdf.generate_block(
-            pdf_xq2,
-            xgrid=targetgrid,
-            sorted_q2grid=q2grid,
-            pids=basis_rotation.flavor_basis_pids,
-        )
-        blocks.append(block)
-
-    return blocks
+    # Run postfit emulator only for bayesian fits
+    if "bayes_metrics.csv" in os.listdir(FIT_PATH):
+        log.info("Running postfit emulator")
+        _postfit_emulator()
+    else:
+        log.info("Skipping postfit emulator")
