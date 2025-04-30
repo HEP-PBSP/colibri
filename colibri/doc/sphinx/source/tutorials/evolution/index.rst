@@ -12,25 +12,6 @@ A colibri fit folder is the folder resulting from a colibri-model fit. It is ess
 of relevant information for the fit.
 Currently, we distinguish between two types of fit folders: Bayesian fit folders and Monte Carlo replica fit folders.
 
-Both folders contain the following files:
-
-.. code-block:: text
-
-   colibri_fit/
-   ├── replicas/         # Folder containing replica sub‐folders (one per replica) with exportgrid files.
-   ├── pdf_model.pkl     # pickled PDF model used for the fit
-   ├── input/            # directory of input data and runcard(s)
-   ├── filter.yml        # YAML file: copy of the input runcard
-   └── md5               # checksum file to verify integrity of the fit folder
-
-The ``replicas`` folder contains the subfolders of the replicas that were used in the fit. 
-Each of these folders contains an ``.exportgrid`` file, which can be interpreted as a sample from the posterior distribution 
-of the PDF model.
-The ``pdf_model.pkl`` file contains the pickled PDF model used for the fit. This file can be used for several purposes,
-an example is that of using it to resample from the posterior distribution of the PDF model when a Bayesian fit is performed
-(See also `colibri.scripts.ns_resampler`).
-The other files are the input data and the filter file, which is a copy of the input runcard used for the fit.
-The ``md5`` file is a checksum file that can be used to verify the integrity of the fit folder.
 
 Bayesian fit folders
 ^^^^^^^^^^^^^^^^^^^^
