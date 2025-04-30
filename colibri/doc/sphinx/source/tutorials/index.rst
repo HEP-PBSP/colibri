@@ -9,3 +9,5 @@ This section contains tutorials to exemplify how to perform a PDF fit using a gi
    :maxdepth: 1
 
    les-houches/index
+
+   evolution/index
