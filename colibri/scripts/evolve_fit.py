@@ -8,6 +8,7 @@ import logging
 import os
 import pathlib
 import shutil
+import sys
 from glob import glob
 
 import evolven3fit
@@ -30,21 +31,6 @@ log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
 
 
-parser = argparse.ArgumentParser(
-    description="A wrapper around n3fit/scripts/evolven3fit.py.\n"
-    "Usage for evolution: `evolve_fit evolve <fit_name>`\n"
-    "For more details, run `evolven3fit --help`.",
-    formatter_class=argparse.RawTextHelpFormatter,
-)
-
-parser.add_argument("action", help="The action to run, e.g. evolve")
-parser.add_argument("name_fit", help="The name of the fit directory")
-args = parser.parse_args()
-
-FIT_DIR = args.name_fit
-FIT_PATH = pathlib.Path(FIT_DIR).resolve()
-
-
 def my_custom_get_theoryID_from_runcard(usr_path):
     """
     Does the same as `evolven3fit.utils.get_theoryID_from_runcard`
@@ -58,7 +44,7 @@ def my_custom_get_theoryID_from_runcard(usr_path):
 evolven3fit.utils.get_theoryID_from_runcard = my_custom_get_theoryID_from_runcard
 
 
-def _postfit_emulator():
+def _postfit_emulator(fit_path):
     """
     Emulates the postfit script from validphys/scripts/postfit.py
     by creating the symlinks, central replica and LHAPDF set
@@ -68,12 +54,12 @@ def _postfit_emulator():
     equivalent to the postfit script but without the selection
     of replicas.
     """
-    fitname = FIT_PATH.name
+    fitname = fit_path.name
 
     # Paths
-    postfit_path = FIT_PATH / "postfit"
+    postfit_path = fit_path / "postfit"
     LHAPDF_path = postfit_path / fitname  # Path for LHAPDF grid output
-    replicas_path = FIT_PATH / "replicas"  # Path for replicas output
+    replicas_path = fit_path / "replicas"  # Path for replicas output
 
     # Generate postfit and LHAPDF directory
     if postfit_path.is_dir():
@@ -123,7 +109,7 @@ def _postfit_emulator():
     log.info("Postfit complete")
     log.info(f"Your LHAPDF set can be found in: {LHAPDF_path}")
     log.info("Please upload your results with:")
-    log.info(f"\tvp-upload {FIT_PATH}\n")
+    log.info(f"\tvp-upload {fit_path}\n")
     log.info("and install with:")
     log.info(f"\tvp-get fit {fitname}\n")
     log.info(
@@ -136,6 +122,36 @@ def main():
     Before running `evolven3fit` from n3fit/scripts/evolven3fit.py,
     creates a symlink called `nnfit` to replicas folder.
     """
+
+    parser = argparse.ArgumentParser(
+        description="A wrapper around n3fit/scripts/evolven3fit.py.\n"
+        "Usage for evolution: `evolve_fit [evolve] <fit_name>`\n"
+        "For more details, run `evolven3fit --help`.",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+
+    # Make `action` optional (defaults to “evolve”)
+    parser.add_argument(
+        "action",
+        nargs="?",
+        default="evolve",
+        choices=["evolve"],
+        help="The action to run (defaults to 'evolve').",
+    )
+    parser.add_argument("name_fit", help="The name of the fit directory")
+    args = parser.parse_args()
+
+    FIT_DIR = args.name_fit
+    FIT_PATH = pathlib.Path(FIT_DIR).resolve()
+
+    # Check if the action is 'evolve'
+    if args.action != "evolve":
+        raise ValueError("Invalid action. Only 'evolve' is supported.")
+
+    # Check if the fit name is provided
+    if not args.name_fit:
+        raise ValueError("Please provide a fit name.")
+
     replicas_path = os.path.join(FIT_DIR, "replicas")
     symlink_path = os.path.join(FIT_DIR, "nnfit")
 
@@ -147,12 +163,14 @@ def main():
     except FileExistsError:
         log.warning(f"Warning: symlink {symlink_path} already exists")
 
-    # Run evolven3fit
+    # Run evolven3fit: invoke the underlying CLI with both args
+    sys.argv = ["evolven3fit", args.action, args.name_fit]
     evolven3fit_main()
+    # evolven3fit_main()
 
     # Run postfit emulator only for bayesian fits
     if "bayes_metrics.csv" in os.listdir(FIT_PATH):
         log.info("Running postfit emulator")
-        _postfit_emulator()
+        _postfit_emulator(FIT_PATH)
     else:
         log.info("Skipping postfit emulator")
