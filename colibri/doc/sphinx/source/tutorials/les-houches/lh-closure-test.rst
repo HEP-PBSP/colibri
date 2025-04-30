@@ -24,7 +24,7 @@ Then run:
     
     pip install -e .
 
-This will enable an exexutable called ``les_houches_exe``. 
+This will enable an executable called ``les_houches_exe``. 
 
 Step 2: runcard
 ---------------
