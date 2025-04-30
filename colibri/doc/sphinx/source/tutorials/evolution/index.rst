@@ -106,7 +106,8 @@ The script also has a ``--help`` option that will show you all the options avail
 For more information on the evolution see also the helper from the ``evolven3fit`` script.
 
 Postfit emulation
------------------
+^^^^^^^^^^^^^^^^^
+
 For Bayesian fits we don't do any postfit selection on the posterior, however, for backwards compatibility with the 
 `validphys` module we still run a postfit emulation which takes care of creating the central replica and a `postfit` 
 folder containing the evolved replicas as well as the corresponding LHAPDF set.
@@ -135,10 +136,3 @@ lhapdf environment folder.
 
 in order to be able to use ``validphys`` reports for 
 fits we   
-
-Final Fit folder structure
---------------------
-After the  the fit a 
-   
-
-
