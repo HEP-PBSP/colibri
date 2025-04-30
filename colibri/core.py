@@ -45,9 +45,7 @@ class IntegrabilitySettings:
     -------
     integrability_settings:
         integrability: True
-        integrability_specs:
-            evolution_flavours: [V, V3, V8, T3, T8]
-            lambda_integrability: 1000
+        integrability_specs: {'evolution_flavours': [V, V3, V8, T3, T8], 'lambda_integrability': 1000}
     """
 
     integrability: bool
