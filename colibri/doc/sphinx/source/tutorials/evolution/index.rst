@@ -131,8 +131,9 @@ After which the fit can be installed and made available in the environment with 
    vp-get fit <name_fit>
 
 If the user does not have the right permissions it is recommended to simply symlink the lhapdf set to the 
-lhapdf environment folder.
+lhapdf environment folder or to symlink the fit folder to the `NNPDF/results` folder of the environment.
 
+.. note::
 
-in order to be able to use ``validphys`` reports for 
-fits we   
+    The final folder after the evolution will also contain a symlink `nnfit -> replicas` needed for `validphys` and 
+    `evolven3fit` as well as a `postfit` folder.
