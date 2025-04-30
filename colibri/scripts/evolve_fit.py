@@ -166,7 +166,6 @@ def main():
     # Run evolven3fit: invoke the underlying CLI with both args
     sys.argv = ["evolven3fit", args.action, args.name_fit]
     evolven3fit_main()
-    # evolven3fit_main()
 
     # Run postfit emulator only for bayesian fits
     if "bayes_metrics.csv" in os.listdir(FIT_PATH):
