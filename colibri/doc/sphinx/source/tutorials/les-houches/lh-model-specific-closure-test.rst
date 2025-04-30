@@ -4,33 +4,14 @@
 Model-Specific Closure Test 
 ===========================
 
-Step 1: enable the executable
------------------------------
-
-The first step is to enable the executable for this tutorial. 
-
-In your ``colibri-dev`` conda environment, go to the ``les_houches_example`` directory, found in:
-
-.. code-block:: bash
-    
-    cd colibri/examples/les_houches_example 
-
-Then run:
-
-.. code-block:: bash
-    
-    pip install -e .
-
-This will enable an exexutable called ``les_houches_exe``. 
-
 
 Step 2: runcard
 ---------------
 
-In the ``colibri/les_houches_example/model_specific_closure_test/runcard``
+In the ``colibri/examples/les_houches_example/model_specific_closure_test/runcard``
 directory you will find the following runcard:
 
-.. literalinclude:: ../../../../../examples/les_houches_example/model_specific_closure_test/runcard/les_houches_fit.yaml
+.. literalinclude:: ../../../../../examples/les_houches_example/runcards/lh_fit_model_specific_closure_test.yaml
     :language: python
 
 

@@ -22,8 +22,8 @@ like in this basis.
 After having established what model we will be fitting, we will show how a model
 is built in Colibri, by :ref:`implementing the Les Houches model <lh_model>`.
 
-Finally, we will use the model to perform a model-specific closure test, and
-a Closure Test with a PDF set. TODO: add references here to the relevant sections.
+Finally, we will use the model to perform a :ref:`model-specific closure test <lh-model-specific-closure-test>`, 
+and a :ref:`closure test with a PDF set <lh-closure-test>`. 
 
 
 
@@ -33,4 +33,5 @@ a Closure Test with a PDF set. TODO: add references here to the relevant section
    
    ./lh-theory
    ./lh-model
+   ./lh-closure-test
    ./lh-model-specific-closure-test
