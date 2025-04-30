@@ -103,13 +103,34 @@ It can be executed from the command line as follows:
 
 where ``<name_fit>`` is the name of the fit you want to evolve.
 The script also has a ``--help`` option that will show you all the options available.
-For more information on the evolution see also the helper of the ``evolven3fit`` script.
+For more information on the evolution see also the helper from the ``evolven3fit`` script.
 
 Postfit emulation
 -----------------
 For Bayesian fits we don't do any postfit selection on the posterior, however, for backwards compatibility with the 
-`validphys` module we still run a postfit emulation which creates a `postfit` folder containing the evolved replicas
-and the corresponding LHAPDF set. This way, after performing the evolution, we can still 
+`validphys` module we still run a postfit emulation which takes care of creating the central replica and a `postfit` 
+folder containing the evolved replicas as well as the corresponding LHAPDF set.
+
+.. note::
+
+    The postfit emulation is only run for bayesian fits and the script will look into the fit folder to check
+    whether a `bayes_metrics.csv` file is present. If it is not, the script will not run the postfit emulation.
+
+After running the evolution script, it is possible (if the user has the right permissions) to simply upload the fit
+to the `validphys` server using the validphys script
+
+.. code-block:: bash
+
+   vp-upload <name_fit>
+
+After which the fit can be installed and made available in the environment with the command
+
+.. code-block:: bash
+
+   vp-get fit <name_fit>
+
+If the user does not have the right permissions it is recommended to simply symlink the lhapdf set to the 
+lhapdf environment folder.
 
 
 in order to be able to use ``validphys`` reports for 
