@@ -465,8 +465,8 @@ class colibriConfig(Config):
         """
         Produces the covariance matrix used in the fit.
         This covariance matrix is used in:
-            - commondata_utils.central_covmat_index
-            - loss functions in mc_loss_functions.py
+        - commondata_utils.central_covmat_index
+        - loss functions in mc_loss_functions.py
         """
         if use_fit_t0:
             return colibri_covmats.dataset_inputs_t0_covmat_from_systematics

@@ -1,0 +1,18 @@
+.wy-nav-content {
+   max-width: 80%;
+}
+
+.wy-side-nav-search, .wy-nav-top {
+    background: #77C3EC;
+}
+
+.math {
+    text-align: left;
+}
+.eqno {
+    float: right;
+}
+
+.section-title {
+    margin-top: 2em;
+}
