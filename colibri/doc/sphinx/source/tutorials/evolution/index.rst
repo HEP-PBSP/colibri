@@ -40,15 +40,32 @@ Bayesian fit folders
    By “Bayesian fit folder” we mean a folder containing the results of a fit
    performed with a Bayesian sampling method.
 
-On top of the files mentioned above, a Bayesian fit folder should also contains the following files:
+Any Bayesian fit folder should contain the following files:
 
 .. code-block:: text
 
-   bayesian_colibri_fit/
-   ├── bayes_metrics.csv       
+   colibri_fit/
+   ├── replicas/         # Folder containing replica sub‐folders (one per replica) with exportgrid files.
+   ├── pdf_model.pkl     # pickled PDF model used for the fit
+   ├── input/            # directory of input data and runcard(s)
+   ├── filter.yml        # YAML file: copy of the input runcard
+   └── md5               # checksum file to verify integrity of the fit folder
+   ├── bayes_metrics.csv  
    ├── full_posterior_sample.csv
 
-Moreover, depending on the type of Bayesian fit, other files may be present, for example a fit done using the 
+
+The ``replicas`` folder contains the subfolders of the replicas that were used in the fit. 
+Each of these folders contains an ``.exportgrid`` file, which can be interpreted as a sample from the posterior distribution 
+of the PDF model.
+The ``pdf_model.pkl`` file contains the pickled PDF model used for the fit. This file can be used for several purposes,
+an example is that of using it to resample from the posterior distribution of the PDF model when a Bayesian fit is performed
+(See also `colibri.scripts.ns_resampler`).
+The other files are the input data and the filter file, which is a copy of the input runcard used for the fit.
+The ``md5`` file is a checksum file that can be used to verify the integrity of the fit folder.
+The ``bayes_metrics.csv`` file contains the metrics of the fit, such as the log-likelihood and the evidence.
+The ``full_posterior_sample.csv`` file contains the full posterior sample of the fit (whose size is specified in the runcard). 
+
+Depending on the type of Bayesian fit, other files may be present, for example a fit done using the 
 ultranest will contain the following extra files:
 
 .. code-block:: text
@@ -73,6 +90,21 @@ MC replica fit folders
     By “MC replica fit folder” we mean a folder containing the results of a fit
     performed with a Monte Carlo replica method (See :cite:`Costantini:2024wby` for more details on this method.).
 
+A MC replica fit folder is a folder should have the following structure:
+
+.. code-block:: text
+
+   mc_replica_fit/
+   ├── fit_replicas/         # Folder containing replica sub‐folders (one per replica) with exportgrid files.
+   ├── pdf_model.pkl     # pickled PDF model used for the fit
+   ├── input/            # directory of input data and runcard(s)
+   ├── filter.yml        # YAML file: copy of the input runcard
+   └── md5               # checksum file to verify integrity of the fit folder
+   
+where the ``fit_replicas`` folder contains the subfolders of the replicas that were used in the fit.
+This subfolder, in particular, is used by the `colibri.scripts.mc_postfit` script to 
+perform a postfit selection of the replicas. The postfit script also takes care of creating 
+the ``replicas`` folder, which is the one needed for the evolution of the fit.
 
 
 Evolution script
