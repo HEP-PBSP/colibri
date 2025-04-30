@@ -71,7 +71,7 @@ MC replica fit folders
     By “MC replica fit folder” we mean a folder containing the results of a fit
     performed with a Monte Carlo replica method (See :cite:`Costantini:2024wby` for more details on this method.).
 
-A MC replica fit folder is a folder should have the following structure:
+A MC replica fit folder should have the following structure:
 
 .. code-block:: text
 
@@ -107,10 +107,15 @@ For more information on the evolution see also the helper of the ``evolven3fit``
 
 Postfit emulation
 -----------------
-Bayesian fits don't need a Postfit operation, however, in order to be able to use ``validphys`` reports for 
+For Bayesian fits we don't do any postfit selection on the posterior, however, for backwards compatibility with the 
+`validphys` module we still run a postfit emulation which creates a `postfit` folder containing the evolved replicas
+and the corresponding LHAPDF set. This way, after performing the evolution, we can still 
+
+
+in order to be able to use ``validphys`` reports for 
 fits we   
 
-Fit folder structure
+Final Fit folder structure
 --------------------
 After the  the fit a 
    
