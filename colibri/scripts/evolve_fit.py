@@ -53,6 +53,11 @@ def _postfit_emulator(fit_path):
     It does not perform any selection of replicas, so it is
     equivalent to the postfit script but without the selection
     of replicas.
+
+    Parameters
+    ----------
+    fit_path : str
+        Path to the fit directory.
     """
     fitname = fit_path.name
 
