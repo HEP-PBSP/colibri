@@ -38,7 +38,7 @@ You can evolve the fit using the command, again from the ``model_specific_closur
 
 .. code-block:: bash
     
-    evolve_fit evolve les_houches_fit
+    evolve_fit les_houches_fit
 
 3.2 Generating a ``validphys`` report
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
