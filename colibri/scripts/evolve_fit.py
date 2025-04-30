@@ -144,10 +144,6 @@ def main():
     FIT_DIR = args.name_fit
     FIT_PATH = pathlib.Path(FIT_DIR).resolve()
 
-    # Check if the action is 'evolve'
-    if args.action != "evolve":
-        raise ValueError("Invalid action. Only 'evolve' is supported.")
-
     # Check if the fit name is provided
     if not args.name_fit:
         raise ValueError("Please provide a fit name.")
