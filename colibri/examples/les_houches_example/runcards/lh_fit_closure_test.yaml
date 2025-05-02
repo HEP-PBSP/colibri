@@ -71,16 +71,16 @@ prior_settings:
 # Nested Sampling settings
 ns_settings:
   sampler_plot: true
-  n_posterior_samples: 100
+  n_posterior_samples: 100      # Number of posterior samples generated.
   ReactiveNS_settings:
     vectorized: False
-    ndraw_max: 500
+    ndraw_max: 500              # Maximum number of points to simultaneously propose.
   Run_settings:
-    min_num_live_points: 200
-    min_ess: 50
-    frac_remain: 0.3
+    min_num_live_points: 200    # Minimum number of live points throughout the run.
+    min_ess: 50                 # Target number of effective posterior samples.
+    frac_remain: 0.3            # Integrate until this fraction of the integral is left in the remainder. 
   SliceSampler_settings:
-    nsteps: 106
+    nsteps: 106                 # number of accepted steps until the sample is considered independent.
 
 
 actions_:
