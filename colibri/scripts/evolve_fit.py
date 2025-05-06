@@ -7,6 +7,7 @@ import argparse
 import logging
 import os
 import pathlib
+import re
 import shutil
 import sys
 from glob import glob
@@ -44,6 +45,16 @@ def my_custom_get_theoryID_from_runcard(usr_path):
 evolven3fit.utils.get_theoryID_from_runcard = my_custom_get_theoryID_from_runcard
 
 
+def idx(path):
+    """
+    Get the index of the replica from the path.
+    """
+    # get the final folder name, e.g. "replica_12"
+    name = os.path.basename(os.path.normpath(path))
+    # extract the number
+    return int(re.search(r"replica_(\d+)", name).group(1))
+
+
 def _postfit_emulator(fit_path):
     """
     Emulates the postfit script from validphys/scripts/postfit.py
@@ -73,8 +84,9 @@ def _postfit_emulator(fit_path):
     os.makedirs(LHAPDF_path, exist_ok=True)
 
     # Perform dummy postfit selection
-    all_replicas = sorted(glob(f"{replicas_path}/replica_*/"))
-    selected_paths = all_replicas
+    paths = glob(f"{replicas_path}/replica_*/")
+    sorted_paths = sorted(paths, key=idx)
+    selected_paths = sorted_paths
 
     # Copy info file
     info_source_path = replicas_path.joinpath(f"{fitname}.info")
