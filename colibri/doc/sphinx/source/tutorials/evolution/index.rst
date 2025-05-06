@@ -1,13 +1,13 @@
 .. _evolution:
 
-======================
+===================
 Colibri Fit folders
-======================
+===================
 
 In this tutorial we will discuss what the general structure of a colibri fit folder is and how it can be evolved.
 
 Colibri fit folders
---------------------
+-------------------
 A colibri fit folder is the folder resulting from a colibri-model fit. It is essentially a folder containing a set 
 of relevant information for the fit.
 Currently, we distinguish between two types of fit folders: Bayesian fit folders and Monte Carlo replica fit folders.
@@ -89,7 +89,7 @@ the ``replicas`` folder, which is the one needed for the evolution of the fit.
 
 
 Evolution script
------------------
+----------------
 
 The evolution script of colibri is a wrapper around the `evolven3fit` script
 (See the :mod:`colibri.scripts.evolve_fit` module’s and :func:`colibri.scripts.evolve_fit.main` function.)
