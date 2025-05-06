@@ -1,7 +1,7 @@
-.. _les_houches:
+.. _evolution:
 
 ======================
-Evolving a Colibri Fit
+Colibri Fit folders
 ======================
 
 In this tutorial we will discuss what the general structure of a colibri fit folder is and how it can be evolved.
