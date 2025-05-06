@@ -237,7 +237,9 @@ def analytic_fit(
     gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
     log_prior = jnp.log(1 / prior_width).sum()
     # Compute maximum log likelihood
-    max_logl = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
+    min_chi2 = (Y - X @ sol_mean) @ Sigma @ (Y - X @ sol_mean)
+    # Compute the log likelihood
+    max_logl = -0.5 * min_chi2
 
     logZ_laplace = gaussian_integral + max_logl + log_prior
 
