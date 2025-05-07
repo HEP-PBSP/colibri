@@ -200,3 +200,11 @@ Utils
    :undoc-members:
    :show-inheritance:
    :noindex:
+
+Scripts
+-------
+.. automodule:: colibri.scripts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
