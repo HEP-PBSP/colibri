@@ -374,7 +374,7 @@ MOCK_PDF_MODEL.param_names = ["param1", "param2"]
 MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: np.ones((14, len(xgrid)))
 MOCK_PDF_MODEL.pred_and_pdf_func = (
     lambda xgrid, forward_map: lambda params, fast_kernel_arrays: (
-        forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params)),
+        forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params), fast_kernel_arrays),
         np.ones((14, len(xgrid))),
     )
 )
@@ -382,7 +382,7 @@ MOCK_PDF_MODEL.pred_and_pdf_func = (
 TEST_XGRID = jnp.array([0.1, 0.2])
 TEST_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
-TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0]
+TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0][0]
 
 
 """
