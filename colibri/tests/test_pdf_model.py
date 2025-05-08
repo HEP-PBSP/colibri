@@ -46,6 +46,6 @@ def test_pred_and_pdf_func():
     predictions, pdf = pred_and_pdf(params, TEST_FK_ARRAYS)
     expected_pdf = sum([param * TEST_XGRID for param in params])
 
-    expected_predictions = expected_pdf * TEST_FK_ARRAYS[0]
+    expected_predictions = expected_pdf * TEST_FK_ARRAYS[0][0]
     assert_array_equal(pdf, expected_pdf)
     assert_array_equal(predictions, expected_predictions)

@@ -327,7 +327,7 @@ def test_likelihood_float_type(
     tmp_path,
 ):
 
-    _pred_data = lambda x: jnp.ones(
+    _pred_data = lambda x, fks: jnp.ones(
         len(MOCK_CENTRAL_INV_COVMAT_INDEX.central_values)
     )  # Mock _pred_data
     FIT_XGRID = jnp.linspace(0, 1, 10)  # Mock FIT_XGRID

@@ -23,6 +23,7 @@ colibri_providers = [
     "colibri.plots_and_tables.plotting",
     "colibri.provider_aliases",
     "colibri.mc_utils",
+    "colibri.likelihood",
     "colibri.ultranest_fit",
     "colibri.monte_carlo_fit",
     "colibri.analytic_fit",
