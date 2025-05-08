@@ -388,26 +388,26 @@ TEST_XGRID = jnp.array([0.1, 0.2])
 TEST_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0][0]
+"""
+Mock forward map function for testing purposes.
+"""
 
 
-"""
-Mock instance of Central Covmat Index object
-"""
 MOCK_CENTRAL_COVMAT_INDEX = Mock()
 MOCK_CENTRAL_COVMAT_INDEX.central_values = jnp.ones(2)
 MOCK_CENTRAL_COVMAT_INDEX.inv_covmat = jnp.eye(2)
 MOCK_CENTRAL_COVMAT_INDEX.central_values_idx = jnp.arange(2)
+"""
+Mock instance of Central Covmat Index object.
+"""
 
-"""
-Mock instance of Central Inverse covmat index object
-"""
+
 MOCK_CENTRAL_INV_COVMAT_INDEX = Mock()
 MOCK_CENTRAL_INV_COVMAT_INDEX.central_values = jnp.ones(2)
 MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(2)
 MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(2)
-
 """
-Mock Log likelihood class
+Mock instance of Central Inverse covmat index object
 """
 
 
