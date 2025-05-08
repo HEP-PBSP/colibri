@@ -11,16 +11,15 @@ from colibri.pdf_model import PDFModel
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
+TEST_THEORYID = 40000000
 """
 Intrinsic charm theory used in the tests.
 """
-TEST_THEORYID = 40000000
 
+TEST_USECUTS = "internal"
 """
 Default cuts to be used when testing.
 """
-TEST_USECUTS = "internal"
-
 
 TEST_DATASET = {
     "dataset_input": {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"},
@@ -28,10 +27,6 @@ TEST_DATASET = {
     "use_cuts": TEST_USECUTS,
 }
 
-"""
-This should contain the exact same info as TEST_DATASET, but with the use of
-the "dataset_inputs" key instead of "dataset_input"
-"""
 TEST_DATASETS = {
     "dataset_inputs": [
         {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}
@@ -39,6 +34,10 @@ TEST_DATASETS = {
     "theoryid": TEST_THEORYID,
     "use_cuts": TEST_USECUTS,
 }
+"""
+This should contain the exact same info as TEST_DATASET, but with the use of
+the "dataset_inputs" key instead of "dataset_input"
+"""
 
 TEST_DATASET_HAD = {
     "dataset_input": {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
@@ -46,19 +45,16 @@ TEST_DATASET_HAD = {
     "use_cuts": TEST_USECUTS,
 }
 
-"""
-This should contain the exact same info as TEST_DATASET_HAD, but with the use of
-the "dataset_inputs" key instead of "dataset_input"
-"""
 TEST_DATASETS_HAD = {
     "dataset_inputs": [{"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"}],
     "theoryid": TEST_THEORYID,
     "use_cuts": TEST_USECUTS,
 }
+"""
+This should contain the exact same info as TEST_DATASET_HAD, but with the use of
+the "dataset_inputs" key instead of "dataset_input"
+"""
 
-"""
-Mixed DIS and HAD dataset for testing purposes.
-"""
 TEST_DATASETS_DIS_HAD = {
     "dataset_inputs": [
         {"dataset": "HERA_NC_318GEV_EP-SIGMARED", "variant": "legacy"},
@@ -67,10 +63,10 @@ TEST_DATASETS_DIS_HAD = {
     "theoryid": TEST_THEORYID,
     "use_cuts": TEST_USECUTS,
 }
+"""
+Mixed DIS and HAD dataset for testing purposes.
+"""
 
-"""
-Positivity dataset for testing purposes.
-"""
 TEST_POS_DATASET = {
     "positivity": {
         "posdatasets": [
@@ -81,6 +77,9 @@ TEST_POS_DATASET = {
         ]
     }
 }
+"""
+Positivity dataset for testing purposes.
+"""
 
 TEST_SINGLE_POS_DATASET = {
     "posdataset": {
@@ -335,13 +334,13 @@ TEST_FULL_POS_DATASET = {
 }
 
 
-"""
-Toy PDF model to be used to test the pdf_model module.
-"""
 N_PARAMS = 10
 
 
 class TestPDFModel(PDFModel):
+    """
+    Toy PDF model to be used to test the pdf_model module.
+    """
 
     def __init__(self, n_parameters):
         self.n_parameters = n_parameters
@@ -365,20 +364,25 @@ class TestPDFModel(PDFModel):
         return wmin_param
 
 
-"""
-Mock PDF model to be used to test functions that require a PDFModel instance.
-"""
 MOCK_PDF_MODEL = Mock()
-MOCK_PDF_MODEL.param_names = ["param1", "param2"]
+MOCK_PDF_MODEL.param_names = ["param1"]
 MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: params[0] * np.ones(
     (14, len(xgrid))
 )
+"""
+Mock PDF model with 1 parameter and grid_values_func rescaling by a np.ones PDF grid by the value of the parameter.
+"""
+
 MOCK_PDF_MODEL.pred_and_pdf_func = (
     lambda xgrid, forward_map: lambda params, fast_kernel_arrays: (
         forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params), fast_kernel_arrays),
-        np.ones((14, len(xgrid))),
+        MOCK_PDF_MODEL.grid_values_func(xgrid)(params),
     )
 )
+"""
+Mock prediction function of PDF model.
+"""
+
 
 TEST_XGRID = jnp.array([0.1, 0.2])
 TEST_FK_ARRAYS = (jnp.array([1, 2]),)
