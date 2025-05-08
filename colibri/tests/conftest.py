@@ -267,12 +267,12 @@ class TestPDFModel(PDFModel):
 
 
 MOCK_PDF_MODEL = Mock()
-MOCK_PDF_MODEL.param_names = ["param1"]
+MOCK_PDF_MODEL.param_names = ["param1", "param2"]
 MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: params[0] * np.ones(
     (14, len(xgrid))
 )
 """
-Mock PDF model with 1 parameter and grid_values_func rescaling by a np.ones PDF grid by the value of the parameter.
+Mock PDF model with 2 parameters and grid_values_func rescaling by a np.ones PDF grid by the value of the parameter.
 """
 
 MOCK_PDF_MODEL.pred_and_pdf_func = (
