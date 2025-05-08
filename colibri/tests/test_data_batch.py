@@ -1,4 +1,6 @@
 """
+colibri.tests.test_data_batch
+
 Module for testing the data_batch module.
 """
 

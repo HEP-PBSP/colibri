@@ -1,6 +1,7 @@
 """
-Module to test the analytic fit functionality of the colibri package.
+colibri.tests.test_analytic_fit
 
+Module to test the analytic fit functionality of the colibri package.
 """
 
 import logging

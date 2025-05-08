@@ -1,3 +1,7 @@
+"""
+Module for testing the closure test functions in the colibri package.
+"""
+
 from unittest.mock import MagicMock, patch
 
 import jax.numpy as jnp

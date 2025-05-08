@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_monte_carlo_fit
+
+Tests for the monte_carlo_fit module.
+"""
+
 import os
 from unittest.mock import Mock, patch
 

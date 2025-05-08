@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_loss_functions
+
+Tests for the loss functions in the colibri package.
+"""
+
 from colibri.api import API as colibriAPI
 from colibri.tests.conftest import (
     REPLICA_INDEX,

@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_mc_loss_functions
+
+Tests for the Monte Carlo loss functions in the colibri package.
+"""
+
 import jax.numpy as jnp
 
 from colibri.mc_loss_functions import (

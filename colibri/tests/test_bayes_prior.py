@@ -1,6 +1,7 @@
 """
-Module to test the bayesian_prior function and its associated classes.
+colibri.tests.test_bayes_prior
 
+Module to test the bayesian_prior function and its associated classes.
 """
 
 from unittest.mock import patch

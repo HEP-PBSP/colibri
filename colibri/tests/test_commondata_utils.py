@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_commondata_utils
+
+Module for testing commondata_utils functions in the colibri package.
+"""
+
 import pathlib
 
 import jax.numpy as jnp

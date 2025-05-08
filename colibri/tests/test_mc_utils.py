@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_mc_utils
+
+Tests for the Monte Carlo utilities in the colibri package.
+"""
+
 import pathlib
 from unittest.mock import Mock, mock_open, patch
 

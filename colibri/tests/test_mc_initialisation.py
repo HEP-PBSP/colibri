@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_mc_initialisation
+
+Tests for the Monte Carlo initialisation functions in the colibri package.
+"""
+
 import logging
 import unittest
 from unittest.mock import MagicMock, patch

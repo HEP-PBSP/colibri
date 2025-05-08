@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_covmats
+
+Module to test the colibri.covmats module.
+"""
+
 import pathlib
 
 import jax.numpy as jnp
