@@ -7,6 +7,7 @@ from unittest.mock import Mock
 import jax
 import jax.numpy as jnp
 import numpy as np
+
 from colibri.pdf_model import PDFModel
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
@@ -239,9 +240,27 @@ TEST_FULL_POS_DATASET = {
 }
 
 
+TEST_N_XGRID = 50
+"""
+Default number of xgrid points to be used in the tests.
+"""
+
+TEST_N_FL = 14
+"""
+Default number of flavours to be used in the tests.
+"""
+
+TEST_PDF_GRID = np.ones((TEST_N_FL, TEST_N_XGRID))
+"""
+Test PDF grid used for testing purposes.
+"""
+
+
 class TestPDFModel(PDFModel):
     """
     Toy PDF model to be used to test the pdf_model module.
+    This is needed to test the properties and methods of the PDFModel class.
+    For other purposes, we can just use the Mock class.
     """
 
     def __init__(self, n_parameters):
@@ -259,20 +278,20 @@ class TestPDFModel(PDFModel):
 
         def wmin_param(params):
             """
-            Returns random array of shape (14,len(params))
+            Returns random array of shape (TEST_N_FL,len(params)).
             """
-            return sum([param * xgrid for param in params])
+            return sum([param * TEST_PDF_GRID for param in params])
 
         return wmin_param
 
 
 MOCK_PDF_MODEL = Mock()
 MOCK_PDF_MODEL.param_names = ["param1", "param2"]
-MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: params[0] * np.ones(
-    (14, len(xgrid))
+MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: np.sum(
+    np.array([param * TEST_PDF_GRID for param in params]), axis=0
 )
 """
-Mock PDF model with 2 parameters and grid_values_func rescaling by a np.ones PDF grid by the value of the parameter.
+Mock PDF model with 2 parameters and grid_values_func simple mult add operation on np.ones grid.
 """
 
 MOCK_PDF_MODEL.pred_and_pdf_func = (
@@ -286,12 +305,25 @@ Mock prediction function of PDF model.
 """
 
 
-TEST_XGRID = jnp.logspace(-7, 0, 50)  # jnp.array([0.1, 0.2])
-TEST_FK_ARRAYS = (jnp.array([1, 2]),)
-TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
-TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0][0]
+TEST_XGRID = jnp.logspace(-7, 0, TEST_N_XGRID)
 """
-Mock forward map function for testing purposes.
+X-grid used for testing purposes.
+"""
+
+np.random.seed(1)
+TEST_FK_ARRAYS = (np.random.rand(2, TEST_N_FL, TEST_N_XGRID),)
+"""
+Tuple of fast kernel arrays used for testing purposes.
+This mocks a DIS fast kernel mapping the PDF grid to 2 datapoints.
+"""
+
+TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
+
+
+TEST_FORWARD_MAP = lambda pdf, fk_arrays: np.einsum("ijk,jk->i", fk_arrays, pdf)
+"""
+Mock DIS forward map function for testing purposes.
+Function expects a DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_N_XGRID) and a PDF of shape (TEST_N_FL, TEST_N_XGRID).
 """
 
 
