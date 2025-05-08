@@ -3,9 +3,10 @@ from unittest.mock import Mock, patch
 
 import jax.numpy as jnp
 import numpy as np
+from numpy.testing import assert_allclose
+
 from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_carlo_fit
 from colibri.tests.conftest import MOCK_PDF_MODEL
-from numpy.testing import assert_allclose
 
 mock_pdf_model = MOCK_PDF_MODEL
 N_PARAMS = len(MOCK_PDF_MODEL.param_names)

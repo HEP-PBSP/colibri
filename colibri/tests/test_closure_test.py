@@ -1,15 +1,16 @@
-import pytest
+from unittest.mock import MagicMock, patch
+
 import jax.numpy as jnp
-from unittest.mock import MagicMock
-from unittest.mock import patch
-from colibri.closure_test import (
-    closure_test_pdf_grid,
-    closure_test_central_pdf_grid,
-    closure_test_colibri_model_pdf,
-)
-from colibri.api import API as cAPI
+import pytest
 import validphys
 from validphys import convolution
+
+from colibri.api import API as cAPI
+from colibri.closure_test import (
+    closure_test_central_pdf_grid,
+    closure_test_colibri_model_pdf,
+    closure_test_pdf_grid,
+)
 
 
 @pytest.fixture

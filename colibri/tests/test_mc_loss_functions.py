@@ -1,8 +1,9 @@
 import jax.numpy as jnp
+
 from colibri.mc_loss_functions import (
     make_chi2_training_data,
-    make_chi2_validation_data,
     make_chi2_training_data_with_positivity,
+    make_chi2_validation_data,
     make_chi2_validation_data_with_positivity,
 )
 from colibri.mc_utils import MCPseudodata

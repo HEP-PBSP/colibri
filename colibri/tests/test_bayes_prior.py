@@ -1,13 +1,20 @@
+"""
+Module to test the bayesian_prior function and its associated classes.
+
+"""
+
+from unittest.mock import patch
+
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats
+import numpy as np
+import pandas as pd
+import pytest
 from jax import random
+
 from colibri.bayes_prior import bayesian_prior
 from colibri.core import PriorSettings
-import numpy as np
-import pytest
-from unittest.mock import patch
-import pandas as pd
 
 
 def test_uniform_prior():

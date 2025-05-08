@@ -6,14 +6,14 @@ Tests for the PDFModel class.
 
 import jax.numpy as jnp
 from numpy.testing import assert_array_equal
-from colibri.tests.conftest import (
-    TestPDFModel,
-    TEST_FORWARD_MAP_DIS,
-    TEST_FK_ARRAYS,
-    TEST_XGRID,
-    TEST_PDF_GRID,
-)
 
+from colibri.tests.conftest import (
+    TEST_FK_ARRAYS,
+    TEST_FORWARD_MAP_DIS,
+    TEST_PDF_GRID,
+    TEST_XGRID,
+    TestPDFModel,
+)
 
 model = TestPDFModel(n_parameters=2)
 

@@ -11,9 +11,10 @@ from unittest.mock import mock_open, patch
 
 import pytest
 import reportengine
+from reportengine.configparser import ConfigError
+
 from colibri.config import Environment, colibriConfig
 from colibri.core import PriorSettings
-from reportengine.configparser import ConfigError
 
 BASE_CONFIG = colibriConfig({})
 

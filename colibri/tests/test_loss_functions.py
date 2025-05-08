@@ -1,11 +1,10 @@
 from colibri.api import API as colibriAPI
-
 from colibri.tests.conftest import (
-    T0_PDFSET,
-    TRVAL_INDEX,
     REPLICA_INDEX,
+    T0_PDFSET,
     TEST_DATASETS_DIS_HAD,
     TEST_POS_DATASET,
+    TRVAL_INDEX,
 )
 
 

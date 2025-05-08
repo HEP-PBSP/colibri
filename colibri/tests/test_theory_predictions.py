@@ -4,26 +4,24 @@ colibri.tests.test_theory_predictions.py
 Test module for theory_predictions.py
 """
 
-from numpy.testing import assert_allclose
 import jax.numpy as jnp
 import jaxlib
+from numpy.testing import assert_allclose
+from validphys.fkparser import load_fktable
 
 from colibri.api import API as colibriAPI
-from colibri.theory_predictions import (
-    make_dis_prediction,
-    make_had_prediction,
-    fktable_xgrid_indices,
-)
-
 from colibri.tests.conftest import (
-    TEST_DATASET,
     CLOSURE_TEST_PDFSET,
+    TEST_DATASET,
     TEST_DATASET_HAD,
     TEST_DATASETS,
     TEST_DATASETS_HAD,
 )
-
-from validphys.fkparser import load_fktable
+from colibri.theory_predictions import (
+    fktable_xgrid_indices,
+    make_dis_prediction,
+    make_had_prediction,
+)
 
 
 # Mock FKTableData class to simulate the 'fktable' object

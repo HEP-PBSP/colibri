@@ -4,20 +4,20 @@ colibri.tests.test_export_results.py
 This module contains the tests for the export_results module of colibri.
 """
 
+import pathlib
 from unittest.mock import Mock, mock_open, patch
 
 import jax
 import numpy as np
 import pandas as pd
 import yaml
-import pathlib
 
 from colibri.export_results import (
     export_bayes_results,
+    get_pdfgrid_from_exportgrids,
+    read_exportgrid,
     write_exportgrid,
     write_replicas,
-    read_exportgrid,
-    get_pdfgrid_from_exportgrids,
 )
 
 # Mock the objects and functions used in tests

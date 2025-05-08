@@ -3,6 +3,9 @@ import pathlib
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 import pandas as pd
+from nnpdf_data.coredata import CommonData
+from numpy.testing import assert_allclose
+
 from colibri.api import API as colibriAPI
 from colibri.commondata_utils import CentralCovmatIndex, experimental_commondata_tuple
 from colibri.tests.conftest import (
@@ -11,8 +14,6 @@ from colibri.tests.conftest import (
     T0_PDFSET,
     TEST_DATASETS,
 )
-from numpy.testing import assert_allclose
-from nnpdf_data.coredata import CommonData
 
 TEST_COMMONDATA_FOLDER = pathlib.Path(__file__).with_name("test_commondata")
 

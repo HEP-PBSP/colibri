@@ -3,10 +3,11 @@ import pathlib
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+from numpy.testing import assert_allclose
+
 from colibri.api import API as colibriAPI
 from colibri.covmats import sqrt_covmat_jax
 from colibri.tests.conftest import T0_PDFSET, TEST_DATASETS
-from numpy.testing import assert_allclose
 
 TEST_COVMATS_FOLDER = pathlib.Path(__file__).with_name("test_covmats")
 

@@ -1,20 +1,20 @@
-import pandas as pd
 import pathlib
-from numpy.testing import assert_allclose
+from unittest.mock import Mock, mock_open, patch
 
-from unittest.mock import Mock, patch, mock_open
-from colibri.mc_utils import write_exportgrid_mc
-from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 import jax.numpy as jnp
-
+import pandas as pd
 from conftest import (
     CLOSURE_TEST_PDFSET,
     PSEUDODATA_SEED,
-    TRVAL_INDEX,
     REPLICA_INDEX,
     TEST_DATASETS,
+    TRVAL_INDEX,
 )
+from numpy.testing import assert_allclose
+
 from colibri.api import API as colibriAPI
+from colibri.constants import EXPORT_LABELS, LHAPDF_XGRID
+from colibri.mc_utils import write_exportgrid_mc
 
 MC_PSEUDODATA = {
     "level_1_seed": PSEUDODATA_SEED,

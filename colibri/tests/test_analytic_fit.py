@@ -13,14 +13,13 @@ import pytest
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 from colibri.core import PriorSettings
 from colibri.tests.conftest import (
-    TEST_FK_ARRAYS,
     MOCK_CENTRAL_INV_COVMAT_INDEX,
-    TEST_XGRID,
     MOCK_PDF_MODEL,
+    TEST_FK_ARRAYS,
     TEST_FORWARD_MAP_DIS,
     TEST_PDF_GRID,
+    TEST_XGRID,
 )
-
 
 analytic_settings = {
     "sampling_seed": 123,
