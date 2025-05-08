@@ -7,7 +7,6 @@ from unittest.mock import Mock
 import jax
 import jax.numpy as jnp
 import numpy as np
-
 from colibri.pdf_model import PDFModel
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
