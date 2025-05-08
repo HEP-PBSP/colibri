@@ -16,6 +16,7 @@ from colibri.tests.conftest import (
     TEST_FK_ARRAYS,
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     TEST_XGRID,
+    MOCK_PDF_MODEL,
 )
 
 
@@ -33,13 +34,13 @@ PRIOR_SETTINGS = PriorSettings(
 
 
 def test_analytic_fit_flat_direction():
-    # Create mock pdf model
-    mock_pdf_model = Mock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-        (14, len(xgrid))
-    )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
+    """
+    Tests that the analytic fit raises a ValueError when the
+    pred_and_pdf_func returns a flat direction in the parameter space.
+    """
+    # override the pred_and_pdf_func to return a flat direction
+    # in the parameter space
+    MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: (
         lambda params, fkarrs: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
     )
 
@@ -50,7 +51,7 @@ def test_analytic_fit_flat_direction():
         analytic_fit(
             MOCK_CENTRAL_INV_COVMAT_INDEX,
             _pred_data,
-            mock_pdf_model,
+            MOCK_PDF_MODEL,
             analytic_settings,
             PRIOR_SETTINGS,
             TEST_XGRID,
