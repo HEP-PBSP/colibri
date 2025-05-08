@@ -371,7 +371,9 @@ Mock PDF model to be used to test functions that require a PDFModel instance.
 """
 MOCK_PDF_MODEL = Mock()
 MOCK_PDF_MODEL.param_names = ["param1", "param2"]
-MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: np.ones((14, len(xgrid)))
+MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: params[0] * np.ones(
+    (14, len(xgrid))
+)
 MOCK_PDF_MODEL.pred_and_pdf_func = (
     lambda xgrid, forward_map: lambda params, fast_kernel_arrays: (
         forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params), fast_kernel_arrays),

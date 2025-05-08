@@ -84,6 +84,25 @@ def test_LogLikelihood_class(pos_penalty):
     assert MOCK_PDF_MODEL == ultranest_loglike.pdf_model
     assert _penalty_posdata == ultranest_loglike.penalty_posdata
 
+    # Test the __call__ method
+    params = jnp.array(
+        [
+            2.0,
+        ]
+    )
+    if pos_penalty:
+        assert ultranest_loglike(params) == jnp.array(
+            [
+                -1.0,
+            ]
+        )
+    else:
+        assert ultranest_loglike(params) == jnp.array(
+            [
+                0.0,
+            ]
+        )
+
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 @patch("colibri.ultranest_fit.jax.vmap")
