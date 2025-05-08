@@ -57,7 +57,7 @@ def test_monte_carlo_fit_runs_without_errors():
     assert result.monte_carlo_specs["alpha"] == 1e-07
     assert result.monte_carlo_specs["lambda_positivity"] == 1000
 
-    assert_allclose(result.optimized_parameters, jnp.array([0.0, 0.0]))
+    assert_allclose(result.optimized_parameters, jnp.array([0.0]))
     assert_allclose(result.training_loss, jnp.array([]))
     assert_allclose(result.validation_loss, jnp.array([]))
 
@@ -77,7 +77,7 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
     mock_monte_carlo_fit.monte_carlo_specs = {}
     mock_monte_carlo_fit.training_loss = jnp.array([0.1, 0.2, 0.3])
     mock_monte_carlo_fit.validation_loss = jnp.array([0.2, 0.3, 0.4])
-    mock_monte_carlo_fit.optimized_parameters = jnp.array([0.0, 0.0])
+    mock_monte_carlo_fit.optimized_parameters = jnp.array([0.0])
 
     # Run the run_monte_carlo_fit function
     output_path = str(tmp_path)
