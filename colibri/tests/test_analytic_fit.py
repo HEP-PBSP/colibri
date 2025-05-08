@@ -1,15 +1,23 @@
+"""
+Module to test the analytic fit functionality of the colibri package.
+
+"""
+
+import logging
+from unittest.mock import Mock, patch
+
 import jax.numpy as jnp
 import jax.random
-from unittest.mock import Mock, patch
-from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
-from colibri.tests.conftest import TEST_FK_ARRAYS
-from colibri.core import PriorSettings
-import logging
 import pytest
 
-mock_central_inv_covmat_index = Mock()
-mock_central_inv_covmat_index.central_values = jnp.ones(2)
-mock_central_inv_covmat_index.inv_covmat = jnp.eye(2)
+from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
+from colibri.core import PriorSettings
+from colibri.tests.conftest import (
+    TEST_FK_ARRAYS,
+    MOCK_CENTRAL_INV_COVMAT_INDEX,
+    TEST_XGRID,
+)
+
 
 analytic_settings = {
     "sampling_seed": 123,
@@ -22,9 +30,6 @@ PRIOR_SETTINGS = PriorSettings(
         "prior_distribution_specs": {"max_val": 1.0, "min_val": -1.0},
     }
 )
-
-# Define mock input parameters
-FIT_XGRID = jnp.logspace(-7, 0, 50)
 
 
 def test_analytic_fit_flat_direction():
@@ -43,12 +48,12 @@ def test_analytic_fit_flat_direction():
     with pytest.raises(ValueError):
         # Run the analytic fit and make sure that the Value Error is raised
         analytic_fit(
-            mock_central_inv_covmat_index,
+            MOCK_CENTRAL_INV_COVMAT_INDEX,
             _pred_data,
             mock_pdf_model,
             analytic_settings,
             PRIOR_SETTINGS,
-            FIT_XGRID,
+            TEST_XGRID,
             TEST_FK_ARRAYS,
         )
 
@@ -68,12 +73,12 @@ def test_analytic_fit(caplog):
 
     # Run the analytic fit
     result = analytic_fit(
-        mock_central_inv_covmat_index,
+        MOCK_CENTRAL_INV_COVMAT_INDEX,
         _pred_data,
         mock_pdf_model,
         analytic_settings,
         PRIOR_SETTINGS,
-        FIT_XGRID,
+        TEST_XGRID,
         TEST_FK_ARRAYS,
     )
 
@@ -90,12 +95,12 @@ def test_analytic_fit(caplog):
     # Run the analytic fit
     with caplog.at_level(logging.ERROR):  # Set the log level to ERROR
         result_2 = analytic_fit(
-            mock_central_inv_covmat_index,
+            MOCK_CENTRAL_INV_COVMAT_INDEX,
             _pred_data,
             mock_pdf_model,
             analytic_settings,
             PRIOR_SETTINGS,
-            FIT_XGRID,
+            TEST_XGRID,
             TEST_FK_ARRAYS,
         )
 
@@ -134,12 +139,12 @@ def test_analytic_fit_different_priors(caplog):
 
     # Run the analytic fit
     result = analytic_fit(
-        mock_central_inv_covmat_index,
+        MOCK_CENTRAL_INV_COVMAT_INDEX,
         _pred_data,
         mock_pdf_model,
         analytic_settings,
         PRIOR_SETTINGS1,
-        FIT_XGRID,
+        TEST_XGRID,
         TEST_FK_ARRAYS,
     )
 
@@ -160,12 +165,12 @@ def test_analytic_fit_different_priors(caplog):
 
     # Run the analytic fit with custom uniform prior
     result = analytic_fit(
-        mock_central_inv_covmat_index,
+        MOCK_CENTRAL_INV_COVMAT_INDEX,
         _pred_data,
         mock_pdf_model,
         analytic_settings,
         PRIOR_SETTINGS2,
-        FIT_XGRID,
+        TEST_XGRID,
         TEST_FK_ARRAYS,
     )
 

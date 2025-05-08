@@ -286,7 +286,7 @@ Mock prediction function of PDF model.
 """
 
 
-TEST_XGRID = jnp.array([0.1, 0.2])
+TEST_XGRID = jnp.logspace(-7, 0, 50)  # jnp.array([0.1, 0.2])
 TEST_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
 TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0][0]

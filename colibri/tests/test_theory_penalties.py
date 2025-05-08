@@ -20,7 +20,6 @@ from colibri.tests.conftest import (
     TEST_SINGLE_POS_DATASET_HAD,
     TEST_THEORYID,
     TEST_USECUTS,
-    TEST_XGRID,
 )
 from colibri.theory_penalties import (
     integrability_penalty,
@@ -83,7 +82,8 @@ def test_integrability_penalty_no_integrability():
     integrability_settings.integrability = False
 
     # Get the penalty function
-    penalty_fn = integrability_penalty(integrability_settings, TEST_XGRID)
+    integrability_xgrid = jnp.array([0.1, 0.2])
+    penalty_fn = integrability_penalty(integrability_settings, integrability_xgrid)
 
     # Check that it returns 0 for any input
     pdf_dummy = jnp.ones((14, 50))
@@ -110,7 +110,8 @@ def test_integrability_penalty_integrability():
     }
 
     # Get the penalty function
-    penalty_fn = integrability_penalty(integrability_settings, TEST_XGRID)
+    integrability_xgrid = jnp.array([0.1, 0.2])
+    penalty_fn = integrability_penalty(integrability_settings, integrability_xgrid)
 
     pdf_dummy = jnp.ones((14, 50))  # assumed to be x * pdf
     penalty = penalty_fn(pdf_dummy)
