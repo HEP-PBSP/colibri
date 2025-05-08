@@ -320,7 +320,7 @@ This mocks a DIS fast kernel mapping the PDF grid to 2 datapoints.
 TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
 
 
-TEST_FORWARD_MAP = lambda pdf, fk_arrays: np.einsum("ijk,jk->i", fk_arrays, pdf)
+TEST_FORWARD_MAP_DIS = lambda pdf, fk_arrays: np.einsum("ijk,jk->i", fk_arrays, pdf)
 """
 Mock DIS forward map function for testing purposes.
 Function expects a DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_N_XGRID) and a PDF of shape (TEST_N_FL, TEST_N_XGRID).

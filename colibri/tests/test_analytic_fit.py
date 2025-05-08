@@ -17,6 +17,8 @@ from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     TEST_XGRID,
     MOCK_PDF_MODEL,
+    TEST_FORWARD_MAP_DIS,
+    TEST_PDF_GRID,
 )
 
 
@@ -41,10 +43,10 @@ def test_analytic_fit_flat_direction():
     # override the pred_and_pdf_func to return a flat direction
     # in the parameter space
     MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fkarrs: (jnp.ones_like(params), jnp.ones((14, len(xgrid))))
+        lambda params, fkarrs: (jnp.ones_like(params), TEST_PDF_GRID)
     )
 
-    _pred_data = None
+    _pred_data = TEST_FORWARD_MAP_DIS
 
     with pytest.raises(ValueError):
         # Run the analytic fit and make sure that the Value Error is raised
@@ -60,23 +62,21 @@ def test_analytic_fit_flat_direction():
 
 
 def test_analytic_fit(caplog):
-    # Create mock pdf model
-    mock_pdf_model = Mock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-        (14, len(xgrid))
-    )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fkarrs: (params, jnp.ones((14, len(xgrid))))
+    """
+    Tests basic functionality of the analytic fit function.
+    """
+
+    MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params, fkarrs: (params, TEST_PDF_GRID)
     )
 
-    _pred_data = None
+    _pred_data = TEST_FORWARD_MAP_DIS
 
     # Run the analytic fit
     result = analytic_fit(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         _pred_data,
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         analytic_settings,
         PRIOR_SETTINGS,
         TEST_XGRID,
@@ -89,7 +89,7 @@ def test_analytic_fit(caplog):
     assert (
         result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]
     )
-    assert len(result.param_names) == len(mock_pdf_model.param_names)
+    assert len(result.param_names) == len(MOCK_PDF_MODEL.param_names)
 
     # Check that it works if min_max_prior is False
     analytic_settings["min_max_prior"] = False
@@ -98,7 +98,7 @@ def test_analytic_fit(caplog):
         result_2 = analytic_fit(
             MOCK_CENTRAL_INV_COVMAT_INDEX,
             _pred_data,
-            mock_pdf_model,
+            MOCK_PDF_MODEL,
             analytic_settings,
             PRIOR_SETTINGS,
             TEST_XGRID,
@@ -114,7 +114,7 @@ def test_analytic_fit(caplog):
         result_2.resampled_posterior.shape[0]
         == analytic_settings["n_posterior_samples"]
     )
-    assert len(result_2.param_names) == len(mock_pdf_model.param_names)
+    assert len(result_2.param_names) == len(MOCK_PDF_MODEL.param_names)
 
 
 def test_analytic_fit_different_priors(caplog):
@@ -126,14 +126,8 @@ def test_analytic_fit_different_priors(caplog):
         }
     )
 
-    # Create mock pdf model
-    mock_pdf_model = Mock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-        (14, len(xgrid))
-    )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fkarrs: (params, jnp.ones((14, len(xgrid))))
+    MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params, fkarrs: (params, TEST_PDF_GRID)
     )
 
     _pred_data = None
@@ -142,7 +136,7 @@ def test_analytic_fit_different_priors(caplog):
     result = analytic_fit(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         _pred_data,
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         analytic_settings,
         PRIOR_SETTINGS1,
         TEST_XGRID,
@@ -155,7 +149,7 @@ def test_analytic_fit_different_priors(caplog):
     assert (
         result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]
     )
-    assert len(result.param_names) == len(mock_pdf_model.param_names)
+    assert len(result.param_names) == len(MOCK_PDF_MODEL.param_names)
 
     PRIOR_SETTINGS2 = PriorSettings(
         **{
@@ -168,7 +162,7 @@ def test_analytic_fit_different_priors(caplog):
     result = analytic_fit(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         _pred_data,
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         analytic_settings,
         PRIOR_SETTINGS2,
         TEST_XGRID,
@@ -194,13 +188,9 @@ def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
     mock_analytic_fit.min_chi2 = 0.1
     mock_analytic_fit.logz = 7.0
 
-    # Create mock pdf model
-    mock_pdf_model = Mock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-
     # Run the run_analytic_fit function
     output_path = str(tmp_path)
-    run_analytic_fit(mock_analytic_fit, output_path, mock_pdf_model)
+    run_analytic_fit(mock_analytic_fit, output_path, MOCK_PDF_MODEL)
 
     # Check if the write_exportgrid function was called for each sample
     assert (
