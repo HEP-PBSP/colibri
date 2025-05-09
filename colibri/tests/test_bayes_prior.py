@@ -16,16 +16,14 @@ from jax import random
 
 from colibri.bayes_prior import bayesian_prior
 from colibri.core import PriorSettings
+from colibri.tests.conftest import TEST_PRIOR_SETTINGS_UNIFORM
 
 
 def test_uniform_prior():
-    prior_settings = PriorSettings(
-        **{
-            "prior_distribution": "uniform_parameter_prior",
-            "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
-        }
-    )
-    prior_transform = bayesian_prior(prior_settings)
+    """
+    Test the transformation of a uniform prior distribution.
+    """
+    prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM)
 
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10,))
@@ -34,10 +32,10 @@ def test_uniform_prior():
     expected = (
         cube
         * (
-            prior_settings.prior_distribution_specs["max_val"]
-            - prior_settings.prior_distribution_specs["min_val"]
+            TEST_PRIOR_SETTINGS_UNIFORM.prior_distribution_specs["max_val"]
+            - TEST_PRIOR_SETTINGS_UNIFORM.prior_distribution_specs["min_val"]
         )
-        + prior_settings.prior_distribution_specs["min_val"]
+        + TEST_PRIOR_SETTINGS_UNIFORM.prior_distribution_specs["min_val"]
     )
 
     assert np.allclose(transformed, expected), "Uniform prior transformation failed."

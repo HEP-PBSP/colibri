@@ -14,7 +14,8 @@ import reportengine
 from reportengine.configparser import ConfigError
 
 from colibri.config import Environment, colibriConfig
-from colibri.core import PriorSettings
+from colibri.tests.conftest import TEST_PRIOR_SETTINGS_UNIFORM
+
 
 BASE_CONFIG = colibriConfig({})
 
@@ -79,12 +80,7 @@ def test_parse_prior_settings(mock_warning):
     result1 = BASE_CONFIG.parse_prior_settings(settings1)
 
     # Assert the result is as expected
-    expected1 = PriorSettings(
-        **{
-            "prior_distribution": "uniform_parameter_prior",
-            "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
-        }
-    )
+    expected1 = TEST_PRIOR_SETTINGS_UNIFORM
     assert result1 == expected1
 
     # Check that the warning was called for the unknown key

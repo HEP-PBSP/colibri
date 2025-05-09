@@ -20,6 +20,7 @@ from colibri.tests.conftest import (
     TEST_FORWARD_MAP_DIS,
     TEST_PDF_GRID,
     TEST_XGRID,
+    TEST_PRIOR_SETTINGS_UNIFORM,
 )
 
 analytic_settings = {
@@ -27,12 +28,6 @@ analytic_settings = {
     "full_sample_size": 100,
     "n_posterior_samples": 10,
 }
-PRIOR_SETTINGS = PriorSettings(
-    **{
-        "prior_distribution": "uniform_parameter_prior",
-        "prior_distribution_specs": {"max_val": 1.0, "min_val": -1.0},
-    }
-)
 
 
 def test_analytic_fit_flat_direction():
@@ -55,7 +50,7 @@ def test_analytic_fit_flat_direction():
             _pred_data,
             MOCK_PDF_MODEL,
             analytic_settings,
-            PRIOR_SETTINGS,
+            TEST_PRIOR_SETTINGS_UNIFORM,
             TEST_XGRID,
             TEST_FK_ARRAYS,
         )
@@ -78,7 +73,7 @@ def test_analytic_fit(caplog):
         _pred_data,
         MOCK_PDF_MODEL,
         analytic_settings,
-        PRIOR_SETTINGS,
+        TEST_PRIOR_SETTINGS_UNIFORM,
         TEST_XGRID,
         TEST_FK_ARRAYS,
     )
@@ -100,7 +95,7 @@ def test_analytic_fit(caplog):
             _pred_data,
             MOCK_PDF_MODEL,
             analytic_settings,
-            PRIOR_SETTINGS,
+            TEST_PRIOR_SETTINGS_UNIFORM,
             TEST_XGRID,
             TEST_FK_ARRAYS,
         )

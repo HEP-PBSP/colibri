@@ -9,6 +9,8 @@ import jax.numpy as jnp
 import numpy as np
 
 from colibri.pdf_model import PDFModel
+from colibri.core import PriorSettings
+
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
@@ -426,3 +428,11 @@ class UltraNestLogLikelihoodMock:
     ):
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * (self.chi2(central_values, predictions, inv_covmat))
+
+
+TEST_PRIOR_SETTINGS_UNIFORM = PriorSettings(
+    **{
+        "prior_distribution": "uniform_parameter_prior",
+        "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
+    }
+)
