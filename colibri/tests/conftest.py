@@ -2,6 +2,7 @@
 Module containing standard pytest data configurations for testing purposes.
 """
 
+import pathlib
 from unittest.mock import Mock
 
 import jax
@@ -436,3 +437,12 @@ TEST_PRIOR_SETTINGS_UNIFORM = PriorSettings(
         "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
     }
 )
+"""
+Uniform prior settings for testing purposes, `prior_distribution_specs` should correspond to the default specs for a uniform prior.
+"""
+
+
+TEST_COMMONDATA_FOLDER = pathlib.Path(__file__).with_name("test_commondata")
+"""
+Path to the folder containing the test commondata files.
+"""

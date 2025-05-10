@@ -4,17 +4,17 @@ colibri.tests.test_mc_utils
 Tests for the Monte Carlo utilities in the colibri package.
 """
 
-import pathlib
 from unittest.mock import Mock, mock_open, patch
 
 import jax.numpy as jnp
 import pandas as pd
-from conftest import (
+from colibri.tests.conftest import (
     CLOSURE_TEST_PDFSET,
     PSEUDODATA_SEED,
     REPLICA_INDEX,
     TEST_DATASETS,
     TRVAL_INDEX,
+    TEST_COMMONDATA_FOLDER,
 )
 from numpy.testing import assert_allclose
 
@@ -29,8 +29,6 @@ MC_PSEUDODATA = {
     **REPLICA_INDEX,
     **TEST_DATASETS,
 }
-
-TEST_COMMONDATA_FOLDER = pathlib.Path(__file__).with_name("test_commondata")
 
 
 def test_mc_pseudodata():

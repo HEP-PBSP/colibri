@@ -4,8 +4,6 @@ colibri.tests.test_commondata_utils
 Module for testing commondata_utils functions in the colibri package.
 """
 
-import pathlib
-
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 import pandas as pd
@@ -19,9 +17,8 @@ from colibri.tests.conftest import (
     PSEUDODATA_SEED,
     T0_PDFSET,
     TEST_DATASETS,
+    TEST_COMMONDATA_FOLDER,
 )
-
-TEST_COMMONDATA_FOLDER = pathlib.Path(__file__).with_name("test_commondata")
 
 
 def test_experimental_commondata_tuple():
