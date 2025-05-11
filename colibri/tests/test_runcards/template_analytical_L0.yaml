@@ -43,7 +43,7 @@ t0pdfset: 240701-02-rs-nnpdf40-baseline         # The t0 PDF used to build the t
 
 # Weight minimisation settings
 wmin_settings:
-  wminpdfset: 250503_pod_basis_40k
+  wminpdfset: NNPDF40_nnlo_as_01180
   n_basis: 40
 
 ###################
