@@ -1,0 +1,78 @@
+meta: 'A runcard to test a bayesian fit.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:    
+  # DIS                
+  - {'dataset': 'NMC_NC_NOTFIXED_P_EM-SIGMARED', variant: legacy}
+  - {'dataset': 'SLAC_NC_NOTFIXED_P_EM-F2', variant: legacy_dw}
+  - {'dataset': 'SLAC_NC_NOTFIXED_D_EM-F2', variant: legacy_dw}
+
+
+theoryid: 40_000_000                          # The theory from which the predictions are drawn.
+
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0                  # The closure test level: False for experimental, level 0
+                                       # for pseudodata with no noise, level 1 for pseudodata with
+                                       # noise.
+closure_test_pdf: NNPDF31_nnlo_as_0118 # The closure test PDF used if closure_level is not False
+
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: POSF2U, maxlambda: 1e6}
+
+positivity_penalty_settings:
+  positivity_penalty: true
+  alpha: 1e-7                           
+  lambda_positivity: 10
+
+integrability_settings:
+  integrability: false
+
+use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
+
+
+#############
+# Model specs
+#############
+# Weight minimisation settings
+wmin_settings:
+  wminpdfset: NNPDF31_nnlo_as_0118
+  n_basis: 5
+
+
+###################
+# Methodology specs
+###################
+
+bayesian_fit: True
+# Nested Sampling settings
+ns_settings:
+  sampler_plot: False
+  n_posterior_samples: 1
+  ReactiveNS_settings:
+    vectorized: true
+    ndraw_max: 500
+  Run_settings:
+    min_num_live_points: 200
+    min_ess: 50
+    frac_remain: 0.5
+
+prior_settings:
+  prior_distribution: 'uniform_parameter_prior'
+  prior_distribution_specs:
+    {
+      max_val: 2,
+      min_val: -2,
+    }
+actions_:
+- run_ultranest_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
