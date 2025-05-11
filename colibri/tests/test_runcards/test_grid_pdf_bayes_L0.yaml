@@ -67,8 +67,6 @@ grid_pdf_settings:
 ###################
 # Methodology specs
 ###################
-
-bayesian_fit: True
 # Nested Sampling settings
 ns_settings:
   sampler_plot: False
