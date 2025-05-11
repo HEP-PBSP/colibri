@@ -30,9 +30,9 @@ positivity:                            # Positivity datasets, used in the positi
   - {dataset: POSF2U, maxlambda: 1e6}
 
 positivity_penalty_settings:
-  positivity_penalty: False
+  positivity_penalty: true
   alpha: 1e-7                           
-  lambda_positivity: 0               
+  lambda_positivity: 10
 
 integrability_settings:
   integrability: false
