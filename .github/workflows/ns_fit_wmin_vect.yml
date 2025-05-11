@@ -51,13 +51,6 @@ jobs:
         source $(conda info --base)/etc/profile.d/conda.sh  # Initialize Conda
         conda activate colibri-dev
         pip install git+https://${{ secrets.COLIBRI_TOKEN }}@github.com/HEP-PBSP/wmin-model.git
-
-    - name: Copy theory to Conda environment
-      shell: bash -l {0}
-      run: |
-        mkdir -p $CONDA_PREFIX/share/NNPDF/theories
-        mkdir $CONDA_PREFIX/share/NNPDF/theories/theory_401
-        cp -r colibri/tests/test_theoryID/theory_401/* $CONDA_PREFIX/share/NNPDF/theories/theory_401/
     
     - name: Run NS fit
       shell: bash -l {0}
