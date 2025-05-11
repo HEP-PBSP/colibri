@@ -104,7 +104,7 @@ def test_LogLikelihood_class(pos_penalty):
 @patch("colibri.ultranest_fit.jax.vmap")
 def test_LogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
     """
-    Tests the LogLikelihood class with vectorized ReactiveNS settings.
+    Tests the LogLikelihood class with vectorized settings.
     """
 
     ultranest_loglike = LogLikelihood(
