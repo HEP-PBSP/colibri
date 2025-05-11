@@ -15,7 +15,7 @@ from colibri.core import PriorSettings
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
-TEST_THEORYID = 40000000
+TEST_THEORYID = 40_000_000
 """
 Intrinsic charm theory used in the tests.
 """
@@ -313,14 +313,25 @@ TEST_XGRID = jnp.logspace(-7, 0, TEST_N_XGRID)
 X-grid used for testing purposes.
 """
 
+TEST_N_DATA = 2
+"""
+Number of data points used in mock models for testing purposes.
+"""
+
 np.random.seed(1)
-TEST_FK_ARRAYS = (np.random.rand(2, TEST_N_FL, TEST_N_XGRID),)
+TEST_FK_ARRAYS = (np.random.rand(TEST_N_DATA, TEST_N_FL, TEST_N_XGRID),)
 """
 Tuple of fast kernel arrays used for testing purposes.
 This mocks a DIS fast kernel mapping the PDF grid to 2 datapoints.
 """
 
-TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
+
+np.random.seed(2)
+TEST_POS_FK_ARRAYS = (np.random.rand(TEST_N_DATA, TEST_N_FL, TEST_N_XGRID),)
+"""
+Tuple of fast kernel arrays used for testing purposes.
+This mocks a POS fast kernel mapping the PDF grid to 2 datapoints.
+"""
 
 
 TEST_FORWARD_MAP_DIS = lambda pdf, fk_arrays: np.einsum("ijk,jk->i", fk_arrays, pdf)
@@ -331,11 +342,11 @@ Function expects a DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_
 
 
 MOCK_CENTRAL_INV_COVMAT_INDEX = Mock()
-MOCK_CENTRAL_INV_COVMAT_INDEX.central_values = jnp.ones(2)
-MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(2)
-MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(2)
+MOCK_CENTRAL_INV_COVMAT_INDEX.central_values = jnp.ones(TEST_N_DATA)
+MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(TEST_N_DATA)
+MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(TEST_N_DATA)
 """
-Mock instance of Central Inverse covmat index object
+Mock instance of Central Inverse covmat index object.
 """
 
 
