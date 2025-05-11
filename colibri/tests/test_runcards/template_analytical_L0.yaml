@@ -61,8 +61,8 @@ prior_settings:
   prior_distribution: uniform_parameter_prior
   prior_distribution_specs: 
         {
-          "min_val": -1.95,
-          "max_val": 1.94,
+          "min_val": -5,
+          "max_val": 5,
         }
 
 actions_:
