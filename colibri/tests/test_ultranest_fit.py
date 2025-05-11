@@ -20,6 +20,7 @@ from colibri.tests.conftest import (
     TEST_FK_ARRAYS,
     TEST_FORWARD_MAP_DIS,
     TEST_POS_FK_ARRAYS,
+    TEST_XGRID,
     UltraNestLogLikelihoodMock,
 )
 from colibri.ultranest_fit import UltranestFit, run_ultranest_fit, ultranest_fit
@@ -28,9 +29,6 @@ jax.config.update("jax_enable_x64", True)
 
 # Define mock input parameters
 bayesian_prior = lambda x: x
-FIT_XGRID = jnp.logspace(-7, 0, 50)
-fast_kernel_arrays = [jnp.eye(2)]
-positivity_fast_kernel_arrays = [jnp.eye(2)]
 mock_chi2 = lambda central_values, predictions, inv_covmat: 0.0
 
 _penalty_posdata = (
@@ -63,7 +61,7 @@ def test_UltraNestLogLikelihood_class(pos_penalty):
     ultranest_loglike = LogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=FIT_XGRID,
+        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -98,7 +96,7 @@ def test_UltraNestLogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
     ultranest_loglike = LogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=FIT_XGRID,
+        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -136,7 +134,7 @@ def test_log_likelihood(pos_penalty):
     ultranest_loglike = LogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=FIT_XGRID,
+        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -149,10 +147,10 @@ def test_log_likelihood(pos_penalty):
     log_like = log_likelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        FIT_XGRID,
+        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
         ns_settings,
         _penalty_posdata,
         positivity_penalty_settings=POS_PENALTY_SETTINGS,
@@ -177,10 +175,10 @@ def test_ultranest_fit(pos_penalty):
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         mock_pdf_model,
-        FIT_XGRID,
+        TEST_XGRID,
         _pred_data,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2,
         _penalty_posdata,
@@ -225,10 +223,10 @@ def test_ultranest_fit_vectorized(pos_penalty):
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         mock_pdf_model,
-        FIT_XGRID,
+        TEST_XGRID,
         _pred_data,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2,
         _penalty_posdata,
@@ -282,10 +280,10 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         mock_pdf_model,
-        FIT_XGRID,
+        TEST_XGRID,
         _pred_data,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2,
         _penalty_posdata,
@@ -339,10 +337,10 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         mock_pdf_model,
-        FIT_XGRID,
+        TEST_XGRID,
         _pred_data,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2,
         _penalty_posdata,
@@ -421,10 +419,6 @@ def test_log_likelihood_with_and_without_pos_penalty():
     # Simple forward map placeholder
     forward_map = lambda x: x
 
-    # Dummy FK tables
-    fast_kernel_arrays = (jnp.array([1.0]),)
-    positivity_fast_kernel_arrays = (jnp.array([1.0]),)
-
     ns_settings = {"ReactiveNS_settings": {"vectorized": False}}
 
     # Mocking chi2 and penalty_posdata
@@ -444,8 +438,8 @@ def test_log_likelihood_with_and_without_pos_penalty():
         pdf_model,
         jnp.array([0.1, 0.2]),  # dummy fit_xgrid
         forward_map,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2_mock,
         penalty_posdata_mock,
@@ -481,8 +475,8 @@ def test_log_likelihood_with_and_without_pos_penalty():
         pdf_model,
         jnp.array([0.1, 0.2]),  # dummy fit_xgrid
         forward_map,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2_mock,
         penalty_posdata_mock,
