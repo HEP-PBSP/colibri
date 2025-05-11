@@ -5,7 +5,7 @@ Tests for the likelihood module.
 """
 
 import copy
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import jax
 import jax.numpy as jnp
@@ -20,15 +20,14 @@ from colibri.tests.conftest import (
     TEST_FORWARD_MAP_DIS,
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
+    MOCK_CHI2,
+    MOCK_PENALTY_POSDATA,
 )
 
 jax.config.update("jax_enable_x64", True)
 
 # Define mock input parameters
 bayesian_prior = lambda x: x
-mock_chi2 = MagicMock(return_value=10.0)
-mock_penalty_posdata = MagicMock(return_value=jnp.array([5.0]))
-
 
 integrability_penalty = lambda pdf: jnp.array([0.0])
 
@@ -59,8 +58,8 @@ def test_LogLikelihood_class(pos_penalty):
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
         ns_settings=ns_settings,
-        chi2=mock_chi2,
-        penalty_posdata=mock_penalty_posdata,
+        chi2=MOCK_CHI2,
+        penalty_posdata=MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
             "alpha": 1e-7,
@@ -76,7 +75,7 @@ def test_LogLikelihood_class(pos_penalty):
         MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat, ultranest_loglike.inv_covmat
     )
     assert MOCK_PDF_MODEL == ultranest_loglike.pdf_model
-    assert mock_penalty_posdata == ultranest_loglike.penalty_posdata
+    assert MOCK_PENALTY_POSDATA == ultranest_loglike.penalty_posdata
 
     # Test the __call__ method
     params = jnp.array(
@@ -115,8 +114,8 @@ def test_LogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
         ns_settings=vect_ns_settings,
-        chi2=mock_chi2,
-        penalty_posdata=mock_penalty_posdata,
+        chi2=MOCK_CHI2,
+        penalty_posdata=MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
             "alpha": 1e-7,
@@ -153,8 +152,8 @@ def test_log_likelihood(pos_penalty):
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
         ns_settings=ns_settings,
-        chi2=mock_chi2,
-        penalty_posdata=mock_penalty_posdata,
+        chi2=MOCK_CHI2,
+        penalty_posdata=MOCK_PENALTY_POSDATA,
         positivity_penalty_settings=POS_PENALTY_SETTINGS,
         integrability_penalty=integrability_penalty,
     )
@@ -166,7 +165,7 @@ def test_log_likelihood(pos_penalty):
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         ns_settings,
-        mock_penalty_posdata,
+        MOCK_PENALTY_POSDATA,
         positivity_penalty_settings=POS_PENALTY_SETTINGS,
         integrability_penalty=integrability_penalty,
     )
@@ -196,8 +195,8 @@ def test_log_likelihood_with_and_without_pos_penalty():
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         ns_settings,
-        mock_chi2,
-        mock_penalty_posdata,
+        MOCK_CHI2,
+        MOCK_PENALTY_POSDATA,
         positivity_penalty_settings,
         integrability_penalty=integrability_penalty,
     )
@@ -233,8 +232,8 @@ def test_log_likelihood_with_and_without_pos_penalty():
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         ns_settings,
-        mock_chi2,
-        mock_penalty_posdata,
+        MOCK_CHI2,
+        MOCK_PENALTY_POSDATA,
         positivity_penalty_settings,
         integrability_penalty=integrability_penalty,
     )

@@ -3,7 +3,7 @@ Module containing standard pytest data configurations for testing purposes.
 """
 
 import pathlib
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 
 import jax
 import jax.numpy as jnp
@@ -347,6 +347,17 @@ MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(TEST_N_DATA)
 MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(TEST_N_DATA)
 """
 Mock instance of Central Inverse covmat index object.
+"""
+
+
+MOCK_CHI2 = MagicMock(return_value=10.0)
+"""
+Mock chi2 function for testing purposes.
+"""
+
+MOCK_PENALTY_POSDATA = MagicMock(return_value=jnp.array([5.0]))
+"""
+Mock penalty_posdata function for testing purposes.
 """
 
 

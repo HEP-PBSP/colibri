@@ -20,6 +20,7 @@ from colibri.tests.conftest import (
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
     UltraNestLogLikelihoodMock,
+    MOCK_PENALTY_POSDATA,
 )
 from colibri.ultranest_fit import UltranestFit, run_ultranest_fit, ultranest_fit
 
@@ -27,13 +28,6 @@ jax.config.update("jax_enable_x64", True)
 
 # Define mock input parameters
 bayesian_prior = lambda x: x
-mock_chi2 = lambda central_values, predictions, inv_covmat: 0.0
-
-_penalty_posdata = (
-    lambda pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays: jnp.array(
-        [1.0, 1.0]
-    )
-)
 
 integrability_penalty = lambda pdf: jnp.array([0.0])
 
@@ -64,7 +58,7 @@ def test_ultranest_fit(pos_penalty):
         TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2,
-        _penalty_posdata,
+        MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
             "alpha": 1e-7,
@@ -104,7 +98,7 @@ def test_ultranest_fit_vectorized(pos_penalty):
         TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2,
-        _penalty_posdata,
+        MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
             "alpha": 1e-7,
@@ -153,7 +147,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
         TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2,
-        _penalty_posdata,
+        MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
             "alpha": 1e-7,
@@ -202,7 +196,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
         TEST_POS_FK_ARRAYS,
         ns_settings,
         chi2,
-        _penalty_posdata,
+        MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
             "alpha": 1e-7,
