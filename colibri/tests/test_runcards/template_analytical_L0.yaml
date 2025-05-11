@@ -29,13 +29,13 @@ theoryid: 40_000_000                          # The theory from which the predic
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
 closure_test_level: 0
-closure_test_pdf: NNPDF31_nnlo_as_0118
+closure_test_pdf: NNPDF40_nnlo_as_01180
 
 #####################
 # Loss function specs
 #####################
 use_fit_t0: true                    # Whether the t0 covariance is used in the chi2 loss.
-t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
+t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
 
 #############
 # Model specs
@@ -43,7 +43,7 @@ t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covaria
 
 # Weight minimisation settings
 wmin_settings:
-  wminpdfset: NNPDF31_nnlo_as_0118
+  wminpdfset: NNPDF40_nnlo_as_01180
   n_basis: 20
 
 ###################

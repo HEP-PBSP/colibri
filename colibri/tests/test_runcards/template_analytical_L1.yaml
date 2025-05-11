@@ -30,13 +30,13 @@ use_cuts: internal                     # The kinematic cuts to be applied to the
 
 closure_test_level: 1
 level_1_seed: 123456
-closure_test_pdf: 250503_pod_basis_40k_underlying_law_40w_pos
+closure_test_pdf: NNPDF40_nnlo_as_01180
 
 #####################
 # Loss function specs
 #####################
 use_fit_t0: true                    # Whether the t0 covariance is used in the chi2 loss.
-t0pdfset: 240701-02-rs-nnpdf40-baseline         # The t0 PDF used to build the t0 covariance matrix.
+t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
 
 #############
 # Model specs
@@ -44,7 +44,7 @@ t0pdfset: 240701-02-rs-nnpdf40-baseline         # The t0 PDF used to build the t
 
 # Weight minimisation settings
 wmin_settings:
-  wminpdfset: 250503_pod_basis_40k
+  wminpdfset: NNPDF40_nnlo_as_01180
   n_basis: 40
 
 ###################
