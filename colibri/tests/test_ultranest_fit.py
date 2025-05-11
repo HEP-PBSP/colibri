@@ -162,19 +162,11 @@ def test_log_likelihood(pos_penalty):
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit(pos_penalty):
-    # Create mock pdf model
-    mock_pdf_model = Mock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-        (14, len(xgrid))
-    )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
-    )
+    
     _pred_data = None
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
@@ -190,7 +182,7 @@ def test_ultranest_fit(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         bayesian_prior,
         ns_settings,
         mock_log_likelihood,
@@ -199,7 +191,7 @@ def test_ultranest_fit(pos_penalty):
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
         ns_settings["n_posterior_samples"],
-        len(mock_pdf_model.param_names),
+        len(MOCK_PDF_MODEL.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
     assert fit_result.ultranest_specs == ns_settings
@@ -208,21 +200,13 @@ def test_ultranest_fit(pos_penalty):
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit_vectorized(pos_penalty):
-    # Create mock pdf model
-    mock_pdf_model = Mock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-        (14, len(xgrid))
-    )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
-    )
+    
     _pred_data = None
     ns_settings["ReactiveNS_settings"]["vectorized"] = True
 
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
@@ -238,7 +222,7 @@ def test_ultranest_fit_vectorized(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         bayesian_prior,
         ns_settings,
         mock_log_likelihood,
@@ -247,7 +231,7 @@ def test_ultranest_fit_vectorized(pos_penalty):
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
         ns_settings["n_posterior_samples"],
-        len(mock_pdf_model.param_names),
+        len(MOCK_PDF_MODEL.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
     assert fit_result.ultranest_specs == ns_settings
@@ -266,20 +250,12 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
         "sampler_plot": False,
         "popstepsampler": False,
     }
-    # Create mock pdf model
-    mock_pdf_model = Mock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-        (14, len(xgrid))
-    )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
-    )
+    
     _pred_data = None
 
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
@@ -295,7 +271,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         bayesian_prior,
         ns_settings,
         mock_log_likelihood,
@@ -304,7 +280,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
         ns_settings["n_posterior_samples"],
-        len(mock_pdf_model.param_names),
+        len(MOCK_PDF_MODEL.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
     assert fit_result.ultranest_specs == ns_settings
@@ -323,20 +299,12 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
         "sampler_plot": False,
         "popstepsampler": True,
     }
-    # Create mock pdf model
-    mock_pdf_model = Mock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-    mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-        (14, len(xgrid))
-    )
-    mock_pdf_model.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fast_kernel_arrays: (params, jnp.ones((14, len(xgrid))))
-    )
+    
     _pred_data = None
 
     mock_log_likelihood = UltraNestLogLikelihoodMock(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
@@ -352,7 +320,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        mock_pdf_model,
+        MOCK_PDF_MODEL,
         bayesian_prior,
         ns_settings,
         mock_log_likelihood,
@@ -361,7 +329,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
         ns_settings["n_posterior_samples"],
-        len(mock_pdf_model.param_names),
+        len(MOCK_PDF_MODEL.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
     assert fit_result.ultranest_specs == ns_settings
@@ -385,13 +353,9 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
     mock_ultranest_fit.min_chi2 = 0.1
     mock_ultranest_fit.logz = 7.0
 
-    # Create mock pdf model
-    mock_pdf_model = Mock()
-    mock_pdf_model.param_names = ["param1", "param2"]
-
     # Run the run_ultranest_fit function
     output_path = str(tmp_path)
-    run_ultranest_fit(mock_ultranest_fit, output_path, mock_pdf_model)
+    run_ultranest_fit(mock_ultranest_fit, output_path, MOCK_PDF_MODEL)
 
     # Check if the write_exportgrid function was called for each sample
     assert (
