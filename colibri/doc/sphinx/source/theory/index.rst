@@ -10,3 +10,5 @@ This section discusses some relevant theoretical background to Colibri.
    :maxdepth: 1
 
    ./theory_predictions/index
+
+   ./likelihood/index
