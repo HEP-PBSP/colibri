@@ -1,8 +1,8 @@
 .. _running_fits:
 
-==========================
-Running Fits with Colibri
-==========================
+============
+Running Fits
+============
 
 Colibri supports three inference methods for fitting models:
 

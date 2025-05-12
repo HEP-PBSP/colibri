@@ -1,8 +1,8 @@
 .. _les_houches:
 
-===========================
-Les Houches Parametrisation
-===========================
+========================
+Implementing a PDF model
+========================
 If you have followed the :ref:`installation instructions <installation>`,
 you can follow this tutorial to use Colibri to implement the Les Houches 
 parametrisation model, which is described in the :ref:`theory section <lh_theory>`.
