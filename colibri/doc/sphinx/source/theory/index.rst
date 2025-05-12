@@ -14,3 +14,7 @@ This section discusses some relevant theoretical background to Colibri.
    ./likelihood/index
 
    ./bayesian_prior/index
+
+   ./mc_loss_func/index
+
+   ./inference/index
