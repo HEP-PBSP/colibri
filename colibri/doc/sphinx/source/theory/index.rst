@@ -12,3 +12,5 @@ This section discusses some relevant theoretical background to Colibri.
    ./theory_predictions/index
 
    ./likelihood/index
+
+   ./bayesian_prior/index
