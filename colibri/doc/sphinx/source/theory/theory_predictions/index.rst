@@ -62,12 +62,6 @@ A :math:`N_{\rm data}`-point measurement :math:`\sigma` of a hadron-hadron cross
 where the :math:`FK_{i,j,k,l,m}` operator has shape :math:`(N_{\rm data}, N_{\rm fl}, N_{\rm fl}, N_{\rm x}, N_{\rm x})`.
 
 
-
-
-
-
-Theoretical predictions in Colibri make use of the standard factorisation theorem for hard scattering processes.
-
 In colibri, the forward modeling of hadron-hadron data is taken care of in the :py:class:`colibri.theory_predictions` module
 by the :py:func:`colibri.theory_predictions.make_had_prediction` closure function shown below.
 
