@@ -193,14 +193,14 @@ class LesHouchesPDF(PDFModel):
                     valence_pdf,  # V
                     valence3_pdf,  # V3
                     valence_pdf,  # V8 = V
-                    jnp.zeros_like(xgrid),  # V15
-                    jnp.zeros_like(xgrid),  # V24
-                    jnp.zeros_like(xgrid),  # V35
+                    valence_pdf,  # V15 = V
+                    valence_pdf,  # V24 = V
+                    valence_pdf,  # V35 = V
                     valence3_pdf,  # T3 = V3
                     t8_pdf,  # T8
-                    jnp.zeros_like(xgrid),  # T15
-                    jnp.zeros_like(xgrid),  # T24
-                    jnp.zeros_like(xgrid),  # T35
+                    sigma_pdf,  # T15 = Σ
+                    sigma_pdf,  # T24 = Σ
+                    sigma_pdf,  # T35 = Σ
                 ]
             )
             return pdf_grid
