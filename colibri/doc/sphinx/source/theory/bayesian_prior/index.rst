@@ -1,7 +1,7 @@
 .. _bayesian_prior:
 
-==============
-Bayesian Prior 
-==============
+===================
+Prior Distributions 
+===================
 
 This is the first section of theory.
