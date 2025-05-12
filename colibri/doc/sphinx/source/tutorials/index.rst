@@ -3,11 +3,15 @@
 Tutorials
 =========
 
-This section contains tutorials to exemplify how to perform a PDF fit using a given parametrisation in Colibri.
+In this section, you’ll find step-by-step tutorials on using Colibri for various different purposes such as 
+creating a custom PDF model or fitting data with it.
+
 
 .. toctree::
    :maxdepth: 1
 
    les-houches/index
+
+   running_fits/index
 
    evolution/index
