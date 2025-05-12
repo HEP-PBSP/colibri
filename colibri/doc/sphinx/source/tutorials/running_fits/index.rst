@@ -21,3 +21,7 @@ In the sections that follow, we’ll explore the use cases and workflows for eac
    :maxdepth: 1
 
    ./running_analytic
+
+   ./running_bayesian
+
+   ./running_mc_replica
