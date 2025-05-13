@@ -22,7 +22,7 @@ for detailed usage instructions in Colibri, see (TODO: link to user guide).
 
 
 Bayesian update
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 Let us suppose that experimental data comprising :math:`N_{\rm data}` datapoints is 
 distributed according to a multivariate normal distribution
