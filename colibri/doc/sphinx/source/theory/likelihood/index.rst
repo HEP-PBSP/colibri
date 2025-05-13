@@ -52,8 +52,14 @@ see the tutorial ... (TODO a tutorial on fitting where positivity constraints ar
 
 Integrability Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-...
+Integrability constraints are implemented in colibri by adding the following penalty term to the likelihood function
 
+.. math::
+    \begin{align}
+    \label{eq:int_constraint}
+    \mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) \to \mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) + \Lambda_{\rm int} \sum_{k}\sum_{i} \bigg[ x_i f_k(x_i, Q_0^2) \bigg]^2 ,
+    \end{align}
 
-Monte Carlo Loss Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+where :math:`Q_0` is the parametrisation scale and the points :math:`x_i` run over a set of values in the small :math:`x`
+region of the grid of the FK-table; in practice one often only takes the smallest :math:`x` value of the grid to 
+enforce the condition.
