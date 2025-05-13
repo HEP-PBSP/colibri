@@ -19,8 +19,7 @@ closure_test_level: 0                  # The closure test level: False for exper
                                        # for pseudodata with no noise, level 1 for pseudodata with
                                        # noise.
 closure_test_pdf: NNPDF31_nnlo_as_0118 # The closure test PDF used if closure_level is not False
-reduced_xgrid_data: True               # An artefact of the old grid_pdf implementation,
-                                       # ensuring we generate closure test data using the model.
+
 
 #####################
 # Loss function specs
@@ -31,9 +30,9 @@ positivity:                            # Positivity datasets, used in the positi
   - {dataset: POSF2U, maxlambda: 1e6}
 
 positivity_penalty_settings:
-  positivity_penalty: False
+  positivity_penalty: true
   alpha: 1e-7                           
-  lambda_positivity: 0               
+  lambda_positivity: 10
 
 integrability_settings:
   integrability: false
@@ -54,8 +53,6 @@ wmin_settings:
 ###################
 # Methodology specs
 ###################
-
-bayesian_fit: True
 # Nested Sampling settings
 ns_settings:
   sampler_plot: False

@@ -1,4 +1,4 @@
-meta: 'A runcard to test a monte carlo fit.'
+meta: 'A runcard to test a bayesian fit.'
 
 #######################
 # Data and theory specs
@@ -29,12 +29,13 @@ positivity:                            # Positivity datasets, used in the positi
   posdatasets:
   - {dataset: POSF2U, maxlambda: 1e6}
 
-
 positivity_penalty_settings:
   positivity_penalty: true
   alpha: 1e-7                           
   lambda_positivity: 10
 
+integrability_settings:
+  integrability: false
 
 use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
@@ -52,16 +53,24 @@ wmin_settings:
 ###################
 # Methodology specs
 ###################
+# Nested Sampling settings
+ns_settings:
+  sampler_plot: False
+  n_posterior_samples: 1
+  ReactiveNS_settings:
+    vectorized: true
+    ndraw_max: 500
+  Run_settings:
+    min_num_live_points: 200
+    min_ess: 50
+    frac_remain: 0.5
 
-# Monte Carlo settings
-use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
-max_epochs: 300                       # The max number of epochs in Monte Carlo training.
-mc_validation_fraction: 0.2            # The fraction of the data used for validation in Monte Carlo training.
-mc_initialiser_settings:
-  random_seed: 0               # The initialiser for Monte Carlo training.
-  type: uniform                        # This setting starts with all parameters equal to zero.
-  max_val: 3
-  min_val: -3
-
+prior_settings:
+  prior_distribution: 'uniform_parameter_prior'
+  prior_distribution_specs:
+    {
+      max_val: 2,
+      min_val: -2,
+    }
 actions_:
-- run_monte_carlo_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- run_ultranest_fit                        # Choose from ultranest_fit, monte_carlo_fit, analytic_fit

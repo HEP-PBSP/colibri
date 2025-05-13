@@ -1,8 +1,8 @@
 .. _lh_theory:
 
-======
-Theory
-======
+===========================
+Les Houches Parametrisation
+===========================
 
 We follow the Les Houches parametrisation as presented in reference :cite:`Alekhin:2005xgg`.
 
