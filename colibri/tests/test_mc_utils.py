@@ -15,6 +15,7 @@ from colibri.tests.conftest import (
     TEST_DATASETS,
     TRVAL_INDEX,
     TEST_COMMONDATA_FOLDER,
+    MOCK_PDF_MODEL,
 )
 from numpy.testing import assert_allclose
 
@@ -47,12 +48,6 @@ def test_mc_pseudodata():
 
 # Define the test parameters
 parameters = [0.1, 0.2, 0.3]  # Example parameters
-# Create mock pdf model
-mock_pdf_model = Mock()
-mock_pdf_model.param_names = ["param1", "param2"]
-mock_pdf_model.grid_values_func = lambda xgrid: lambda params: jnp.ones(
-    (14, len(xgrid))
-)
 replica_index = 1
 
 
@@ -64,7 +59,7 @@ def test_write_exportgrid_creates_directories(
 ):
     mock_exists.side_effect = lambda path: False
 
-    write_exportgrid_mc(parameters, mock_pdf_model, replica_index, tmp_path)
+    write_exportgrid_mc(parameters, MOCK_PDF_MODEL, replica_index, tmp_path)
 
     expected_dir_path = f"{tmp_path}/fit_replicas/replica_1"
     mock_mkdir.assert_called_once_with(expected_dir_path)
@@ -77,7 +72,7 @@ def test_write_exportgrid_writes_file(mock_open, mock_mkdir, mock_exists, tmp_pa
     mock_exists.side_effect = lambda path: False
 
     with patch("yaml.dump") as mock_yaml_dump:
-        write_exportgrid_mc(parameters, mock_pdf_model, replica_index, tmp_path)
+        write_exportgrid_mc(parameters, MOCK_PDF_MODEL, replica_index, tmp_path)
 
         fit_name = str(tmp_path).split("/")[-1]
 
@@ -102,7 +97,7 @@ def test_write_exportgrid_correct_paths_for_monte_carlo(
 ):
     mock_exists.side_effect = lambda path: False
 
-    write_exportgrid_mc(parameters, mock_pdf_model, replica_index, tmp_path)
+    write_exportgrid_mc(parameters, MOCK_PDF_MODEL, replica_index, tmp_path)
 
     expected_dir_path = f"{tmp_path}/fit_replicas/replica_1"
     mock_mkdir.assert_called_once_with(expected_dir_path)
@@ -116,6 +111,6 @@ def test_write_exportgrid_no_directory_creation_if_exists(
 ):
     mock_exists.side_effect = lambda path: True
 
-    write_exportgrid_mc(parameters, mock_pdf_model, replica_index, tmp_path)
+    write_exportgrid_mc(parameters, MOCK_PDF_MODEL, replica_index, tmp_path)
 
     mock_mkdir.assert_not_called()
