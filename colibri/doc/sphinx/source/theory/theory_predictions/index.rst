@@ -5,7 +5,7 @@ Forward Map
 ===========
 
 Colibri provides a flexible platform for fitting parton distribution function (PDF) models to data involving at least
-one incoming proton. The data are modeled in the framework of collinear QCD factorization, where the scattering
+one incoming proton. The data is modeled in the framework of collinear QCD factorization, where the scattering
 process is written as a convolution of the PDFs with perturbatively-computed hard-scattering cross sections.
 
 In this context, inferring the PDFs from experimental measurements is an inverse problem: the unknowns are the
