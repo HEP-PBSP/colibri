@@ -4,24 +4,23 @@ colibri.tests.test_mc_utils
 Tests for the Monte Carlo utilities in the colibri package.
 """
 
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import mock_open, patch
 
-import jax.numpy as jnp
 import pandas as pd
-from colibri.tests.conftest import (
-    CLOSURE_TEST_PDFSET,
-    PSEUDODATA_SEED,
-    REPLICA_INDEX,
-    TEST_DATASETS,
-    TRVAL_INDEX,
-    TEST_COMMONDATA_FOLDER,
-    MOCK_PDF_MODEL,
-)
 from numpy.testing import assert_allclose
 
 from colibri.api import API as colibriAPI
 from colibri.constants import EXPORT_LABELS, LHAPDF_XGRID
 from colibri.mc_utils import write_exportgrid_mc
+from colibri.tests.conftest import (
+    CLOSURE_TEST_PDFSET,
+    MOCK_PDF_MODEL,
+    PSEUDODATA_SEED,
+    REPLICA_INDEX,
+    TEST_COMMONDATA_FOLDER,
+    TEST_DATASETS,
+    TRVAL_INDEX,
+)
 
 MC_PSEUDODATA = {
     "level_1_seed": PSEUDODATA_SEED,
