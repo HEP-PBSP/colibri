@@ -48,7 +48,7 @@ def test_mc_pseudodata():
 
 # Define the test parameters
 parameters = [0.1, 0.2, 0.3]  # Example parameters
-replica_index = 1
+replica_index = REPLICA_INDEX["replica_index"]
 
 
 @patch("os.path.exists")
