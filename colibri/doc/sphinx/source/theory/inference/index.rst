@@ -114,12 +114,8 @@ then the posterior distribution becomes
 Bayesian inference
 ^^^^^^^^^^^^^^^^^^
 
-In the most general setting—regardless of PDF form or forward model—we recommend using Bayesian inference via nested sampling. Colibri integrates the [UltraNest] (https://johannesbuchner.github.io/UltraNest/index.html) package to perform this efficiently.
-
-For a step-by-step walkthrough of setting up and running a nested-sampling fit in Colibri, see the tutorial (TODO: add link here).
-
-In the most general setting, that is for any type of PDF and forward model, it is recommended to use the Bayesian inference
-method which is based on a nested sampling implementation given by the 
+In the most general setting, that is for any type of PDF and forward model, it is recommended to use the 
+Bayesian inference method which is based on a nested sampling implementation given by the 
 `UltraNest <https://johannesbuchner.github.io/UltraNest/index.html>`_ package.
 
 A tutorial on how to perform a Bayesian fit using nested sampling can be found in the
@@ -132,15 +128,15 @@ Gradient based methods
 Colibri supports the use of gradient-based methods, trough the `jax <https://docs.jax.dev/en/latest/quickstart.html>`_ and 
 `optax <https://optax.readthedocs.io/en/latest/>`_ libraries, for the inference of the PDF model parameters.
 
-A tutorial (TODO in tutorials).
+A tutorial can be found here (TODO in tutorials).
 
 A gradient-based method used to also perform uncertainty quantification and that can be found in colibri is the
 Monte Carlo replica method.
 This method consists in determining a set of fit outcomes to approximate the posterior probability 
 distribution of the PDF model given a set of experimental input data. 
 The input data are in turn represented as a MC sample of :math:`N_{\rm rep}` 
-pseudodata replicas whose distribution (typically a multivariate normal) reproduces the covariance matrix of the experimental
-data. 
+pseudodata replicas whose distribution (typically a multivariate normal) reproduces the covariance matrix 
+of the experimental data. 
 The fit outcomes are determined by minimising conditionally on a validation set the likelihood function
 defined in :ref:`Likelihood function <likelihood>`.
 
