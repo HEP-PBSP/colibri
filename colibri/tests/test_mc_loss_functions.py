@@ -14,6 +14,7 @@ from colibri.mc_loss_functions import (
 )
 from colibri.mc_utils import MCPseudodata
 from colibri.training_validation import PosdataTrainValidationSplit
+from colibri.tests.conftest import TEST_POS_FK_ARRAYS
 
 # Mock data
 training_indices = jnp.array([0, 1, 2])
@@ -35,7 +36,6 @@ pdf = jnp.array([1.0, 1.0, 1.0, 1.0])
 
 alpha = 0.5
 lambda_positivity = 1.0
-positivity_fast_kernel_arrays = jnp.array([1.0, 1.0, 1.0, 1.0])
 
 
 def test_chi2_training_data():
@@ -100,7 +100,7 @@ def test_chi2_training_data_with_positivity():
     )
 
     mock_penalty_posdata = (
-        lambda pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays: jnp.array(
+        lambda pdf, alpha, lambda_positivity, TEST_POS_FK_ARRAYS: jnp.array(
             [1.0, 2.0, 3.0, 4.0]
         )
     )
@@ -115,7 +115,7 @@ def test_chi2_training_data_with_positivity():
         batch_idx,
         alpha,
         lambda_positivity,
-        positivity_fast_kernel_arrays,
+        TEST_POS_FK_ARRAYS,
     )
 
     # Calculate expected chi2 manually for verification
@@ -140,7 +140,7 @@ def test_chi2_validation_data_with_positivity():
     )
 
     mock_penalty_posdata = (
-        lambda pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays: jnp.array(
+        lambda pdf, alpha, lambda_positivity, TEST_POS_FK_ARRAYS: jnp.array(
             [1.0, 2.0, 3.0, 4.0]
         )
     )
@@ -154,7 +154,7 @@ def test_chi2_validation_data_with_positivity():
         pdf,
         alpha,
         lambda_positivity,
-        positivity_fast_kernel_arrays,
+        TEST_POS_FK_ARRAYS,
     )
 
     # Calculate expected chi2 manually for verification
