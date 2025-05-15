@@ -1,10 +1,11 @@
 .. _evolution:
 
-===================
-Colibri Fit folders
-===================
+===============
+Colibri Scripts
+===============
 
-In this tutorial we will discuss what the general structure of a colibri fit folder is and how it can be evolved.
+In this tutorial we will discuss what the general structure of a colibri fit folder is 
+and some of the scripts that are available in colibri.
 
 Colibri fit folders
 -------------------
@@ -30,9 +31,9 @@ Any Bayesian fit folder should contain the following files:
    ├── pdf_model.pkl     # pickled PDF model used for the fit
    ├── input/            # directory of input data and runcard(s)
    ├── filter.yml        # YAML file: copy of the input runcard
-   └── md5               # checksum file to verify integrity of the fit folder
+   ├── md5               # checksum file to verify integrity of the fit folder
    ├── bayes_metrics.csv  
-   ├── full_posterior_sample.csv
+   └── full_posterior_sample.csv
 
 
 The ``replicas`` folder contains the subfolders of the replicas that were used in the fit. 
@@ -137,3 +138,96 @@ lhapdf environment folder or to symlink the fit folder to the `NNPDF/results` fo
 
     The final folder after the evolution will also contain a symlink `nnfit -> replicas` needed for `validphys` and 
     `evolven3fit` as well as a `postfit` folder.
+
+
+Resampling script
+-----------------
+
+In a Colibri fit runcard, you control how many posterior samples get written out as .exportgrid files in the 
+``replicas/`` folder — and those can subsequently be evolved into a PDF set.
+
+For a Bayesian fit using the analytical - inference method, set the total number of posterior draws via the 
+``analytic_settings`` block. For example:
+
+.. code-block:: yaml
+
+    # Analytic settings
+    analytic_settings:
+      n_posterior_samples: 100
+      full_sample_size: 50000
+
+Likewise, if you instead use the UltraNest nested sampler, specify exactly the same parameter name under 
+``ultranest_settings``:
+
+.. code-block:: yaml
+
+    # ultranest settings
+    ultranest_settings:
+      n_posterior_samples: 100
+      ...
+
+
+**Key Parameters**
+
+
+- ``n_posterior_samples``: 
+  The number of individual posterior draws that will each be written out as a separate
+  ``.exportgrid`` file in the ``replicas/`` folder.
+
+- ``full_sample_size`` *(analytic only)* : 
+  The total size of the merged posterior sample, which is saved to
+  ``full_posterior_sample.csv`` at the top level of your fit directory.
+
+.. note::
+    
+    In the case of a fit done using the ``ultranest`` nested sampling sampler, 
+    the ``full_sample_size`` defaults to an internal number that might depends on the 
+    specific run.
+
+
+If you want to draw additional replicas (or have a smaller set for a finite-size effects studies) from the posterior distribution 
+of an already‐completed PDF fit, you do **not** need to re‐run the full fit. 
+Instead, use the ``resample_fit`` helper script.
+
+**Usage**
+
+
+To see all available options, invoke:
+
+.. code-block:: console
+
+    $ resample_fit --help
+
+This will print out a help message that looks like this:
+
+
+.. code-block:: bash
+
+   usage: resample_fit [-h] [--fitype FITYPE] [--nreplicas NREPLICAS] [--resampling_seed RESAMPLING_SEED]
+                       [--resampled_fit_name RESAMPLED_FIT_NAME] [--parametrisation_scale PARAMETRISATION_SCALE]
+                       fit_name
+   
+   Script to resample from Bayesian posterior
+   
+   positional arguments:
+     fit_name              The colibri fit from which to sample.
+   
+   options:
+     -h, --help            show this help message and exit
+     --fitype FITYPE, -t FITYPE
+                           The type of fit to be resampled. Currently only `ultranest` and `analytic` are supported.
+     --nreplicas NREPLICAS, -nrep NREPLICAS
+                           The number of samples.
+     --resampling_seed RESAMPLING_SEED, -seed RESAMPLING_SEED
+                           The random seed to be used to sample from the posterior.
+     --resampled_fit_name RESAMPLED_FIT_NAME, -newfit RESAMPLED_FIT_NAME
+                           The name of the resampled fit.
+     --parametrisation_scale PARAMETRISATION_SCALE, -Q PARAMETRISATION_SCALE
+                           The scale at which the PDFs are fitted.
+
+As an example, if we want to resample from the posterior distribution of an analytical fit called ``my_fit``
+we can do it as follows:
+
+.. code-block:: bash
+
+   resample_fit my_fit -t analytic -n 100 -seed 1234 -newfit my_resampled_fit
