@@ -8,25 +8,35 @@ import os
 import pathlib
 from pathlib import Path
 import shutil
+
 from numpy.testing import assert_allclose
 import pytest
 from unittest.mock import patch, mock_open, MagicMock
 from unittest import mock
+
 
 import pandas as pd
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas
+import pytest
+import validphys
+from numpy.testing import assert_allclose
+from validphys import convolution
+from validphys.fkparser import load_fktable
+
 from colibri.api import API as cAPI
 from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     MOCK_PDF_MODEL,
-    TEST_DATASET_HAD,
     TEST_DATASET,
+    TEST_DATASET_HAD,
 )
 from colibri.utils import (
     cast_to_numpy,
+    closest_indices,
+    compute_determinants_of_principal_minors,
     get_fit_path,
     get_full_posterior,
     get_pdf_model,
@@ -37,12 +47,107 @@ from colibri.utils import (
     write_resampled_bayesian_fit,
     compute_determinants_of_principal_minors,
     resample_posterior_from_file,
+    pdf_model_from_colibri_model,
+    resample_from_ns_posterior,
+    t0_pdf_grid,
 )
 from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from validphys.fkparser import load_fktable
 
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
+
+
+@pytest.fixture
+def mock_colibri_model():
+    model = MagicMock()
+    model.grid_values_func = MagicMock(
+        return_value=lambda params: jnp.array(
+            [[p * x for x in range(1, 6)] for p in params]
+        )
+    )
+    return model
+
+
+def test_t0_pdf_grid():
+    """
+    Test the t0_pdf_grid function.
+
+    Verifies:
+    - Type of "t0pdfset" is validphys.core.PDF
+    - Output type is a jnp.array.
+    - The output shape is (N_rep, N_fl, N_x)
+    """
+
+    # mock a valid PDF set
+    inp = {"t0pdfset": "NNPDF40_nlo_as_01180"}
+    t0pdfset = cAPI.t0pdfset(**inp)
+
+    # Check 1: t0pdfset is an instance of validphys.core.PDF
+    assert isinstance(t0pdfset, validphys.core.PDF)
+
+    # define a test array
+    FIT_XGRID = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    # call the function
+    t0_grid = t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65)
+
+    # Check 2: type of the output is a jnp.array
+    assert isinstance(t0_grid, jnp.ndarray)
+
+    # Check 3: shape of the output
+    N_rep = t0pdfset.get_members()  #   number of replicas
+    N_fl = len(convolution.FK_FLAVOURS)  # number of flavours
+
+    assert t0_grid.shape == (N_rep, N_fl, len(FIT_XGRID))
+
+
+def test_resample_from_ns_posterior():
+    """
+    Test the resample_from_ns_posterior function.
+    Verifies:
+    - Output type is a JAX DeviceArray.
+    - Output size matches n_posterior_samples and is smaller than or equal to the input sample size.
+    - All elements in the output belong to the original sample.
+    - There are no duplicate elements in the output.
+    - If n_posterior_samples equals the input size, the output is identical to the input.
+    """
+
+    # Create a sample to test the function
+    samples = jnp.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    n_posterior_samples = 3
+    posterior_resampling_seed = 42
+
+    # Call the function
+    resampled_samples = resample_from_ns_posterior(
+        samples,
+        n_posterior_samples=n_posterior_samples,
+        posterior_resampling_seed=posterior_resampling_seed,
+    )
+
+    # Check 1: Output type
+    assert isinstance(resampled_samples, jnp.ndarray)
+
+    # Check 2: Output size
+    assert len(resampled_samples) == n_posterior_samples
+    assert len(resampled_samples) <= len(samples)
+
+    # Check 3: All elements in output belong to the original samples
+    assert np.all(np.isin(resampled_samples, samples))
+
+    # Check 4: No duplicates
+    assert len(resampled_samples) == len(jnp.unique(resampled_samples))
+
+    # Case 2: n_posterior_samples equals the size of the input samples
+    n_posterior_samples = len(samples)
+    resampled_samples_full = resample_from_ns_posterior(
+        samples,
+        n_posterior_samples=n_posterior_samples,
+        posterior_resampling_seed=posterior_resampling_seed,
+    )
+
+    # Check 5: Output is identical to the input when sizes match
+    assert jnp.array_equal(jnp.sort(resampled_samples_full), jnp.sort(samples))
 
 
 def test_cast_to_numpy():
@@ -67,6 +172,7 @@ def test_get_path_fit():
     and checks if the function returns the correct path.
     Finally, it removes the copied directory.
     """
+
     conda_prefix = os.getenv("CONDA_PREFIX")
 
     destination_dir = pathlib.Path(conda_prefix) / "share" / "colibri" / "results"
@@ -235,7 +341,7 @@ def test_likelihood_float_type(
     tmp_path,
 ):
 
-    _pred_data = lambda x: jnp.ones(
+    _pred_data = lambda x, fks: jnp.ones(
         len(MOCK_CENTRAL_INV_COVMAT_INDEX.central_values)
     )  # Mock _pred_data
     FIT_XGRID = jnp.linspace(0, 1, 10)  # Mock FIT_XGRID
@@ -475,6 +581,76 @@ def test_resample_posterior_not_use_all_columns():
         assert result == "mock_resampled_posterior"
 
 
+def test_single_value():
+    """
+    Test for utils.closest_indices.
+    """
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([1.1])
+    result = closest_indices(a, v, atol=0.2)
+    expected = np.array([0])
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_multiple_values():
+    """
+    Test for utils.closest_indices.
+    """
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([1.1, 3.0])
+    result = closest_indices(a, v, atol=0.2)
+    expected = np.array([0, 2])
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_no_close_values():
+    """
+    Test for utils.closest_indices.
+    """
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([4.0])
+    result = closest_indices(a, v, atol=0.2)
+    expected = np.array([])  # No close values
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_exact_match():
+    """
+    Test for utils.closest_indices.
+    """
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([1.0, 2.0, 3.0])
+    result = closest_indices(a, v, atol=1e-7)
+    expected = np.array([0, 1, 2])
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_atol_effect():
+    """
+    Test for utils.closest_indices.
+    """
+    a = np.array([1.0, 2.0, 3.0])
+    v = np.array([2.1])
+    result = closest_indices(a, v, atol=0.09)  # Should not match 2.0 due to tight atol
+    expected = np.array([])  # No match because atol is small
+    np.testing.assert_array_equal(result, expected)
+
+    result = closest_indices(a, v, atol=0.11)  # Now 2.1 is close enough to 2.0
+    expected = np.array([1])
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_scalar_v_input():
+    """
+    Test for utils.closest_indices.
+    """
+    a = np.array([1, 2, 3])
+    v = np.float32(1.0)
+    expected = 0
+    result = closest_indices(a, v)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
 def test_identity_matrix():
     C = np.identity(3)
     expected = np.array([1.0, 1.0, 1.0, 1.0])
@@ -509,3 +685,79 @@ def test_large_psd_matrix():
     expected = np.array([1.0, 4.0, 8.0, 12.0])
     result = compute_determinants_of_principal_minors(C)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_pdf_model_from_colibri_model_not_found():
+    with patch("importlib.import_module", side_effect=ModuleNotFoundError):
+        settings = {"model": "nonexistent_model"}
+        with pytest.raises(ModuleNotFoundError):
+            pdf_model_from_colibri_model(settings)
+
+
+@patch("importlib.import_module")
+def test_pdf_model_from_colibri_model_missing_config(mock_import_module):
+    # Explicitly remove the 'config' attribute
+    mock_module = MagicMock()
+    del mock_module.config  # Ensure 'config' attribute doesn't exist
+    mock_import_module.return_value = mock_module
+    settings = {"model": "mock_model"}
+    with pytest.raises(AttributeError):
+        pdf_model_from_colibri_model(settings)
+
+
+@patch("importlib.import_module")
+@patch("inspect.getmembers")
+def test_pdf_model_from_colibri_model_success(
+    mock_getmembers, mock_import_module, mock_colibri_model
+):
+    mock_import_module.return_value = MagicMock()
+    # Mock the colibriConfig class and its subclass
+    from colibri.config import colibriConfig
+
+    class MockColibriConfig(colibriConfig):
+        def __init__(self, input_params):
+            pass
+
+        def produce_pdf_model(self, param1, param2, output_path, dump_model=False):
+            return mock_colibri_model
+
+    mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
+
+    # Define valid model settings
+    model_settings = {
+        "model": "mock_colibri_model",
+        "param1": 1,
+        "param2": 2,
+    }
+
+    # Call the function and assert the result
+    result = pdf_model_from_colibri_model(model_settings)
+    assert result == mock_colibri_model
+
+
+@patch("importlib.import_module")
+@patch("inspect.getmembers")
+def test_pdf_model_from_colibri_model_incorrect_inputs(
+    mock_getmembers, mock_import_module, mock_colibri_model
+):
+    mock_import_module.return_value = MagicMock()
+    # Mock the colibriConfig class and its subclass
+    from colibri.config import colibriConfig
+
+    class MockColibriConfig(colibriConfig):
+        def __init__(self, input_params):
+            pass
+
+        def produce_pdf_model(self, param1, param2, output_path, dump_model=False):
+            return mock_colibri_model
+
+    mock_getmembers.return_value = [("MockSubclass", MockColibriConfig)]
+
+    # Define model settings missing param2
+    model_settings = {
+        "model": "mock_colibri_model",
+        "param1": 1,
+    }
+
+    with pytest.raises(ValueError):
+        pdf_model_from_colibri_model(model_settings)

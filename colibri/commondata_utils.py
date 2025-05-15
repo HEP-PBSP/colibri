@@ -27,7 +27,7 @@ def experimental_commondata_tuple(data):
     Returns
     -------
     tuple
-        tuple of validphys.coredata.CommonData instances
+        tuple of nnpdf_data.coredata.CommonData instances
     """
     return tuple(data.load_commondata_instance())
 
@@ -39,6 +39,7 @@ def level_0_commondata_tuple(
     FIT_XGRID,
     fast_kernel_arrays,
     flavour_indices=None,
+    fill_fk_xgrid_with_zeros=False,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -60,13 +61,24 @@ def level_0_commondata_tuple(
     closure_test_central_pdf_grid: jnp.array
         grid is of shape N_fl x N_x
 
+    fast_kernel_arrays: tuple
+        tuple of jnp.array of shape (Ndat, Nfl, Nfk_xgrid)
+        containing the fast kernel arrays for each dataset in data.
+
     flavour_indices: list, default is None
         Subset of flavour (evolution basis) indices to be used.
+
+    fill_fk_xgrid_with_zeros: bool, default is False
+        If True, then the missing xgrid points in the FK table
+        will be filled with zeros. This is useful when the FK table
+        is needed as tensor of shape (Ndat, Nfl, Nfk_xgrid) with Nfk_xgrid and Nfl fixed
+        for all datasets.
+
 
     Returns
     -------
     tuple
-        tuple of validphys.coredata.CommonData instances
+        tuple of nnpdf_data.coredata.CommonData instances
     """
 
     fake_data = []
@@ -78,9 +90,12 @@ def level_0_commondata_tuple(
         # replace central values with theory prediction from `closure_test_pdf`
         fake_data.append(
             cd.with_central_value(
-                make_pred_dataset(ds, FIT_XGRID, flavour_indices=flavour_indices)(
-                    closure_test_central_pdf_grid, fk_dataset
-                )
+                make_pred_dataset(
+                    ds,
+                    FIT_XGRID,
+                    flavour_indices=flavour_indices,
+                    fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
+                )(closure_test_central_pdf_grid, fk_dataset)
             )
         )
     return tuple(fake_data)
@@ -99,7 +114,7 @@ def level_1_commondata_tuple(
 
     Parameters
     ----------
-    level_0_commondata_tuple: tuple of validphys.coredata.CommonData instances
+    level_0_commondata_tuple: tuple of nnpdf_data.coredata.CommonData instances
         A tuple of level_0 closure test data.
 
     data_generation_covariance_matrix: jnp.array
@@ -111,7 +126,7 @@ def level_1_commondata_tuple(
     Returns
     -------
     tuple
-        tuple of validphys.coredata.CommonData instances
+        tuple of nnpdf_data.coredata.CommonData instances
     """
 
     # First, construct a jax array from the level_0_commondata_tuple

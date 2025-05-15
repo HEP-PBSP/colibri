@@ -10,12 +10,13 @@ import hashlib
 import logging
 import os
 import shutil
-import jax
 
+import jax
 import jax.numpy as jnp
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
+from colibri.core import IntegrabilitySettings, PriorSettings
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
@@ -284,6 +285,120 @@ class colibriConfig(Config):
 
         return positivity_penalty_settings
 
+    def parse_integrability_settings(self, settings):
+        """
+        Parses the integrability settings defined in the runcard
+        into an IntegrabilitySettings dataclass.
+        """
+
+        known_keys = {
+            "integrability",
+            "integrability_specs",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            # raise error if key not in known keys as otherwise IntegrabilitySettigs would
+            # be passed an uknown key
+            raise (
+                ConfigError(
+                    f"Key '{k}' in integrability_settings not known.",
+                    k,
+                    known_keys,
+                )
+            )
+
+        integrability_settings = {}
+
+        integrability_settings["integrability"] = settings.get("integrability", False)
+        integrability_settings["integrability_specs"] = settings.get(
+            "integrability_specs", {}
+        )
+
+        # assign default values
+        integrability_settings["integrability_specs"].setdefault(
+            "lambda_integrability", 100
+        )
+        integrability_settings["integrability_specs"].setdefault(
+            "evolution_flavours", [9, 10]
+        )  # T3 and T8 as default
+        integrability_settings["integrability_specs"].setdefault(
+            "integrability_xgrid", [2.00000000e-07]
+        )  # last point of XGRID as default
+
+        if integrability_settings["integrability_specs"]["evolution_flavours"] != [
+            9,
+            10,
+        ]:  # only process if not default
+
+            ev_fls = []
+
+            for ev_fl in integrability_settings["integrability_specs"][
+                "evolution_flavours"
+            ]:
+                if ev_fl not in FLAVOUR_TO_ID_MAPPING.keys():
+                    raise (
+                        ConfigError(
+                            f"evolution_flavours ids can only be taken from  {FLAVOUR_TO_ID_MAPPING.keys()}"
+                        )
+                    )
+                ev_fls.append(FLAVOUR_TO_ID_MAPPING[ev_fl])
+
+            # convert strings to numeric indexes
+            integrability_settings["integrability_specs"]["evolution_flavours"] = ev_fls
+
+        return IntegrabilitySettings(**integrability_settings)
+
+    def parse_prior_settings(self, settings):
+        """
+        Parses the prior_settings namespace from the runcard,
+        into the core.PriorSettings dataclass.
+        """
+        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
+        known_keys = {
+            "prior_distribution",
+            "prior_distribution_specs",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in prior_settings not known.", k, known_keys)
+            )
+
+        # Now construct the prior_settings dictionary, checking the parameter combinations are valid
+        prior_settings = {}
+
+        # Set the prior distribution
+        prior_settings["prior_distribution"] = settings.get(
+            "prior_distribution", "uniform_parameter_prior"
+        )
+
+        # Set the prior distribution specs
+        # log warning if the user has not provided the prior_distribution_specs and the prior distribution is uniform
+        if (settings["prior_distribution"] == "uniform_parameter_prior") and (
+            "prior_distribution_specs" not in settings
+        ):
+            log.warning(
+                ConfigError(
+                    "prior_distribution_specs not found in prior_settings. Using default [-1,1] values for uniform_parameter_prior.",
+                )
+            )
+
+        # raise error if prior_distribution_specs is not provided for prior_from_gauss_posterior
+        if (settings["prior_distribution"] == "prior_from_gauss_posterior") and (
+            "prior_distribution_specs" not in settings
+        ):
+            raise ConfigError(
+                "prior_distribution_specs not found in prior_settings. Please provide prior_distribution_specs for prior_from_gauss_posterior."
+            )
+
+        prior_settings["prior_distribution_specs"] = settings.get(
+            "prior_distribution_specs", {"max_val": 1.0, "min_val": -1.0}
+        )
+
+        return PriorSettings(**prior_settings)
+
     def parse_analytic_settings(
         self,
         settings,
@@ -297,7 +412,6 @@ class colibriConfig(Config):
             "n_posterior_samples",
             "sampling_seed",
             "full_sample_size",
-            "optimal_prior",
         }
 
         kdiff = settings.keys() - known_keys
@@ -321,9 +435,6 @@ class colibriConfig(Config):
         # Set the full sample size
         analytic_settings["full_sample_size"] = settings.get("full_sample_size", 1000)
 
-        # Set the optimal prior flag
-        analytic_settings["optimal_prior"] = settings.get("optimal_prior", False)
-
         return analytic_settings
 
     def produce_vectorized(self, ns_settings):
@@ -345,7 +456,7 @@ class colibriConfig(Config):
         elif closure_test_level == 1:
             return commondata_utils.level_1_commondata_tuple
         else:
-            raise ValueError(
+            raise ConfigError(
                 "closure_test_level must be either False, 0 or 1, if not specified in the runcard then Experimental data is used."
             )
 
@@ -354,8 +465,8 @@ class colibriConfig(Config):
         """
         Produces the covariance matrix used in the fit.
         This covariance matrix is used in:
-            - commondata_utils.central_covmat_index
-            - loss functions in mc_loss_functions.py
+        - commondata_utils.central_covmat_index
+        - loss functions in mc_loss_functions.py
         """
         if use_fit_t0:
             return colibri_covmats.dataset_inputs_t0_covmat_from_systematics
@@ -375,25 +486,12 @@ class colibriConfig(Config):
         else:
             return colibri_covmats.dataset_inputs_covmat_from_systematics
 
-    def produce_dataset_inputs_t0_predictions(
-        self, data, t0set, use_fit_t0, use_gen_t0
-    ):
-        """
-        Produce t0 predictions for all datasets in data
-        """
-
-        if (not use_fit_t0) or (not use_gen_t0):
-            raise ConfigError(
-                f"use_fit_t0 or use_gen_t0 need to be set to True so that dataset_inputs_t0_predictions can be generated"
-            )
-        t0_predictions = []
-        for dataset in data.datasets:
-            t0_predictions.append(covmats.dataset_t0_predictions(dataset, t0set))
-        return t0_predictions
-
     def parse_closure_test_pdf(self, name):
         """PDF set used to generate fakedata"""
-        return self.parse_pdf(name)
+        if name == "colibri_model":
+            return name
+        else:
+            return self.parse_pdf(name)
 
     def produce_flavour_indices(self, flavour_mapping=None):
         """

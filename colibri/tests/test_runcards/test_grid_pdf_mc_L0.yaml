@@ -6,11 +6,13 @@ meta: 'A runcard to test a monte carlo fit.'
 
 dataset_inputs:    
   # DIS                
-  - {'dataset': 'NMC_NC_NOTFIXED_P_EM-SIGMARED', 'variant': 'legacy'}
-  - {'dataset': 'SLAC_NC_NOTFIXED_P_DW_EM-F2', 'variant': 'legacy'}
-  - {'dataset': 'SLAC_NC_NOTFIXED_D_DW_EM-F2', 'variant': 'legacy'}
+  - {'dataset': 'NMC_NC_NOTFIXED_P_EM-SIGMARED', variant: legacy}
+  - {'dataset': 'SLAC_NC_NOTFIXED_P_EM-F2', variant: legacy_dw}
+  - {'dataset': 'SLAC_NC_NOTFIXED_D_EM-F2', variant: legacy_dw}
 
-theoryid: 401                         # The theory from which the predictions are drawn.
+
+theoryid: 40_000_000                         # The theory from which the predictions are drawn.
+
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
 closure_test_level: 0                  # The closure test level: False for experimental, level 0
@@ -28,8 +30,10 @@ positivity:                            # Positivity datasets, used in the positi
   posdatasets:
   - {dataset: NNPDF_POS_2P24GEV_F2U, maxlambda: 1e6}
 
-alpha: 1e-7                           
-lambda_positivity: 0                  
+positivity_penalty_settings:
+  positivity_penalty: true
+  alpha: 1e-7                           
+  lambda_positivity: 10             
 
 use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF31_nnlo_as_0118         # The t0 PDF used to build the t0 covariance matrix.
