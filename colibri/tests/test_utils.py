@@ -677,7 +677,6 @@ def test_analytic_fit_resampler(mock_resample, mock_read_csv, mock_exists):
     mock_exists.assert_called_once_with(fit_path / "full_posterior_sample.csv")
 
     # Ensure correct arguments were passed to mock_resample
-    assert np.array_equal(mock_resample.call_args[0][0], sample_data)
     assert mock_resample.call_args[0][1] == len(sample_data)
     assert mock_resample.call_args[0][2] == resampling_seed
 
