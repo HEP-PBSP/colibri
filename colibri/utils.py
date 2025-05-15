@@ -370,27 +370,12 @@ def resample_posterior_from_file(
     return resampled_posterior
 
 
-def ultranest_ns_fit_resampler(
+def full_posterior_sample_fit_resampler(
     fit_path: pathlib.Path, n_replicas: int, resampling_seed: int
 ):
     """
-    Wrapper for resampling from ultranest nested sampling result posterior.
-    """
-    return resample_posterior_from_file(
-        fit_path,
-        pathlib.Path("ultranest_logs/chains/equal_weighted_post.txt"),
-        n_replicas,
-        resampling_seed,
-        use_all_columns=True,
-        read_csv_args={"sep": "\s+", "dtype": float},
-    )
-
-
-def analytic_fit_resampler(
-    fit_path: pathlib.Path, n_replicas: int, resampling_seed: int
-):
-    """
-    Wrapper for resampling from analytic posterior.
+    Wrapper for resampling from a fit with a full_posterior_sample.csv like file
+    storing the posterior samples in the root of the folder.
     """
     return resample_posterior_from_file(
         fit_path,

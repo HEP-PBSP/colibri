@@ -12,8 +12,7 @@ import pathlib
 from reportengine import colors
 
 from colibri.utils import (
-    ultranest_ns_fit_resampler,
-    analytic_fit_resampler,
+    full_posterior_sample_fit_resampler,
     write_resampled_bayesian_fit,
 )
 
@@ -77,20 +76,16 @@ def main():
     # path of resampled fit
     resampled_fit_path = pathlib.Path(args.resampled_fit_name)
 
+    resampled_posterior = full_posterior_sample_fit_resampler(
+        fit_path,
+        args.nreplicas,
+        args.resampling_seed,
+    )
+
     if args.fitype == "ultranest":
-        resampled_posterior = ultranest_ns_fit_resampler(
-            fit_path,
-            args.nreplicas,
-            args.resampling_seed,
-        )
         csv_result_name = "ns_result"
 
     elif args.fitype == "analytic":
-        resampled_posterior = analytic_fit_resampler(
-            fit_path,
-            args.nreplicas,
-            args.resampling_seed,
-        )
         csv_result_name = "analytic_result"
 
     else:
