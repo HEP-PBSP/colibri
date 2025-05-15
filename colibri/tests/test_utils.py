@@ -50,8 +50,8 @@ from colibri.utils import (
     pdf_model_from_colibri_model,
     resample_from_ns_posterior,
     t0_pdf_grid,
+    analytic_fit_resampler,
 )
-from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from validphys.fkparser import load_fktable
 
 
@@ -537,7 +537,6 @@ def test_resample_posterior_not_use_all_columns():
     """
     Test resample_posterior_from_file when use_all_columns=False.
     """
-    import pathlib
 
     # Mock inputs
     fit_path = pathlib.Path("/mock/path")
@@ -649,6 +648,38 @@ def test_scalar_v_input():
     expected = 0
     result = closest_indices(a, v)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+@patch("colibri.utils.os.path.exists")
+@patch("pandas.read_csv")
+@patch("colibri.utils.resample_from_ns_posterior")
+def test_analytic_fit_resampler(mock_resample, mock_read_csv, mock_exists):
+    # Test the case where n_replicas exceeds the number of available posterior samples
+    fit_path = Path("/fake/path")
+    n_replicas = 15
+    resampling_seed = 42
+
+    # Mock os.path.exists to return True, simulating that the file exists
+    mock_exists.return_value = True
+
+    # Mock pandas.read_csv to return a dataframe with fewer rows than n_replicas
+    sample_data = np.array([[1, 2], [3, 4], [5, 6]])  # 3 samples
+    mock_read_csv.return_value = pd.DataFrame(sample_data)
+
+    # Mock resample_from_ns_posterior to return expected value
+    expected_resampled = np.array([[1, 2], [3, 4]])  # Example result
+    mock_resample.return_value = expected_resampled
+
+    result = analytic_fit_resampler(fit_path, n_replicas, resampling_seed)
+
+    assert result is expected_resampled
+
+    mock_exists.assert_called_once_with(fit_path / "full_posterior_sample.csv")
+
+    # Ensure correct arguments were passed to mock_resample
+    assert np.array_equal(mock_resample.call_args[0][0], sample_data)
+    assert mock_resample.call_args[0][1] == len(sample_data)
+    assert mock_resample.call_args[0][2] == resampling_seed
 
 
 def test_identity_matrix():
