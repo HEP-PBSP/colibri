@@ -533,6 +533,100 @@ def test_write_resampled_bayesian_fit(
         mock_to_csv.assert_called_once_with(expected_csv_path, float_format="%.5e")
 
 
+def test_creates_replicas_dir_when_missing(tmp_path):
+    # Setup fake paths
+    fit_path = tmp_path / "fit"
+    resampled_path = tmp_path / "resampled"
+    # Touch a dummy pdf_model.pkl so dill.load can open it
+    (fit_path).mkdir()
+    (fit_path / "pdf_model.pkl").write_bytes(b"")
+
+    # Create a fake pdf_model with minimal interface
+    fake_model = mock.Mock()
+    fake_model.param_names = []  # no columns
+    fake_model.grid_values_func.return_value = lambda params: []
+
+    # Patch out everything except the mkdir check
+    with mock.patch("colibri.utils.dill.load", return_value=fake_model), mock.patch(
+        "colibri.utils.os.system"
+    ) as mock_system, mock.patch(
+        "colibri.utils.pd.DataFrame.to_csv"
+    ) as mock_to_csv, mock.patch(
+        "colibri.utils.os.path.exists", return_value=False
+    ) as mock_exists, mock.patch(
+        "colibri.utils.os.mkdir"
+    ) as mock_mkdir, mock.patch(
+        "colibri.utils.write_exportgrid"
+    ) as mock_we:
+
+        # Call with an empty posterior so loop won’t actually try to mkdir again
+        write_resampled_bayesian_fit(
+            resampled_posterior=np.empty((0, 0)),
+            fit_path=fit_path,
+            resampled_fit_path=resampled_path,
+            resampled_fit_name="replica_name",
+            parametrisation_scale=1.0,
+            csv_results_name="results",
+        )
+
+        # The first time we hit the replicas-dir block, exists() was False
+        new_rep_dir = resampled_path / "replicas"
+        mock_exists.assert_any_call(new_rep_dir)
+        mock_mkdir.assert_called_once_with(new_rep_dir)
+
+
+def test_creates_each_replica_dir_when_missing(tmp_path):
+    # --- Setup fake fit and resampled dirs
+    fit_path = tmp_path / "fit"
+    resampled_path = tmp_path / "resampled"
+    fit_path.mkdir()
+    # dummy pdf_model.pkl so open() doesn't fail
+    (fit_path / "pdf_model.pkl").write_bytes(b"")
+
+    # Fake pdf_model: only needs param_names + grid_values_func
+    fake_model = mock.Mock()
+    fake_model.param_names = ["a", "b"]
+    fake_model.grid_values_func.return_value = lambda params: []
+
+    # Create a small posterior with 2 replicas
+    posterior = np.array([[1.0, 2.0], [3.0, 4.0]])
+
+    with mock.patch("colibri.utils.dill.load", return_value=fake_model), mock.patch(
+        "colibri.utils.os.system"
+    ), mock.patch("colibri.utils.pd.DataFrame.to_csv"), mock.patch(
+        "colibri.utils.os.path.exists", return_value=False
+    ) as m_exists, mock.patch(
+        "colibri.utils.os.mkdir"
+    ) as m_mkdir, mock.patch(
+        "colibri.utils.write_exportgrid"
+    ):
+
+        write_resampled_bayesian_fit(
+            resampled_posterior=posterior,
+            fit_path=fit_path,
+            resampled_fit_path=resampled_path,
+            resampled_fit_name="replica_name",
+            parametrisation_scale=1.0,
+            csv_results_name="results",
+        )
+
+        # Build the expected calls:
+        # 1) mkdir(resampled/replicas)
+        # 2) mkdir(resampled/replicas/replica_1)
+        # 3) mkdir(resampled/replicas/replica_2)
+        expected_base = resampled_path / "replicas"
+        expected_calls = [
+            mock.call(expected_base),
+            mock.call(expected_base / "replica_1"),
+            mock.call(expected_base / "replica_2"),
+        ]
+
+        assert m_mkdir.call_args_list == expected_calls
+        # And we did check existence three times:
+        assert m_exists.call_count == 3
+        assert m_mkdir.call_count == 3
+
+
 def test_resample_posterior_not_use_all_columns():
     """
     Test resample_posterior_from_file when use_all_columns=False.
