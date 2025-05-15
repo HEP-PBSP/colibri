@@ -9,5 +9,10 @@ This section discusses some relevant theoretical background to Colibri.
 .. toctree::
    :maxdepth: 1
 
-   ./Theory1
-   ./Theory2
+   ./likelihood/index
+   
+   ./theory_predictions/index
+
+   ./bayesian_prior/index
+
+   ./inference/index
