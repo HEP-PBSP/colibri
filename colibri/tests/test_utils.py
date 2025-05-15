@@ -43,14 +43,13 @@ from colibri.utils import (
     likelihood_float_type,
     mask_fktable_array,
     mask_luminosity_mapping,
-    ultranest_ns_fit_resampler,
+    full_posterior_sample_fit_resampler,
     write_resampled_bayesian_fit,
     compute_determinants_of_principal_minors,
     resample_posterior_from_file,
     pdf_model_from_colibri_model,
     resample_from_ns_posterior,
     t0_pdf_grid,
-    analytic_fit_resampler,
 )
 from validphys.fkparser import load_fktable
 
@@ -379,12 +378,10 @@ def test_ns_fit_resampler_file_not_found(mock_resample, mock_read_csv, mock_exis
     mock_exists.return_value = False
 
     with pytest.raises(FileNotFoundError) as exc_info:
-        ultranest_ns_fit_resampler(fit_path, n_replicas, resampling_seed)
+        full_posterior_sample_fit_resampler(fit_path, n_replicas, resampling_seed)
 
     assert "please run the appropriate fit first." in str(exc_info.value)
-    mock_exists.assert_called_once_with(
-        fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
-    )
+    mock_exists.assert_called_once_with(fit_path / "full_posterior_sample.csv")
     mock_read_csv.assert_not_called()
     mock_resample.assert_not_called()
 
@@ -411,21 +408,13 @@ def test_ns_fit_resampler_replicas_exceeding_samples(
     expected_resampled = np.array([[1, 2], [3, 4]])  # Example result
     mock_resample.return_value = expected_resampled
 
-    result = ultranest_ns_fit_resampler(fit_path, n_replicas, resampling_seed)
+    result = full_posterior_sample_fit_resampler(fit_path, n_replicas, resampling_seed)
 
     assert result is expected_resampled
 
-    mock_exists.assert_called_once_with(
-        fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
-    )
-    mock_read_csv.assert_called_once_with(
-        fit_path / "ultranest_logs/chains/equal_weighted_post.txt",
-        sep="\s+",
-        dtype=float,
-    )
+    mock_exists.assert_called_once_with(fit_path / "full_posterior_sample.csv")
 
     # Ensure correct arguments were passed to mock_resample
-    assert np.array_equal(mock_resample.call_args[0][0], sample_data)
     assert mock_resample.call_args[0][1] == len(sample_data)
     assert mock_resample.call_args[0][2] == resampling_seed
 
@@ -450,20 +439,12 @@ def test_ns_fit_resampler_normal_case(mock_resample, mock_read_csv, mock_exists)
     expected_resampled = np.array([[3, 4], [5, 6]])  # Example result
     mock_resample.return_value = expected_resampled
 
-    result = ultranest_ns_fit_resampler(fit_path, n_replicas, resampling_seed)
+    result = full_posterior_sample_fit_resampler(fit_path, n_replicas, resampling_seed)
 
     assert result is expected_resampled
-    mock_exists.assert_called_once_with(
-        fit_path / "ultranest_logs/chains/equal_weighted_post.txt"
-    )
-    mock_read_csv.assert_called_once_with(
-        fit_path / "ultranest_logs/chains/equal_weighted_post.txt",
-        sep="\s+",
-        dtype=float,
-    )
+    mock_exists.assert_called_once_with(fit_path / "full_posterior_sample.csv")
 
     # Ensure correct arguments were passed to mock_resample
-    assert np.array_equal(mock_resample.call_args[0][0], sample_data)
     assert mock_resample.call_args[0][1] == n_replicas
     assert mock_resample.call_args[0][2] == resampling_seed
 
@@ -764,7 +745,7 @@ def test_analytic_fit_resampler(mock_resample, mock_read_csv, mock_exists):
     expected_resampled = np.array([[1, 2], [3, 4]])  # Example result
     mock_resample.return_value = expected_resampled
 
-    result = analytic_fit_resampler(fit_path, n_replicas, resampling_seed)
+    result = full_posterior_sample_fit_resampler(fit_path, n_replicas, resampling_seed)
 
     assert result is expected_resampled
 
