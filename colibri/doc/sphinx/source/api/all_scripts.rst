@@ -14,7 +14,7 @@ Evolution
 
 Nested Sampling Resampler
 -------------------------
-.. automodule:: colibri.scripts.ns_resampler
+.. automodule:: colibri.scripts.bayesian_resampler
    :members:
    :undoc-members:
    :show-inheritance:

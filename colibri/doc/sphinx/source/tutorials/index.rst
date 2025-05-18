@@ -16,4 +16,4 @@ creating a custom PDF model or fitting data with it.
 
    closure_tests/index
 
-   evolution/index
+   scripts/index
