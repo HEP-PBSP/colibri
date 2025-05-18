@@ -330,7 +330,7 @@ def likelihood_float_type(
 
 def resample_posterior_from_file(
     fit_path: pathlib.Path,
-    file_path: pathlib.Path,
+    file_path: str,
     n_replicas: int,
     resampling_seed: int,
     use_all_columns: bool = False,
@@ -338,6 +338,31 @@ def resample_posterior_from_file(
 ):
     """
     Generic function to resample from a posterior using a specified file path.
+
+    Parameters
+    ----------
+    fit_path: pathlib.Path
+        The path to the fit folder.
+
+    file_path: str
+        The name of the file containing the posterior samples inside the fit folder.
+
+    n_replicas: int
+        The number of posterior samples to resample from the file.
+
+    resampling_seed: int
+        The random seed to use for resampling.
+
+    use_all_columns: bool, default is False
+        If True, all columns of the file are used. If False, the first column is ignored.
+
+    read_csv_args: dict, default is None
+        Additional arguments to pass to pd.read_csv when loading the file.
+
+    Returns
+    -------
+    resampled_posterior: np.ndarray
+        The resampled posterior samples.
     """
     # Check that the file exists
     full_path = fit_path / file_path
