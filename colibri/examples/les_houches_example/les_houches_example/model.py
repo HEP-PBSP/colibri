@@ -197,7 +197,7 @@ class LesHouchesPDF(PDFModel):
                     valence_pdf,  # V24 = V
                     valence_pdf,  # V35 = V
                     jnp.zeros_like(xgrid),  # T3 = 0
-                    t8_pdf,         # T8
+                    t8_pdf,  # T8
                     sigma_pdf,  # T15 = Σ
                     sigma_pdf,  # T24 = Σ
                     sigma_pdf,  # T35 = Σ
