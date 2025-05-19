@@ -10,6 +10,21 @@ dataset_inputs:
 - {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
 - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
 - {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+# - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
+# - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
+# - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
+# - {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw}
+# - {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy}
+# - {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
+# - {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}
+# - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
 
 
 
@@ -20,7 +35,7 @@ closure_test_level: 0                  # The closure test level: False for exper
                                        # for pseudodata with no noise, level 1 for pseudodata with
                                        # noise.
 
-closure_test_pdf: LH_PARAM_20250429  # The closure test PDF used if closure_test_level is not False
+closure_test_pdf: LH_PARAM_20250519  # The closure test PDF used if closure_test_level is not False
 
 #####################
 # Loss function specs
