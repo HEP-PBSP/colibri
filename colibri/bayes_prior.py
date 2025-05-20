@@ -9,7 +9,7 @@ from colibri.checks import check_pdf_models_equal
 
 
 @check_pdf_models_equal
-def bayesian_prior(prior_settings):
+def bayesian_prior(prior_settings, pdf_model):
     """
     Produces a prior transform function.
 
@@ -27,10 +27,16 @@ def bayesian_prior(prior_settings):
         prior_specs = prior_settings.prior_distribution_specs
 
         if "bounds" in prior_specs:
+            # Use param names from the model to order bounds correctly
+            param_names = pdf_model.param_names
+            bounds_dict = prior_specs["bounds"]
+
+            missing = [p for p in param_names if p not in bounds_dict]
+            if missing:
+                raise ValueError(f"Missing bounds for parameters: {missing}")
+
             # Per-parameter bounds
-            bounds = jnp.array(
-                list(prior_specs["bounds"].values())
-            )  # shape (n_params, 2)
+            bounds = jnp.array([bounds_dict[param] for param in param_names])
             mins = bounds[:, 0]
             maxs = bounds[:, 1]
 
