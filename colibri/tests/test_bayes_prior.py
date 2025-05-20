@@ -56,14 +56,18 @@ def test_uniform_prior():
     prior_transform_bounds = bayesian_prior(prior_settings_bounds, dummy_pdf_model)
 
     cube_bounds = random.uniform(key, shape=(2,))
-    expected_bounds = jnp.array([
-        cube_bounds[0] * (1.0 - (-1.0)) + (-1.0),
-        cube_bounds[1] * (2.0 - 0.0) + 0.0,
-    ])
+    expected_bounds = jnp.array(
+        [
+            cube_bounds[0] * (1.0 - (-1.0)) + (-1.0),
+            cube_bounds[1] * (2.0 - 0.0) + 0.0,
+        ]
+    )
 
     transformed_bounds = prior_transform_bounds(cube_bounds)
 
-    assert jnp.allclose(transformed_bounds, expected_bounds), "Uniform prior transformation (per-parameter bounds) failed."
+    assert jnp.allclose(
+        transformed_bounds, expected_bounds
+    ), "Uniform prior transformation (per-parameter bounds) failed."
 
     # ---- Test missing parameter in bounds ----
     incomplete_bounds = {
@@ -81,7 +85,6 @@ def test_uniform_prior():
     with pytest.raises(ValueError, match="Missing bounds for parameters"):
         bayesian_prior(prior_settings_missing_bounds, dummy_pdf_model)
 
-    
     # ---- Test missing min_val/max_val and bounds ----
     prior_settings_invalid = PriorSettings(
         **{
@@ -92,6 +95,7 @@ def test_uniform_prior():
 
     with pytest.raises(ValueError, match="prior_distribution_specs must define either"):
         bayesian_prior(prior_settings_invalid, dummy_pdf_model)
+
 
 @patch("colibri.bayes_prior.get_full_posterior")
 def test_gaussian_prior(mock_get_full_posterior):
