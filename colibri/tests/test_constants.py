@@ -5,7 +5,13 @@ Module for testing that the constants in the colibri module are
 working as expected.
 """
 
-from colibri.constants import FLAVOURS_ID_MAPPINGS, FLAVOUR_TO_ID_MAPPING, XGRID
+from colibri.constants import (
+    FLAVOURS_ID_MAPPINGS,
+    FLAVOUR_TO_ID_MAPPING,
+    XGRID,
+    LHAPDF_XGRID,
+)
+from colibri.tests.conftest import EXPECTED_XGRID, EXPECTED_LHAPDF_XGRID
 
 
 def test_id_to_flavour_mappings():
@@ -18,7 +24,7 @@ def test_id_to_flavour_mappings():
 
     # Check that the mapping is correct
     assert FLAVOURS_ID_MAPPINGS[0] == "photon"
-    assert FLAVOURS_ID_MAPPINGS[1] == "\Sigma"
+    assert FLAVOURS_ID_MAPPINGS[1] == r"\Sigma"
     assert FLAVOURS_ID_MAPPINGS[2] == "g"
     assert FLAVOURS_ID_MAPPINGS[3] == "V"
     assert FLAVOURS_ID_MAPPINGS[4] == "V3"
@@ -42,7 +48,7 @@ def test_flavour_to_id_mapping():
 
     # Check that the mapping is correct
     assert FLAVOUR_TO_ID_MAPPING["photon"] == 0
-    assert FLAVOUR_TO_ID_MAPPING["\Sigma"] == 1
+    assert FLAVOUR_TO_ID_MAPPING[r"\Sigma"] == 1
     assert FLAVOUR_TO_ID_MAPPING["g"] == 2
     assert FLAVOUR_TO_ID_MAPPING["V"] == 3
     assert FLAVOUR_TO_ID_MAPPING["V3"] == 4
@@ -55,3 +61,23 @@ def test_flavour_to_id_mapping():
     assert FLAVOUR_TO_ID_MAPPING["T15"] == 11
     assert FLAVOUR_TO_ID_MAPPING["T24"] == 12
     assert FLAVOUR_TO_ID_MAPPING["T35"] == 13
+
+
+def test_XGRID():
+    """
+    Test that the XGRID is correct.
+    """
+
+    # Check the expected XGRID length
+    assert len(XGRID) == 50
+    assert XGRID == EXPECTED_XGRID
+
+
+def test_LHAPDF_XGRID():
+    """
+    Test that the LHAPDFXGRID is correct.
+    """
+
+    # Check the expected XGRID length
+    assert len(LHAPDF_XGRID) == 196
+    assert LHAPDF_XGRID == EXPECTED_LHAPDF_XGRID
