@@ -40,23 +40,19 @@ def bayesian_prior(prior_settings, pdf_model):
             mins = bounds[:, 0]
             maxs = bounds[:, 1]
 
-            @jax.jit
-            def prior_transform(cube):
-                return cube * (maxs - mins) + mins
-
         elif "min_val" in prior_specs and "max_val" in prior_specs:
             # Global bounds for all parameters
-            min_val = prior_specs["min_val"]
-            max_val = prior_specs["max_val"]
-
-            @jax.jit
-            def prior_transform(cube):
-                return cube * (max_val - min_val) + min_val
+            mins = prior_specs["min_val"]
+            maxs = prior_specs["max_val"]
 
         else:
             raise ValueError(
                 "prior_distribution_specs must define either 'bounds' or 'min_val' and 'max_val'"
             )
+
+        @jax.jit
+        def prior_transform(cube):
+            return cube * (maxs - mins) + mins
 
     elif prior_settings.prior_distribution == "prior_from_gauss_posterior":
         prior_fit = prior_settings.prior_distribution_specs["prior_fit"]
