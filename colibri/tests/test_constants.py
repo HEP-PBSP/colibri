@@ -5,11 +5,13 @@ Module for testing that the constants in the colibri module are
 working as expected.
 """
 
+import numpy as np
 from colibri.constants import (
     FLAVOURS_ID_MAPPINGS,
     FLAVOUR_TO_ID_MAPPING,
     XGRID,
     LHAPDF_XGRID,
+    evolution_to_flavour_matrix,
 )
 from colibri.tests.conftest import EXPECTED_XGRID, EXPECTED_LHAPDF_XGRID
 
@@ -81,3 +83,39 @@ def test_LHAPDF_XGRID():
     # Check the expected XGRID length
     assert len(LHAPDF_XGRID) == 196
     assert LHAPDF_XGRID == EXPECTED_LHAPDF_XGRID
+
+
+def test_evolution_to_flavour_matrix():
+    """
+    Tests that the evolution to flavour matrix rotation is correct.
+    """
+
+    # photon basis vector in the evolution basis
+    photon_ev = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    # photon basis vector in the flavour basis
+    photon_fl = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+    assert np.allclose(evolution_to_flavour_matrix @ photon_ev, photon_fl)
+
+    # sigma basis vector in the evolution basis
+    sigma_ev = np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    # sigma basis vector in the flavour basis
+    sigma_fl = np.array(
+        [
+            1 / 12,
+            1 / 12,
+            1 / 12,
+            1 / 12,
+            1 / 12,
+            1 / 12,
+            0,
+            1 / 12,
+            1 / 12,
+            1 / 12,
+            1 / 12,
+            1 / 12,
+            1 / 12,
+            0,
+        ]
+    )
+    assert np.allclose(evolution_to_flavour_matrix @ sigma_ev, sigma_fl)
