@@ -8,12 +8,11 @@ import numpy as np
 import pytest
 from unittest.mock import patch
 import pandas as pd
+from colibri.tests.conftest import MOCK_PDF_MODEL
 
 
 def test_uniform_prior():
     # ---- Test global min/max case ----
-    class DummyPDFModel:
-        param_names = ["param0", "param1"]
 
     prior_settings = PriorSettings(
         **{
@@ -21,8 +20,8 @@ def test_uniform_prior():
             "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
         }
     )
-    dummy_pdf_model = DummyPDFModel()
-    prior_transform = bayesian_prior(prior_settings, dummy_pdf_model)
+
+    prior_transform = bayesian_prior(prior_settings, MOCK_PDF_MODEL)
 
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10,))
@@ -42,8 +41,8 @@ def test_uniform_prior():
     # ---- Test per-parameter bounds case ----
 
     bounds = {
-        "param0": (-1.0, 1.0),
-        "param1": (0.0, 2.0),
+        "param1": (-1.0, 1.0),
+        "param2": (0.0, 2.0),
     }
 
     prior_settings_bounds = PriorSettings(
@@ -53,7 +52,7 @@ def test_uniform_prior():
         }
     )
 
-    prior_transform_bounds = bayesian_prior(prior_settings_bounds, dummy_pdf_model)
+    prior_transform_bounds = bayesian_prior(prior_settings_bounds, MOCK_PDF_MODEL)
 
     cube_bounds = random.uniform(key, shape=(2,))
     expected_bounds = jnp.array(
@@ -83,7 +82,7 @@ def test_uniform_prior():
     )
 
     with pytest.raises(ValueError, match="Missing bounds for parameters"):
-        bayesian_prior(prior_settings_missing_bounds, dummy_pdf_model)
+        bayesian_prior(prior_settings_missing_bounds, MOCK_PDF_MODEL)
 
     # ---- Test missing min_val/max_val and bounds ----
     prior_settings_invalid = PriorSettings(
@@ -94,16 +93,11 @@ def test_uniform_prior():
     )
 
     with pytest.raises(ValueError, match="prior_distribution_specs must define either"):
-        bayesian_prior(prior_settings_invalid, dummy_pdf_model)
+        bayesian_prior(prior_settings_invalid, MOCK_PDF_MODEL)
 
 
 @patch("colibri.bayes_prior.get_full_posterior")
 def test_gaussian_prior(mock_get_full_posterior):
-
-    class DummyPDFModel:
-        param_names = []
-
-    dummy_pdf_model = DummyPDFModel()
 
     # Create a mock posterior dataframe
     mean = np.array([0.0, 0.0])
@@ -125,7 +119,7 @@ def test_gaussian_prior(mock_get_full_posterior):
         }
     )
 
-    prior_transform = bayesian_prior(prior_settings, dummy_pdf_model)
+    prior_transform = bayesian_prior(prior_settings, MOCK_PDF_MODEL)
 
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10, 2))
@@ -138,14 +132,10 @@ def test_gaussian_prior(mock_get_full_posterior):
 
 
 def test_invalid_prior_type():
-    class DummyPDFModel:
-        param_names = []
-
-    dummy_pdf_model = DummyPDFModel()
 
     prior_settings = PriorSettings(
         **{"prior_distribution": "invalid_type", "prior_distribution_specs": {}}
     )
 
     with pytest.raises(ValueError) as e:
-        bayesian_prior(prior_settings, dummy_pdf_model)
+        bayesian_prior(prior_settings, MOCK_PDF_MODEL)
