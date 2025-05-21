@@ -68,19 +68,19 @@ prior_settings:
   prior_distribution: uniform_parameter_prior
   prior_distribution_specs:
     bounds:
-      - [-0.1, 1]     # alpha_gluon
-      - [9, 13]       # beta_gluon
-      - [0.4, 0.9]    # alpha_up
-      - [3, 4.5]    # beta_up
-      - [-3, 3]     # epsilon_up
-      - [1, 6]      # gamma_up
-      - [1, 2]     # alpha_down
-      - [8, 12]     # beta_down
-      - [-4.5, -3]  # epsilon_down
-      - [3.8, 5.8]        # gamma_down
-      - [0.1, 0.5]     # norm_sigma
-      - [-0.2, 0.1]   # alpha_sigma
-      - [1.2, 3]      # beta_sigma
+      alpha_gluon: [-0.1, 1]
+      beta_gluon: [9, 13]
+      alpha_up: [0.4, 0.9]
+      beta_up: [3, 4.5]
+      epsilon_up: [-3, 3]
+      gamma_up: [1, 6]
+      alpha_down: [1, 2]
+      beta_down: [8, 12]
+      epsilon_down: [-4.5, -3]
+      gamma_down: [3.8, 5.8]
+      norm_sigma: [0.1, 0.5]
+      alpha_sigma: [-0.2, 0.1]
+      beta_sigma: [1.2, 3]
 
 
 # Nested Sampling settings
