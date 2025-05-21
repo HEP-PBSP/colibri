@@ -5,7 +5,7 @@ Module for testing that the constants in the colibri module are
 working as expected.
 """
 
-from colibri.constants import FLAVOURS_ID_MAPPINGS, FLAVOUR_TO_ID_MAPPING
+from colibri.constants import FLAVOURS_ID_MAPPINGS, FLAVOUR_TO_ID_MAPPING, XGRID
 
 
 def test_id_to_flavour_mappings():
@@ -13,6 +13,10 @@ def test_id_to_flavour_mappings():
     Test that the id to flavour mapping is correct.
     """
 
+    # Check that the type is dict
+    assert isinstance(FLAVOURS_ID_MAPPINGS, dict)
+
+    # Check that the mapping is correct
     assert FLAVOURS_ID_MAPPINGS[0] == "photon"
     assert FLAVOURS_ID_MAPPINGS[1] == "\Sigma"
     assert FLAVOURS_ID_MAPPINGS[2] == "g"
@@ -33,6 +37,8 @@ def test_flavour_to_id_mapping():
     """
     Test that the flavour to ID mapping is correct.
     """
+    # Check that the type is dict
+    assert isinstance(FLAVOUR_TO_ID_MAPPING, dict)
 
     # Check that the mapping is correct
     assert FLAVOUR_TO_ID_MAPPING["photon"] == 0
