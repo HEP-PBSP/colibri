@@ -73,8 +73,7 @@ def closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID):
 
     # Compute the pdf grid
     pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)
-    # params = jnp.array(closure_test_model_settings["parameters"])
-    params = jnp.array(list(closure_test_model_settings["parameters"].values()))
+    params = jnp.array(closure_test_model_settings["parameters"])
     pdf_grid = pdf_grid_func(params)
 
     return pdf_grid
