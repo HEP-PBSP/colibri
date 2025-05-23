@@ -77,6 +77,7 @@ def test_closure_test_pdf_grid_with_colibri_model(
     mock_pdf_model_from_colibri_model.return_value = mock_colibri_model
 
     settings = {"parameters": [1, 2, 3], "model": "test_model"}
+
     grid = closure_test_pdf_grid(
         "colibri_model", sample_xgrid, closure_test_model_settings=settings
     )
@@ -107,7 +108,9 @@ def test_closure_test_colibri_model_pdf(
 ):
     # Mock the pdf model
     mock_pdf_model_from_colibri_model.return_value = mock_colibri_model
+
     settings = {"parameters": [1, 2, 3], "model": "test_model"}
+
     pdf_grid = closure_test_colibri_model_pdf(settings, sample_xgrid)
     assert pdf_grid.shape == (3, 5)
     assert jnp.array_equal(pdf_grid[0], jnp.array([1, 2, 3, 4, 5]))
