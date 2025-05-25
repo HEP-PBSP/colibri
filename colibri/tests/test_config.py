@@ -420,7 +420,6 @@ def test_produce_commondata_tuple():
         BASE_CONFIG.produce_commondata_tuple(closure_test_level)
 
 
-
 @patch("colibri.config.log.warning")
 def test_parse_closure_test_colibri_model_pdf(mock_warning):
     # Mock the pdf model
@@ -432,7 +431,7 @@ def test_parse_closure_test_colibri_model_pdf(mock_warning):
         "unknown_key": "should_warn",
     }
 
-     # Call the method
+    # Call the method
     result = BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings)
 
     # Assert the result is as expected
