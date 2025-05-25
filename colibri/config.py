@@ -521,3 +521,26 @@ class colibriConfig(Config):
         Returns None as the pdf_model is not used in the colibri module.
         """
         return None
+
+    def parse_closure_test_colibri_model_pdf(self, settings):
+        known_keys = {"model", "fitted_flavours", "parameters"}
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(
+                    f"Key '{k}' in closure_test_model_settings not known.",
+                    k,
+                    known_keys,
+                )
+            )
+
+        # Now construct the closure_test_model_settings dictionary,
+        # checking the parameter combinations are valid
+        closure_test_model_settings = {}
+
+        closure_test_model_settings["model"] = settings.get("model")
+        closure_test_model_settings["fitted_flavours"] = settings.get("fitted_flavours")
+        closure_test_model_settings["parameters"] = settings.get("parameters")
+
+        return closure_test_model_settings
