@@ -418,3 +418,33 @@ def test_produce_commondata_tuple():
     closure_test_level = 2
     with pytest.raises(ConfigError):
         BASE_CONFIG.produce_commondata_tuple(closure_test_level)
+
+
+
+@patch("colibri.config.log.warning")
+def test_parse_closure_test_colibri_model_pdf(mock_warning):
+    # Mock the pdf model
+
+    settings = {
+        "parameters": {"param1": 1, "param2": 2},
+        "model": "test_model",
+        "fitted_flavours": ["T3", "T8"],
+        "unknown_key": "should_warn",
+    }
+
+     # Call the method
+    result = BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings)
+
+    # Assert the result is as expected
+    expected = {
+        "model": "test_model",
+        "fitted_flavours": ["T3", "T8"],
+        "parameters": {"param1": 1, "param2": 2},
+    }
+
+    assert result == expected
+
+    # Check that the warning was called for the unknown key
+    mock_warning.assert_called_once()
+    args, _ = mock_warning.call_args
+    assert isinstance(args[0], ConfigError)
