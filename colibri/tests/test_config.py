@@ -446,3 +446,29 @@ def test_parse_closure_test_colibri_model_pdf(mock_warning):
     mock_warning.assert_called_once()
     args, _ = mock_warning.call_args
     assert isinstance(args[0], ConfigError)
+
+    # Check that error is raised if a necessary key is missing
+
+    settings_no_model = {
+        "parameters": {"param1": 1},
+        "fitted_flavours": ["T3"],
+    }
+
+    with pytest.raises(KeyError, match="model not found"):
+        BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings_no_model)
+
+    settings_no_fitted_flavours = {
+        "parameters": {"param1": 1},
+        "model": "test_model",
+    }
+
+    with pytest.raises(KeyError, match="fitted_flavours not found"):
+        BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings_no_fitted_flavours)
+
+    settings_no_parameters = {
+        "model": "test_model",
+        "fitted_flavours": ["T3"],
+    }
+
+    with pytest.raises(KeyError, match="parameters not found"):
+        BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings_no_parameters)
