@@ -12,5 +12,4 @@ dependencies:
   - ultranest
   - pip
   - pip:
-    - nnpdf
     - -e .

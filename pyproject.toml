@@ -20,7 +20,7 @@ jax = "*"
 optax = "*"
 flax = "*"
 dill = "*"
-
+nnpdf = "*"
 
 [tool.poetry.extra]
 test = [
