@@ -11,16 +11,15 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-
 from colibri.loss_functions import chi2
 from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     MOCK_PDF_MODEL,
+    MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
     UltraNestLogLikelihoodMock,
-    MOCK_PENALTY_POSDATA,
 )
 from colibri.ultranest_fit import UltranestFit, run_ultranest_fit, ultranest_fit
 

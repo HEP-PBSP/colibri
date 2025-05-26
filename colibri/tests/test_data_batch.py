@@ -5,6 +5,7 @@ Module for testing the data_batch module.
 """
 
 from typing import Callable, Generator
+
 import jax
 
 from colibri.data_batch import DataBatches, data_batches

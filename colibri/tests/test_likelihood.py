@@ -15,13 +15,13 @@ from numpy.testing import assert_allclose
 from colibri.likelihood import LogLikelihood, log_likelihood
 from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
+    MOCK_CHI2,
     MOCK_PDF_MODEL,
+    MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
     TEST_FORWARD_MAP_DIS,
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
-    MOCK_CHI2,
-    MOCK_PENALTY_POSDATA,
 )
 
 jax.config.update("jax_enable_x64", True)

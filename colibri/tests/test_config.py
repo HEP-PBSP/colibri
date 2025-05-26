@@ -16,7 +16,6 @@ from reportengine.configparser import ConfigError
 from colibri.config import Environment, colibriConfig
 from colibri.tests.conftest import TEST_PRIOR_SETTINGS_UNIFORM
 
-
 BASE_CONFIG = colibriConfig({})
 
 

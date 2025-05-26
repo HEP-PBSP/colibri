@@ -16,7 +16,7 @@ from jax import random
 
 from colibri.bayes_prior import bayesian_prior
 from colibri.core import PriorSettings
-from colibri.tests.conftest import TEST_PRIOR_SETTINGS_UNIFORM, MOCK_PDF_MODEL
+from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_PRIOR_SETTINGS_UNIFORM
 
 
 def test_uniform_prior():

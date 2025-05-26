@@ -13,8 +13,8 @@ from colibri.mc_loss_functions import (
     make_chi2_validation_data_with_positivity,
 )
 from colibri.mc_utils import MCPseudodata
-from colibri.training_validation import PosdataTrainValidationSplit
 from colibri.tests.conftest import TEST_POS_FK_ARRAYS
+from colibri.training_validation import PosdataTrainValidationSplit
 
 # Mock data
 training_indices = jnp.array([0, 1, 2])

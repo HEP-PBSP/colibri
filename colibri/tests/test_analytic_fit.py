@@ -19,8 +19,8 @@ from colibri.tests.conftest import (
     TEST_FK_ARRAYS,
     TEST_FORWARD_MAP_DIS,
     TEST_PDF_GRID,
-    TEST_XGRID,
     TEST_PRIOR_SETTINGS_UNIFORM,
+    TEST_XGRID,
 )
 
 analytic_settings = {

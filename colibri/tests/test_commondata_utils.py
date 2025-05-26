@@ -16,8 +16,8 @@ from colibri.tests.conftest import (
     CLOSURE_TEST_PDFSET,
     PSEUDODATA_SEED,
     T0_PDFSET,
-    TEST_DATASETS,
     TEST_COMMONDATA_FOLDER,
+    TEST_DATASETS,
 )
 
 
