@@ -1,6 +1,6 @@
 
 <div align="center">
-<img src="./colibri-logo.png" alt="colibri logo" width="40%">
+<img src="./logo_colibri.png" alt="colibri logo" width="40%">
 </div>
 
 <div style="text-align: right; font-size: 10px;">
