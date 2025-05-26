@@ -523,6 +523,10 @@ class colibriConfig(Config):
         return None
 
     def parse_closure_test_colibri_model_pdf(self, settings):
+        """
+        Checks that the required keys are included in closure_test_model_settings
+        and constructs a dictionary for the settings.
+        """
         known_keys = {"model", "fitted_flavours", "parameters"}
 
         kdiff = settings.keys() - known_keys
@@ -536,11 +540,24 @@ class colibriConfig(Config):
             )
 
         # Now construct the closure_test_model_settings dictionary,
-        # checking the parameter combinations are valid
+        # checking the required keys are present.
         closure_test_model_settings = {}
 
-        closure_test_model_settings["model"] = settings.get("model")
-        closure_test_model_settings["fitted_flavours"] = settings.get("fitted_flavours")
-        closure_test_model_settings["parameters"] = settings.get("parameters")
+        if "model" in settings:
+            closure_test_model_settings["model"] = settings.get("model")
+        else:
+            raise KeyError(f"model not found in closure_test_model_settings")
+
+        if "fitted_flavours" in settings:
+            closure_test_model_settings["fitted_flavours"] = settings.get(
+                "fitted_flavours"
+            )
+        else:
+            raise KeyError(f"fitted_flavours not found in closure_test_model_settings")
+
+        if "parameters" in settings:
+            closure_test_model_settings["parameters"] = settings.get("parameters")
+        else:
+            raise KeyError(f"parameters not found in closure_test_model_settings")
 
         return closure_test_model_settings

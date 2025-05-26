@@ -423,7 +423,6 @@ def test_produce_commondata_tuple():
 @patch("colibri.config.log.warning")
 def test_parse_closure_test_colibri_model_pdf(mock_warning):
     # Mock the pdf model
-
     settings = {
         "parameters": {"param1": 1, "param2": 2},
         "model": "test_model",
