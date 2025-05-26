@@ -21,9 +21,6 @@ optax = "*"
 flax = "*"
 dill = "*"
 
-# nnpdf dependency
-nnpdf = { git = "https://github.com/NNPDF/nnpdf" }
-
 
 [tool.poetry.extra]
 test = [
