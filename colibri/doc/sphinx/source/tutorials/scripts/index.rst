@@ -231,3 +231,10 @@ we can do it as follows:
 .. code-block:: bash
 
    resample_fit my_fit -t analytic -n 100 -seed 1234 -newfit my_resampled_fit
+
+.. note::
+    
+    Importantly, in order to resample from the posterior distribution of a fit, you need
+    to be in the same environment as the one used to perform the fit.
+    Hence, if you want to resample a fit done using the ``les-houches`` PDF model, you need to 
+    be in the environment where the ``les_houches_exe`` exectuable is available.
