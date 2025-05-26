@@ -12,6 +12,7 @@ from colibri.constants import (
     XGRID,
     LHAPDF_XGRID,
     evolution_to_flavour_matrix,
+    GRID_MAPPING,
 )
 from colibri.tests.conftest import EXPECTED_XGRID, EXPECTED_LHAPDF_XGRID
 
@@ -310,3 +311,9 @@ def test_evolution_to_flavour_matrix():
         ]
     )
     assert np.allclose(evolution_to_flavour_matrix @ T35_ev, T35_fl)
+
+
+def test_GRID_MAPPING():
+    assert type(GRID_MAPPING) is dict
+    assert np.allclose(GRID_MAPPING["xgrid"], XGRID)
+    assert np.allclose(GRID_MAPPING["lhapdf_grid"], LHAPDF_XGRID)
