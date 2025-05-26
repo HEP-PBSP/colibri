@@ -10,6 +10,7 @@ import os
 import pathlib
 import sys
 from functools import wraps
+from typing import Union
 
 import dill
 import jax
@@ -17,6 +18,8 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from colibri.loss_functions import chi2
+from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
+from colibri.export_results import write_exportgrid
 
 from validphys import convolution
 
@@ -154,6 +157,7 @@ def resample_from_ns_posterior(
     -------
     resampled_samples: jax.Array
         The resampled subset of the input dataset, containing n_posterior_samples without selected replacement.
+
     """
 
     current_samples = samples.copy()
@@ -322,6 +326,169 @@ def likelihood_float_type(
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:
         file.write(str(dtype))
+
+
+def resample_posterior_from_file(
+    fit_path: pathlib.Path,
+    file_path: str,
+    n_replicas: int,
+    resampling_seed: int,
+    use_all_columns: bool = False,
+    read_csv_args: dict = None,
+):
+    """
+    Generic function to resample from a posterior using a specified file path.
+
+    Parameters
+    ----------
+    fit_path: pathlib.Path
+        The path to the fit folder.
+
+    file_path: str
+        The name of the file containing the posterior samples inside the fit folder.
+
+    n_replicas: int
+        The number of posterior samples to resample from the file.
+
+    resampling_seed: int
+        The random seed to use for resampling.
+
+    use_all_columns: bool, default is False
+        If True, all columns of the file are used. If False, the first column is ignored.
+
+    read_csv_args: dict, default is None
+        Additional arguments to pass to pd.read_csv when loading the file.
+
+    Returns
+    -------
+    resampled_posterior: np.ndarray
+        The resampled posterior samples.
+    """
+    # Check that the file exists
+    full_path = fit_path / file_path
+    if not os.path.exists(full_path):
+        raise FileNotFoundError(
+            f"{full_path} does not exist; please run the appropriate fit first."
+        )
+
+    # Load the samples
+    samples = pd.read_csv(full_path, **read_csv_args)
+    if not use_all_columns:
+        samples = samples.iloc[:, 1:]
+
+    samples = samples.values
+
+    # Adjust number of replicas if necessary
+    if n_replicas > samples.shape[0]:
+        n_replicas = samples.shape[0]
+        log.warning(
+            f"The chosen number of posterior samples exceeds the available posterior samples."
+            f" Setting the number of resampled posterior samples to {n_replicas}."
+        )
+
+    # Resample from posterior
+    resampled_posterior = resample_from_ns_posterior(
+        samples,
+        n_replicas,
+        resampling_seed,
+    )
+    return resampled_posterior
+
+
+def full_posterior_sample_fit_resampler(
+    fit_path: pathlib.Path, n_replicas: int, resampling_seed: int
+):
+    """
+    Wrapper for resampling from a fit with a full_posterior_sample.csv like file
+    storing the posterior samples in the root of the folder.
+    """
+    return resample_posterior_from_file(
+        fit_path,
+        "full_posterior_sample.csv",
+        n_replicas,
+        resampling_seed,
+        use_all_columns=False,
+        read_csv_args={"index_col": None, "dtype": float},
+    )
+
+
+def write_resampled_bayesian_fit(
+    resampled_posterior: np.ndarray,
+    fit_path: pathlib.Path,
+    resampled_fit_path: pathlib.Path,
+    resampled_fit_name: Union[str, pathlib.Path],
+    parametrisation_scale: float,
+    csv_results_name: str,
+):
+    """
+    Writes the resampled ns fit to `resampled_fit_path`.
+
+    Parameters
+    ----------
+    resampled_posterior: np.ndarray
+        The resampled posterior.
+
+    fit_path: pathlib.Path
+        The path to the original fit.
+
+    resampled_fit_path: pathlib.Path
+        The path to the resampled fit.
+
+    resampled_fit_name: Union[str, pathlib.Path]
+        The name of the resampled fit.
+
+    parametrisation_scale: float
+
+    csv_results_name: str
+        The name of the csv file to store the resampled posterior.
+    """
+    log.info(f"Loading pdf model from {fit_path}")
+
+    # load pdf_model from fit using dill
+    with open(fit_path / "pdf_model.pkl", "rb") as file:
+        pdf_model = dill.load(file)
+
+    # copy old fit to resampled fit
+    os.system(f"cp -r {fit_path} {resampled_fit_path}")
+
+    # remove old replicas from resampled fit
+    os.system(f"rm -r {resampled_fit_path}/replicas/*")
+
+    # overwrite old ns_result.csv with resampled posterior
+    parameters = pdf_model.param_names
+    df = pd.DataFrame(resampled_posterior, columns=parameters)
+    df.to_csv(str(resampled_fit_path) + f"/{csv_results_name}.csv", float_format="%.5e")
+
+    new_rep_path = resampled_fit_path / "replicas"
+
+    if not os.path.exists(new_rep_path):
+        os.mkdir(new_rep_path)
+
+    # Finish by writing the replicas to export grids, ready for evolution
+    for i, parameters in enumerate(resampled_posterior):
+        # Get the PDF grid in the evolution basis
+        lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+        grid_for_writing = np.array(lhapdf_interpolator(parameters))
+
+        replica_index = i + 1
+
+        replica_index_path = new_rep_path / f"replica_{replica_index}"
+        if not os.path.exists(replica_index_path):
+            os.mkdir(replica_index_path)
+
+        grid_name = replica_index_path / resampled_fit_name
+
+        log.info(f"Writing exportgrid for replica {replica_index}")
+        write_exportgrid(
+            grid_for_writing=grid_for_writing,
+            grid_name=grid_name,
+            replica_index=replica_index,
+            Q=parametrisation_scale,
+            xgrid=LHAPDF_XGRID,
+            export_labels=EXPORT_LABELS,
+        )
+
+    log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
 
 
 def pdf_model_from_colibri_model(model_settings):

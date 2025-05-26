@@ -42,11 +42,11 @@ def training_validation_split(
 
     Parameters
     ----------
-    indices: jaxlib.xla_extension.Array
+    indices: jaxlib.Array
 
     mc_validation_fraction: float
 
-    random_seed: jaxlib.xla_extension.Array
+    random_seed: jaxlib.Array
         PRNGKey, obtained as jax.random.PRNGKey(random_number)
 
     shuffle_indices: bool

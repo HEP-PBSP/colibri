@@ -6,9 +6,16 @@ Module for testing the utils module.
 
 import os
 import pathlib
+from pathlib import Path
 import shutil
-from unittest.mock import MagicMock, mock_open, patch
 
+from numpy.testing import assert_allclose
+import pytest
+from unittest.mock import patch, mock_open, MagicMock
+from unittest import mock
+
+
+import pandas as pd
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -36,10 +43,16 @@ from colibri.utils import (
     likelihood_float_type,
     mask_fktable_array,
     mask_luminosity_mapping,
+    full_posterior_sample_fit_resampler,
+    write_resampled_bayesian_fit,
+    compute_determinants_of_principal_minors,
+    resample_posterior_from_file,
     pdf_model_from_colibri_model,
     resample_from_ns_posterior,
     t0_pdf_grid,
 )
+from validphys.fkparser import load_fktable
+
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
@@ -352,6 +365,296 @@ def test_likelihood_float_type(
     assert os.path.exists(tmp_path / "dtype.txt")
 
 
+@patch("os.path.exists")
+@patch("pandas.read_csv")
+@patch("colibri.utils.resample_from_ns_posterior")
+def test_ns_fit_resampler_file_not_found(mock_resample, mock_read_csv, mock_exists):
+    # Test the case where the required posterior samples file does not exist
+    fit_path = Path("/fake/path")
+    n_replicas = 10
+    resampling_seed = 42
+
+    # Mock os.path.exists to return False, simulating missing file
+    mock_exists.return_value = False
+
+    with pytest.raises(FileNotFoundError) as exc_info:
+        full_posterior_sample_fit_resampler(fit_path, n_replicas, resampling_seed)
+
+    assert "please run the appropriate fit first." in str(exc_info.value)
+    mock_exists.assert_called_once_with(fit_path / "full_posterior_sample.csv")
+    mock_read_csv.assert_not_called()
+    mock_resample.assert_not_called()
+
+
+@patch("colibri.utils.os.path.exists")
+@patch("pandas.read_csv")
+@patch("colibri.utils.resample_from_ns_posterior")
+def test_ns_fit_resampler_replicas_exceeding_samples(
+    mock_resample, mock_read_csv, mock_exists
+):
+    # Test the case where n_replicas exceeds the number of available posterior samples
+    fit_path = Path("/fake/path")
+    n_replicas = 15
+    resampling_seed = 42
+
+    # Mock os.path.exists to return True, simulating that the file exists
+    mock_exists.return_value = True
+
+    # Mock pandas.read_csv to return a dataframe with fewer rows than n_replicas
+    sample_data = np.array([[1, 2], [3, 4], [5, 6]])  # 3 samples
+    mock_read_csv.return_value = pd.DataFrame(sample_data)
+
+    # Mock resample_from_ns_posterior to return expected value
+    expected_resampled = np.array([[1, 2], [3, 4]])  # Example result
+    mock_resample.return_value = expected_resampled
+
+    result = full_posterior_sample_fit_resampler(fit_path, n_replicas, resampling_seed)
+
+    assert result is expected_resampled
+
+    mock_exists.assert_called_once_with(fit_path / "full_posterior_sample.csv")
+
+    # Ensure correct arguments were passed to mock_resample
+    assert mock_resample.call_args[0][1] == len(sample_data)
+    assert mock_resample.call_args[0][2] == resampling_seed
+
+
+@patch("os.path.exists")
+@patch("pandas.read_csv")
+@patch("colibri.utils.resample_from_ns_posterior")
+def test_ns_fit_resampler_normal_case(mock_resample, mock_read_csv, mock_exists):
+    # Test the normal case where everything is as expected
+    fit_path = Path("/fake/path")
+    n_replicas = 2
+    resampling_seed = 42
+
+    # Mock os.path.exists to return True, simulating that the file exists
+    mock_exists.return_value = True
+
+    # Mock pandas.read_csv to return a dataframe with enough samples
+    sample_data = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])  # 4 samples
+    mock_read_csv.return_value = pd.DataFrame(sample_data)
+
+    # Mock resample_from_ns_posterior to return expected value
+    expected_resampled = np.array([[3, 4], [5, 6]])  # Example result
+    mock_resample.return_value = expected_resampled
+
+    result = full_posterior_sample_fit_resampler(fit_path, n_replicas, resampling_seed)
+
+    assert result is expected_resampled
+    mock_exists.assert_called_once_with(fit_path / "full_posterior_sample.csv")
+
+    # Ensure correct arguments were passed to mock_resample
+    assert mock_resample.call_args[0][1] == n_replicas
+    assert mock_resample.call_args[0][2] == resampling_seed
+
+
+@patch("builtins.open", new_callable=mock.mock_open)
+@patch("dill.load")
+@patch("colibri.utils.os.system")
+@patch("colibri.utils.os.path.exists")
+@patch("colibri.utils.write_exportgrid")
+def test_write_resampled_bayesian_fit(
+    mock_write_exportgrid,
+    mock_exists,
+    mock_os_system,
+    mock_dill_load,
+    mock_open,
+):
+    # Setup mock parameters
+    fit_path = Path("/fake/fit/path")
+    resampled_fit_path = Path("/fake/resampled/path")
+    resampled_posterior = np.array([[0.1, 0.2], [0.3, 0.4]])
+    resampled_fit_name = "test_grid"
+    parametrisation_scale = 1.0
+
+    # Mock pdf_model and parameter names
+    mock_pdf_model = MagicMock()
+    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.grid_values_func.return_value = lambda params: [
+        params[0] + 1,
+        params[1] + 1,
+    ]
+    mock_dill_load.return_value = mock_pdf_model
+
+    # Ensure os.path.exists returns True for necessary paths
+    mock_exists.side_effect = lambda path: (
+        True
+        if str(resampled_fit_path) in str(path) or str(fit_path) in str(path)
+        else False
+    )
+
+    # Mock Path().is_dir() to return True for the resampled path
+    with patch.object(Path, "is_dir", return_value=True):
+        # Run the function
+        write_resampled_bayesian_fit(
+            resampled_posterior=resampled_posterior,
+            fit_path=fit_path,
+            resampled_fit_path=resampled_fit_path,
+            resampled_fit_name=resampled_fit_name,
+            parametrisation_scale=parametrisation_scale,
+            csv_results_name="ns_result.csv",
+        )
+
+    # Verify that open was called with pdf_model.pkl
+    expected_open_call = mock.call(fit_path / "pdf_model.pkl", "rb")
+    assert (
+        expected_open_call in mock_open.call_args_list
+    ), "Expected open to be called with pdf_model.pkl in read mode, but it wasn't."
+
+    # Verify directory copy and removal of replicas
+    mock_os_system.assert_any_call(f"cp -r {fit_path} {resampled_fit_path}")
+    mock_os_system.assert_any_call(f"rm -r {resampled_fit_path}/replicas/*")
+
+    # Verify the correct data was written to CSV
+    df = pd.DataFrame(resampled_posterior, columns=mock_pdf_model.param_names)
+    expected_csv_path = str(resampled_fit_path) + "/ns_result.csv"
+    with patch("pandas.DataFrame.to_csv") as mock_to_csv:
+        df.to_csv(expected_csv_path, float_format="%.5e")
+        mock_to_csv.assert_called_once_with(expected_csv_path, float_format="%.5e")
+
+
+def test_creates_replicas_dir_when_missing(tmp_path):
+    # Setup fake paths
+    fit_path = tmp_path / "fit"
+    resampled_path = tmp_path / "resampled"
+    # Touch a dummy pdf_model.pkl so dill.load can open it
+    (fit_path).mkdir()
+    (fit_path / "pdf_model.pkl").write_bytes(b"")
+
+    # Create a fake pdf_model with minimal interface
+    fake_model = mock.Mock()
+    fake_model.param_names = []  # no columns
+    fake_model.grid_values_func.return_value = lambda params: []
+
+    # Patch out everything except the mkdir check
+    with mock.patch("colibri.utils.dill.load", return_value=fake_model), mock.patch(
+        "colibri.utils.os.system"
+    ) as mock_system, mock.patch(
+        "colibri.utils.pd.DataFrame.to_csv"
+    ) as mock_to_csv, mock.patch(
+        "colibri.utils.os.path.exists", return_value=False
+    ) as mock_exists, mock.patch(
+        "colibri.utils.os.mkdir"
+    ) as mock_mkdir, mock.patch(
+        "colibri.utils.write_exportgrid"
+    ) as mock_we:
+
+        # Call with an empty posterior so loop won’t actually try to mkdir again
+        write_resampled_bayesian_fit(
+            resampled_posterior=np.empty((0, 0)),
+            fit_path=fit_path,
+            resampled_fit_path=resampled_path,
+            resampled_fit_name="replica_name",
+            parametrisation_scale=1.0,
+            csv_results_name="results",
+        )
+
+        # The first time we hit the replicas-dir block, exists() was False
+        new_rep_dir = resampled_path / "replicas"
+        mock_exists.assert_any_call(new_rep_dir)
+        mock_mkdir.assert_called_once_with(new_rep_dir)
+
+
+def test_creates_each_replica_dir_when_missing(tmp_path):
+    # --- Setup fake fit and resampled dirs
+    fit_path = tmp_path / "fit"
+    resampled_path = tmp_path / "resampled"
+    fit_path.mkdir()
+    # dummy pdf_model.pkl so open() doesn't fail
+    (fit_path / "pdf_model.pkl").write_bytes(b"")
+
+    # Fake pdf_model: only needs param_names + grid_values_func
+    fake_model = mock.Mock()
+    fake_model.param_names = ["a", "b"]
+    fake_model.grid_values_func.return_value = lambda params: []
+
+    # Create a small posterior with 2 replicas
+    posterior = np.array([[1.0, 2.0], [3.0, 4.0]])
+
+    with mock.patch("colibri.utils.dill.load", return_value=fake_model), mock.patch(
+        "colibri.utils.os.system"
+    ), mock.patch("colibri.utils.pd.DataFrame.to_csv"), mock.patch(
+        "colibri.utils.os.path.exists", return_value=False
+    ) as m_exists, mock.patch(
+        "colibri.utils.os.mkdir"
+    ) as m_mkdir, mock.patch(
+        "colibri.utils.write_exportgrid"
+    ):
+
+        write_resampled_bayesian_fit(
+            resampled_posterior=posterior,
+            fit_path=fit_path,
+            resampled_fit_path=resampled_path,
+            resampled_fit_name="replica_name",
+            parametrisation_scale=1.0,
+            csv_results_name="results",
+        )
+
+        # Build the expected calls:
+        # 1) mkdir(resampled/replicas)
+        # 2) mkdir(resampled/replicas/replica_1)
+        # 3) mkdir(resampled/replicas/replica_2)
+        expected_base = resampled_path / "replicas"
+        expected_calls = [
+            mock.call(expected_base),
+            mock.call(expected_base / "replica_1"),
+            mock.call(expected_base / "replica_2"),
+        ]
+
+        assert m_mkdir.call_args_list == expected_calls
+        # And we did check existence three times:
+        assert m_exists.call_count == 3
+        assert m_mkdir.call_count == 3
+
+
+def test_resample_posterior_not_use_all_columns():
+    """
+    Test resample_posterior_from_file when use_all_columns=False.
+    """
+
+    # Mock inputs
+    fit_path = pathlib.Path("/mock/path")
+    file_path = pathlib.Path("mock_file.csv")
+    n_replicas = 5
+    resampling_seed = 42
+    use_all_columns = False
+    mock_data = pd.DataFrame(
+        {
+            "Column0": [0, 1, 2, 3, 4],
+            "Column1": [10, 11, 12, 13, 14],
+            "Column2": [20, 21, 22, 23, 24],
+        }
+    )
+
+    # Mock the behavior of os.path.exists
+    with patch("os.path.exists", return_value=True), patch(
+        "pandas.read_csv", return_value=mock_data
+    ), patch("colibri.utils.resample_from_ns_posterior") as mock_resampler:
+
+        # Simulate the resampling function
+        mock_resampler.return_value = "mock_resampled_posterior"
+
+        # Call the function under test
+        result = resample_posterior_from_file(
+            fit_path=fit_path,
+            file_path=file_path,
+            n_replicas=n_replicas,
+            resampling_seed=resampling_seed,
+            use_all_columns=use_all_columns,
+            read_csv_args={"sep": ",", "dtype": float},
+        )
+
+        # Assertions
+        pd.testing.assert_frame_equal(
+            pd.DataFrame(mock_data.iloc[:, 1:].values),
+            pd.DataFrame([[10, 20], [11, 21], [12, 22], [13, 23], [14, 24]]),
+        )
+        assert mock_resampler.call_args[0][1] == n_replicas
+        assert mock_resampler.call_args[0][2] == resampling_seed
+        assert result == "mock_resampled_posterior"
+
+
 def test_single_value():
     """
     Test for utils.closest_indices.
@@ -420,6 +723,37 @@ def test_scalar_v_input():
     expected = 0
     result = closest_indices(a, v)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+@patch("colibri.utils.os.path.exists")
+@patch("pandas.read_csv")
+@patch("colibri.utils.resample_from_ns_posterior")
+def test_analytic_fit_resampler(mock_resample, mock_read_csv, mock_exists):
+    # Test the case where n_replicas exceeds the number of available posterior samples
+    fit_path = Path("/fake/path")
+    n_replicas = 15
+    resampling_seed = 42
+
+    # Mock os.path.exists to return True, simulating that the file exists
+    mock_exists.return_value = True
+
+    # Mock pandas.read_csv to return a dataframe with fewer rows than n_replicas
+    sample_data = np.array([[1, 2], [3, 4], [5, 6]])  # 3 samples
+    mock_read_csv.return_value = pd.DataFrame(sample_data)
+
+    # Mock resample_from_ns_posterior to return expected value
+    expected_resampled = np.array([[1, 2], [3, 4]])  # Example result
+    mock_resample.return_value = expected_resampled
+
+    result = full_posterior_sample_fit_resampler(fit_path, n_replicas, resampling_seed)
+
+    assert result is expected_resampled
+
+    mock_exists.assert_called_once_with(fit_path / "full_posterior_sample.csv")
+
+    # Ensure correct arguments were passed to mock_resample
+    assert mock_resample.call_args[0][1] == len(sample_data)
+    assert mock_resample.call_args[0][2] == resampling_seed
 
 
 def test_identity_matrix():

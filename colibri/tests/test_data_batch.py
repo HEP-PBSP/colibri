@@ -5,8 +5,7 @@ Module for testing the data_batch module.
 """
 
 from typing import Callable, Generator
-
-import jaxlib
+import jax
 
 from colibri.data_batch import DataBatches, data_batches
 
@@ -32,5 +31,5 @@ def test_data_batches():
     batches = data_batch.data_batch_stream_index()
     next_batch = next(batches)
 
-    assert isinstance(next_batch, jaxlib.xla_extension.ArrayImpl)
+    assert isinstance(next_batch, jax.Array)
     assert len(next_batch) == batch_size

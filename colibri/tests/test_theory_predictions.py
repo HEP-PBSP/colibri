@@ -149,7 +149,7 @@ def test_make_dis_prediction():
 
     assert_allclose(pred1, pred2)
     assert callable(func)
-    assert type(pred) == jaxlib.xla_extension.ArrayImpl
+    assert isinstance(pred, jnp.ndarray)
 
 
 def test_make_had_prediction():
@@ -180,7 +180,7 @@ def test_make_had_prediction():
     pred = func(pdf_grid[0], fk_arr)
 
     assert callable(func)
-    assert type(pred) == jaxlib.xla_extension.ArrayImpl
+    assert isinstance(pred, jnp.ndarray)
 
 
 def test_make_pred_data():

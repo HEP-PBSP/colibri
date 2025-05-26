@@ -1,0 +1,97 @@
+# This workflow tests that the NS fit in main and the one in the PR are consistent
+# triggered by PR review submission or edit
+
+name: Analytic Fit L0 CI wmin model
+
+on:
+  pull_request_review:
+    types:
+      - submitted
+      - edited
+
+env:
+  CACHE_NUMBER: 0  # increase to reset cache manually
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+        miniforge-version: latest
+        activate-environment: colibri-dev
+        use-mamba: true  
+    - name: Cache Conda packages
+      uses: actions/cache@v3
+      with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('environment.yml') }}
+    
+    - name: Update environment
+      run: mamba env update -n colibri-dev -f environment.yml
+      if: steps.cache.outputs.cache-hit != 'true'
+
+    - name: Install wmin private repository
+      run: |
+        source $(conda info --base)/etc/profile.d/conda.sh  # Initialize Conda
+        conda activate colibri-dev
+        pip install git+https://${{ secrets.COLIBRI_TOKEN }}@github.com/HEP-PBSP/wmin-model.git
+
+    - name: Run analytical fit
+      shell: bash -l {0}
+      run: |
+        wmin colibri/tests/test_runcards/template_analytical_L0.yaml -o PR_wmin_analytic_L0
+    
+    - name: Checkout main branch
+      uses: actions/checkout@v3
+      with:
+        ref: main
+        clean: false
+
+    - name: Update environment again
+      run: mamba env update -n colibri-dev -f environment.yml
+      if: steps.cache.outputs.cache-hit != 'true'
+
+
+    - name: Install wmin private repository
+      run: |
+        source $(conda info --base)/etc/profile.d/conda.sh  # Initialize Conda
+        conda activate colibri-dev
+        pip install git+https://${{ secrets.COLIBRI_TOKEN }}@github.com/HEP-PBSP/wmin-model.git
+
+    - name: Run analytical fit in main
+      shell: bash -l {0}
+      run: |
+        wmin colibri/tests/test_runcards/template_analytical_L0.yaml -o main_wmin_analytic_L0
+    
+    - name: Compare Analytic results
+      run: |
+        # Check if files exist
+        if [ -f PR_wmin_analytic_L0/analytic_result.csv ] && [ -f main_wmin_analytic_L0/analytic_result.csv ]; then
+        # Perform the diff only if both files exist
+        if diff PR_wmin_analytic_L0/analytic_result.csv main_wmin_analytic_L0/analytic_result.csv &> /dev/null; then
+            echo "wmin fits are identical"
+        else
+            echo "wmin fits are different"
+            exit 1  # Fail the test by exiting with a non-zero code
+        fi
+        else
+        echo "One or both files do not exist"
+        exit 1  # Fail the test by exiting with a non-zero code
+        fi
+
