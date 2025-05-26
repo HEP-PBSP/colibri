@@ -199,3 +199,114 @@ def test_evolution_to_flavour_matrix():
         ]
     )
     assert np.allclose(evolution_to_flavour_matrix @ V15_ev, V15_fl)
+
+    # V24 basis vector in the evolution basis
+    V24_ev = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0])
+
+    V24_fl = np.array(
+        [
+            0,
+            0.1,
+            -0.025,
+            -0.025,
+            -0.025,
+            -0.025,
+            0,
+            0.025,
+            0.025,
+            0.025,
+            0.025,
+            -0.1,
+            0,
+            0,
+        ]
+    )
+
+    assert np.allclose(evolution_to_flavour_matrix @ V24_ev, V24_fl)
+
+    # V35 basis vector in the evolution basis
+    V35_ev = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
+
+    V35_fl = np.array(
+        [
+            1 / 12,
+            -1 / 60,
+            -1 / 60,
+            -1 / 60,
+            -1 / 60,
+            -1 / 60,
+            0,
+            1 / 60,
+            1 / 60,
+            1 / 60,
+            1 / 60,
+            1 / 60,
+            -1 / 12,
+            0,
+        ]
+    )
+
+    assert np.allclose(evolution_to_flavour_matrix @ V35_ev, V35_fl)
+
+    # T3 basis vector in the evolution basis
+    T3_ev = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0])
+    T3_fl = np.array([0, 0, 0, 0, 1 / 4, -1 / 4, 0, -1 / 4, 1 / 4, 0, 0, 0, 0, 0])
+    assert np.allclose(evolution_to_flavour_matrix @ T3_ev, T3_fl)
+
+    # T8 basis vector in the evolution basis
+    T8_ev = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0])
+    T8_fl = np.array(
+        [0, 0, 0, -1 / 6, 1 / 12, 1 / 12, 0, 1 / 12, 1 / 12, -1 / 6, 0, 0, 0, 0]
+    )
+    assert np.allclose(evolution_to_flavour_matrix @ T8_ev, T8_fl)
+
+    # T15
+    T15_ev = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0])
+    T15_fl = np.array(
+        [
+            0,
+            0,
+            -0.125,
+            1 / 24,
+            1 / 24,
+            1 / 24,
+            0,
+            1 / 24,
+            1 / 24,
+            1 / 24,
+            -0.125,
+            0,
+            0,
+            0,
+        ]
+    )
+    assert np.allclose(evolution_to_flavour_matrix @ T15_ev, T15_fl)
+
+    # T24
+    T24_ev = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
+    T24_fl = np.array(
+        [0, -0.1, 0.025, 0.025, 0.025, 0.025, 0, 0.025, 0.025, 0.025, 0.025, -0.1, 0, 0]
+    )
+    assert np.allclose(evolution_to_flavour_matrix @ T24_ev, T24_fl)
+
+    # T35
+    T35_ev = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    T35_fl = np.array(
+        [
+            -1 / 12,
+            1 / 60,
+            1 / 60,
+            1 / 60,
+            1 / 60,
+            1 / 60,
+            0,
+            1 / 60,
+            1 / 60,
+            1 / 60,
+            1 / 60,
+            1 / 60,
+            -1 / 12,
+            0,
+        ]
+    )
+    assert np.allclose(evolution_to_flavour_matrix @ T35_ev, T35_fl)
