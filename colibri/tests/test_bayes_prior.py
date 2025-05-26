@@ -24,7 +24,7 @@ def test_uniform_prior():
     Test the transformation of a uniform prior distribution.
     """
     prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_PDF_MODEL)
-    
+
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10,))
 
