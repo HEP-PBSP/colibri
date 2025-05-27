@@ -22,11 +22,11 @@ class LesHouchesConfig(colibriConfig):
     LesHouchesConfig class Inherits from colibri.config.colibriConfig
     """
 
-    def produce_pdf_model(self, output_path, fitted_flavours, dump_model=True):
+    def produce_pdf_model(self, output_path, dump_model=True):
         """
         Produce the Les Houches model.
         """
-        model = LesHouchesPDF(fitted_flavours)
+        model = LesHouchesPDF()
         # dump model to output_path using dill
         # this is mainly needed by scripts/ns_resampler.py
         if dump_model:
