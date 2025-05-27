@@ -17,7 +17,7 @@ class LesHouchesApp(colibriApp):
 
 
 def main():
-    a = LesHouchesApp(name="gp", providers=lh_pdf_providers)
+    a = LesHouchesApp(name="les_houches", providers=lh_pdf_providers)
     a.main()
 
 
