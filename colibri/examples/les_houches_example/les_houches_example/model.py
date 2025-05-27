@@ -12,7 +12,6 @@ class LesHouchesPDF(PDFModel):
     A PDFModel implementation for the Les Houches parametrisation.
     """
 
-
     @property
     def param_names(self):
         """The fitted parameters of the model."""

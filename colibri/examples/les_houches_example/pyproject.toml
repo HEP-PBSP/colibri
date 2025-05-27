@@ -5,7 +5,7 @@ build-backend = "poetry_dynamic_versioning.backend"
 [tool.poetry]
 name = "les_houches_example"
 version = "1.0.0"
-authors = ["..."]
+authors = ["PBSP collaboration"]
 description = "Les Houches Parametrisation Example"
 
 [tool.poetry.dependencies]
