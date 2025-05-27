@@ -12,8 +12,6 @@ class LesHouchesPDF(PDFModel):
     A PDFModel implementation for the Les Houches parametrisation.
     """
 
-    def __init__(self, fitted_flavours):
-        self.fitted_flavours = fitted_flavours
 
     @property
     def param_names(self):
