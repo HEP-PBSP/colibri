@@ -174,15 +174,6 @@ MC Utils
    :show-inheritance:
    :noindex:
 
-Plots and Tables
-----------------
-
-.. automodule:: colibri.plots_and_tables
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
 Training and Validation
 -----------------------
 
