@@ -14,7 +14,7 @@ env:
 jobs:
   build:
 
-    if: ${{ github.event.label.name == 'run-tests' }} 
+    if: ${{ github.event.label.name == 'run-analytic_ct' }} 
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
