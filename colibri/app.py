@@ -20,7 +20,6 @@ colibri_providers = [
     "colibri.commondata_utils",
     "colibri.training_validation",
     "colibri.covmats",
-    "colibri.plots_and_tables.plotting",
     "colibri.provider_aliases",
     "colibri.mc_utils",
     "colibri.likelihood",
