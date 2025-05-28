@@ -4,17 +4,16 @@
 name: Monte Carlo CI wmin model
 
 on:
-  pull_request_review:
+  pull_request:
     types:
-      - submitted
-      - edited
+      - labeled
 
 env:
   CACHE_NUMBER: 0  # increase to reset cache manually
 
 jobs:
   build:
-
+    if: ${{ github.event.label.name == 'run-mcreplica_ct' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
