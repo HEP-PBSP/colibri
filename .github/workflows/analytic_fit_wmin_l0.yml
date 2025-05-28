@@ -4,10 +4,9 @@
 name: Analytic Fit L0 CI wmin model
 
 on:
-  pull_request_review:
+  pull_request:
     types:
-      - submitted
-      - edited
+      - labeled
 
 env:
   CACHE_NUMBER: 0  # increase to reset cache manually
@@ -15,6 +14,7 @@ env:
 jobs:
   build:
 
+    if: ${{ github.event.label.name == 'run-analytic_ct' }} 
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

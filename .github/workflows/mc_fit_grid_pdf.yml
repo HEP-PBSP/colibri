@@ -4,10 +4,9 @@
 name: Monte Carlo CI grid_pdf model
 
 on:
-  pull_request_review:
+  pull_request:
     types:
-      - submitted
-      - edited
+      - labeled
 
 
 env:
@@ -15,7 +14,7 @@ env:
 
 jobs:
   build:
-
+    if: ${{ github.event.label.name == 'run-mcreplica_ct' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
