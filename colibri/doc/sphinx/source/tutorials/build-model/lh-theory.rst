@@ -4,12 +4,12 @@
 Les Houches Parametrisation
 ===========================
 
-We follow the Les Houches parametrisation as presented in reference :cite:`Alekhin:2005xgg`.
+We follow the Les Houches parametrisation as presented in Ref. :cite:`Alekhin:2005xgg`.
 
 Free parameters in the Les Houches Parametrisation
 --------------------------------------------------
 
-As described in reference :cite:`Alekhin:2005xgg`, the Les Houches parametrisation assumes that the total sea, :math:`\Sigma=u+\bar{u}+d+\bar{d}+s+\bar{s}`, is constrained to be made 40% by up and anti-up, 40% by down and anti-down, and 20% by strange and anti-strange, which means that we can write:
+As described in Ref. :cite:`Alekhin:2005xgg`, the Les Houches parametrisation assumes that the total sea, :math:`\Sigma=u+\bar{u}+d+\bar{d}+s+\bar{s}`, is constrained to be made 40% by up and anti-up, 40% by down and anti-down, and 20% by strange and anti-strange, which means that we can write:
 
 .. math::
     
@@ -127,4 +127,3 @@ We already have an explicit parametrisation for :math:`f_\Sigma` and :math:`f_g`
 
     x f_{V_3} &= x f_{u_v} - x f_{d_v} \\
     &= A_{u_v}\,x^{\alpha_{u_v}}\,(1 - x)^{\beta_{u_v}}\, (1+\epsilon_{u_v}\sqrt{x}+\gamma_{u_v} x) - A_{d_v}\,x^{\alpha_{d_v}}\,(1 - x)^{\beta_{d_v}}(1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x). \notag
-

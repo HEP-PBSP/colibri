@@ -15,7 +15,7 @@ Colibri is available to the public. Along with this online documentation, you ca
 `access the code here <https://github.com/HEP-PBSP/colibri>`_. 
 The code is made available as an open-source package together with user-friendly examples and the documentation presented here.
 
-If you are a new user head along to :ref:`get-started` and check out the :ref:`Tutorials`.
+If you are a new user head along to :ref:`in_get_started` and check out the :ref:`in_tutorials`.
 
 The Colibri team
 ================

@@ -1,4 +1,4 @@
-.. _tutorials:
+.. _in_tutorials:
 
 Tutorials
 =========
@@ -10,10 +10,12 @@ creating a custom PDF model or fitting data with it.
 .. toctree::
    :maxdepth: 1
 
-   les-houches/index
+   build-model/index
 
    running_fits/index
 
-   closure_tests/index
+   closure_test/index
+
+   model-cl-test/index
 
    scripts/index
