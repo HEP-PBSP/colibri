@@ -71,6 +71,7 @@ While a fit done using the `analytic_fit` module will contain the extra followin
    analytic_colibri_fit/
    ├── analytic_result.csv
 
+.. _mc_fit_folders:
 
 MC replica fit folders
 ^^^^^^^^^^^^^^^^^^^^^^
