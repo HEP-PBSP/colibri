@@ -86,8 +86,16 @@ executable.
 Running the fit
 ---------------
 
-For example, to perform a Monte Carlo fit for the Les Houches model 
+To perform a Monte Carlo fit for the Les Houches model 
 (presented in :ref:`this tutorial <in_les_houches>`), you would run:
+
+.. code-block:: bash
+
+    pip install -e .
+
+from the ``examples/les_houches_example`` directory.
+
+Then, you can use the above runcard with the following command:
 
 .. code-block:: bash
 
