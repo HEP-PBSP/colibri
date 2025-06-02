@@ -137,8 +137,17 @@ In general, Colibri runcards can be executed by running the following command:
 
     model_executable runcard.yaml
 
-So, in the case of the Les Houches parametrisation model presented in 
-:ref:`this tutorial <in_les_houches>`, the command would be:
+This must be done after installing the dependencies specific to the model. For 
+example, for the Les Houches parametrisation model presented in 
+:ref:`this tutorial <in_les_houches>`, the first step would be to run 
+
+.. code-block:: bash
+
+    pip install -e .
+
+from the ``examples/les_houches_example`` directory.
+
+Then, you can use the above runcard with the following command:
 
 .. code-block:: bash
 
