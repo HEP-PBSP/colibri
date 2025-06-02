@@ -5,10 +5,14 @@
 Bayesian Fits
 =============
 
-Here is an example runcard to run a Bayesian Fit with the Les Houches
+We will first look at an example runcard to run a Bayesian Fit with the Les Houches
 parametrisation model (see :ref:`this tutorial <in_les_houches>` for details
 on the Les Houches model and how to build it).
 
+Then we will look at the command to execute the runcard. 
+
+Runcard
+-------
 
 .. code-block:: bash
 
@@ -123,6 +127,23 @@ with, for example:
 
 in those cases where it is appropriate for the given parameters of the model 
 (eg. only one parameter or all parameters have close numerical values).
+
+Running the fit
+---------------
+
+In general, Colibri runcards can be executed by running the following command:
+
+.. code-block:: bash
+
+    model_executable runcard.yaml
+
+So, in the case of the Les Houches parametrisation model presented in 
+:ref:`this tutorial <in_les_houches>`, the command would be:
+
+.. code-block:: bash
+
+    les_houches_exe runcard.yaml
+
 
 Running fits will generate fit folders, the details of which can be found in 
 :ref:`this section <bayes_fit_folders>`.
