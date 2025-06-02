@@ -1,4 +1,4 @@
-.. _running_fits:
+.. _in_running_fits:
 
 ============
 Running Fits

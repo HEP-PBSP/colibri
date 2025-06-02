@@ -1,4 +1,4 @@
-.. _in_running_closure:
+.. _in_closure_tests:
 
 ======================
 Running a Closure Test
