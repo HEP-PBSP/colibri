@@ -6,9 +6,13 @@ Monte Carlo replica Fits
 ========================
 
 Here is an example runcard to perform a fit using the Monte Carlo replica
-method with the Les Houches parametrisation model 
-(see :ref:`this tutorial <in_les_houches>` for details on the Les Houches 
-model and how to build it).
+method. Note that the dependence on the model will come from the model-specific
+executable. For example, to perform a Monte Carlo fit for the Les Houches model 
+(presented in :ref:`this tutorial <in_les_houches>`), you would run:
+
+.. code-block:: bash
+
+    les_houches_exe monte_carlo_runcard.yml
 
 .. code-block:: bash
 
