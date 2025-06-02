@@ -5,14 +5,12 @@
 Monte Carlo replica Fits
 ========================
 
+Runcard
+-------
+
 Here is an example runcard to perform a fit using the Monte Carlo replica
 method. Note that the dependence on the model will come from the model-specific
-executable. For example, to perform a Monte Carlo fit for the Les Houches model 
-(presented in :ref:`this tutorial <in_les_houches>`), you would run:
-
-.. code-block:: bash
-
-    les_houches_exe monte_carlo_runcard.yml
+executable. 
 
 .. code-block:: bash
 
@@ -61,7 +59,7 @@ executable. For example, to perform a Monte Carlo fit for the Les Houches model
     #   lambda_positivity: 0                 
 
     use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
-    t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
+    t0pdfset: NNPDF40_nnlo_as_01180        # The t0 PDF used to build the t0 covariance matrix.
     
 
     ###################
@@ -74,16 +72,26 @@ executable. For example, to perform a Monte Carlo fit for the Les Houches model
 
     # Monte Carlo settings
     use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
-    max_epochs: 300                       # The max number of epochs in Monte Carlo training.
-    mc_validation_fraction: 0.2   
+    max_epochs: 300                        # The max number of epochs in Monte Carlo training.
+    mc_validation_fraction: 0.2            # The fraction of the data used for validation in Monte Carlo training.
 
     mc_initialiser_settings:               # The initialiser for Monte Carlo training.
-    type: uniform
-    min_val: 0
-    max_val: 3
+        type: uniform
+        min_val: 0
+        max_val: 3
 
     actions_:
     - run_monte_carlo_fit
+
+Running the fit
+---------------
+
+For example, to perform a Monte Carlo fit for the Les Houches model 
+(presented in :ref:`this tutorial <in_les_houches>`), you would run:
+
+.. code-block:: bash
+
+    les_houches_exe monte_carlo_runcard.yml -rep number_of_replicas
 
 Running fits will generate fit folders, the details of which can be found in 
 :ref:`this section <mc_fit_folders>`.
