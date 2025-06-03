@@ -20,7 +20,6 @@ model-specific closure test, you should adapt it to include the following:
     closure_test_pdf: colibri_model
     closure_test_model_settings:
     model: les_houches_example
-    fitted_flavours: [\Sigma, g, V, V3]
 
     # The parameters of the model.
     parameters:
