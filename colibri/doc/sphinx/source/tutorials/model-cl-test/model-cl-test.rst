@@ -60,5 +60,6 @@ Running the fit will create a directory called ``lh_fit_closure_test``,
 where you will find the output of the fit. You can read more about it in
 :ref:`this tutorial <bayes_fit_folders>`.
 
-You can evolve it by following the instructions given in :ref:`evolution`.
+You can evolve it by following the instructions given in 
+:ref:`this tutorial <evolution>`.
 
