@@ -3,7 +3,7 @@
 Tutorials
 =========
 
-In this section, you’ll find step-by-step tutorials on using Colibri for various different purposes such as 
+In this section, you'll find step-by-step tutorials on using Colibri for various different purposes such as 
 creating a custom PDF model or fitting data with it.
 
 
