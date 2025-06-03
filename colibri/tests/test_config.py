@@ -418,3 +418,43 @@ def test_produce_commondata_tuple():
     closure_test_level = 2
     with pytest.raises(ConfigError):
         BASE_CONFIG.produce_commondata_tuple(closure_test_level)
+
+
+@patch("colibri.config.log.warning")
+def test_parse_closure_test_colibri_model_pdf(mock_warning):
+    # Mock the pdf model
+    settings = {
+        "parameters": {"param1": 1, "param2": 2},
+        "model": "test_model",
+        "fitted_flavours": ["T3", "T8"],
+    }
+
+    # Call the method
+    result = BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings)
+
+    # Assert the result is as expected
+    expected = {
+        "parameters": {"param1": 1, "param2": 2},
+        "model": "test_model",
+        "fitted_flavours": ["T3", "T8"],
+    }
+
+    assert result == expected
+
+    # Check that error is raised if a necessary key is missing
+
+    settings_no_model = {
+        "parameters": {"param1": 1},
+        "fitted_flavours": ["T3"],
+    }
+
+    with pytest.raises(KeyError, match="Missing required key.*model"):
+        BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings_no_model)
+
+    settings_no_parameters = {
+        "model": "test_model",
+        "fitted_flavours": ["T3"],
+    }
+
+    with pytest.raises(KeyError, match="Missing required key.*parameters"):
+        BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings_no_parameters)

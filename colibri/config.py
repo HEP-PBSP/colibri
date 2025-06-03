@@ -521,3 +521,20 @@ class colibriConfig(Config):
         Returns None as the pdf_model is not used in the colibri module.
         """
         return None
+
+    def parse_closure_test_colibri_model_pdf(self, settings):
+        """
+        Validates that required keys are present and returns the full settings dictionary.
+        Requires: 'model' and 'parameters'.
+        Other keys (e.g. 'fitted_flavours') are allowed and passed through.
+        """
+        required_keys = {"model", "parameters"}
+
+        missing_keys = required_keys - settings.keys()
+        if missing_keys:
+            raise KeyError(
+                f"Missing required key(s) in closure_test_model_settings: {', '.join(missing_keys)}"
+            )
+
+        # Return a full copy of the settings dictionary (assuming it’s valid)
+        return dict(settings)
