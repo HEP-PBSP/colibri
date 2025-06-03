@@ -427,7 +427,6 @@ def test_parse_closure_test_colibri_model_pdf(mock_warning):
         "parameters": {"param1": 1, "param2": 2},
         "model": "test_model",
         "fitted_flavours": ["T3", "T8"],
-        "unknown_key": "should_warn",
     }
 
     # Call the method
@@ -435,17 +434,12 @@ def test_parse_closure_test_colibri_model_pdf(mock_warning):
 
     # Assert the result is as expected
     expected = {
+        "parameters": {"param1": 1, "param2": 2},
         "model": "test_model",
         "fitted_flavours": ["T3", "T8"],
-        "parameters": {"param1": 1, "param2": 2},
     }
 
     assert result == expected
-
-    # Check that the warning was called for the unknown key
-    mock_warning.assert_called_once()
-    args, _ = mock_warning.call_args
-    assert isinstance(args[0], ConfigError)
 
     # Check that error is raised if a necessary key is missing
 
@@ -454,21 +448,13 @@ def test_parse_closure_test_colibri_model_pdf(mock_warning):
         "fitted_flavours": ["T3"],
     }
 
-    with pytest.raises(KeyError, match="model not found"):
+    with pytest.raises(KeyError, match="Missing required key.*model"):
         BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings_no_model)
-
-    settings_no_fitted_flavours = {
-        "parameters": {"param1": 1},
-        "model": "test_model",
-    }
-
-    with pytest.raises(KeyError, match="fitted_flavours not found"):
-        BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings_no_fitted_flavours)
 
     settings_no_parameters = {
         "model": "test_model",
         "fitted_flavours": ["T3"],
     }
 
-    with pytest.raises(KeyError, match="parameters not found"):
+    with pytest.raises(KeyError, match="Missing required key.*parameters"):
         BASE_CONFIG.parse_closure_test_colibri_model_pdf(settings_no_parameters)

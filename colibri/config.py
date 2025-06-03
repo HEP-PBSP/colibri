@@ -524,40 +524,17 @@ class colibriConfig(Config):
 
     def parse_closure_test_colibri_model_pdf(self, settings):
         """
-        Checks that the required keys are included in closure_test_model_settings
-        and constructs a dictionary for the settings.
+        Validates that required keys are present and returns the full settings dictionary.
+        Requires: 'model' and 'parameters'.
+        Other keys (e.g. 'fitted_flavours') are allowed and passed through.
         """
-        known_keys = {"model", "fitted_flavours", "parameters"}
+        required_keys = {"model", "parameters"}
 
-        kdiff = settings.keys() - known_keys
-        for k in kdiff:
-            log.warning(
-                ConfigError(
-                    f"Key '{k}' in closure_test_model_settings not known.",
-                    k,
-                    known_keys,
-                )
+        missing_keys = required_keys - settings.keys()
+        if missing_keys:
+            raise KeyError(
+                f"Missing required key(s) in closure_test_model_settings: {', '.join(missing_keys)}"
             )
 
-        # Now construct the closure_test_model_settings dictionary,
-        # checking the required keys are present.
-        closure_test_model_settings = {}
-
-        if "model" in settings:
-            closure_test_model_settings["model"] = settings.get("model")
-        else:
-            raise KeyError(f"model not found in closure_test_model_settings")
-
-        if "fitted_flavours" in settings:
-            closure_test_model_settings["fitted_flavours"] = settings.get(
-                "fitted_flavours"
-            )
-        else:
-            raise KeyError(f"fitted_flavours not found in closure_test_model_settings")
-
-        if "parameters" in settings:
-            closure_test_model_settings["parameters"] = settings.get("parameters")
-        else:
-            raise KeyError(f"parameters not found in closure_test_model_settings")
-
-        return closure_test_model_settings
+        # Return a full copy of the settings dictionary (assuming it’s valid)
+        return dict(settings)
