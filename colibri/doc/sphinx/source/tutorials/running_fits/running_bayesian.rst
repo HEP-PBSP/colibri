@@ -156,3 +156,12 @@ Then, you can use the above runcard with the following command:
 
 Running fits will generate fit folders, the details of which can be found in 
 :ref:`this section <bayes_fit_folders>`.
+
+Terminal output
+^^^^^^^^^^^^^^^
+
+.. image:: ../../_static/figures/fit_terminal_output.png
+   :width: 900px
+   :align: center
+
+TODO: add explanation of what the output is.
