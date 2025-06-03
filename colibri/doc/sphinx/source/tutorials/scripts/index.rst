@@ -1,4 +1,4 @@
-.. _evolution:
+.. _colibri_scripts:
 
 ===============
 Colibri Scripts
