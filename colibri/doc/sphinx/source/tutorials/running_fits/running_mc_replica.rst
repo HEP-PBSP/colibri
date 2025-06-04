@@ -77,11 +77,41 @@ executable.
 
     mc_initialiser_settings:               # The initialiser for Monte Carlo training.
         type: uniform
-        min_val: 0
-        max_val: 3
+        bounds:
+            alpha_gluon: [-0.1, 1]
+            beta_gluon: [9, 13]
+            alpha_up: [0.4, 0.9]
+            beta_up: [3, 4.5]
+            epsilon_up: [-3, 3]
+            gamma_up: [1, 6]
+            alpha_down: [1, 2]
+            beta_down: [8, 12]
+            epsilon_down: [-4.5, -3]
+            gamma_down: [3.8, 5.8]
+            norm_sigma: [0.1, 0.5]
+            alpha_sigma: [-0.2, 0.1]
+            beta_sigma: [1.2, 3]
 
     actions_:
     - run_monte_carlo_fit
+
+If it is appropriate for a given model, you may choose to have single, 
+global minimum and maximum values for all parameters, instead of specific
+bounds for each parameter. In that, case, you may replace
+
+.. code-block:: bash
+
+    bounds:
+    alpha_gluon: [-0.1, 1]
+    beta_gluon: [9, 13]
+    ...
+
+with, for example: 
+
+.. code-block:: bash
+    
+    min_val: -4.5
+    max_val: 13
 
 Running the fit
 ---------------
