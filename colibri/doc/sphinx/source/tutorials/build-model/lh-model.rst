@@ -44,14 +44,20 @@ that is specific to this model, and will be used to initialise a fit.
 
 ``app.py``
 ^^^^^^^^^^
-The ``app.py`` scripts defines the ``LesHouchesApp`` class, which is based on the abstract
-class ``colibriApp``. It looks as follows:
+The ``app.py`` module defines the core application class for the Les Houches model:
 
 .. literalinclude:: ../../../../../examples/les_houches_example/les_houches_example/app.py
    :language: python
 
-Note that it enables the use of reportengine and validphys functionalities. 
-(See :cite:`zahari_kassabov_2019_2571601` for documentation on validphys).
+The ``LesHouchesApp`` class enables the Les Houches model to function as a `reportengine App <https://github.com/NNPDF/reportengine>`_. This integration provides a structured framework for data processing and report generation.
+
+Key Features:
+~~~~~~~~~~~~~
+
+* **Provider System**: The ``LesHouchesApp`` accepts a list of providers (``lh_pdf_providers``) containing modules that are recognized by the application framework.
+
+* **Inheritance Hierarchy**: The ``LesHouchesApp`` is a subclass of ``colibriApp``, which means it automatically inherits all providers from both `colibri` and `validphys`, giving access to their full functionality without additional configuration.
+
 
 ``config.py``
 ^^^^^^^^^^^^^
