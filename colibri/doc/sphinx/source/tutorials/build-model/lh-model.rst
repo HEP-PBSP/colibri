@@ -33,7 +33,7 @@ which follows the sutructure defined above. We will have a look at them one by o
 
 ``pyproject.toml``
 ^^^^^^^^^^^^^^^^^^
-The ``pyproject.toml`` file defines a python package for this model. It looks like this:
+The ``pyproject.toml`` file defines the Python package configuration for this model using `Poetry <https://python-poetry.org/docs/pyproject/>`_ as the dependency management and packaging tool. The configuration file structure looks like this:
 
 .. literalinclude:: ../../../../../examples/les_houches_example/pyproject.toml
    :language: python
