@@ -71,7 +71,7 @@ builder and environment.
 
 ``model.py``
 ^^^^^^^^^^^^
-the ``model.py`` script defines the Les Houches parametrisation model. It looks like this:
+The ``model.py`` script defines the Les Houches parametrisation model. It looks like this:
 
 .. literalinclude:: ../../../../../examples/les_houches_example/les_houches_example/model.py
    :language: python
