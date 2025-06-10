@@ -49,7 +49,7 @@ leaving 13 free parameters [#]_ .
 Normalisations
 --------------
 
-In order to be able to perform a fit, we would like to write all PDFs explicitly in terms of free parameters, `x` and `Q_0`. 
+In order to be able to perform a fit, we would like to write all PDFs explicitly in terms of free parameters, `x` and :math:`Q_0`. 
 
 We therefore write the expressions for :math:`A_g`, :math:`A_{u_v}` and :math:`A_{d_v}` explicitly by solving the integral spelled out in the sum rules, Equations :eq:`eq:gluon-sum-rule` and :eq:`eq:valence-sum-rules`, which are of the form of Euler beta functions, given by:
 
