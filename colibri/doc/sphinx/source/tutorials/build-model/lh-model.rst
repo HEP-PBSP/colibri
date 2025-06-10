@@ -43,7 +43,7 @@ that is specific to this model, and will be used to initialise a fit.
 (See :ref:`Running Fits <in_running_fits>`).
 
 ``app.py``
-^^^^^^^^^^
+----------
 The ``app.py`` module defines the core application class for the Les Houches model:
 
 .. literalinclude:: ../../../../../examples/les_houches_example/les_houches_example/app.py
