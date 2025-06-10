@@ -78,7 +78,7 @@ theory used in this tutorial;
 
 .. code-block:: bash
     
-    vp-get EKO 40000000
+    vp-get eko 40000000
 
 TODO: add link to EKO NNPDF documentation
 
