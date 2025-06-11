@@ -5,7 +5,7 @@ build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry]
 name = "colibri"
-version = "0.0.0"
+version = "0.1.0"
 authors = [ "PBSP collaboration" ]
 description = "A PDF fitting tool"
 repository = "https://github.com/HEP-PBSP/colibri"
@@ -20,7 +20,9 @@ jax = "*"
 optax = "*"
 flax = "*"
 dill = "*"
-nnpdf = "*"
+
+# nnpdf dependency
+nnpdf = { git = "https://github.com/NNPDF/nnpdf" }
 
 [tool.poetry.extra]
 test = [
