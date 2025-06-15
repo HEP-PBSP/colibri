@@ -4,12 +4,17 @@ build-backend = "poetry_dynamic_versioning.backend"
 
 
 [tool.poetry]
-name = "colibri"
+name = "hep-colibri"
 version = "0.1.0"
 authors = [ "PBSP collaboration" ]
 description = "A PDF fitting tool"
 repository = "https://github.com/HEP-PBSP/colibri"
 readme = "README.md"
+
+packages = [
+    { include = "colibri" }
+]
+
 
 [tool.poetry.dependencies]
 python = "^3.9"
