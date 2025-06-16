@@ -37,7 +37,7 @@ jobs:
           make html
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           # Path to the generated HTML; adjust if your build directory differs.
           path: colibri/doc/sphinx/_build/html
