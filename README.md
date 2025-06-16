@@ -91,7 +91,7 @@ conda install mpich lhapdf pandoc mpi4py ultranest pip
 After having completed this you can simply install the rest of the dependencies with `pip`:
 
 ```bash
-python -m pip install git@github.com:HEP-PBSP/colibri.git
+python -m pip install git+https://github.com/HEP-PBSP/colibri.git
 ```
 
 to verify that the installation went trough
