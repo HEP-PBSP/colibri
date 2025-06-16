@@ -53,6 +53,15 @@ extensions = [
     "sphinx_copybutton",
 ]
 
+# Mock imports that are not installed / heavy
+autodoc_mock_imports = [
+   "mpich",
+   "lhapdf",
+   "pandoc",
+   "mpi4py",
+   "ultranest",
+]
+
 
 bibtex_bibfiles = ["references.bib"]
 
