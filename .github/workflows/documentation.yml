@@ -1,5 +1,4 @@
 name: documentation
-
 # Trigger on pushes to main or manual dispatch
 on: [push, workflow_dispatch]
 
@@ -18,7 +17,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -26,16 +24,13 @@ jobs:
           # python-version: "3.9"
           # Otherwise default is latest; ensure compatibility with your project.
           cache: "pip"
-
       - name: Install dependencies
         run: |
           pip install ".[doc]"
-
       - name: Build Sphinx HTML
         run: |
           cd colibri/doc/sphinx
           make html
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -46,7 +41,13 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    
+    # Add the required environment configuration
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
     steps:
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
-
+        id: deployment
+        uses: actions/deploy-pages@v4
