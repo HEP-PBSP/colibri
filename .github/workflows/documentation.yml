@@ -1,11 +1,7 @@
 name: documentation
 
 # Trigger on pushes to main or manual dispatch
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 # Permissions needed for Pages deployment
 permissions:
@@ -49,6 +45,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v1
