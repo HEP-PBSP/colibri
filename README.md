@@ -78,7 +78,7 @@ If you don't want to clone the repository and don't need to work in development 
 > **Note:** 
 > Most of the `colibri` dependencies are available in the [PyPi repository](https://pypi.org/), however non-python codes such as LHAPDF and pandoc won’t be installed automatically and neeed to be manually installed in the environment because of this we recommend to use a conda environment.
 
-Create a conda environment from your base environment
+Create a conda environment from your base environment, for instance
 
 ```bash
 conda create -n colibri-dev python>=3.11
@@ -107,7 +107,15 @@ colibri --help
 
 ### 3. GPU (CUDA) JAX Support
 
-#### TODO
+The installation instructions shown above will install jax in cpu mode. It is however possible to run
+colibri fits using gpu cuda support too.
+To do so, after installing the package following one of the methods shown above, if you are on a linux
+machine you can install jax in cuda mode by running
+
+```bash
+pip install -U "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
+
+```
 
 
 ## Usage
