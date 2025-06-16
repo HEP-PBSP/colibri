@@ -1,28 +1,55 @@
 name: documentation
 
-on: [push, workflow_dispatch]
+# Trigger on pushes to main or manual dispatch
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
+# Permissions needed for Pages deployment
 permissions:
-  contents: write
+  pages: write       # to create/update Pages deployment
+  id-token: write    # required by some GitHub Pages authentication flows
+  contents: read     # to checkout code
 
 jobs:
-  docs:
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      # optionally pass artifact info if needed; not used here but can be referenced
+      docs-path: colibri/doc/sphinx/_build/html
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          # If you need a specific Python version, you can set:
+          # python-version: "3.9"
+          # Otherwise default is latest; ensure compatibility with your project.
+          cache: "pip"
+
       - name: Install dependencies
         run: |
           pip install ".[doc]"
-      - name: Sphinx build
+
+      - name: Build Sphinx HTML
         run: |
           cd colibri/doc/sphinx
           make html
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          publish_branch: gh-pages
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: _build/
-          force_orphan: true
+          # Path to the generated HTML; adjust if your build directory differs.
+          path: colibri/doc/sphinx/_build/html
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
+
