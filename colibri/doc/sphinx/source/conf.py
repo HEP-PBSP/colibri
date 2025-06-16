@@ -55,11 +55,11 @@ extensions = [
 
 # Mock imports that are not installed / heavy
 autodoc_mock_imports = [
-   "mpich",
-   "lhapdf",
-   "pandoc",
-   "mpi4py",
-   "ultranest",
+    "mpich",
+    "lhapdf",
+    "pandoc",
+    "mpi4py",
+    "ultranest",
 ]
 
 
