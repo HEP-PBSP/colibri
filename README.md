@@ -47,33 +47,50 @@ TODO
 
 This section covers installing `colibri` in various ways. By default, `pip install hep-colibri` installs JAX CPU build and all core dependencies. For GPU support, see the separate section below.
 
-### 1. Core Installation via Conda
+### 1. Development Installation via Conda
 
-**Option A: Using provided environment.yml**
+You can install colibri easily by first cloning the repository and the using the provided `environment.yml` file
+
+```bash
+git clone https://github.com/HEP-PBSP/colibri
+cd colibri
+```
+
+from your conda base environment run 
 
 ```bash
 conda env create -f environment.yml
 
 ```
 
-To use a different environment name:
+This will create a `colibri-dev` environment installed in development mode.
+If you want to use a different environment name you can run:
 
 ```bash
 conda env create -n myenv -f environment.yml
 ```
 
-**Option B: Manual Conda environment**
+
+### 2. Installing with pip
+
+If you don't want to clone the repository and don't need to work in development mode you can follow the installation instructions below.
+
+> **Note:** 
+> Most of the `colibri` dependencies are available in the [PyPi repository](https://pypi.org/), however non-python codes such as LHAPDF and pandoc won’t be installed automatically and neeed to be manually installed in the environment because of this we recommend to use a conda environment.
+
+Create a conda environment from your base environment
 
 ```bash
-conda create -n colibri-env -y python=3.10
-conda activate colibri-env
-conda install mpich mpi4py lhapdf pandoc
-pip install hep-colibri
+conda create -n colibri-dev python>=3.11
 ```
 
-### 2. Core Installation via pip
+In this new environment install the following conda packages
 
-From your python environment run
+```bash
+conda install mpich lhapdf pandoc mpi4py ultranest pip
+```
+
+After having completed this you can simply install the rest of the dependencies with `pip`:
 
 ```bash
 pip install --upgrade pip
