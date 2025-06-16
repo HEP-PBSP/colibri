@@ -23,7 +23,6 @@ A reportengine app to perform PDF fits using arbitrary parametrisations.
   - [2. Core Installation via pip](#2-core-installation-via-pip)
   - [3. GPU (CUDA) JAX Support](#3-gpu-cuda-jax-support)
 - [Usage](#usage)
-- [Installation of Various Models](#installation-of-various-models)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -48,7 +47,7 @@ This section covers installing `colibri` in various ways. By default, `pip insta
 
 ### 1. Development Installation via Conda
 
-You can install colibri easily by first cloning the repository and the using the provided `environment.yml` file
+You can install colibri easily by first cloning the repository and then using the provided `environment.yml` file
 
 ```bash
 git clone https://github.com/HEP-PBSP/colibri
@@ -75,7 +74,7 @@ conda env create -n myenv -f environment.yml
 If you don't want to clone the repository and don't need to work in development mode you can follow the installation instructions below.
 
 > **Note:** 
-> Most of the `colibri` dependencies are available in the [PyPi repository](https://pypi.org/), however non-python codes such as LHAPDF and pandoc won’t be installed automatically and neeed to be manually installed in the environment because of this we recommend to use a conda environment.
+> Most of the `colibri` dependencies are available in the [PyPi repository](https://pypi.org/), however non-python codes such as LHAPDF and pandoc won’t be installed automatically and neeed to be manually installed in the environment. Because of this we recommend to use a conda environment.
 
 Create a conda environment from your base environment, for instance
 
@@ -119,20 +118,14 @@ pip install -U "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_
 
 ## Usage
 
-#### TODO
-
-
-## Installation of various models
-
-
-#### TODO
+Usage examples such as the implementation of a PDF model and running of a PDF fit can be found under Tutorials in the [Documentation](https://hep-pbsp.github.io/colibri/)
 
 
 ## Contributing
 
 We welcome bug reports or feature requests sent to the [issue tracker](https://github.com/HEP-PBSP/colibri/issues). You may use the issue tracker for help and questions as well.
 
-If you would like contribute to the code, please follow the NNPDF [Contribution Guidelines](https://docs.nnpdf.science/contributing/index.html).
+If you would like contribute to the code, please follow the Contribution Guidelines (TODO).
 
 When developing locally, before committing please test your changes by running `pytest` from the root of the repository.
 
