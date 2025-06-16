@@ -32,7 +32,7 @@ A reportengine app to perform PDF fits using arbitrary parametrisations.
 
 ## Documentation
 
-TODO
+Documentation regarding the usage and installation is available at <https://hep-pbsp.github.io/colibri/>
 
 ## Features
 - Perform PDF fits using flexible parametrisations
