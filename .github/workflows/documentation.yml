@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Path to the generated HTML; adjust if your build directory differs.
-          path: colibri/doc/sphinx/_build/html
+          path: colibri/doc/sphinx/build/html
 
   deploy:
     needs: build
