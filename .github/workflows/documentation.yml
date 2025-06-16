@@ -16,7 +16,8 @@ jobs:
           pip install sphinx sphinx_rtd_theme myst_parser sphinxcontrib-bibtex sphinx-copybutton
       - name: Sphinx build
         run: |
-          sphinx-build colibri/doc/sphinx/source _build
+          cd doc/sphinx
+          make html
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
