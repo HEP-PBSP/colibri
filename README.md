@@ -43,7 +43,7 @@ Documentation regarding the usage and installation is available at <https://hep-
 
 ## Installation
 
-This section covers installing `colibri` in various ways. By default, `pip install hep-colibri` installs JAX CPU build and all core dependencies. For GPU support, see the separate section below.
+This section covers installing `colibri` in various ways.
 
 ### 1. Development Installation via Conda
 
