@@ -30,7 +30,7 @@ test = [
     "pytest",
     "hypothesis",
 ]
-doc = ["sphinxcontrib-bibtex", "sphinx-rtd-theme", "sphinx", "tabulate"]
+doc = ["sphinxcontrib-bibtex", "sphinx-rtd-theme", "sphinx", "tabulate", "sphinx-copybutton"]
 
 [tool.poetry.scripts]
 colibri = "colibri.app:main"
