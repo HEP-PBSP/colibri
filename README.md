@@ -24,7 +24,6 @@ A reportengine app to perform PDF fits using arbitrary parametrisations.
   - [3. GPU (CUDA) JAX Support](#3-gpu-cuda-jax-support)
 - [Usage](#usage)
 - [Installation of Various Models](#installation-of-various-models)
-- [Development & Testing](#development--testing)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -129,14 +128,13 @@ pip install -U "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_
 #### TODO
 
 
-## Development & Testing
+## Contributing
 
-The advised way of installing to work in development mode is: TODO
+We welcome bug reports or feature requests sent to the [issue tracker](https://github.com/HEP-PBSP/colibri/issues). You may use the issue tracker for help and questions as well.
 
-```bash
-git clone https://github.com/HEP-PBSP/colibri.git
-cd colibri
-```
+If you would like contribute to the code, please follow the NNPDF [Contribution Guidelines](https://docs.nnpdf.science/contributing/index.html).
+
+When developing locally, before committing please test your changes by running `pytest` from the root of the repository.
 
 
 ## License
