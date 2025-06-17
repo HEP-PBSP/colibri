@@ -1,12 +1,12 @@
 .. _installation:
 
 Installing Colibri on Linux or macOS
-=====================================
+====================================
 
 This section covers installing ``colibri`` in various ways.
 
 1. Development Installation via Conda
---------------------------------------
+-------------------------------------
 
 You can install colibri easily by first cloning the repository and then using the provided ``environment.yml`` file
 
@@ -30,7 +30,7 @@ If you want to use a different environment name you can run:
 
 
 2. Installing with pip
------------------------
+----------------------
 
 If you don't want to clone the repository and don't need to work in development mode you can follow the installation instructions below.
 
@@ -71,7 +71,7 @@ To verify that the installation went through
 
 
 3. GPU (CUDA) JAX Support
---------------------------
+-------------------------
 
 The installation instructions shown above will install jax in cpu mode. It is however possible to run
 colibri fits using gpu cuda support too.
