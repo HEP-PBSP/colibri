@@ -117,7 +117,7 @@ pip install -U "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_
 
 ## Usage
 
-Usage examples such as the implementation of a PDF model and running of a PDF fit can be found under Tutorials in the [Documentation](https://hep-pbsp.github.io/colibri/)
+Usage examples such as the implementation of a PDF model and running of a PDF fit can be found under Tutorials in the [Documentation](https://hep-pbsp.github.io/colibri/).
 
 
 ## Contributing
