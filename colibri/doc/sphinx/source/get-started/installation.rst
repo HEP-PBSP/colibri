@@ -55,7 +55,14 @@ After having completed this you can simply install the rest of the dependencies 
 
     python -m pip install git+https://github.com/HEP-PBSP/colibri.git
 
-to verify that the installation went trough
+Note, this will install the latest development version, if you want to install a specific release you can specify the 
+version, for instance for v0.2.0 you can use the following command
+
+.. code-block:: bash
+
+    python -m pip install git+https://github.com/HEP-PBSP/colibri.git@v0.2.0
+
+To verify that the installation went trough
 
 .. code-block:: bash
 
@@ -74,4 +81,15 @@ machine you can install jax in cuda mode by running
 .. code-block:: bash
 
     pip install -U "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
+
+.. note::
+   It is possible to run fits using float32 precision, the only way of doing so currently is to apply a patch to ultranest so that the json.dump is compatible. To do that, follow the instructions:
+
+.. code-block:: bash
+
+    git clone git@github.com:LucaMantani/UltraNest.git
+    cd UltraNest
+    git switch add-numpy-encoder
+    pip install .
+
 

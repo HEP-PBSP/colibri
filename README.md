@@ -94,6 +94,14 @@ After having completed this you can simply install the rest of the dependencies 
 python -m pip install git+https://github.com/HEP-PBSP/colibri.git
 ```
 
+Note, this will install the latest development version, if you want to install a specific release you can specify the 
+version, for instance for v0.2.0 you can use the following command
+
+```bash
+python -m pip install git+https://github.com/HEP-PBSP/colibri.git@v0.2.0
+
+```
+
 to verify that the installation went trough
 
 ```bash
@@ -114,6 +122,17 @@ pip install -U "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_
 
 ```
 
+**Note:** 
+It is possible to run fits using float32 precision, the only way of doing so currently is to apply a patch to ultranest so that the json.dump is compatible. To do that, follow the instructions:
+
+```bash
+git clone git@github.com:LucaMantani/UltraNest.git
+cd UltraNest
+git switch add-numpy-encoder
+pip install .
+
+```
+
 
 ## Usage
 
@@ -124,7 +143,7 @@ Usage examples such as the implementation of a PDF model and running of a PDF fi
 
 We welcome bug reports or feature requests sent to the [issue tracker](https://github.com/HEP-PBSP/colibri/issues). You may use the issue tracker for help and questions as well.
 
-If you would like contribute to the code, please follow the Contribution Guidelines (TODO).
+If you would like contribute to the code, we ask you to kindly follow the [NNPDF Contribution Guidelines](https://docs.nnpdf.science/contributing/index.html).
 
 When developing locally, before committing please test your changes by running `pytest` from the root of the repository.
 

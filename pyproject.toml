@@ -5,7 +5,7 @@ build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry]
 name = "colibri"
-version = "0.1.0"
+version = "1.0.0"
 authors = [ "PBSP collaboration" ]
 description = "A PDF fitting tool"
 repository = "https://github.com/HEP-PBSP/colibri"
