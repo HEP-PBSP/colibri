@@ -74,7 +74,7 @@ conda env create -n myenv -f environment.yml
 If you don't want to clone the repository and don't need to work in development mode you can follow the installation instructions below.
 
 > **Note:** 
-> Most of the `colibri` dependencies are available in the [PyPi repository](https://pypi.org/), however non-python codes such as LHAPDF and pandoc won’t be installed automatically and neeed to be manually installed in the environment. Because of this we recommend to use a conda environment.
+> Most of the `colibri` dependencies are available in the [PyPi repository](https://pypi.org/), however non-python codes such as LHAPDF and pandoc won’t be installed automatically and need to be manually installed in the environment. Because of this we recommend to use a conda environment.
 
 Create a conda environment from your base environment, for instance
 
@@ -102,7 +102,7 @@ python -m pip install git+https://github.com/HEP-PBSP/colibri.git@v0.2.0
 
 ```
 
-to verify that the installation went trough
+to verify that the installation went through
 
 ```bash
 python -c "import colibri; print(colibri.__version__)"

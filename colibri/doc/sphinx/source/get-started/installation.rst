@@ -35,7 +35,7 @@ If you want to use a different environment name you can run:
 If you don't want to clone the repository and don't need to work in development mode you can follow the installation instructions below.
 
 .. note::
-   Most of the ``colibri`` dependencies are available in the `PyPi repository <https://pypi.org/>`_, however non-python codes such as LHAPDF and pandoc won't be installed automatically and neeed to be manually installed in the environment. Because of this we recommend to use a conda environment.
+   Most of the ``colibri`` dependencies are available in the `PyPi repository <https://pypi.org/>`_, however non-python codes such as LHAPDF and pandoc won't be installed automatically and need to be manually installed in the environment. Because of this we recommend to use a conda environment.
 
 Create a conda environment from your base environment, for instance
 
@@ -62,7 +62,7 @@ version, for instance for v0.2.0 you can use the following command
 
     python -m pip install git+https://github.com/HEP-PBSP/colibri.git@v0.2.0
 
-To verify that the installation went trough
+To verify that the installation went through
 
 .. code-block:: bash
 
