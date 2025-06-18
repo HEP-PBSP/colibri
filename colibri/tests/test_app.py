@@ -1,3 +1,9 @@
+"""
+colibri.tests.test_app
+
+Module to test the colibri app.
+"""
+
 import colibri
 from colibri.app import colibriApp
 from colibri.tests.conftest import CONFIG_YML_PATH

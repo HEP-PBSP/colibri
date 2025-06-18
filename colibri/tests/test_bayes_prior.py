@@ -1,27 +1,29 @@
+"""
+colibri.tests.test_bayes_prior
+
+Module to test the bayesian_prior function and its associated classes.
+"""
+
+from unittest.mock import patch
+
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats
+import numpy as np
+import pandas as pd
+import pytest
 from jax import random
+
 from colibri.bayes_prior import bayesian_prior
 from colibri.core import PriorSettings
-import numpy as np
-import pytest
-from unittest.mock import patch
-import pandas as pd
-from colibri.tests.conftest import MOCK_PDF_MODEL
+from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_PRIOR_SETTINGS_UNIFORM
 
 
 def test_uniform_prior():
-    # ---- Test global min/max case ----
-
-    prior_settings = PriorSettings(
-        **{
-            "prior_distribution": "uniform_parameter_prior",
-            "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
-        }
-    )
-
-    prior_transform = bayesian_prior(prior_settings, MOCK_PDF_MODEL)
+    """
+    Test the transformation of a uniform prior distribution.
+    """
+    prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_PDF_MODEL)
 
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10,))
@@ -30,10 +32,10 @@ def test_uniform_prior():
     expected = (
         cube
         * (
-            prior_settings.prior_distribution_specs["max_val"]
-            - prior_settings.prior_distribution_specs["min_val"]
+            TEST_PRIOR_SETTINGS_UNIFORM.prior_distribution_specs["max_val"]
+            - TEST_PRIOR_SETTINGS_UNIFORM.prior_distribution_specs["min_val"]
         )
-        + prior_settings.prior_distribution_specs["min_val"]
+        + TEST_PRIOR_SETTINGS_UNIFORM.prior_distribution_specs["min_val"]
     )
 
     assert np.allclose(transformed, expected), "Uniform prior transformation failed."

@@ -163,7 +163,7 @@ def analytic_fit(
     Sigma = inv_covmat
     X = predictions.T - intercept[:, None]
 
-    # * Check that cov mat is positive definite
+    # * Check that covmat is positive definite
     if jnp.any(jla.eigh(X.T @ Sigma @ X)[0] <= 0.0):
         raise ValueError(
             "The obtained covariance matrix for the analytic solution is not positive definite."

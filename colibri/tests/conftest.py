@@ -2,25 +2,28 @@
 Module containing standard pytest data configurations for testing purposes.
 """
 
-from unittest.mock import Mock
+import pathlib
+from unittest.mock import Mock, MagicMock
 
 import jax
 import jax.numpy as jnp
 import numpy as np
+
 from colibri.pdf_model import PDFModel
+from colibri.core import PriorSettings
+
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
+TEST_THEORYID = 40_000_000
 """
 Intrinsic charm theory used in the tests.
 """
-TEST_THEORYID = 40000000
 
+TEST_USECUTS = "internal"
 """
 Default cuts to be used when testing.
 """
-TEST_USECUTS = "internal"
-
 
 TEST_DATASET = {
     "dataset_input": {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"},
@@ -28,10 +31,6 @@ TEST_DATASET = {
     "use_cuts": TEST_USECUTS,
 }
 
-"""
-This should contain the exact same info as TEST_DATASET, but with the use of
-the "dataset_inputs" key instead of "dataset_input"
-"""
 TEST_DATASETS = {
     "dataset_inputs": [
         {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"}
@@ -39,6 +38,10 @@ TEST_DATASETS = {
     "theoryid": TEST_THEORYID,
     "use_cuts": TEST_USECUTS,
 }
+"""
+This should contain the exact same info as TEST_DATASET, but with the use of
+the "dataset_inputs" key instead of "dataset_input"
+"""
 
 TEST_DATASET_HAD = {
     "dataset_input": {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
@@ -46,19 +49,16 @@ TEST_DATASET_HAD = {
     "use_cuts": TEST_USECUTS,
 }
 
-"""
-This should contain the exact same info as TEST_DATASET_HAD, but with the use of
-the "dataset_inputs" key instead of "dataset_input"
-"""
 TEST_DATASETS_HAD = {
     "dataset_inputs": [{"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"}],
     "theoryid": TEST_THEORYID,
     "use_cuts": TEST_USECUTS,
 }
+"""
+This should contain the exact same info as TEST_DATASET_HAD, but with the use of
+the "dataset_inputs" key instead of "dataset_input"
+"""
 
-"""
-Mixed DIS and HAD dataset for testing purposes.
-"""
 TEST_DATASETS_DIS_HAD = {
     "dataset_inputs": [
         {"dataset": "HERA_NC_318GEV_EP-SIGMARED", "variant": "legacy"},
@@ -67,10 +67,10 @@ TEST_DATASETS_DIS_HAD = {
     "theoryid": TEST_THEORYID,
     "use_cuts": TEST_USECUTS,
 }
+"""
+Mixed DIS and HAD dataset for testing purposes.
+"""
 
-"""
-Positivity dataset for testing purposes.
-"""
 TEST_POS_DATASET = {
     "positivity": {
         "posdatasets": [
@@ -81,6 +81,9 @@ TEST_POS_DATASET = {
         ]
     }
 }
+"""
+Positivity dataset for testing purposes.
+"""
 
 TEST_SINGLE_POS_DATASET = {
     "posdataset": {
@@ -104,7 +107,6 @@ CLOSURE_TEST_PDFSET = {"closure_test_pdf": "NNPDF40_nnlo_as_01180"}
 TRVAL_INDEX = {"trval_index": 1}
 REPLICA_INDEX = {"replica_index": 1}
 
-TEST_PDFSET = "NNPDF40_nnlo_as_01180"
 
 PSEUDODATA_SEED = 123456
 
@@ -210,100 +212,6 @@ TEST_FULL_HAD_DATASET = {
 }
 
 
-TEST_FULL_GLOBAL_DATASET = {
-    "dataset_inputs": [
-        # DIS
-        {"dataset": "NMC_NC_NOTFIXED_P_EM-SIGMARED", "variant": "legacy"},
-        {"dataset": "SLAC_NC_NOTFIXED_P_DW_EM-F2", "variant": "legacy"},
-        {"dataset": "SLAC_NC_NOTFIXED_D_DW_EM-F2", "variant": "legacy"},
-        {"dataset": "BCDMS_NC_NOTFIXED_P_DW_EM-F2", "variant": "legacy"},
-        {"dataset": "BCDMS_NC_NOTFIXED_D_DW_EM-F2", "variant": "legacy"},
-        {"dataset": "CHORUS_CC_NOTFIXED_PB_DW_NU-SIGMARED", "variant": "legacy"},
-        {"dataset": "CHORUS_CC_NOTFIXED_PB_DW_NB-SIGMARED", "variant": "legacy"},
-        {
-            "dataset": "NUTEV_CC_NOTFIXED_FE_DW_NU-SIGMARED",
-            "variant": "legacy",
-            "cfac": ["MAS"],
-        },
-        {
-            "dataset": "NUTEV_CC_NOTFIXED_FE_DW_NB-SIGMARED",
-            "variant": "legacy",
-            "cfac": ["MAS"],
-        },
-        {"dataset": "HERA_NC_318GEV_EM-SIGMARED", "variant": "legacy"},
-        {"dataset": "HERA_NC_251GEV_EP-SIGMARED", "variant": "legacy"},
-        {"dataset": "HERA_NC_300GEV_EP-SIGMARED", "variant": "legacy"},
-        {"dataset": "HERA_NC_318GEV_EP-SIGMARED", "variant": "legacy"},
-        {"dataset": "HERA_NC_225GEV_EP-SIGMARED", "variant": "legacy"},
-        {"dataset": "HERA_CC_318GEV_EP-SIGMARED", "variant": "legacy"},
-        {"dataset": "HERA_CC_318GEV_EM-SIGMARED", "variant": "legacy"},
-        {"dataset": "HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED", "variant": "legacy"},
-        {"dataset": "HERA_NC_318GEV_EAVG_CHARM-SIGMARED", "variant": "legacy"},
-        # Hadronic
-        {"dataset": "DYE866_Z0_800GEV_DW_RATIO_PDXSECRATIO", "variant": "legacy"},
-        {"dataset": "DYE866_Z0_800GEV_PXSEC", "variant": "legacy"},
-        {"dataset": "DYE605_Z0_38P8GEV_DW_PXSEC", "variant": "legacy"},
-        {
-            "dataset": "DYE906_Z0_120GEV_DW_PDXSECRATIO",
-            "variant": "legacy",
-            "cfac": ["ACC"],
-        },
-        {"dataset": "CDF_Z0_1P96TEV_ZRAP", "variant": "legacy"},
-        {"dataset": "D0_Z0_1P96TEV_ZRAP", "variant": "legacy"},
-        {"dataset": "D0_WPWM_1P96TEV_ASY", "variant": "legacy"},
-        {"dataset": "ATLAS_DY_7TEV_36PB_ETA", "variant": "legacy"},
-        {"dataset": "ATLAS_Z0_7TEV_49FB_HIMASS", "variant": "legacy"},
-        {"dataset": "ATLAS_Z0_7TEV_LOMASS_M", "variant": "legacy"},
-        {"dataset": "ATLAS_DY_7TEV_46FB_CC", "variant": "legacy"},
-        {"dataset": "ATLAS_Z0_7TEV_46FB_CF-Y", "variant": "legacy"},
-        {"dataset": "ATLAS_Z0_8TEV_HIMASS_M-Y", "variant": "legacy"},
-        {"dataset": "ATLAS_Z0_8TEV_LOWMASS_M-Y", "variant": "legacy"},
-        {"dataset": "ATLAS_DY_13TEV_TOT", "variant": "legacy", "cfac": ["NRM"]},
-        {"dataset": "ATLAS_WJ_8TEV_WP-PT", "variant": "legacy"},
-        {"dataset": "ATLAS_WJ_8TEV_WM-PT", "variant": "legacy"},
-        {"dataset": "ATLAS_Z0J_8TEV_PT-M", "variant": "legacy_10"},
-        {"dataset": "ATLAS_Z0J_8TEV_PT-Y", "variant": "legacy_10"},
-        {"dataset": "ATLAS_TTBAR_7TEV_TOT_X-SEC", "variant": "legacy"},
-        {"dataset": "ATLAS_TTBAR_8TEV_TOT_X-SEC", "variant": "legacy"},
-        {"dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC", "variant": "legacy"},
-        {"dataset": "ATLAS_TTBAR_8TEV_LJ_DIF_YT-NORM", "variant": "legacy"},
-        {"dataset": "ATLAS_TTBAR_8TEV_LJ_DIF_YTTBAR-NORM", "variant": "legacy"},
-        {"dataset": "ATLAS_TTBAR_8TEV_2L_DIF_YTTBAR-NORM", "variant": "legacy"},
-        {"dataset": "ATLAS_PH_13TEV_XSEC", "variant": "legacy", "cfac": ["EWK"]},
-        {"dataset": "ATLAS_SINGLETOP_7TEV_TCHANNEL-XSEC", "variant": "legacy"},
-        {"dataset": "ATLAS_SINGLETOP_13TEV_TCHANNEL-XSEC", "variant": "legacy"},
-        {"dataset": "ATLAS_SINGLETOP_7TEV_T-Y-NORM", "variant": "legacy"},
-        {"dataset": "ATLAS_SINGLETOP_7TEV_TBAR-Y-NORM", "variant": "legacy"},
-        {"dataset": "ATLAS_SINGLETOP_8TEV_T-RAP-NORM", "variant": "legacy"},
-        {"dataset": "ATLAS_SINGLETOP_8TEV_TBAR-RAP-NORM", "variant": "legacy"},
-        {"dataset": "CMS_WPWM_7TEV_ELECTRON_ASY"},
-        {"dataset": "CMS_WPWM_7TEV_MUON_ASY", "variant": "legacy"},
-        {"dataset": "CMS_Z0_7TEV_DIMUON_2D"},
-        {"dataset": "CMS_WPWM_8TEV_MUON_Y", "variant": "legacy"},
-        {"dataset": "CMS_Z0J_8TEV_PT-Y", "cfac": ["NRM"], "variant": "legacy_10"},
-        {"dataset": "CMS_TTBAR_7TEV_TOT_X-SEC", "variant": "legacy"},
-        {"dataset": "CMS_TTBAR_8TEV_TOT_X-SEC", "variant": "legacy"},
-        {"dataset": "CMS_TTBAR_13TEV_TOT_X-SEC", "variant": "legacy"},
-        {"dataset": "CMS_TTBAR_8TEV_LJ_DIF_YTTBAR-NORM", "variant": "legacy"},
-        {"dataset": "CMS_TTBAR_5TEV_TOT_X-SEC", "variant": "legacy"},
-        {"dataset": "CMS_TTBAR_8TEV_2L_DIF_MTTBAR-YT-NORM", "variant": "legacy"},
-        {"dataset": "CMS_TTBAR_13TEV_2L_DIF_YT", "variant": "legacy"},
-        {"dataset": "CMS_TTBAR_13TEV_LJ_2016_DIF_YTTBAR", "variant": "legacy"},
-        {"dataset": "CMS_SINGLETOP_7TEV_TCHANNEL-XSEC", "variant": "legacy"},
-        {"dataset": "CMS_SINGLETOP_8TEV_TCHANNEL-XSEC", "variant": "legacy"},
-        {"dataset": "CMS_SINGLETOP_13TEV_TCHANNEL-XSEC", "variant": "legacy"},
-        {"dataset": "LHCB_Z0_7TEV_DIELECTRON_Y"},
-        {"dataset": "LHCB_Z0_8TEV_DIELECTRON_Y"},
-        {"dataset": "LHCB_DY_7TEV_MUON_Y", "cfac": ["NRM"]},
-        {"dataset": "LHCB_DY_8TEV_MUON_Y", "cfac": ["NRM"]},
-        {"dataset": "LHCB_Z0_13TEV_DIMUON-Y"},
-        {"dataset": "LHCB_Z0_13TEV_DIELECTRON-Y"},
-    ],
-    "theoryid": TEST_THEORYID,
-    "use_cuts": TEST_USECUTS,
-}
-
-
 TEST_FULL_POS_DATASET = {
     "positivity": {
         "posdatasets": [
@@ -335,13 +243,28 @@ TEST_FULL_POS_DATASET = {
 }
 
 
+TEST_N_XGRID = 50
 """
-Toy PDF model to be used to test the pdf_model module.
+Default number of xgrid points to be used in the tests.
 """
-N_PARAMS = 10
+
+TEST_N_FL = 14
+"""
+Default number of flavours to be used in the tests.
+"""
+
+TEST_PDF_GRID = np.ones((TEST_N_FL, TEST_N_XGRID))
+"""
+Test PDF grid used for testing purposes.
+"""
 
 
 class TestPDFModel(PDFModel):
+    """
+    Toy PDF model to be used to test the pdf_model module.
+    This is needed to test the properties and methods of the PDFModel class.
+    For other purposes, we can just use the Mock class.
+    """
 
     def __init__(self, n_parameters):
         self.n_parameters = n_parameters
@@ -358,52 +281,83 @@ class TestPDFModel(PDFModel):
 
         def wmin_param(params):
             """
-            Returns random array of shape (14,len(params))
+            Returns random array of shape (TEST_N_FL,len(params)).
             """
-            return sum([param * xgrid for param in params])
+            return sum([param * TEST_PDF_GRID for param in params])
 
         return wmin_param
 
 
-"""
-Mock PDF model to be used to test functions that require a PDFModel instance.
-"""
 MOCK_PDF_MODEL = Mock()
 MOCK_PDF_MODEL.param_names = ["param1", "param2"]
-MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: params[0] * np.ones(
-    (14, len(xgrid))
+MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: np.sum(
+    np.array([param * TEST_PDF_GRID for param in params]), axis=0
 )
+"""
+Mock PDF model with 2 parameters and grid_values_func simple mult add operation on np.ones grid.
+"""
+
 MOCK_PDF_MODEL.pred_and_pdf_func = (
     lambda xgrid, forward_map: lambda params, fast_kernel_arrays: (
         forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params), fast_kernel_arrays),
-        np.ones((14, len(xgrid))),
+        MOCK_PDF_MODEL.grid_values_func(xgrid)(params),
     )
 )
-
-TEST_XGRID = jnp.array([0.1, 0.2])
-TEST_FK_ARRAYS = (jnp.array([1, 2]),)
-TEST_POS_FK_ARRAYS = (jnp.array([1, 2]),)
-TEST_FORWARD_MAP = lambda pdf, fk_arrays: pdf * fk_arrays[0][0]
+"""
+Mock prediction function of PDF model.
+"""
 
 
+TEST_XGRID = jnp.logspace(-7, 0, TEST_N_XGRID)
 """
-Mock instance of Central Covmat Index object
+X-grid used for testing purposes.
 """
-MOCK_CENTRAL_COVMAT_INDEX = Mock()
-MOCK_CENTRAL_COVMAT_INDEX.central_values = jnp.ones(2)
-MOCK_CENTRAL_COVMAT_INDEX.inv_covmat = jnp.eye(2)
-MOCK_CENTRAL_COVMAT_INDEX.central_values_idx = jnp.arange(2)
 
+TEST_N_DATA = 2
 """
-Mock instance of Central Inverse covmat index object
+Number of data points used in mock models for testing purposes.
 """
+
+np.random.seed(1)
+TEST_FK_ARRAYS = (np.random.rand(TEST_N_DATA, TEST_N_FL, TEST_N_XGRID),)
+"""
+Tuple of fast kernel arrays used for testing purposes.
+This mocks a DIS fast kernel mapping the PDF grid to 2 datapoints.
+"""
+
+
+np.random.seed(2)
+TEST_POS_FK_ARRAYS = (np.random.rand(TEST_N_DATA, TEST_N_FL, TEST_N_XGRID),)
+"""
+Tuple of fast kernel arrays used for testing purposes.
+This mocks a POS fast kernel mapping the PDF grid to 2 datapoints.
+"""
+
+
+TEST_FORWARD_MAP_DIS = lambda pdf, fk_arrays: np.einsum("ijk,jk->i", fk_arrays, pdf)
+"""
+Mock DIS forward map function for testing purposes.
+Function expects a DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_N_XGRID) and a PDF of shape (TEST_N_FL, TEST_N_XGRID).
+"""
+
+
 MOCK_CENTRAL_INV_COVMAT_INDEX = Mock()
-MOCK_CENTRAL_INV_COVMAT_INDEX.central_values = jnp.ones(2)
-MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(2)
-MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(2)
-
+MOCK_CENTRAL_INV_COVMAT_INDEX.central_values = jnp.ones(TEST_N_DATA)
+MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(TEST_N_DATA)
+MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(TEST_N_DATA)
 """
-Mock Log likelihood class
+Mock instance of Central Inverse covmat index object.
+"""
+
+
+MOCK_CHI2 = MagicMock(return_value=10.0)
+"""
+Mock chi2 function for testing purposes.
+"""
+
+MOCK_PENALTY_POSDATA = MagicMock(return_value=jnp.array([5.0]))
+"""
+Mock penalty_posdata function for testing purposes.
 """
 
 
@@ -497,6 +451,23 @@ class UltraNestLogLikelihoodMock:
     ):
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * (self.chi2(central_values, predictions, inv_covmat))
+
+
+TEST_PRIOR_SETTINGS_UNIFORM = PriorSettings(
+    **{
+        "prior_distribution": "uniform_parameter_prior",
+        "prior_distribution_specs": {"min_val": -1.0, "max_val": 1.0},
+    }
+)
+"""
+Uniform prior settings for testing purposes, `prior_distribution_specs` should correspond to the default specs for a uniform prior.
+"""
+
+
+TEST_COMMONDATA_FOLDER = pathlib.Path(__file__).with_name("test_commondata")
+"""
+Path to the folder containing the test commondata files.
+"""
 
 
 EXPECTED_XGRID = [
