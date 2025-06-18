@@ -160,8 +160,8 @@ Running fits will generate fit folders, the details of which can be found in
 Terminal output
 ^^^^^^^^^^^^^^^
 
-.. image:: ../../_static/figures/fit_terminal_output.png
-   :width: 900px
-   :align: center
-
-TODO: add explanation of what the output is.
+As the fit runs, a **status line** and **live point display** will be displayed
+in the terminal for each iteration. For details on what they mean and how to 
+interpret them, see the 
+`UltraNest documentation <https://johannesbuchner.github.io/UltraNest/index.html#>`_.
+Specifically, `this page <https://johannesbuchner.github.io/UltraNest/issues.html>`_.
