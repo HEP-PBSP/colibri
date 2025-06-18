@@ -4,9 +4,9 @@
 Implementing a Model in Colibri
 ===============================
 
-In this section, we will present how to implement a model in Colibri, which can then be used to 
-:ref:`run fits <in_running_fits>`, :ref:`closure tests <in_closure_tests>`, and other
-applications (see the :ref:`tutorials <in_tutorials>`).
+In this section, we will present how to implement a model in Colibri, which can then be 
+used to :ref:`run fits <in_running_fits>`, :ref:`closure tests <in_closure_tests>`, 
+and other applications (see the :ref:`tutorials <in_tutorials>`).
 
 In general, a Colibri model is contained in a directory with the following structure:
 
@@ -33,7 +33,9 @@ which follows the sutructure defined above. We will have a look at them one by o
 
 ``pyproject.toml``
 ^^^^^^^^^^^^^^^^^^
-The ``pyproject.toml`` file defines the Python package configuration for this model using `Poetry <https://python-poetry.org/docs/pyproject/>`_ as the dependency management and packaging tool. The configuration file structure looks like this:
+The ``pyproject.toml`` file defines the Python package configuration for this model using 
+`Poetry <https://python-poetry.org/docs/pyproject/>`_ as the dependency management and 
+packaging tool. The configuration file structure looks like this:
 
 .. literalinclude:: ../../../../../examples/les_houches_example/pyproject.toml
    :language: python
@@ -49,7 +51,9 @@ The ``app.py`` module defines the core application class for the Les Houches mod
 .. literalinclude:: ../../../../../examples/les_houches_example/les_houches_example/app.py
    :language: python
 
-The ``LesHouchesApp`` class enables the Les Houches model to function as a `reportengine App <https://github.com/NNPDF/reportengine>`_. This integration provides a structured framework for data processing and report generation.
+The ``LesHouchesApp`` class enables the Les Houches model to function as a 
+`reportengine App <https://github.com/NNPDF/reportengine>`_. 
+This integration provides a structured framework for data processing and report generation.
 
 Key Features:
 ~~~~~~~~~~~~~
@@ -68,6 +72,18 @@ builder and environment.
 
 .. literalinclude:: ../../../../../examples/les_houches_example/les_houches_example/config.py
    :language: python
+
+The ``produce_pdf_model`` method creates an instance of the ``LesHouchesPDF`` model. 
+Therefore, every model should have this production rule.
+
+If ``dump_model`` is set to ``True``, the method serialises the model using ``dill`` 
+and writes it to ``pdf_model.pkl`` in the ``output_path``, where ``output_path`` will 
+be the output directory created when running a colibri fit 
+(see :ref:`colibri_fit_folders`). ``pdf_model.pkl`` will be loaded by 
+``scripts/bayesian_resampler.py`` for resampling. 
+
+If ``dump_model`` is set to ``False``, the serialised model will not be written to the
+disk. 
 
 ``model.py``
 ^^^^^^^^^^^^
