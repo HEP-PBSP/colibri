@@ -92,12 +92,17 @@ The ``model.py`` script defines the Les Houches parametrisation model. It looks 
 .. literalinclude:: ../../../../../examples/les_houches_example/les_houches_example/model.py
    :language: python
 
-The LesHouchesPDF class is defined, based on the more general class PDFModel, which you can read
-more about :ref:`here <pdf_model_class>`. The LesHouchesPDF class does the following:
+The LesHouchesPDF class completes the abstract methods of the PDFModel class, which you
+can read more about :ref:`here <pdf_model_class>`. This allows for the definition of a
+specific model in a way that can be used in the colibri code. The LesHouchesPDF class 
+does the following:
 
 - takes a list of flavours to be fitted (``param_names``), 
 - defines the PDF for each flavour, 
 - computes grid values. 
 
-Having defined this model, it can be used to run a fit and perform closure tests. You can find
-an example of how to execute the model :ref:`here <lh-closure-test>`.
+Having defined this model, it is used in the production rule ``produce_pdf_model``,
+defined in the ``config.py`` script, shown above. This allows the model to be seen
+by the rest of the code, so that it can be used to run a fit and perform closure tests.
+
+You can find an example of how to execute the model :ref:`here <lh-closure-test>`.
