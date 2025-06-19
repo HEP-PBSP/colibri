@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 
 from colibri.mc_initialisation import mc_initial_parameters
 
