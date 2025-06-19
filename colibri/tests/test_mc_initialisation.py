@@ -11,12 +11,8 @@ from unittest.mock import MagicMock, patch
 import jax
 import jax.numpy as jnp
 import numpy as np
-<<<<<<< HEAD
-
-=======
 import pytest
-import logging
->>>>>>> 79b1862 (Add option to have different bounds for mc_initialiser_settings)
+
 from colibri.mc_initialisation import mc_initial_parameters
 
 logging.basicConfig(level=logging.DEBUG)
