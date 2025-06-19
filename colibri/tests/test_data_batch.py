@@ -1,11 +1,14 @@
 """
+colibri.tests.test_data_batch
+
 Module for testing the data_batch module.
 """
 
 from typing import Callable, Generator
+
 import jax
 
-from colibri.data_batch import data_batches, DataBatches
+from colibri.data_batch import DataBatches, data_batches
 
 
 def test_data_batches():

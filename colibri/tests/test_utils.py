@@ -6,20 +6,16 @@ Module for testing the utils module.
 
 import os
 import pathlib
-from pathlib import Path
 import shutil
-
-from numpy.testing import assert_allclose
-import pytest
-from unittest.mock import patch, mock_open, MagicMock
+from pathlib import Path
 from unittest import mock
+from unittest.mock import MagicMock, mock_open, patch
 
-
-import pandas as pd
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pandas
+import pandas as pd
 import pytest
 import validphys
 from numpy.testing import assert_allclose
@@ -37,22 +33,19 @@ from colibri.utils import (
     cast_to_numpy,
     closest_indices,
     compute_determinants_of_principal_minors,
+    full_posterior_sample_fit_resampler,
     get_fit_path,
     get_full_posterior,
     get_pdf_model,
     likelihood_float_type,
     mask_fktable_array,
     mask_luminosity_mapping,
-    full_posterior_sample_fit_resampler,
-    write_resampled_bayesian_fit,
-    compute_determinants_of_principal_minors,
-    resample_posterior_from_file,
     pdf_model_from_colibri_model,
     resample_from_ns_posterior,
+    resample_posterior_from_file,
     t0_pdf_grid,
+    write_resampled_bayesian_fit,
 )
-from validphys.fkparser import load_fktable
-
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 

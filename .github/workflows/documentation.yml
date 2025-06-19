@@ -1,0 +1,53 @@
+name: documentation
+# Trigger on pushes to main or manual dispatch
+on: [push, workflow_dispatch]
+
+# Permissions needed for Pages deployment
+permissions:
+  pages: write       # to create/update Pages deployment
+  id-token: write    # required by some GitHub Pages authentication flows
+  contents: read     # to checkout code
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      # optionally pass artifact info if needed; not used here but can be referenced
+      docs-path: colibri/doc/sphinx/build/html
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          # If you need a specific Python version, you can set:
+          # python-version: "3.9"
+          # Otherwise default is latest; ensure compatibility with your project.
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          pip install ".[doc]"
+      - name: Build Sphinx HTML
+        run: |
+          cd colibri/doc/sphinx
+          make html
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Path to the generated HTML; adjust if your build directory differs.
+          path: colibri/doc/sphinx/build/html
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    
+    # Add the required environment configuration
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

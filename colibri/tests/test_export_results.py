@@ -4,21 +4,22 @@ colibri.tests.test_export_results.py
 This module contains the tests for the export_results module of colibri.
 """
 
+import pathlib
 from unittest.mock import Mock, mock_open, patch
 
 import jax
 import numpy as np
 import pandas as pd
 import yaml
-import pathlib
 
 from colibri.export_results import (
     export_bayes_results,
+    get_pdfgrid_from_exportgrids,
+    read_exportgrid,
     write_exportgrid,
     write_replicas,
-    read_exportgrid,
-    get_pdfgrid_from_exportgrids,
 )
+from colibri.tests.conftest import MOCK_PDF_MODEL
 
 # Mock the objects and functions used in tests
 # Mock the BayesianFit object
@@ -30,8 +31,6 @@ bayes_fit.full_posterior_samples = jax.random.uniform(
 bayes_fit.bayesian_metrics = {"logz": 1}
 bayes_fit.param_names = ["param1", "param2"]
 
-# Mock the pdf_model object
-pdf_model = Mock()
 
 rank = 0
 size = 1
@@ -123,7 +122,7 @@ def test_write_exportgrid():
 @patch("colibri.export_results.log.info")
 def test_write_replicas(mock_log_info, mock_write_exportgrid, tmp_path):
     output_path = str(tmp_path)
-    write_replicas(bayes_fit, output_path, pdf_model)
+    write_replicas(bayes_fit, output_path, MOCK_PDF_MODEL)
 
     # Check if the write_exportgrid function was called for each sample
     assert mock_write_exportgrid.call_count == bayes_fit.resampled_posterior.shape[0]

@@ -21,20 +21,23 @@ optax = "*"
 flax = "*"
 dill = "*"
 
+# Mark Sphinx and its extensions optional:
+sphinx = {version="*", optional=true}
+sphinxcontrib-bibtex = {version="*", optional=true}
+sphinx-rtd-theme = {version="*", optional=true}
+tabulate = {version="*", optional=true}
+sphinx-copybutton = {version="*", optional=true}
+
 # nnpdf dependency
 nnpdf = { git = "https://github.com/NNPDF/nnpdf" }
 
 
-[tool.poetry.extra]
+[tool.poetry.extras]
 test = [
     "pytest",
     "hypothesis",
 ]
-doc = [
-    "sphinx",
-    "recommonmark",
-    "sphinx_rtd_theme"
-]
+doc = ["sphinxcontrib-bibtex", "sphinx-rtd-theme", "sphinx", "tabulate", "sphinx-copybutton"]
 
 [tool.poetry.scripts]
 colibri = "colibri.app:main"
