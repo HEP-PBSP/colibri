@@ -95,7 +95,7 @@ def ultranest_fit(
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
         log_likelihood,
-        bayesian_prior,
+        bayesian_prior["prior_transform"],
         **ns_settings["ReactiveNS_settings"],
     )
 

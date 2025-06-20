@@ -172,6 +172,7 @@ class colibriConfig(Config):
             "ultranest_seed",
             "sampler_plot",
             "popstepsampler",
+            "blackjax_settings",
         }
 
         kdiff = settings.keys() - known_keys
@@ -197,6 +198,7 @@ class colibriConfig(Config):
         ns_settings["ReactiveNS_settings"] = settings.get("ReactiveNS_settings", {})
         ns_settings["Run_settings"] = settings.get("Run_settings", {})
         ns_settings["SliceSampler_settings"] = settings.get("SliceSampler_settings", {})
+        ns_settings["blackjax_settings"] = settings.get("blackjax_settings", {})
 
         # set sampler plot to True by default
         ns_settings["sampler_plot"] = settings.get("sampler_plot", True)

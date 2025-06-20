@@ -6,6 +6,9 @@ from colibri.utils import (
     get_full_posterior,
 )
 from colibri.checks import check_pdf_models_equal
+import tensorflow_probability.substrates.jax as tfp
+
+tfd = tfp.distributions
 
 
 @check_pdf_models_equal
@@ -30,7 +33,6 @@ def bayesian_prior(prior_settings, pdf_model):
             # Use param names from the model to order bounds correctly
             param_names = pdf_model.param_names
             bounds_dict = prior_specs["bounds"]
-
             missing = [p for p in param_names if p not in bounds_dict]
             if missing:
                 raise ValueError(f"Missing bounds for parameters: {missing}")
@@ -49,6 +51,15 @@ def bayesian_prior(prior_settings, pdf_model):
             raise ValueError(
                 "prior_distribution_specs must define either 'bounds' or 'min_val' and 'max_val'"
             )
+
+        prior = tfd.Uniform(low=mins, high=maxs)
+
+        def sample(rng_key, n_samples):
+            return prior.sample(seed=rng_key, sample_shape=(n_samples,))
+
+        @jax.jit
+        def log_prob(x):
+            return prior.log_prob(x).sum(axis=-1)
 
         @jax.jit
         def prior_transform(cube):
@@ -76,4 +87,9 @@ def bayesian_prior(prior_settings, pdf_model):
 
     else:
         raise ValueError("Invalid prior type.")
-    return prior_transform
+
+    return {
+        "prior_transform": prior_transform,
+        "log_prob": log_prob,
+        "sample": sample,
+    }

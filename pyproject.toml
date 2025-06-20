@@ -12,7 +12,7 @@ repository = "https://github.com/HEP-PBSP/colibri"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.13" 
 prompt_toolkit = "*"
 h5py = "*"
 
@@ -30,6 +30,9 @@ sphinx-copybutton = {version="*", optional=true}
 
 # nnpdf dependency
 nnpdf = { git = "https://github.com/NNPDF/nnpdf" }
+anesthetic = "^2.10.2"
+tensorflow-probability = "^0.25.0"
+blackjax = {git = "https://github.com/handley-lab/blackjax", rev = "nested_sampling"}
 
 
 [tool.poetry.extras]
