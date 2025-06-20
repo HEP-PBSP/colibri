@@ -24,6 +24,7 @@ colibri_providers = [
     "colibri.mc_utils",
     "colibri.likelihood",
     "colibri.ultranest_fit",
+    "colibri.blackjax_fit",
     "colibri.monte_carlo_fit",
     "colibri.analytic_fit",
     "colibri.pdf_model",
