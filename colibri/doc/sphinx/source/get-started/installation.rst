@@ -42,7 +42,7 @@ Then you can activate the environment with:
 
 where you should change ``colibri-dev`` to the name of the environment you created, if you used a different name.
 
-You are ready to start using Colibri! For example, you could head to one of the :ref:`Tutorials`.
+You are ready to start using Colibri! For example, you could head to one of the :ref:`Tutorials <in_tutorials>`.
 
 Option 2: Using pip
 -------------------
@@ -62,7 +62,7 @@ Then you can activate the environment with:
 
    conda activate name_environment
 
-and you are ready to start using Colibri, for example by following one of the :ref:`Tutorials`.
+and you are ready to start using Colibri, for example by following one of the :ref:`Tutorials <in_tutorials>`.
 
 Option 3: Using float32 with Ultranest
 --------------------------------------
