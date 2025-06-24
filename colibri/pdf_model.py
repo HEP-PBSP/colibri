@@ -37,18 +37,20 @@ class PDFModel(ABC):
 
         Example
         -------
-        def grid_values_func(xgrid):
-            def func(params):
-                # Define expression for each flavour
-                fl_1 = params[0] + params[1] * xgrid
-                fl_2 = params[2] + params[3] * xgrid
+        ::
 
-                # Combine the flavours into a single array
-                # This is just an example, the actual implementation will depend on the model
-                # and the number of flavours
+            def grid_values_func(xgrid):
+                def func(params):
+                    # Define expression for each flavour
+                    fl_1 = params[0] + params[1] * xgrid
+                    fl_2 = params[2] + params[3] * xgrid
 
-                return jnp.array([fl_1, fl_2])
-            return func
+                    # Combine the flavours into a single array
+                    # This is just an example, the actual implementation will depend on the model
+                    # and the number of flavours
+
+                    return jnp.array([fl_1, fl_2])
+                return func
         """
         pass
 

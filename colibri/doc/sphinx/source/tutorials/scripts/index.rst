@@ -1,4 +1,4 @@
-.. _evolution:
+.. _colibri_scripts:
 
 ===============
 Colibri Scripts
@@ -13,6 +13,7 @@ A colibri fit folder is the folder resulting from a colibri-model fit. It is ess
 of relevant information for the fit.
 Currently, we distinguish between two types of fit folders: Bayesian fit folders and Monte Carlo replica fit folders.
 
+.. _bayes_fit_folders:
 
 Bayesian fit folders
 ^^^^^^^^^^^^^^^^^^^^
@@ -20,7 +21,8 @@ Bayesian fit folders
 .. note::
 
    By “Bayesian fit folder” we mean a folder containing the results of a fit
-   performed with a Bayesian sampling method.
+   performed with a Bayesian sampling method (see :ref:`this section <running_bayesian>` for details on how to run a
+   Bayesian fit).
 
 Any Bayesian fit folder should contain the following files:
 
@@ -88,6 +90,7 @@ This subfolder, in particular, is used by the `colibri.scripts.mc_postfit` scrip
 perform a postfit selection of the replicas. The postfit script also takes care of creating 
 the ``replicas`` folder, which is the one needed for the evolution of the fit.
 
+.. _evolution:
 
 Evolution script
 ----------------
