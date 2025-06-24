@@ -180,9 +180,6 @@ def main():
     sys.argv = ["evolven3fit", args.action, args.name_fit]
     evolven3fit_main()
 
-    # Run postfit emulator only for bayesian fits
-    if "bayes_metrics.csv" in os.listdir(FIT_PATH):
-        log.info("Running postfit emulator")
-        _postfit_emulator(FIT_PATH)
-    else:
-        log.info("Skipping postfit emulator")
+    # Run postfit emulator to generate the postfit directory and symlinks
+    log.info("Running postfit emulator to generate postfit directory and symlinks.")
+    _postfit_emulator(FIT_PATH)

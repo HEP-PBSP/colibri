@@ -113,10 +113,8 @@ For Bayesian fits we don't do any postfit selection on the posterior, however, f
 `validphys` module we still run a postfit emulation which takes care of creating the central replica and a `postfit` 
 folder containing the evolved replicas as well as the corresponding LHAPDF set.
 
-.. note::
-
-    The postfit emulation is only run for bayesian fits and the script will look into the fit folder to check
-    whether a `bayes_metrics.csv` file is present. If it is not, the script will not run the postfit emulation.
+Upload of the fit
+^^^^^^^^^^^^^^^^^
 
 After running the evolution script, it is possible (if the user has the right permissions) to simply upload the fit
 to the `validphys` server using the validphys script
