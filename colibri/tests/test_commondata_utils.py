@@ -1,20 +1,24 @@
-import pathlib
+"""
+colibri.tests.test_commondata_utils
+
+Module for testing commondata_utils functions in the colibri package.
+"""
 
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 import pandas as pd
+from nnpdf_data.coredata import CommonData
+from numpy.testing import assert_allclose
+
 from colibri.api import API as colibriAPI
 from colibri.commondata_utils import CentralCovmatIndex, experimental_commondata_tuple
 from colibri.tests.conftest import (
     CLOSURE_TEST_PDFSET,
     PSEUDODATA_SEED,
     T0_PDFSET,
+    TEST_COMMONDATA_FOLDER,
     TEST_DATASETS,
 )
-from numpy.testing import assert_allclose
-from nnpdf_data.coredata import CommonData
-
-TEST_COMMONDATA_FOLDER = pathlib.Path(__file__).with_name("test_commondata")
 
 
 def test_experimental_commondata_tuple():

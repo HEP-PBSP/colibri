@@ -1,9 +1,17 @@
+"""
+colibri.tests.test_mc_initialisation
+
+Tests for the Monte Carlo initialisation functions in the colibri package.
+"""
+
+import logging
 import unittest
 from unittest.mock import MagicMock, patch
+
 import jax
 import jax.numpy as jnp
 import numpy as np
-import logging
+
 from colibri.mc_initialisation import mc_initial_parameters
 
 logging.basicConfig(level=logging.DEBUG)

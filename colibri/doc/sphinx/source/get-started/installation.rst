@@ -1,82 +1,95 @@
 .. _installation:
 
 Installing Colibri on Linux or macOS
-=====================================
+====================================
 
-Clone the repository
---------------------
-The first step is to clone the repository. You can do this by running the following command in your terminal:
+This section covers installing ``colibri`` in various ways.
 
-.. code-block:: bash
+1. Development Installation via Conda
+-------------------------------------
 
-   git clone https://github.com/HEP-PBSP/colibri
-
-After you have cloned the repository, navigate to the `colibri` directory:
+You can install colibri easily by first cloning the repository and then using the provided ``environment.yml`` file
 
 .. code-block:: bash
 
-   cd colibri
+    git clone https://github.com/HEP-PBSP/colibri
+    cd colibri
 
-Now you can continue with the installation, for which you have two options, as described below.
-
-Option 1: Using conda
----------------------
-
-From your base conda environment run:
-
-.. code-block:: bash 
-
-   conda env create -f environment.yml
-
-This will create a conda environment called ``colibri-dev`` that has a ``colibri`` executable and all the needed dependencies. To use a different environment name, you should do:
+from your conda base environment run 
 
 .. code-block:: bash
 
-   conda env create -n myenv -f environment.yml
+    conda env create -f environment.yml
 
-Then you can activate the environment with:
-
-.. code-block:: bash
-
-   conda activate colibri-dev
-
-where you should change ``colibri-dev`` to the name of the environment you created, if you used a different name.
-
-You are ready to start using Colibri! For example, you could head to one of the :ref:`Tutorials <in_tutorials>`.
-
-Option 2: Using pip
--------------------
-
-Create a working environment with conda (or mamba):
+This will create a ``colibri-dev`` environment installed in development mode.
+If you want to use a different environment name you can run:
 
 .. code-block:: bash
 
-   conda create -n name_environment -y && conda activate name_environment
-   conda install mpich mpi4py lhapdf pandoc
-   cd colibri
-   pip install -e .
+    conda env create -n myenv -f environment.yml
 
-Then you can activate the environment with:
 
-.. code-block:: bash
+2. Installing with pip
+----------------------
 
-   conda activate name_environment
+If you don't want to clone the repository and don't need to work in development mode you can follow the installation instructions below.
 
-and you are ready to start using Colibri, for example by following one of the :ref:`Tutorials <in_tutorials>`.
+.. note::
+   Most of the ``colibri`` dependencies are available in the `PyPi repository <https://pypi.org/>`_, however non-python codes such as LHAPDF and pandoc won't be installed automatically and need to be manually installed in the environment. Because of this we recommend to use a conda environment.
 
-Option 3: Using float32 with Ultranest
---------------------------------------
-If using float32 is of interest, one needs to apply a patch to ultranest so that the json.dump is compatible. To do that, run the following commands:
+Create a conda environment from your base environment, for instance
 
 .. code-block:: bash
 
-   git clone git@github.com:LucaMantani/UltraNest.git
-   cd UltraNest
-   git switch add-numpy-encoder
-   pip install .
+    conda create -n colibri-dev python>=3.11
 
-**Installation of Various Models**  
-The various PDF models, such as `wmin-model` and `gp-model`, should be installed from the respective repositories.
+In this new environment install the following conda packages
 
+.. code-block:: bash
+
+    conda install mpich lhapdf pandoc mpi4py ultranest pip
+
+After having completed this you can simply install the rest of the dependencies with ``pip``:
+
+.. code-block:: bash
+
+    python -m pip install git+https://github.com/HEP-PBSP/colibri.git
+
+Note, this will install the latest development version, if you want to install a specific release you can specify the 
+version, for instance for v0.2.0 you can use the following command
+
+.. code-block:: bash
+
+    python -m pip install git+https://github.com/HEP-PBSP/colibri.git@v0.2.0
+
+To verify that the installation went through
+
+.. code-block:: bash
+
+    python -c "import colibri; print(colibri.__version__)"
+    colibri --help
+
+
+3. GPU (CUDA) JAX Support
+-------------------------
+
+The installation instructions shown above will install jax in cpu mode. It is however possible to run
+colibri fits using gpu cuda support too.
+To do so, after installing the package following one of the methods shown above, if you are on a linux
+machine you can install jax in cuda mode by running
+
+.. code-block:: bash
+
+    pip install -U "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
+
+.. note::
+   It is possible to run fits using float32 precision, the only way of doing so currently is to apply a patch to ultranest so that the json.dump is compatible. To do that, follow the instructions:
+
+.. code-block:: bash
+
+    git clone git@github.com:LucaMantani/UltraNest.git
+    cd UltraNest
+    git switch add-numpy-encoder
+    pip install .
 
 

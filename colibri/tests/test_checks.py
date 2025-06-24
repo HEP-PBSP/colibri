@@ -4,11 +4,13 @@ colibri.tests.test_checks
 Tests for the checks module of the colibri package.
 """
 
-from colibri.checks import check_pdf_models_equal, check_pdf_model_is_linear
-from colibri.core import PriorSettings
-from unittest.mock import patch, MagicMock, mock_open
-import pytest
+from unittest.mock import MagicMock, mock_open, patch
+
 import jax.numpy as jnp
+import pytest
+
+from colibri.checks import check_pdf_model_is_linear, check_pdf_models_equal
+from colibri.core import PriorSettings
 
 
 @patch(
