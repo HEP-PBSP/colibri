@@ -16,3 +16,7 @@
 .section-title {
     margin-top: 2em;
 }
+
+.underline {
+  text-decoration: underline;
+}

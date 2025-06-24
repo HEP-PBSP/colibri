@@ -7,7 +7,7 @@ Likelihood function
 
 Having defined a PDF model 
 :math:`\mathbf{f}: \boldsymbol{\theta} \in \mathbb{R}^{N_{\rm params}} \to \mathbb{R}^{N_{\rm fl}\times N_{\rm x}}` 
-(see the practical example in :ref:`Les Houches Tutorial <les_houches>`)
+(see the practical example in :ref:`Les Houches Tutorial <in_les_houches>`)
 colibri allows us to sample the posterior distribution of its parameters :math:`\boldsymbol{\theta}`
 given a :ref:`prior distribution <bayesian_prior>` :math:`\pi(\boldsymbol{\theta})`
 and a likelihood function :math:`\mathcal{L}(\mathbf{D} | \boldsymbol{\theta})`.

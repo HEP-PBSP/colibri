@@ -28,7 +28,7 @@ class LesHouchesConfig(colibriConfig):
         """
         model = LesHouchesPDF()
         # dump model to output_path using dill
-        # this is mainly needed by scripts/ns_resampler.py
+        # this is mainly needed by scripts/bayesian_resampler.py
         if dump_model:
             with open(output_path / "pdf_model.pkl", "wb") as file:
                 dill.dump(model, file)

@@ -7,11 +7,14 @@ Colibri Scripts
 In this tutorial we will discuss what the general structure of a colibri fit folder is 
 and some of the scripts that are available in colibri.
 
+.. _colibri_fit_folders:
+
 Colibri fit folders
 -------------------
-A colibri fit folder is the folder resulting from a colibri-model fit. It is essentially a folder containing a set 
-of relevant information for the fit.
-Currently, we distinguish between two types of fit folders: Bayesian fit folders and Monte Carlo replica fit folders.
+A colibri fit folder is the folder resulting from a colibri-model fit. It is essentially 
+a folder containing a set of relevant information for the fit.
+Currently, we distinguish between two types of fit folders: Bayesian fit folders and 
+Monte Carlo replica fit folders.
 
 
 Bayesian fit folders
@@ -37,18 +40,21 @@ Any Bayesian fit folder should contain the following files:
 
 
 The ``replicas`` folder contains the subfolders of the replicas that were used in the fit. 
-Each of these folders contains an ``.exportgrid`` file, which can be interpreted as a sample from the posterior distribution 
-of the PDF model.
-The ``pdf_model.pkl`` file contains the pickled PDF model used for the fit. This file can be used for several purposes,
-an example is that of using it to resample from the posterior distribution of the PDF model when a Bayesian fit is performed
-(See also `colibri.scripts.ns_resampler`).
-The other files are the input data and the filter file, which is a copy of the input runcard used for the fit.
+Each of these folders contains an ``.exportgrid`` file, which can be interpreted as a sample 
+from the posterior distribution of the PDF model.
+The ``pdf_model.pkl`` file contains the pickled PDF model used for the fit. This file can 
+be used for several purposes,an example is that of using it to resample from the posterior 
+distribution of the PDF model when a Bayesian fit is performed (See also `colibri.scripts.ns_resampler`).
+The other files are the input data and the filter file, which is a copy of the input 
+runcard used for the fit.
 The ``md5`` file is a checksum file that can be used to verify the integrity of the fit folder.
-The ``bayes_metrics.csv`` file contains the metrics of the fit, such as the log-likelihood and the evidence.
-The ``full_posterior_sample.csv`` file contains the full posterior sample of the fit (whose size is specified in the runcard). 
+The ``bayes_metrics.csv`` file contains the metrics of the fit, such as the log-likelihood
+and the evidence.
+The ``full_posterior_sample.csv`` file contains the full posterior sample of the fit
+(whose size is specified in the runcard). 
 
-Depending on the type of Bayesian fit, other files may be present, for example a fit done using the 
-ultranest will contain the following extra files:
+Depending on the type of Bayesian fit, other files may be present, for example a fit done 
+using the ultranest will contain the following extra files:
 
 .. code-block:: text
 
