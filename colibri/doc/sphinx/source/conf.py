@@ -215,3 +215,8 @@ intersphinx_mapping = {"python": ("https://docs.python.org/", None)}
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+rst_prolog = """
+.. role:: underline
+    :class: underline
+"""

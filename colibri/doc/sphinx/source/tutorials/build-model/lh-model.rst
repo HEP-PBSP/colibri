@@ -55,8 +55,7 @@ The ``LesHouchesApp`` class enables the Les Houches model to function as a
 `reportengine App <https://github.com/NNPDF/reportengine>`_. 
 This integration provides a structured framework for data processing and report generation.
 
-Key Features:
-~~~~~~~~~~~~~
+:underline:`Key Features:`
 
 * **Provider System**: The ``LesHouchesApp`` accepts a list of providers (``lh_pdf_providers``) containing modules that are recognized by the application framework.
 
