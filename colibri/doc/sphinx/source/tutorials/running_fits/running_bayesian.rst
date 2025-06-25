@@ -109,13 +109,13 @@ Runcard
     - run_ultranest_fit                      # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
 
 Note how the prior bounds need to be specified for each parameter. Alternatively, 
-global bounds (i.e the same bounds for all parameters) can be used, by repacing 
+global bounds (i.e the same bounds for all parameters) can be used, by replacing 
 
 .. code-block:: bash
 
     bounds:
-    alpha_gluon: [-0.1, 1]
-    beta_gluon: [9, 13]
+        alpha_gluon: [-0.1, 1]
+        beta_gluon: [9, 13]
     ...
 
 with, for example: 
