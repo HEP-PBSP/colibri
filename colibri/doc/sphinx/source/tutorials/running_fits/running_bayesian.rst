@@ -5,7 +5,7 @@
 Bayesian Fits
 =============
 
-We will first look at an example runcard to run a Bayesian Fit with the Les Houches
+We will first look at an example runcard to run a Bayesian fit with the Les Houches
 parametrisation model (see :ref:`this tutorial <in_les_houches>` for details
 on the Les Houches model and how to build it).
 
@@ -56,13 +56,13 @@ Runcard
     - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
 
     positivity_penalty_settings:
-    positivity_penalty: false
-    alpha: 1e-7                           
-    lambda_positivity: 0                 
+        positivity_penalty: false
+        alpha: 1e-7                           
+        lambda_positivity: 0                 
 
     # Integrability Settings
     integrability_settings:
-    integrability: False            
+        integrability: False            
 
     use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
     t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
@@ -75,34 +75,34 @@ Runcard
     prior_distribution: uniform_parameter_prior
     prior_distribution_specs:
         bounds:
-        alpha_gluon: [-0.1, 1]
-        beta_gluon: [9, 13]
-        alpha_up: [0.4, 0.9]
-        beta_up: [3, 4.5]
-        epsilon_up: [-3, 3]
-        gamma_up: [1, 6]
-        alpha_down: [1, 2]
-        beta_down: [8, 12]
-        epsilon_down: [-4.5, -3]
-        gamma_down: [3.8, 5.8]
-        norm_sigma: [0.1, 0.5]
-        alpha_sigma: [-0.2, 0.1]
-        beta_sigma: [1.2, 3]
+            alpha_gluon: [-0.1, 1]
+            beta_gluon: [9, 13]
+            alpha_up: [0.4, 0.9]
+            beta_up: [3, 4.5]
+            epsilon_up: [-3, 3]
+            gamma_up: [1, 6]
+            alpha_down: [1, 2]
+            beta_down: [8, 12]
+            epsilon_down: [-4.5, -3]
+            gamma_down: [3.8, 5.8]
+            norm_sigma: [0.1, 0.5]
+            alpha_sigma: [-0.2, 0.1]
+            beta_sigma: [1.2, 3]
 
 
     # Nested Sampling settings
     ns_settings:
-    sampler_plot: true
-    n_posterior_samples: 100      # Number of posterior samples generated.
-    ReactiveNS_settings:
-        vectorized: False
-        ndraw_max: 500              # Maximum number of points to simultaneously propose.
-    Run_settings:
-        min_num_live_points: 200    # Minimum number of live points throughout the run.
-        min_ess: 50                 # Target number of effective posterior samples.
-        frac_remain: 0.3            # Integrate until this fraction of the integral is left in the remainder. 
-    SliceSampler_settings:
-        nsteps: 106                 # number of accepted steps until the sample is considered independent.
+        sampler_plot: true
+        n_posterior_samples: 100        # Number of posterior samples generated.
+        ReactiveNS_settings:
+            vectorized: False
+            ndraw_max: 500              # Maximum number of points to simultaneously propose.
+        Run_settings:
+            min_num_live_points: 200    # Minimum number of live points throughout the run.
+            min_ess: 50                 # Target number of effective posterior samples.
+            frac_remain: 0.3            # Integrate until this fraction of the integral is left in the remainder. 
+        SliceSampler_settings:
+            nsteps: 106                 # number of accepted steps until the sample is considered independent.
 
 
     actions_:
