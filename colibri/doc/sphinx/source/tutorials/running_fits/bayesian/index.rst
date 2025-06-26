@@ -4,7 +4,7 @@
 Bayesian Fits
 =============
 
-In this section, we discuss how to run a Bayesian Fit in Colibri.
+In this section, we discuss how to run a bayesian fit in Colibri.
 
 In bayesian statistics, the parameters :math:`\theta` that describe the theory are
 treated as random variables. They have a `proior probability density` (or `prior`),

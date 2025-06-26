@@ -1,9 +1,9 @@
 
 .. _ultranest_fit:
 
-=============
-UltraNest Fit
-=============
+===========================
+Bayesian Fit with UltraNest
+===========================
 
 We will first look at an example runcard to run a Bayesian fit with the Les Houches
 parametrisation model (see :ref:`this tutorial <in_les_houches>` for details
