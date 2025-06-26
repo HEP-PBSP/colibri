@@ -1,9 +1,30 @@
 .. _running_mc_replica:
 
 
-========================
-Monte Carlo replica Fits
-========================
+===============================
+Monte Carlo Replica Method Fits
+===============================
+
+In this section, we describe how to run a Monte Carlo (MC) replica method fit
+in Colibri.
+
+In the Monte Carlo replica method introduces a `pseudodata distribution`,
+:math:`d_p \sim N(d_0, \Sigma)`, which is an approximation to the actual distribution
+from which the measurement :math:`d_0` was drawn. 
+
+We then define the corresponding 'best-fit parameter' values to be those which
+minimise the :math:`\chi^2` evaluated on the pseudodata:
+
+.. math::
+
+    \chi^2 = (d_p - t(\theta))^T \, \Sigma^{-1} \, (d_p - t(\theta))
+
+where:
+
+- :math:`d_p` is the pseudodata vector, drawn from the distribution :math:`d_p \sim N(d_0, \Sigma)`,
+- :math:`t(\theta)` is the theoretical prediction vector, dependent on the model parameters :math:`\theta`,
+- :math:`\Sigma` is the covariance matrix encoding the uncertainties.
+
 
 Runcard
 -------
@@ -129,7 +150,13 @@ Then, you can use the above runcard with the following command:
 
 .. code-block:: bash
 
-    les_houches_exe monte_carlo_runcard.yml -rep number_of_replicas
+    les_houches_exe monte_carlo_runcard.yml -rep N
 
-Running fits will generate fit folders, the details of which can be found in 
-:ref:`this section <mc_fit_folders>`.
+Note that this command will generate one single replica, namely replica number
+``N``. For a fit with more than one replica, you should iterate the above or 
+submit the job to a batch system. 
+
+You can then run a postfit selection on the fit folders and evolve the fit.
+Details on how to do this can be found in :ref:`this section <mc_fit_folders>`.
+
+
