@@ -23,6 +23,6 @@ In the sections that follow, we'll explore the use cases and workflows for each 
 
    ./running_analytic
 
-   ./running_bayesian
+   ./bayesian/index
 
    ./running_mc_replica

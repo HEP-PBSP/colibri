@@ -1,8 +1,8 @@
-.. _running_bayesian:
 
+.. _ultranest_fit:
 
 =============
-Bayesian Fits
+UltraNest Fit
 =============
 
 We will first look at an example runcard to run a Bayesian fit with the Les Houches
