@@ -131,18 +131,14 @@ in those cases where it is appropriate for the given parameters of the model
 ``ns_settings``
 ^^^^^^^^^^^^^^^
 
-* ``sampler_plot``: ``true`` will generate diagnostic plots (corner, run and trace plots)
-    in ``fit_output_directory/ultranest_logs/plots``. These help assess the convergence
-    and efficiency of the fit.
+* ``sampler_plot``: ``true`` will generate diagnostic plots (corner, run and trace plots) in ``fit_output_directory/ultranest_logs/plots``. These help assess the convergence and efficiency of the fit.
 * ``n_posterior_samples``: Number of posterior samples drawn from the posterior distribution.
-* ``vectorized``: Determines whether the likelihood function supports vectorised evaluation
-    (i.e., evaluating multiple points at once).
+* ``vectorized``: Determines whether the likelihood function supports vectorised evaluation (i.e., evaluating multiple points at once).
 * ``ndraw_max``: Maximum number of points to simultaneously propose. Can be commented out.
 * ``min_num_live_points``: Minimum number of live points throughout the run.
 * ``min_ess``: Target number of effective posterior samples.
 * ``frac_remain``: Integrate until this fraction of the integral is left in the remainder. 
-* ``SliceSampler_settings``: Sampling uniformly within "slices" of constant probability.
-    Slice sampling is optional, so these settings can be commented out.
+* ``SliceSampler_settings``: Sampling uniformly within "slices" of constant probability. Slice sampling is optional, so these settings can be commented out.
 * ``nsteps``: Number of accepted steps until the sample is considered independent.
 
 

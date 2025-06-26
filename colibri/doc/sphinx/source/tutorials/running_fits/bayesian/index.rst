@@ -15,7 +15,9 @@ The `posterior probability distribution`, i.e. the outcome of the fit, is determ
 from `Bayes' theorem`:
 
 .. math::
-    P(\theta \mid \mathrm{data}) = \frac{P(\mathrm{data} \mid \theta) \times P(\theta)}{P(\mathrm{data})}
+    P(\theta \mid \mathrm{data}) = \frac{P(\mathrm{data} \mid \theta) \times P(\theta)}{P(\mathrm{data})},
+
+where :math:`P(\mathrm{data} \mid \theta)` is the `likelihood function`.
 
 In a bayesian fit, the posterior distribution of the PDF model parameters is sampled
 using a sampling method. Colibri currently supports bayesian sampling with the
