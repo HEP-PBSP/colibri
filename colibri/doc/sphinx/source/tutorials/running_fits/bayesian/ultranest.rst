@@ -128,6 +128,11 @@ with, for example:
 in those cases where it is appropriate for the given parameters of the model 
 (eg. only one parameter or all parameters have close numerical values).
 
+``ns_settings``
+^^^^^^^^^^^^^^^
+
+
+
 Running the fit
 ---------------
 
