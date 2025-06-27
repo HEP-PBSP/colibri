@@ -51,12 +51,39 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
         return initial_values
 
     if mc_initialiser_settings["type"] == "uniform":
-        max_val = mc_initialiser_settings["max_val"]
-        min_val = mc_initialiser_settings["min_val"]
+        if "bounds" in mc_initialiser_settings:
+            # Use param names from the model to order bounds correctly
+            param_names = pdf_model.param_names
+            bounds_dict = mc_initialiser_settings["bounds"]
+
+            missing = [p for p in param_names if p not in bounds_dict]
+            if missing:
+                raise ValueError(f"Missing bounds for parameters: {missing}")
+
+            # Per-parameter bounds
+            bounds = jnp.array([bounds_dict[param] for param in param_names])
+            min_val = bounds[:, 0]
+            max_val = bounds[:, 1]
+
+        elif (
+            "min_val" in mc_initialiser_settings
+            and "max_val" in mc_initialiser_settings
+        ):
+            # Global bounds for all parameters
+
+            max_val = mc_initialiser_settings["max_val"]
+            min_val = mc_initialiser_settings["min_val"]
+
+        else:
+            raise ValueError(
+                "mc_initialiser_settings must define either 'bounds' or 'min_val' and 'max_val'"
+            )
+
         initial_values = jax.random.uniform(
             key=random_seed,
             shape=(len(pdf_model.param_names),),
             minval=min_val,
             maxval=max_val,
         )
+
         return initial_values
