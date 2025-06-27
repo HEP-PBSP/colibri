@@ -16,6 +16,7 @@ a folder containing a set of relevant information for the fit.
 Currently, we distinguish between two types of fit folders: Bayesian fit folders and 
 Monte Carlo replica fit folders.
 
+.. _bayes_fit_folders:
 
 Bayesian fit folders
 ^^^^^^^^^^^^^^^^^^^^
@@ -23,7 +24,8 @@ Bayesian fit folders
 .. note::
 
    By “Bayesian fit folder” we mean a folder containing the results of a fit
-   performed with a Bayesian sampling method.
+   performed with a Bayesian sampling method (see :ref:`this section <running_bayesian>` for details on how to run a
+   Bayesian fit).
 
 Any Bayesian fit folder should contain the following files:
 

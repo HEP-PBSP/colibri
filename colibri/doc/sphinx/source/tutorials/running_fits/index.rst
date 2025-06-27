@@ -15,13 +15,14 @@ Colibri supports three inference methods for fitting models:
 3. **Monte Carlo Replica Fit**:
    Uses a parametric-bootstrap approach to approximate the posterior distribution via repeated resampling.
 
-In the sections that follow, we’ll explore the use cases and workflows for each method.
+In the sections that follow, we'll explore the use cases and workflows for each method.
+
 
 .. toctree::
    :maxdepth: 1
 
    ./running_analytic
 
-   ./running_bayesian
+   ./bayesian/index
 
    ./running_mc_replica
