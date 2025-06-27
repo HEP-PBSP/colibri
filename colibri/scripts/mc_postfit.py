@@ -91,8 +91,8 @@ def main():
 
         index = int(replica.name.split("_")[1])
 
-        chi2_pass = loss < chi2_threshold
-        nsigma_pass = loss - mean_loss < nsigma_threshold * std_loss
+        chi2_pass = loss <= chi2_threshold
+        nsigma_pass = loss - mean_loss <= nsigma_threshold * std_loss
 
         # Check if final loss is above the threshold
         if chi2_pass and nsigma_pass:
