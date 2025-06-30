@@ -61,15 +61,6 @@ minutes.
 A directory called ``lh_fit_closure_test``, containing the output of the fit, 
 should have been created.
 
-Understanding the terminal output
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. image:: ../../_static/figures/fit_terminal_output.png
-   :width: 900px
-   :align: center
-
-TODO: add explanation of what the output is.
-
 3.1 Evolving the fit
 ^^^^^^^^^^^^^^^^^^^^
 
