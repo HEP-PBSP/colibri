@@ -25,7 +25,7 @@ where:
 - :math:`t(\theta)` is the theoretical prediction vector, dependent on the model parameters :math:`\theta`,
 - :math:`\Sigma` is the covariance matrix encoding the uncertainties.
 
-
+The idea is to repeat this procedure across multiple data replicas, so that the collection of best-fit models for each pseudodata instance approximates a posterior sample.
 Runcard
 -------
 
