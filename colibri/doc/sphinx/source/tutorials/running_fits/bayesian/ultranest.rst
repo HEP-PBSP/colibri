@@ -97,6 +97,7 @@ Runcard
         ReactiveNS_settings:
             vectorized: False
             ndraw_max: 500              # Maximum number of points to simultaneously propose.
+            # Any of the options of ultranest ReactiveNestedSampler can be used
         Run_settings:
             min_num_live_points: 200    # Minimum number of live points throughout the run.
             min_ess: 50                 # Target number of effective posterior samples.
