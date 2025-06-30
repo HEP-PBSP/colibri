@@ -101,6 +101,7 @@ Runcard
             min_num_live_points: 200    # Minimum number of live points throughout the run.
             min_ess: 50                 # Target number of effective posterior samples.
             frac_remain: 0.3            # Integrate until this fraction of the integral is left in the remainder. 
+            # Any of the options of ultranest ReactiveNestedSampler run method can be defined
         SliceSampler_settings:
             nsteps: 106                 # number of accepted steps until the sample is considered independent.
 
