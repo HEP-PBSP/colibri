@@ -97,9 +97,7 @@ This subfolder, in particular, is used by the `colibri.scripts.mc_postfit` scrip
 perform a postfit selection of the replicas. The postfit script also takes care of creating 
 the ``replicas`` folder, which is the one needed for the evolution of the fit.
 
-To run the postfit script, you should run the following command:
-
-You can then run a postfit selection of the replicas by running
+You can then run a postfit selection of the replicas by running:
 
 .. code-block:: bash
 
@@ -112,7 +110,7 @@ This can also be run as ``--chi2_threshold`` instead of ``-c``.
 Other options are:
 
 * ``--nsigma NSIGMA``: The nsigma threshold above which replicas are rejected.
-* ``--target_replicas TARGET_REPLICAS`` or ``-t TARGET_REPLICAS``: The target number of replicas to be produced by postfit.
+* ``--target_replicas TARGET_REPLICAS`` or ``-t TARGET_REPLICAS``: The target number of replicas to be produced by postfit. The default is 100.
 
 Evolution script
 ----------------
