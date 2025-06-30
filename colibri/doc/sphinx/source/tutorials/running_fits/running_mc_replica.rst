@@ -8,7 +8,7 @@ Monte Carlo Replica Method Fits
 In this section, we describe how to run a Monte Carlo (MC) replica method fit
 in Colibri.
 
-In the Monte Carlo replica method introduces a `pseudodata distribution`,
+The Monte Carlo replica method introduces a `pseudodata distribution`,
 :math:`d_p \sim N(d_0, \Sigma)`, which is an approximation to the actual distribution
 from which the measurement :math:`d_0` was drawn. 
 
@@ -25,6 +25,8 @@ where:
 - :math:`t(\theta)` is the theoretical prediction vector, dependent on the model parameters :math:`\theta`,
 - :math:`\Sigma` is the covariance matrix encoding the uncertainties.
 
+The idea is to repeat this procedure across multiple data replicas, so that the collection of best-fit 
+models for each pseudodata instance approximates a posterior sample.
 
 Runcard
 -------

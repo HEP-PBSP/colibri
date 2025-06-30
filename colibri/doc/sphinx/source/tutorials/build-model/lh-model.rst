@@ -29,7 +29,7 @@ Implementing the Les Houches model in Colibri
 ---------------------------------------------
 
 In the ``colibri/examples/`` directory, you will find a directory called ``les_houches_example``,
-which follows the sutructure defined above. We will have a look at them one by one. 
+which follows the structure defined above. We will have a look at them one by one. 
 
 ``pyproject.toml``
 ^^^^^^^^^^^^^^^^^^
