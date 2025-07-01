@@ -71,6 +71,7 @@ While a fit done using the `analytic_fit` module will contain the extra followin
    analytic_colibri_fit/
    ├── analytic_result.csv
 
+.. _mc_fit_folders:
 
 MC replica fit folders
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -85,7 +86,7 @@ A MC replica fit folder should have the following structure:
 .. code-block:: text
 
    mc_replica_fit/
-   ├── fit_replicas/         # Folder containing replica sub‐folders (one per replica) with exportgrid files.
+   ├── fit_replicas/     # Folder containing replica sub‐folders (one per replica) with exportgrid files.
    ├── pdf_model.pkl     # pickled PDF model used for the fit
    ├── input/            # directory of input data and runcard(s)
    ├── filter.yml        # YAML file: copy of the input runcard
@@ -96,12 +97,26 @@ This subfolder, in particular, is used by the `colibri.scripts.mc_postfit` scrip
 perform a postfit selection of the replicas. The postfit script also takes care of creating 
 the ``replicas`` folder, which is the one needed for the evolution of the fit.
 
+You can then run a postfit selection of the replicas by running:
+
+.. code-block:: bash
+
+    mc_postfit -c CHI2_THRESHOLD monte_carlo_output_directory 
+
+where the ``-c `` is optional and ``CHI2_THRESHOLD`` is a number that determines
+the :math:`\chi^2` threshold above which a Monte Carlo replica will be rejected.
+This can also be run as ``--chi2_threshold`` instead of ``-c``.
+
+Other options are:
+
+* ``--nsigma NSIGMA``: The nsigma threshold above which replicas are rejected.
+* ``--target_replicas TARGET_REPLICAS`` or ``-t TARGET_REPLICAS``: The target number of replicas to be produced by postfit. The default is 100.
 
 Evolution script
 ----------------
 
 The evolution script of colibri is a wrapper around the `evolven3fit` script
-(See the :mod:`colibri.scripts.evolve_fit` module’s and :func:`colibri.scripts.evolve_fit.main` function.)
+(See the :mod:`colibri.scripts.evolve_fit` module's and :func:`colibri.scripts.evolve_fit.main` function.)
 that only allows for the `evolve` option. 
 
 It can be executed from the command line as follows:
