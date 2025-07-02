@@ -86,14 +86,25 @@ A MC replica fit folder should have the following structure:
 .. code-block:: text
 
    mc_replica_fit/
-   ├── fit_replicas/     # Folder containing replica sub‐folders (one per replica) with exportgrid files.
+   ├── fit_replicas/     # Folder containing replica sub-folders (one per replica) with exportgrid files.
    ├── pdf_model.pkl     # pickled PDF model used for the fit
    ├── input/            # directory of input data and runcard(s)
    ├── filter.yml        # YAML file: copy of the input runcard
    └── md5               # checksum file to verify integrity of the fit folder
    
 where the ``fit_replicas`` folder contains the subfolders of the replicas that were used in the fit.
-This subfolder, in particular, is used by the `colibri.scripts.mc_postfit` script to 
+
+Finding the :math:`\chi^2` of a Monte Carlo fit
+"""""""""""""""""""""""""""""""""""""""""""""""
+
+The :math:`\chi^2` for each replica of your Monte Carlo fit will be stored in the
+``fit_replicas/replica_n/mc_loss.csv`` file. It lists the training and validation losses for every 50
+epochs. 
+
+Postfit selection
+"""""""""""""""""
+
+The ``fit_replicas`` is used by the ``colibri.scripts.mc_postfit`` script to 
 perform a postfit selection of the replicas. The postfit script also takes care of creating 
 the ``replicas`` folder, which is the one needed for the evolution of the fit.
 
@@ -105,12 +116,15 @@ You can then run a postfit selection of the replicas by running:
 
 where the ``-c `` is optional and ``CHI2_THRESHOLD`` is a number that determines
 the :math:`\chi^2` threshold above which a Monte Carlo replica will be rejected.
-This can also be run as ``--chi2_threshold`` instead of ``-c``.
+This can also be run as ``--chi2_threshold`` instead of ``-c``. If no value is 
+specified, a default value of 1.5 will be applied.
 
 Other options are:
 
-* ``--nsigma NSIGMA``: The nsigma threshold above which replicas are rejected.
+* ``--nsigma NSIGMA``: The nsigma threshold above which replicas are rejected. The default is 5.
 * ``--target_replicas TARGET_REPLICAS`` or ``-t TARGET_REPLICAS``: The target number of replicas to be produced by postfit. The default is 100.
+
+
 
 Evolution script
 ----------------

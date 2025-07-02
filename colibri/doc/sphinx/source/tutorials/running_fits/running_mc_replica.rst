@@ -125,8 +125,8 @@ bounds for each parameter. In that, case, you may replace
 .. code-block:: bash
 
     bounds:
-    alpha_gluon: [-0.1, 1]
-    beta_gluon: [9, 13]
+        alpha_gluon: [-0.1, 1]
+        beta_gluon: [9, 13]
     ...
 
 with, for example: 
