@@ -98,8 +98,19 @@ Finding the :math:`\chi^2` of a Monte Carlo fit
 """""""""""""""""""""""""""""""""""""""""""""""
 
 The :math:`\chi^2` for each replica of your Monte Carlo fit will be stored in the
-``fit_replicas/replica_n/mc_loss.csv`` file. It lists the training and validation losses for every 50
-epochs. 
+``fit_replicas/replica_n/mc_loss.csv`` file, where `n` is the specific replica number.
+This file lists the training and validation losses for every 50 epochs. For example,
+the first few lines would look like this:
+
+.. code-block:: bash
+
+   epochs,training_loss,validation_loss
+   0,7.80859e+00,1.13569e+01
+   1,6.19384e+00,9.22697e+00
+   2,4.86740e+00,7.44600e+00
+   ...
+
+would represent the losses for the first 150 epochs (i.e. 0, 1, 2 are just labels).
 
 Postfit selection
 """""""""""""""""
@@ -108,7 +119,7 @@ The ``fit_replicas`` is used by the ``colibri.scripts.mc_postfit`` script to
 perform a postfit selection of the replicas. The postfit script also takes care of creating 
 the ``replicas`` folder, which is the one needed for the evolution of the fit.
 
-You can then run a postfit selection of the replicas by running:
+You can therefore run a postfit selection of the replicas by running:
 
 .. code-block:: bash
 
