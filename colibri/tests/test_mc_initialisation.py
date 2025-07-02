@@ -12,6 +12,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+import pytest
+import logging
 from colibri.mc_initialisation import mc_initial_parameters
 
 logging.basicConfig(level=logging.DEBUG)
@@ -72,6 +74,67 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
         maxval=1.0,
     )
     np.testing.assert_array_equal(result, jnp.array([0.5, -0.5, 0.0]))
+
+    # Reset mock between calls
+
+    mock_PRNGKey.reset_mock()
+    mock_uniform.reset_mock()
+
+    # ---- Test per-parameter bounds case ----
+
+    bounds = {
+        "param1": (-1.0, 1.0),
+        "param2": (0.0, 2.0),
+        "param3": (-0.5, 0.5),
+    }
+
+    settings_bounds = {"type": "uniform", "random_seed": 42, "bounds": bounds}
+
+    # Mock return value to match param count
+    mock_uniform.return_value = jnp.array([0.1, 1.5, 0.0])
+
+    result_bounds = mc_initial_parameters(pdf_model, settings_bounds, replica_index)
+
+    np.testing.assert_array_equal(result_bounds, jnp.array([0.1, 1.5, 0.0]))
+
+    # Get the actual call arguments
+    _, called_kwargs = mock_uniform.call_args
+
+    # Check the 'key' argument matches
+    assert called_kwargs["key"] == jax.random.PRNGKey(43)
+
+    # Check the 'shape' argument matches
+    assert called_kwargs["shape"] == (len(pdf_model.param_names),)
+
+    # Use numpy/jax testing utilities for arrays
+    np.testing.assert_array_equal(called_kwargs["minval"], jnp.array([-1.0, 0.0, -0.5]))
+    np.testing.assert_array_equal(called_kwargs["maxval"], jnp.array([1.0, 2.0, 0.5]))
+
+    # ---- Test missing parameter in bounds ----
+    incomplete_bounds = {
+        "param0": (-1.0, 1.0),
+        # "param1" is missing on purpose
+        "param3": (-0.5, 0.5),
+    }
+
+    settings_missing_bounds = {
+        "type": "uniform",
+        "random_seed": 42,
+        "bounds": incomplete_bounds,
+    }
+
+    with pytest.raises(ValueError, match="Missing bounds for parameters"):
+        mc_initial_parameters(pdf_model, settings_missing_bounds, 1)
+
+    # ---- Test missing min_val/max_val and bounds ----
+    settings_invalid = {
+        "type": "uniform",
+        "random_seed": 42,
+        # neither "bounds" nor min/max
+    }
+
+    with pytest.raises(ValueError, match="mc_initialiser_settings must define either"):
+        mc_initial_parameters(pdf_model, settings_invalid, 1)
 
 
 def test_invalid_initializer_type():
