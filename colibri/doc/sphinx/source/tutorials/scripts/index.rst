@@ -110,7 +110,7 @@ the first few lines would look like this:
    2,4.86740e+00,7.44600e+00
    ...
 
-would represent the losses for the first 150 epochs (i.e. 0, 1, 2 are just labels).
+which would represent the losses for the first 150 epochs (i.e. 0, 1, 2 are just labels).
 
 Postfit selection
 """""""""""""""""
