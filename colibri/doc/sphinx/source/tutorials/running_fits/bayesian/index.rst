@@ -1,4 +1,4 @@
-.. _running_bayesian:
+.. _in_running_bayesian:
 
 =============
 Bayesian Fits

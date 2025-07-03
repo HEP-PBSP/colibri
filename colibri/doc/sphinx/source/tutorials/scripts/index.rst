@@ -24,7 +24,7 @@ Bayesian fit folders
 .. note::
 
    By “Bayesian fit folder” we mean a folder containing the results of a fit
-   performed with a Bayesian sampling method (see :ref:`this section <running_bayesian>` for details on how to run a
+   performed with a Bayesian sampling method (see :ref:`this section <in_running_bayesian>` for details on how to run a
    Bayesian fit).
 
 Any Bayesian fit folder should contain the following files:
@@ -125,7 +125,7 @@ You can therefore run a postfit selection of the replicas by running:
 
     mc_postfit -c CHI2_THRESHOLD monte_carlo_output_directory 
 
-where the ``-c `` is optional and ``CHI2_THRESHOLD`` is a number that determines
+where the ``-c`` is optional and ``CHI2_THRESHOLD`` is a number that determines
 the :math:`\chi^2` threshold above which a Monte Carlo replica will be rejected.
 This can also be run as ``--chi2_threshold`` instead of ``-c``. If no value is 
 specified, a default value of 1.5 will be applied.
@@ -136,6 +136,7 @@ Other options are:
 * ``--target_replicas TARGET_REPLICAS`` or ``-t TARGET_REPLICAS``: The target number of replicas to be produced by postfit. The default is 100.
 
 
+.. _evolution_script:
 
 Evolution script
 ----------------
