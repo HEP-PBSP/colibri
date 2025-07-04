@@ -71,6 +71,19 @@ While a fit done using the `analytic_fit` module will contain the extra followin
    analytic_colibri_fit/
    ├── analytic_result.csv
 
+Finding the :math:`\chi^2` of a bayesian
+""""""""""""""""""""""""""""""""""""""""
+
+The :math:`\chi^2` for a bayesian fit is stored in the ``bayes_metrics.csv`` file, which looks
+like this:
+
+.. code-block:: bash
+
+   bayes_complexity,avg_chi2,min_chi2,logz
+   6.693346300122812,3633.618330629202,3.62692e+03,-1.83561e+03
+
+
+
 .. _mc_fit_folders:
 
 MC replica fit folders
@@ -97,7 +110,7 @@ where the ``fit_replicas`` folder contains the subfolders of the replicas that w
 Finding the :math:`\chi^2` of a Monte Carlo fit
 """""""""""""""""""""""""""""""""""""""""""""""
 
-The :math:`\chi^2` for each replica of your Monte Carlo fit will be stored in the
+The :math:`\chi^2` for each replica of your Monte Carlo fit is stored in the
 ``fit_replicas/replica_n/mc_loss.csv`` file, where `n` is the specific replica number.
 This file lists the training and validation losses for every 50 epochs. For example,
 the first few lines would look like this:
