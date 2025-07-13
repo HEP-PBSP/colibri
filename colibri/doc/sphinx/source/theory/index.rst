@@ -9,6 +9,8 @@ This section discusses some relevant theoretical background to Colibri.
 .. toctree::
    :maxdepth: 1
 
+   ./colibri-code/index
+
    ./pdf_model/index
 
    ./likelihood/index
