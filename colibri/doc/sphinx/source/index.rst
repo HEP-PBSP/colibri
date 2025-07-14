@@ -13,9 +13,22 @@ The Colibri code
 ================
 Colibri is available to the public. Along with this online documentation, you can
 `access the code here <https://github.com/HEP-PBSP/colibri>`_. 
-The code is made available as an open-source package together with user-friendly examples and the documentation presented here.
+The code is made available as an open-source package together with user-friendly
+examples and the documentation presented here.
 
 If you are a new user head along to :ref:`in_get_started` and check out the :ref:`in_tutorials`.
+
+Colibri's workflow
+------------------
+
+The following diagram presents the workflow of the Colibri code.
+
+.. figure:: /_static/figures/colibri-diagram-long.png
+   :width: 100%
+   :align: left
+
+   Colibri takes as input **(i)** a PDF model, which may be any arbitrary parametrisation implemented by the user, **(ii)** JAX, which provides high-performance array operations and native GPU support for fast computations, and **(iii)** data and theory predictions, which it inherits from the NNPDF framework. It then performs a fit using a given inference method, which is specified by the user. At the time of release, the options are a Monte Carlo, bayesian or analytic fit. In each case, the result follows the LHAPDF format.
+
 
 The Colibri team
 ================
