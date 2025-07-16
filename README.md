@@ -39,7 +39,7 @@ Documentation regarding the usage and installation is available at <https://hep-
 - Command-line scripts for common workflows (`colibri`, `evolve_fit`, etc.)
 - Integration with external PDF model repositories
 
-<img src="colibri/doc/sphinx/source/_static/figures/colibri-diagram-short.png" alt="colibri diagram" width="40%">
+<img src="./colibri-diagram-short.png" alt="colibri diagram" width="40%">
 
 ---
 
