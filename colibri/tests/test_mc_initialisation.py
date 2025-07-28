@@ -56,6 +56,92 @@ def test_normal_initializer(mock_normal, mock_PRNGKey):
 
     mock_PRNGKey.assert_called_with(1)
 
+    # ---- Test specified mean and standard deviation ----
+
+    means = {
+        "param1": 1,
+        "param2": 2,
+        "param3": 3,
+    }
+
+    stds = {
+        "param1": 0.5,
+        "param2": 1.0,
+        "param3": 2.0,
+    }
+
+    settings_means = {"type": "normal", "means": means, "stds": stds, "random_seed": 99}
+
+    replica_index = 0
+
+    mock_normal.reset_mock()
+    mock_PRNGKey.reset_mock()
+
+    mock_normal.return_value = jnp.array([0.2, -0.5, 1.0])
+    mock_PRNGKey.return_value = "mocked_key_99"
+
+    result = mc_initial_parameters(pdf_model, settings_means, replica_index)
+
+    expected = jnp.array(
+        [
+            1.0 + 0.5 * 0.2,  # 1.1
+            2.0 + 1.0 * -0.5,  # 1.5
+            3.0 + 2.0 * 1.0,  # 5.0
+        ]
+    )
+
+    np.testing.assert_allclose(result, expected)
+
+    # ---- Test missing means or stds ----
+
+    # Only means provided
+    settings_means_only = {
+        "type": "normal",
+        "means": {"param1": 1.0, "param2": 2.0, "param3": 3.0},
+        "random_seed": 42,
+    }
+
+    with pytest.raises(
+        ValueError, match="Both 'means' and 'stds' must be specified together."
+    ):
+        mc_initial_parameters(pdf_model, settings_means_only, replica_index=0)
+
+    # Only stds provided
+    settings_stds_only = {
+        "type": "normal",
+        "stds": {"param1": 0.1, "param2": 0.2, "param3": 0.3},
+        "random_seed": 42,
+    }
+
+    with pytest.raises(
+        ValueError, match="Both 'means' and 'stds' must be specified together."
+    ):
+        mc_initial_parameters(pdf_model, settings_stds_only, replica_index=0)
+
+    # ---- Test number of means/stds doesn't correspond to number of parameters ----
+
+    # Too few means
+    settings_few_means = {
+        "type": "normal",
+        "means": {"param1": 0.0, "param2": 0.0},  # Only 2 means
+        "stds": {"param1": 1.0, "param2": 1.0, "param3": 1.0},  # Correct number of stds
+        "random_seed": 42,
+    }
+
+    with pytest.raises(ValueError, match="must have exactly one entry per parameter"):
+        mc_initial_parameters(pdf_model, settings_few_means, replica_index=0)
+
+    # Too few stds
+    settings_few_stds = {
+        "type": "normal",
+        "means": {"param1": 0.0, "param2": 0.0, "param3": 0.0},
+        "stds": {"param1": 1.0},  # Only 1 std
+        "random_seed": 42,
+    }
+
+    with pytest.raises(ValueError, match="must have exactly one entry per parameter"):
+        mc_initial_parameters(pdf_model, settings_few_stds, replica_index=0)
+
 
 @patch("jax.random.PRNGKey")
 @patch("jax.random.uniform")
