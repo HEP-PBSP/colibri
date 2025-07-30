@@ -146,8 +146,10 @@ def ultranest_fit(
             # Patch to avoid JAX list-array subtraction issue
             try:
                 # Ensure logl is a NumPy array before plotting
-                if isinstance(sampler.run_sequence['logl'], list):
-                    sampler.run_sequence['logl'] = np.array(sampler.run_sequence['logl'])
+                if isinstance(sampler.run_sequence["logl"], list):
+                    sampler.run_sequence["logl"] = np.array(
+                        sampler.run_sequence["logl"]
+                    )
             except Exception as e:
                 log.warning(f"Could not patch sampler.run_sequence['logl']: {e}")
 
