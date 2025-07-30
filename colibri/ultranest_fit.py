@@ -143,7 +143,14 @@ def ultranest_fit(
 
         if ns_settings["sampler_plot"]:
             log.info("Plotting sampler plots")
-            # Store run plots to ultranest_logs folder (within output_path folder)
+            # Patch to avoid JAX list-array subtraction issue
+            try:
+                # Ensure logl is a NumPy array before plotting
+                if isinstance(sampler.run_sequence['logl'], list):
+                    sampler.run_sequence['logl'] = np.array(sampler.run_sequence['logl'])
+            except Exception as e:
+                log.warning(f"Could not patch sampler.run_sequence['logl']: {e}")
+
             sampler.plot()
 
         # Get the full samples
