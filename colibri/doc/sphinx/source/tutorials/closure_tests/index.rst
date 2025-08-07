@@ -4,7 +4,7 @@
 Running Closure Tests
 =====================
 
-In this section, we demonstrate how to closure tests using Colibri.
+In this section, we demonstrate how to run closure tests using Colibri.
 In the closure test tutorial, we run a standard closure test using the
 Les Houches parametrisation as a model. :ref:`This tutorial <in_les_houches>`
 covers how to implement this model in Colibri.
