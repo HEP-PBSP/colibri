@@ -4,7 +4,7 @@
 Model-Specific Closure Test 
 ===========================
 
-Colibri can be used to run a model-specific closure test. Here we show how to 
+Colibri can be used to run a model-specific closure tests. Here we show how to 
 do so for the Les Houches parametrisation (implemented :ref:`here <lh_model>`).
 
 Step 1: runcard
