@@ -45,25 +45,58 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     param_names = pdf_model.param_names
 
     if mc_initialiser_settings["type"] == "normal":
-        mean_dict = mc_initialiser_settings.get("means", {})
-        std_dict = mc_initialiser_settings.get("stds", {})
+        mean_dict = mc_initialiser_settings.get("means", None)
+        std_dict = mc_initialiser_settings.get("stds", None)
 
-        # Default mean = 0.0, std = 1.0 if not specified
-        means = jnp.array([mean_dict.get(p, 0.0) for p in param_names])
-        stds = jnp.array([std_dict.get(p, 1.0) for p in param_names])
+        mean_val = mc_initialiser_settings.get("mean_val", None)
+        std_val = mc_initialiser_settings.get("std_val", None)
 
-        # Check that, if mean is specified, so is std and vice versa
-        if ("means" in mc_initialiser_settings) ^ ("stds" in mc_initialiser_settings):
-            raise ValueError("Both 'means' and 'stds' must be specified together.")
-
-        # Check that there is exactly one mean/std value per parameter
-
-        if ("means" in mc_initialiser_settings) and ("stds" in mc_initialiser_settings):
+        # Both 'means' and 'stds' provided
+        if (mean_dict is not None) and (std_dict is not None):
             if len(mean_dict) != len(param_names) or len(std_dict) != len(param_names):
                 raise ValueError(
                     f"'means' and 'stds' must have exactly one entry per parameter "
                     f"(you wrote {len(mean_dict)} means and {len(std_dict)} stds for {len(param_names)} parameters)"
                 )
+            means = jnp.array([mean_dict[p] for p in param_names])
+            stds = jnp.array([std_dict[p] for p in param_names])
+
+        # Only 'means' provided
+        elif mean_dict is not None:
+            log.warning(
+                "mc_initialiser_settings: 'means' provided without 'stds'. "
+                "Using std=1.0 for all parameters."
+            )
+            means = jnp.array([mean_dict.get(p, 0.0) for p in param_names])
+            stds = jnp.ones(len(param_names))
+
+        # Only 'stds' provided
+        elif std_dict is not None:
+            log.warning(
+                "mc_initialiser_settings: 'stds' provided without 'means'. "
+                "Using mean=0.0 for all parameters."
+            )
+            means = jnp.zeros(len(param_names))
+            stds = jnp.array([std_dict.get(p, 1.0) for p in param_names])
+
+        # Nothing provided
+        else:
+            if (mean_val is None) and (std_val is None):
+                log.warning(
+                    "mc_initialiser_settings: 'means' and 'stds' not provided. "
+                    "Using default mean=0.0 and std=1.0 for all parameters."
+                )
+                mval = 0.0
+                sval = 1.0
+            elif (mean_val is not None) and (std_val is not None):
+                mval = mean_val
+                sval = std_val
+            elif (mean_val is not None) and (std_val is None):
+                raise ValueError("mc_initialiser_settings: 'std_val' missing.")
+            elif (mean_val is None) and (std_val is not None):
+                raise ValueError("mc_initialiser_settings: 'mean_val' missing.")
+            means = jnp.full(len(param_names), mval)
+            stds = jnp.full(len(param_names), sval)
 
         normal_samples = jax.random.normal(
             key=random_seed,
