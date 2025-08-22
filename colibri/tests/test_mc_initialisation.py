@@ -33,18 +33,21 @@ def test_zeros_initializer():
 
 @patch("jax.random.PRNGKey")
 @patch("jax.random.normal")
-def test_normal_initializer(mock_normal, mock_PRNGKey):
+def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     settings = {"type": "normal", "random_seed": 42}
     replica_index = 0
 
     mock_normal.return_value = jnp.array([0.1, -0.1, 0.2])
 
-    result = mc_initial_parameters(pdf_model, settings, replica_index)
+    with caplog.at_level("WARNING"):
+        result = mc_initial_parameters(pdf_model, settings, replica_index)
 
     mock_PRNGKey.assert_called_once_with(42)
     mock_normal.assert_called_once_with(
         key=jax.random.PRNGKey(42), shape=(len(pdf_model.param_names),)
     )
+
+    assert "mc_initialiser_settings: 'means' and 'stds' not provided." in caplog.text
     np.testing.assert_array_equal(result, jnp.array([0.1, -0.1, 0.2]))
 
     # Now test the case where the random_seed is not provided
@@ -101,10 +104,10 @@ def test_normal_initializer(mock_normal, mock_PRNGKey):
         "random_seed": 42,
     }
 
-    with pytest.raises(
-        ValueError, match="Both 'means' and 'stds' must be specified together."
-    ):
+    with caplog.at_level("WARNING"):
         mc_initial_parameters(pdf_model, settings_means_only, replica_index=0)
+
+    assert "Using std=1.0 for all parameters." in caplog.text
 
     # Only stds provided
     settings_stds_only = {
@@ -113,10 +116,10 @@ def test_normal_initializer(mock_normal, mock_PRNGKey):
         "random_seed": 42,
     }
 
-    with pytest.raises(
-        ValueError, match="Both 'means' and 'stds' must be specified together."
-    ):
+    with caplog.at_level("WARNING"):
         mc_initial_parameters(pdf_model, settings_stds_only, replica_index=0)
+
+    assert "Using mean=0.0 for all parameters." in caplog.text
 
     # ---- Test number of means/stds doesn't correspond to number of parameters ----
 
@@ -141,6 +144,38 @@ def test_normal_initializer(mock_normal, mock_PRNGKey):
 
     with pytest.raises(ValueError, match="must have exactly one entry per parameter"):
         mc_initial_parameters(pdf_model, settings_few_stds, replica_index=0)
+
+    # Global mean and std provided
+    settings_global = {
+        "type": "normal",
+        "mean_val": 0.1,
+        "std_val": 1.1,
+        "random_seed": 123,
+    }
+
+    mock_normal.reset_mock()
+    mock_PRNGKey.reset_mock()
+
+    # Mock: Zufallswerte für die Normalverteilung
+    mock_normal.return_value = jnp.array([0.5, -1.0, 2.0])
+    mock_PRNGKey.return_value = "mocked_key_123"
+
+    result = mc_initial_parameters(pdf_model, settings_global, replica_index=0)
+
+    expected = jnp.array(
+        [
+            0.1 + 1.1 * 0.5,  # mean + std * sample
+            0.1 + 1.1 * -1.0,
+            0.1 + 1.1 * 2.0,
+        ]
+    )
+
+    np.testing.assert_allclose(result, expected)
+
+    mock_PRNGKey.assert_called_once_with(123)
+    mock_normal.assert_called_once_with(
+        key="mocked_key_123", shape=(len(pdf_model.param_names),)
+    )
 
 
 @patch("jax.random.PRNGKey")

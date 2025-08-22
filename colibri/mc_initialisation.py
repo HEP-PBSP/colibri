@@ -79,7 +79,7 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
             means = jnp.zeros(len(param_names))
             stds = jnp.array([std_dict.get(p, 1.0) for p in param_names])
 
-        # Nothing provided
+        # Neither means nor stds provided
         else:
             if (mean_val is None) and (std_val is None):
                 log.warning(
