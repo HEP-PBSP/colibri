@@ -73,12 +73,33 @@ def main():
 
     final_losses = jnp.array([])
     # Loop over the replicas and check their final loss
+    # for replica in replicas_list:
+    #     # Get last non-blank iteration from the mc_loss.csv file
+    #     final_loss = pd.read_csv(replica / "mc_loss.csv").iloc[-1]["training_loss"]
+    #     final_losses = jnp.concatenate((final_losses, jnp.array([final_loss])), axis=0)
+
+    valid_replicas = []  # Keep track of which replicas are valid
+
     for replica in replicas_list:
-        # Get last non-blank iteration from the mc_loss.csv file
-        final_loss = (
-            pd.read_csv(replica / "mc_loss.csv")["training_loss"].dropna().iloc[-1]
-        )
-        final_losses = jnp.concatenate((final_losses, jnp.array([final_loss])), axis=0)
+        try:
+            df = pd.read_csv(replica / "mc_loss.csv")
+            if (
+                df.empty
+                or df["training_loss"].iloc[-1] is pd.NA
+                or pd.isna(df["training_loss"].iloc[-1])
+            ):
+                print(f"Skipping {replica} - empty or NaN training_loss")
+                continue
+
+            final_loss = df.iloc[-1]["training_loss"]
+            final_losses = jnp.concatenate(
+                (final_losses, jnp.array([final_loss])), axis=0
+            )
+            valid_replicas.append(replica)
+
+        except (FileNotFoundError, KeyError, IndexError) as e:
+            print(f"Skipping {replica} - error reading file: {e}")
+            continue
 
     mean_loss = jnp.mean(final_losses)
     std_loss = jnp.std(final_losses)
@@ -89,7 +110,7 @@ def main():
     # We will copy the replicas and order them starting with 0
     # and increasing the index for each good replica we find
     i = 0
-    for replica, loss in zip(replicas_list, final_losses):
+    for replica, loss in zip(valid_replicas, final_losses):
 
         index = int(replica.name.split("_")[1])
 
