@@ -74,8 +74,10 @@ def main():
     final_losses = jnp.array([])
     # Loop over the replicas and check their final loss
     for replica in replicas_list:
-        # Get last iteration from the mc_loss.csv file
-        final_loss = pd.read_csv(replica / "mc_loss.csv").iloc[-1]["training_loss"]
+        # Get last non-blank iteration from the mc_loss.csv file
+        final_loss = (
+            pd.read_csv(replica / "mc_loss.csv")["training_loss"].dropna().iloc[-1]
+        )
         final_losses = jnp.concatenate((final_losses, jnp.array([final_loss])), axis=0)
 
     mean_loss = jnp.mean(final_losses)
