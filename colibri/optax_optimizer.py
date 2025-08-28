@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 
 def optimizer_provider(
-    optimizer="adam", optimizer_settings={}
+    optimizer="adam", optimizer_settings={}, clipnorm=6.073e-6
 ) -> optax._src.base.GradientTransformationExtraArgs:
     """
     Define the optimizer.
@@ -27,6 +27,9 @@ def optimizer_provider(
     optimizer_settings : dict, default = {}
         Dictionary containing the optimizer settings.
 
+    clipnorm : float, optional
+        If not None, gradients will be clipped to this norm.
+
     Returns
     -------
     optax._src.base.GradientTransformationExtraArgs
@@ -37,9 +40,13 @@ def optimizer_provider(
     if not "learning_rate" in optimizer_settings.keys():
         optimizer_settings["learning_rate"] = 5e-4
 
-    opt = getattr(optax, optimizer)
+    opt = getattr(optax, optimizer)(**optimizer_settings)
 
-    return opt(**optimizer_settings)
+    if clipnorm is not None:
+        log.info(f"Using clipnorm: {clipnorm}")
+        return optax.chain(optax.clip_by_global_norm(clipnorm), opt)
+
+    return opt
 
 
 def early_stopper(
