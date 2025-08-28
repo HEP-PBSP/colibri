@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 
 def optimizer_provider(
-    optimizer="adam", optimizer_settings={}, clipnorm=6.073e-6
+    optimizer="adam", optimizer_settings={}, clipnorm=None
 ) -> optax._src.base.GradientTransformationExtraArgs:
     """
     Define the optimizer.

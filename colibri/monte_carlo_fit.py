@@ -58,7 +58,7 @@ def monte_carlo_fit(
     FIT_XGRID,
     optimizer="adam",
     optimizer_settings={},
-    clipnorm=6.073e-6,
+    clipnorm=None,
     batch_size=None,
     batch_seed=1,
     alpha=1e-7,
@@ -101,7 +101,7 @@ def monte_carlo_fit(
 
     optimizer: str, default="adam"
         The optimizer to use.
-    
+
     optimizer_settings: dict, default={}
         A dictionary with the settings for the optimizer.
 
