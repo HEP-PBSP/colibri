@@ -437,6 +437,27 @@ class colibriConfig(Config):
 
         return analytic_settings
 
+    def parse_optimizer_settings(self, settings):
+        """ 
+        For a Monte Carlo fit. Parses the optimizer_settings namespace from the runcard
+        """
+        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
+        known_keys = {"clipnorm", "learning_rate"}
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(
+                    f"Key '{k}' in optimizer_settings not known.", k, known_keys
+                )
+            )
+
+        # Now construct the optimizer_settings dictionary, checking the parameter combinations are valid
+        optimizer_settings = {}
+        optimizer_settings["clipnorm"] = settings.get("clipnorm", 1.0)
+        optimizer_settings["learning_rate"] = settings.get("learning_rate", 5e-4)
+        return optimizer_settings
+
     def produce_vectorized(self, ns_settings):
         """Returns True if the fit is vectorized, False otherwise.
         This is required for the predictions functions, which do not take ns_settings as an argument.
