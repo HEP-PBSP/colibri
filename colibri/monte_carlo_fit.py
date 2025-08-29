@@ -16,7 +16,6 @@ import time
 
 from colibri.data_batch import data_batches
 from colibri.mc_utils import write_exportgrid_mc
-from colibri.optax_optimizer import optimizer_provider
 
 log = logging.getLogger(__name__)
 
@@ -53,12 +52,10 @@ def monte_carlo_fit(
     len_trval_data,
     pdf_model,
     mc_initial_parameters,
+    optimizer_provider,
     early_stopper,
     max_epochs,
     FIT_XGRID,
-    optimizer="adam",
-    optimizer_settings={},
-    clipnorm=None,
     batch_size=None,
     batch_seed=1,
     alpha=1e-7,
@@ -89,6 +86,9 @@ def monte_carlo_fit(
     mc_initial_parameters: jnp.array
         Initial parameters for the Monte Carlo fit.
 
+    optimizer_provider: optax._src.base.GradientTransformationExtraArgs
+        Optax optimizer.
+
     early_stopper: flax.training.early_stopping.EarlyStopping
         Early stopping criteria.
 
@@ -98,15 +98,6 @@ def monte_carlo_fit(
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
-
-    optimizer: str, default="adam"
-        The optimizer to use.
-
-    optimizer_settings: dict, default={}
-        A dictionary with the settings for the optimizer.
-
-    clipnorm: float, optional
-        If not None, gradients will be clipped to this norm.
 
     batch_size: int, default is None which sets it to the full size of data
         Size of batches during training.
@@ -129,10 +120,6 @@ def monte_carlo_fit(
     """
 
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
-
-    optim = optimizer_provider(
-        optimizer=optimizer, optimizer_settings=optimizer_settings, clipnorm=clipnorm
-    )
 
     @jax.jit
     def loss_training(
@@ -186,7 +173,7 @@ def monte_carlo_fit(
             alpha,
             lambda_positivity,
         )
-        updates, opt_state = optim.update(grads, opt_state, params)
+        updates, opt_state = optimizer_provider.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
         return params, opt_state, loss_value
 
@@ -202,7 +189,7 @@ def monte_carlo_fit(
     loss = []
     val_loss = []
 
-    opt_state = optim.init(mc_initial_parameters)
+    opt_state = optimizer_provider.init(mc_initial_parameters)
     parameters = mc_initial_parameters.copy()
 
     data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
