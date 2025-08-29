@@ -438,7 +438,7 @@ class colibriConfig(Config):
         return analytic_settings
 
     def parse_optimizer_settings(self, settings):
-        """ 
+        """
         For a Monte Carlo fit. Parses the optimizer_settings namespace from the runcard
         """
         # Begin by checking that the user-supplied keys are known; warn the user otherwise.
