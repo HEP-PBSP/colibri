@@ -1,4 +1,4 @@
-.. _sec_model_cl_test:
+.. _model_cl_test:
 
 ===========================
 Model-Specific Closure Test 

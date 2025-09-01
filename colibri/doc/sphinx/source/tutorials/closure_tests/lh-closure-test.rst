@@ -39,17 +39,13 @@ an example runcard called ``lh_fit_closure_test.yaml``, which looks like this:
 .. literalinclude:: ../../../../../examples/les_houches_example/runcards/lh_fit_closure_test.yaml
     :language: python
 
-Note that we will be using the PDF grid ``LH_PARAM_20250519``, which has been 
-produced by computing the relevant PDFs for the Les Houches model with the 
-best-fit values for the parameters, taken from Ref. :cite:`Alekhin:2005xgg`. 
+:underline:`Points to note:`
 
-Note also that, by choosing the action ``run_ultranest_fit``, we are running a 
-bayesian fit. You can read more about how to run a bayesian fit in
-:ref:`this tutorial <in_running_bayesian>`.
+* **Underlying law:** We will be using the PDF grid ``LH_PARAM_20250519``, which has been produced by computing the relevant PDFs for the Les Houches model with the best-fit values for the parameters, taken from Ref. :cite:`Alekhin:2005xgg`. 
 
-If you instead want to perform a closure test with the monte carlo replica method,
-you can find out how to do in :ref:`this tutorial <running_mc_replica>`.
+* **Fitting method:** By choosing the action ``run_ultranest_fit``, we are running a bayesian fit. (You can read more about how to run a bayesian fit in :ref:`this tutorial <in_running_bayesian>`.) If you instead want to perform a closure test with the monte carlo replica method, you can find out how to do in :ref:`this tutorial <running_mc_replica>`.
 
+* **Closure test level:** To run a Level 1 closure test with this runcard, you can simply change ``closure_test_level: 0`` to ``1``. To run a model-specific closure, test, see :ref:`this section <model_cl_test>`.
 
 Step 3: producing the fit
 -------------------------
@@ -111,8 +107,8 @@ As an example, we show the result of the fit for the gluon PDF.
    :align: center
 
 The orange line, labelled *LH theory PDF*, shows the gluon PDF used to generate
-the pseudo-data, i.e. the underlying law we are trying to recover. This was
-computed using the best-fit values for each parameter, as presented in
-Ref. :cite:`Alekhin:2005xgg`. The green curve/section, labelled 
+the pseudo-data, i.e. the underlying law we are trying to recover. As mentioned
+above, this was computed using the best-fit values for each parameter, as
+presented in Ref. :cite:`Alekhin:2005xgg`. The green curve/section, labelled 
 *Les Houches fit 68% c.i. + 1*:math:`\sigma`, shows the result of the closure test
 fit with error band.
