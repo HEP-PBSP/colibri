@@ -19,24 +19,24 @@ the following:
     closure_test_pdf: colibri_model
     closure_test_model_settings:
         model: les_houches_example
+        # The parameters of the model.
+        parameters:
+            beta_gluon: 10.9      
+            alpha_gluon: 0.356    
+            alpha_up: 0.718       
+            beta_up: 3.81         
+            epsilon_up: -1.56     
+            gamma_up: 3.30        
+            alpha_down: 1.71      
+            beta_down: 10.0       
+            epsilon_down: -3.83  
+            gamma_down: 4.64      
+            norm_sigma: 0.211     
+            alpha_sigma: -0.048   
+            beta_sigma: 2.20      
 
-    # The parameters of the model.
-    parameters:
-        beta_gluon: 10.9      
-        alpha_gluon: 0.356    
-        alpha_up: 0.718       
-        beta_up: 3.81         
-        epsilon_up: -1.56     
-        gamma_up: 3.30        
-        alpha_down: 1.71      
-        beta_down: 10.0       
-        epsilon_down: -3.83  
-        gamma_down: 4.64      
-        norm_sigma: 0.211     
-        alpha_sigma: -0.048   
-        beta_sigma: 2.20      
-
-And remove or comment out ``closure_test_pdf: LH_PARAM_20250519``.
+And remove or comment out ``closure_test_pdf: LH_PARAM_20250519``
+and ``closure_test_level: 0``.
 
 Note that, unlike for a standard closure test, in this case we need to
 specify the initial values for each parameter. For the values above, we 
