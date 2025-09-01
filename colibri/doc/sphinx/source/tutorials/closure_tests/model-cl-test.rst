@@ -10,7 +10,7 @@ do so for the Les Houches parametrisation (implemented :ref:`here <lh_model>`).
 Step 1: runcard
 ---------------
 
-You can adapt the runcard presented to run a :ref:`lh-closure-test` so that it includes
+You can adapt the runcard presented :ref:`here <lh-closure-test>` to run a closure test so that it includes
 the following:
 
 .. code-block:: bash
