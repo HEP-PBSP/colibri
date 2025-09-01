@@ -110,7 +110,9 @@ As an example, we show the result of the fit for the gluon PDF.
    :width: 600px
    :align: center
 
-The orange line, labelled *LH theory PDF*, shows the gluon PDF computed from 
-best-fit values for all parameters. The green curve/section, labelled 
+The orange line, labelled *LH theory PDF*, shows the gluon PDF used to generate
+the pseudo-data, i.e. the underlying law we are trying to recover. This was
+computed using the best-fit values for each parameter, as presented in
+Ref. :cite:`Alekhin:2005xgg`. The green curve/section, labelled 
 *Les Houches fit 68% c.i. + 1*:math:`\sigma`, shows the result of the closure test
 fit with error band.
