@@ -513,54 +513,56 @@ def pdf_model_from_colibri_model(model_settings):
 
     log.info(f"Successfully imported '{model_name}' model for pdf_model production.")
 
-    if hasattr(module, "config"):
-        from colibri.config import colibriConfig
+    # Importing the submodule if it exists
+    if importlib.util.find_spec(f"{module.__name__}.config") is not None:
+        config = importlib.import_module(f"{module.__name__}.config")
+    else:
+        raise ImportError(f"Config submodule not found for model '{model_name}'.")
 
-        config = getattr(module, "config")
-        classes = inspect.getmembers(config, inspect.isclass)
+    classes = inspect.getmembers(config, inspect.isclass)
 
-        # Loop through the classes in the module
-        # and find the class that is a subclass of colibriConfig
-        for _, cls in classes:
-            if issubclass(cls, colibriConfig) and cls is not colibriConfig:
-                # Get the signature of the produce_pdf_model method
-                signature = inspect.signature(cls(input_params={}).produce_pdf_model)
+    # Loop through the classes in the module
+    # and find the class that is a subclass of colibriConfig
+    from colibri.config import colibriConfig
 
-                # Get the required arguments for the produce_pdf_model method
-                required_args = []
-                # Loop through the parameters in the function's signature
-                for name, param in signature.parameters.items():
-                    # Check if the parameter has no default value
-                    if param.default == inspect.Parameter.empty and param.kind in (
-                        inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                        inspect.Parameter.KEYWORD_ONLY,
-                    ):
-                        if name == "output_path" or name == "dump_model":
-                            continue
-                        required_args.append(name)
+    for _, cls in classes:
+        if issubclass(cls, colibriConfig) and cls is not colibriConfig:
+            # Get the signature of the produce_pdf_model method
+            signature = inspect.signature(cls(input_params={}).produce_pdf_model)
 
-                # Create a dictionary with the required arguments
-                # and their values from closure_test_model_settings
-                inputs = {}
-                for arg in signature.parameters:
-                    if arg in model_settings:
-                        inputs[arg] = model_settings[arg]
+            # Get the required arguments for the produce_pdf_model method
+            required_args = []
+            # Loop through the parameters in the function's signature
+            for name, param in signature.parameters.items():
+                # Check if the parameter has no default value
+                if param.default == inspect.Parameter.empty and param.kind in (
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    inspect.Parameter.KEYWORD_ONLY,
+                ):
+                    if name == "output_path" or name == "dump_model":
+                        continue
+                    required_args.append(name)
 
-                # Check that keys in inputs are the same as required_args
-                if set(inputs.keys()) != set(required_args):
-                    raise ValueError(
-                        f"Required arguments for the model '{model_name}' are "
-                        f"{required_args}, but got {list(inputs.keys())}."
-                    )
+            # Create a dictionary with the required arguments
+            # and their values from closure_test_model_settings
+            inputs = {}
+            for arg in signature.parameters:
+                if arg in model_settings:
+                    inputs[arg] = model_settings[arg]
 
-                # Produce the pdf model
-                pdf_model = cls(input_params={}).produce_pdf_model(
-                    **inputs, output_path=None, dump_model=False
+            # Check that keys in inputs are the same as required_args
+            if set(inputs.keys()) != set(required_args):
+                raise ValueError(
+                    f"Required arguments for the model '{model_name}' are "
+                    f"{required_args}, but got {list(inputs.keys())}."
                 )
 
-                return pdf_model
-    else:
-        raise AttributeError(f"The model '{model_name}' has no 'config' module.")
+            # Produce the pdf model
+            pdf_model = cls(input_params={}).produce_pdf_model(
+                **inputs, output_path=None, dump_model=False
+            )
+
+            return pdf_model
 
 
 def compute_determinants_of_principal_minors(C):
