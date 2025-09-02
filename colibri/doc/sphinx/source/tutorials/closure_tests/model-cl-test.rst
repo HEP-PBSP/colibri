@@ -35,17 +35,11 @@ the following:
             alpha_sigma: -0.048   
             beta_sigma: 2.20      
 
-And remove or comment out ``closure_test_pdf: LH_PARAM_20250519``
-and ``closure_test_level: 0``.
+And remove or comment out ``closure_test_pdf: LH_PARAM_20250519``.
 
 Note that, unlike for a standard closure test, in this case we need to
 specify the initial values for each parameter. For the values above, we 
 have taken the best-fit values, taken from Ref. :cite:`Alekhin:2005xgg`. 
-
-.. note::
-
-    The parameters in the runcard need to be specified in the same order
-    as they appear in the ``model.py`` script.
 
 Step 2: running the fit
 -----------------------
