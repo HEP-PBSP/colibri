@@ -65,7 +65,10 @@ def test_closure_test_pdf_grid_with_colibri_model(mock_pdf_model_from_colibri_mo
     # Mock the pdf model
     mock_pdf_model_from_colibri_model.return_value = MOCK_PDF_MODEL
 
-    settings = {"parameters": [1, 2, 3], "model": "test_model"}
+    settings = {
+        "parameters": {"param1": 1, "param2": 2, "param3": 3},
+        "model": "test_model",
+    }
 
     grid = closure_test_pdf_grid(
         "colibri_model", TEST_XGRID, closure_test_model_settings=settings
@@ -94,6 +97,9 @@ def test_closure_test_colibri_model_pdf(
 ):
     # Mock the pdf model
     mock_pdf_model_from_colibri_model.return_value = MOCK_PDF_MODEL
-    settings = {"parameters": [1, 2, 3], "model": "test_model"}
+    settings = {
+        "parameters": {"param1": 1, "param2": 2, "param3": 3},
+        "model": "test_model",
+    }
     pdf_grid = closure_test_colibri_model_pdf(settings, TEST_XGRID)
     assert pdf_grid.shape == (TEST_N_FL, TEST_N_XGRID)
