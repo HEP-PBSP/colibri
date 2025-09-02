@@ -312,7 +312,6 @@ def likelihood_float_type(
 
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
-    @jax.jit
     def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
         predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
