@@ -36,9 +36,12 @@ the following:
             beta_sigma: 2.20      
 
 And remove or comment out ``closure_test_pdf: LH_PARAM_20250519``.
+Within the closure_test_model_settings, one needs to specify any of the hyperparameters relevant to build
+the model instance. The example model here shown does not necessitate further settings, but in principle
+one could have additional hyperparameters to tune.
 
 Note that, unlike for a standard closure test, in this case we need to
-specify the initial values for each parameter. For the values above, we 
+specify the initial values for each parameter of the PDF model. For the values above, we 
 have taken the best-fit values, taken from Ref. :cite:`Alekhin:2005xgg`. 
 
 Step 2: running the fit
