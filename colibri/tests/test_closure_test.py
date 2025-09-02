@@ -66,7 +66,7 @@ def test_closure_test_pdf_grid_with_colibri_model(mock_pdf_model_from_colibri_mo
     mock_pdf_model_from_colibri_model.return_value = MOCK_PDF_MODEL
 
     settings = {
-        "parameters": {"param1": 1, "param2": 2, "param3": 3},
+        "parameters": {"param1": 1, "param2": 2},
         "model": "test_model",
     }
 
@@ -98,7 +98,7 @@ def test_closure_test_colibri_model_pdf(
     # Mock the pdf model
     mock_pdf_model_from_colibri_model.return_value = MOCK_PDF_MODEL
     settings = {
-        "parameters": {"param1": 1, "param2": 2, "param3": 3},
+        "parameters": {"param1": 1, "param2": 2},
         "model": "test_model",
     }
     pdf_grid = closure_test_colibri_model_pdf(settings, TEST_XGRID)
