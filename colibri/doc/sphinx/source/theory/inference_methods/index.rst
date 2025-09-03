@@ -20,7 +20,7 @@ In the following sections we will discuss the three inference methods in detail.
 Analytic fits
 ^^^^^^^^^^^^^
 The analytic fit method is only applicable when both the PDF model is linear in
-the parameters and the forward modeling is linear in the PDF. This means that the
+the parameters, and the forward modeling is linear in the PDF. This means that the
 method cannot incorporate non-linear constraints such as positivity or
 integrability, making it unsuitable for fully realistic PDF fits.
 
