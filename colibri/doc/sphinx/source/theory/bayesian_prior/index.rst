@@ -1,4 +1,4 @@
-.. _bayesian_prior:
+.. _in_prior_distributions:
 
 ===================
 Prior Distributions 

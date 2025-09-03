@@ -17,4 +17,4 @@ This section discusses some relevant theoretical background to Colibri.
 
    ./bayesian_prior/index
 
-   ./inference/index
+   ./inference_methods/index
