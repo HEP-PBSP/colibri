@@ -10,24 +10,28 @@ In its release version Colibri supports three types of inference methods:
 
 - **Bayesian inference**: the posterior distribution of the PDF model parameters is sampled using a Bayesian sampling method. 
 
-- **Monte Carlo replica method**: the posterior distribution of the PDF model parameters is approximated with the Monte Carlo Replica Method (:cite:`Costantini:2024wby`).
+- **Monte Carlo replica method**: the posterior distribution of the PDF model parameters is approximated with the Monte Carlo Replica Method :cite:`Costantini:2024wby`.
 
 
 In the following sections we will discuss the three inference methods in detail.
 
+.. _th_analytic_fits:
 
 Analytic fits
 ^^^^^^^^^^^^^
-The analytic fit method is only applicable when the PDF model is linear in the parameters and 
-the forward modeling is linear in the PDF.
-Moreover, when using the analytic fit method, it is not possible to include non-linear constraints
-such as positivity and integrability constraints.
+The analytic fit method is only applicable when both the PDF model is linear in
+the parameters, and the forward modeling is linear in the PDF. This means that the
+method cannot incorporate non-linear constraints such as positivity or
+integrability, making it unsuitable for fully realistic PDF fits.
 
 .. note::
-   Albeit not allowing for realistic PDF fits, the analytical fit method can be used to fit linear
-   DIS data with no constraints and use the resulting Gaussian posterior as a prior for a realistic
-   fit on an uncorrelated dataset as described in :ref:`prior distribution <bayesian_prior>`. 
-   In general, this has the advantage of being computationally more efficient.
+
+   An analytic fit can still be useful to fit linear DIS data without
+   constraints, and then use the resulting Gaussian posterior as a prior for
+   a subsequent realistic fit on an uncorrelated dataset.
+   (See :ref:`this section <in_prior_distributions>` for details on bayesian prior
+   distributions.) This two-step approach can reduce computational load when
+   running bayesian fits.
 
 To illustrate the analytical method, let us assume a likelihood of the kind
 
@@ -143,7 +147,7 @@ defined in :ref:`Likelihood function <likelihood>`.
 
 .. note::
 
-    As shown in the study :cite:`Costantini:2024wby`, the MC replica method is equivalent to Bayesian inference 
+    As shown in the study presented in Ref. :cite:alp:`Costantini:2024wby`, the MC replica method is equivalent to Bayesian inference 
     only for linear PDF and forward models. In the presence of non-linearities the method shows a possible 
     bias and underestimation of the uncertainties. For this reason, we don't recommend using the MC replica method
     for non-linear PDF and forward models.
