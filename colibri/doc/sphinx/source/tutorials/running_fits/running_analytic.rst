@@ -66,8 +66,8 @@ fit the weight minimisation (``wmin``) model presented in Ref.
     - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
 
 
-    theoryid: 40_000_000                          # The theory from which the predictions are drawn.
-    use_cuts: internal                     # The kinematic cuts to be applied to the data.
+    theoryid: 40_000_000                          # The theory from which the predictions are drawn
+    use_cuts: internal                     # The kinematic cuts to be applied to the data
 
     closure_test_level: 1
     level_1_seed: 123456
@@ -83,8 +83,8 @@ fit the weight minimisation (``wmin``) model presented in Ref.
     #####################
     # Loss function specs
     #####################
-    use_fit_t0: true                    # Whether the t0 covariance is used in the chi2 loss.
-    t0pdfset: 240701-02-rs-nnpdf40-baseline         # The t0 PDF used to build the t0 covariance matrix.
+    use_fit_t0: true                    # Whether the t0 covariance is used in the chi2 loss
+    t0pdfset: 240701-02-rs-nnpdf40-baseline         # The t0 PDF used to build the t0 covariance matrix
 
     #############
     # Model specs
@@ -101,9 +101,9 @@ fit the weight minimisation (``wmin``) model presented in Ref.
 
     # Analytic settings
     analytic_settings:
-        n_posterior_samples: 1
-        full_sample_size: 50000
-        sampling_seed: 91234
+        n_posterior_samples: 1              # Number of posterior samples generated
+        full_sample_size: 50000             # Number of samples to be drawn from the posterior
+        sampling_seed: 91234                # Random seed used for reproducible sampling
 
 
     prior_settings:
