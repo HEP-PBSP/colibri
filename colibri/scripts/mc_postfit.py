@@ -72,11 +72,6 @@ def main():
     replicas_list = sorted(list(replicas_path.iterdir()))
 
     final_losses = jnp.array([])
-    # Loop over the replicas and check their final loss
-    # for replica in replicas_list:
-    #     # Get last non-blank iteration from the mc_loss.csv file
-    #     final_loss = pd.read_csv(replica / "mc_loss.csv").iloc[-1]["training_loss"]
-    #     final_losses = jnp.concatenate((final_losses, jnp.array([final_loss])), axis=0)
 
     valid_replicas = []  # Keep track of which replicas are valid
 
