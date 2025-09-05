@@ -18,6 +18,9 @@ in general, can be described by an equation of the following form:
 where :math:`W` is a matrix that maps the parameters, :math:`\theta`, to the
 theory prediction vector, :math:`f(\theta)`. 
 
+Effectively, the analytic fit is treated as a "bayesian fit", where the priors of
+the parameters are used to compute the evidence analytically.
+
 See :ref:`this section <th_analytic_fits>` for an overview of the theoretical
 background of the analytic fit methodology, as well as details on when it might
 be appropriate to run an analytic fit.
@@ -35,22 +38,35 @@ fit the weight minimisation (``wmin``) model presented in Ref.
 
 .. code-block:: bash
 
-    meta: 'An example analytic fit using Colibri'
+    meta: 'An example Level 1 closure test analytic fit using Colibri'
 
     #######################
     # Data and theory specs
     #######################
 
     dataset_inputs:
-    # DIS data (DEUTERON experiments)
-    - {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}
-    - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
-    - {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
-    - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
-    - {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+    # DIS data
+    # NMC experiment
+    # - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy} # (out-of-sample)
+    # NUCLEAR experiments
+    - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
+    - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
+    - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
+    # - {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw} # (out-of-sample)
+
+    # HERACOMB experiments
+    - {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
+    # - {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy} # (out-of-sample)
+    - {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
+    - {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
+    - {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
+    # - {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy} # (out-of-sample)
+    - {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
+    - {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
+    - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
 
 
-    theoryid: 40_000_000                   # The theory from which the predictions are drawn.
+    theoryid: 40_000_000                          # The theory from which the predictions are drawn.
     use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
     closure_test_level: 1
@@ -59,76 +75,16 @@ fit the weight minimisation (``wmin``) model presented in Ref.
 
     ## NNPDF settings, these are needed by validphys to run report
     closuretest:
-    fakedata: true
-    filterseed: 123456 # should be the same as level_1_seed
-    fakepdf: 250503_pod_basis_40k_underlying_law_40w_pos # should be the same as closure_test_pdf
-
-    positivity:
-    posdatasets:
-    # Positivity Lagrange Multiplier
-    - {dataset: NNPDF_POS_2P24GEV_F2U, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_F2D, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_F2S, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_FLL, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_F2C, maxlambda: 1e6}
-    # Positivity of MSbar PDFs
-    - {dataset: NNPDF_POS_2P24GEV_XUQ, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_XUB, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_XDQ, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_XDB, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_XSQ, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_XSB, maxlambda: 1e6}
-    - {dataset: NNPDF_POS_2P24GEV_XGL, maxlambda: 1e6}
+        fakedata: true
+        filterseed: 123456 # should be the same as level_1_seed
+        fakepdf: 250503_pod_basis_40k_underlying_law_40w_pos # should be the same as closure_test_pdf
 
 
-    # Apply a cut to a dataset or process type
-    added_filter_rules:
-        - process_type: POS_XPDF
-        rule: "x > 0.1"
-
-        - process_type: POS_DIS # affects structure functions
-        rule: "x > 3e-05"
-
-
-    positivity_penalty_settings:
-        positivity_penalty: true
-        alpha: 1e-7           
-        lambda_positivity: 100
-
-
-    integrability_settings:
-    integrability: true
-    integrability_specs:
-        lambda_integrability: 50
-        evolution_flavours: [T3, T8]
-
-
-    ####################
-    # Colibri specs
-    ####################
-    use_fit_t0: True                                # Whether the t0 covariance is used in the chi2 loss.
+    #####################
+    # Loss function specs
+    #####################
+    use_fit_t0: true                    # Whether the t0 covariance is used in the chi2 loss.
     t0pdfset: 240701-02-rs-nnpdf40-baseline         # The t0 PDF used to build the t0 covariance matrix.
-    
-    # Nested Sampling settings
-    ns_settings:
-    sampler_plot: true # is slow for large number of parameters
-    n_posterior_samples: 100
-    ReactiveNS_settings:
-        vectorized: false
-        # ndraw_max: 500
-    #    resume: True 
-    Run_settings:
-        min_num_live_points: 400
-        min_ess: 1000
-        frac_remain: 0.01
-    SliceSampler_settings:
-        nsteps: 80
-
-    # Prior settings
-    prior_settings:
-    prior_distribution: 'prior_from_gauss_posterior'            # The type of prior used in Nested Sampling (model dependent)
-    prior_distribution_specs: {"prior_fit": 250510_analytic_L1_}
-
 
     #############
     # Model specs
@@ -136,15 +92,31 @@ fit the weight minimisation (``wmin``) model presented in Ref.
 
     # Weight minimisation settings
     wmin_settings:
-    wminpdfset: 250503_pod_basis_40k 
-    n_basis: 45
+        wminpdfset: 250503_pod_basis_40k
+        n_basis: 70
 
+    ###################
+    # Methodology specs
+    ###################
+
+    # Analytic settings
+    analytic_settings:
+        n_posterior_samples: 1
+        full_sample_size: 50000
+        sampling_seed: 91234
+
+
+    prior_settings:
+        prior_distribution: uniform_parameter_prior
+        prior_distribution_specs: 
+                {
+                "min_val": -2.65,
+                "max_val": 2.64,
+                }
 
     actions_:
-    - run_ultranest_fit                       
+    - run_analytic_fit                       
 
-
-Note that the relevant options for the initialisation settings are the same as in
-a bayesian fit, which you can find more details about in
-:ref:`this tutorial <in_running_bayesian>`.
+Note that the ``prior_settings`` are the same as in a bayesian fit, which you can
+find more details about in :ref:`this tutorial <in_running_bayesian>`.
 
