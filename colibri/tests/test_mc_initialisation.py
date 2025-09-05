@@ -33,21 +33,25 @@ def test_zeros_initializer():
 
 @patch("jax.random.PRNGKey")
 @patch("jax.random.normal")
-def test_normal_initializer(mock_normal, mock_PRNGKey):
+def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
+    # ---- Test no means or stds provided (full defaults) ----
     settings = {"type": "normal", "random_seed": 42}
     replica_index = 0
 
     mock_normal.return_value = jnp.array([0.1, -0.1, 0.2])
 
-    result = mc_initial_parameters(pdf_model, settings, replica_index)
+    with caplog.at_level("WARNING"):
+        result = mc_initial_parameters(pdf_model, settings, replica_index)
 
     mock_PRNGKey.assert_called_once_with(42)
     mock_normal.assert_called_once_with(
         key=jax.random.PRNGKey(42), shape=(len(pdf_model.param_names),)
     )
+
+    assert "mc_initialiser_settings: No 'means' or 'stds' provided." in caplog.text
     np.testing.assert_array_equal(result, jnp.array([0.1, -0.1, 0.2]))
 
-    # Now test the case where the random_seed is not provided
+    # ---- Test case where random_seed is not provided ----
     settings = {"type": "normal"}
     replica_index = 1
     mock_normal.return_value = jnp.array([0.5, -0.5, 0.0])
@@ -55,6 +59,206 @@ def test_normal_initializer(mock_normal, mock_PRNGKey):
     result = mc_initial_parameters(pdf_model, settings, replica_index)
 
     mock_PRNGKey.assert_called_with(1)
+
+    # ---- Test specified mean and standard deviation (both as dicts) ----
+    means = {
+        "param1": 1,
+        "param2": 2,
+        "param3": 3,
+    }
+
+    stds = {
+        "param1": 0.5,
+        "param2": 1.0,
+        "param3": 2.0,
+    }
+
+    settings_both = {"type": "normal", "means": means, "stds": stds, "random_seed": 99}
+
+    mock_normal.reset_mock()
+    mock_PRNGKey.reset_mock()
+
+    mock_normal.return_value = jnp.array([0.2, -0.5, 1.0])
+    mock_PRNGKey.return_value = "mocked_key_99"
+
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        result = mc_initial_parameters(pdf_model, settings_both, replica_index=0)
+
+    # No warning should be issued when both are provided
+    assert len(caplog.records) == 0
+
+    expected = jnp.array(
+        [
+            1.0 + 0.5 * 0.2,  # 1.1
+            2.0 + 1.0 * -0.5,  # 1.5
+            3.0 + 2.0 * 1.0,  # 5.0
+        ]
+    )
+
+    np.testing.assert_allclose(result, expected)
+
+    # ---- Test means dict provided without stds ----
+    settings_means_dict_only = {
+        "type": "normal",
+        "means": {"param1": 1.0, "param2": 2.0, "param3": 3.0},
+        "random_seed": 42,
+    }
+
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        mc_initial_parameters(pdf_model, settings_means_dict_only, replica_index=0)
+
+    assert "'means' provided without 'stds'" in caplog.text
+    assert "Using default std=1.0 for all parameters." in caplog.text
+
+    # ---- Test means scalar provided without stds ----
+    settings_means_scalar_only = {
+        "type": "normal",
+        "means": 2.5,  # scalar mean
+        "random_seed": 42,
+    }
+
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        mc_initial_parameters(pdf_model, settings_means_scalar_only, replica_index=0)
+
+    assert "'means' provided without 'stds'" in caplog.text
+    assert "Using default std=1.0 for all parameters." in caplog.text
+
+    # ---- Test stds dict provided without means ----
+    settings_stds_dict_only = {
+        "type": "normal",
+        "stds": {"param1": 0.1, "param2": 0.2, "param3": 0.3},
+        "random_seed": 42,
+    }
+
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        mc_initial_parameters(pdf_model, settings_stds_dict_only, replica_index=0)
+
+    assert "'stds' provided without 'means'" in caplog.text
+    assert "Using default mean=0.0 for all parameters." in caplog.text
+
+    # ---- Test stds scalar provided without means ----
+    settings_stds_scalar_only = {
+        "type": "normal",
+        "stds": 0.5,  # scalar std
+        "random_seed": 42,
+    }
+
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        mc_initial_parameters(pdf_model, settings_stds_scalar_only, replica_index=0)
+
+    assert "'stds' provided without 'means'" in caplog.text
+    assert "Using default mean=0.0 for all parameters." in caplog.text
+
+    # ---- Test scalar means and stds together ----
+    settings_scalars = {
+        "type": "normal",
+        "means": 1.5,  # scalar mean
+        "stds": 0.8,  # scalar std
+        "random_seed": 123,
+    }
+
+    mock_normal.reset_mock()
+    mock_PRNGKey.reset_mock()
+
+    mock_normal.return_value = jnp.array([0.5, -1.0, 2.0])
+    mock_PRNGKey.return_value = "mocked_key_123"
+
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        result = mc_initial_parameters(pdf_model, settings_scalars, replica_index=0)
+
+    # No warning should be issued when both are provided
+    assert len(caplog.records) == 0
+
+    expected = jnp.array(
+        [
+            1.5 + 0.8 * 0.5,  # mean + std * sample
+            1.5 + 0.8 * -1.0,
+            1.5 + 0.8 * 2.0,
+        ]
+    )
+
+    np.testing.assert_allclose(result, expected)
+
+    # ---- Test mixed dict/scalar (means dict, stds scalar) ----
+    settings_mixed = {
+        "type": "normal",
+        "means": {"param1": 1.0, "param2": 2.0, "param3": 3.0},
+        "stds": 0.5,  # scalar std applied to all
+        "random_seed": 456,
+    }
+
+    mock_normal.reset_mock()
+    mock_normal.return_value = jnp.array([1.0, 0.0, -1.0])
+
+    with caplog.at_level("WARNING"):
+        caplog.clear()
+        result = mc_initial_parameters(pdf_model, settings_mixed, replica_index=0)
+
+    # No warning should be issued
+    assert len(caplog.records) == 0
+
+    expected = jnp.array(
+        [
+            1.0 + 0.5 * 1.0,  # 1.5
+            2.0 + 0.5 * 0.0,  # 2.0
+            3.0 + 0.5 * -1.0,  # 2.5
+        ]
+    )
+
+    np.testing.assert_allclose(result, expected)
+
+    # ---- Test validation errors ----
+    # Too few means in dict
+    settings_few_means = {
+        "type": "normal",
+        "means": {"param1": 0.0, "param2": 0.0},  # Only 2 means
+        "stds": {"param1": 1.0, "param2": 1.0, "param3": 1.0},
+        "random_seed": 42,
+    }
+
+    with pytest.raises(
+        ValueError, match="'means' dict must have one entry per parameter"
+    ):
+        mc_initial_parameters(pdf_model, settings_few_means, replica_index=0)
+
+    # Too few stds in dict
+    settings_few_stds = {
+        "type": "normal",
+        "means": {"param1": 0.0, "param2": 0.0, "param3": 0.0},
+        "stds": {"param1": 1.0},  # Only 1 std
+        "random_seed": 42,
+    }
+
+    with pytest.raises(
+        ValueError, match="'stds' dict must have one entry per parameter"
+    ):
+        mc_initial_parameters(pdf_model, settings_few_stds, replica_index=0)
+
+    # Invalid type for means
+    settings_invalid_means = {
+        "type": "normal",
+        "means": ["invalid", "list"],  # Invalid type
+        "random_seed": 42,
+    }
+
+    with pytest.raises(TypeError, match="'means' must be dict or scalar"):
+        mc_initial_parameters(pdf_model, settings_invalid_means, replica_index=0)
+
+    # Invalid type for stds
+    settings_invalid_stds = {
+        "type": "normal",
+        "stds": ["invalid", "list"],  # Invalid type
+        "random_seed": 42,
+    }
+
+    with pytest.raises(TypeError, match="'stds' must be dict or scalar"):
+        mc_initial_parameters(pdf_model, settings_invalid_stds, replica_index=0)
 
 
 @patch("jax.random.PRNGKey")
