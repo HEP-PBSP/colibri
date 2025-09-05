@@ -93,7 +93,6 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
     if mc_initialiser_settings["type"] == "uniform":
         if "bounds" in mc_initialiser_settings:
             # Use param names from the model to order bounds correctly
-            # param_names = pdf_model.param_names
             bounds_dict = mc_initialiser_settings["bounds"]
 
             missing = [p for p in param_names if p not in bounds_dict]
