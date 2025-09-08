@@ -16,6 +16,18 @@ from validphys.fkparser import load_fktable
 def positivity_fast_kernel_arrays(posdatasets, flavour_indices=None):
     """
     Similar to fast_kernel_arrays but for Positivity datasets.
+
+    Parameters
+    ----------
+    posdatasets: list
+        List of positivity dataset specs.
+    flavour_indices: list | None
+        Indices of flavours to keep (evolution basis).
+
+    Returns
+    -------
+    tuple
+        Tuple of tuples of FK arrays per positivity dataset.
     """
     pos_fk_arrays = []
 
@@ -130,7 +142,7 @@ def integrability_penalty(integrability_settings, FIT_XGRID):
 
     Parameters
     ----------
-    integrability_settings: colibri.core.IntegrabilitySettings dataclass
+    integrability_settings: colibri.core.IntegrabilitySettings
 
     Returns
     -------
@@ -168,11 +180,13 @@ def integrability_penalty(integrability_settings, FIT_XGRID):
 
         Parameters
         ----------
-        pdf: jnp.array of shape (Nfl, Nx)
+        pdf: jnp.ndarray
+            PDF grid of shape (Nfl, Nx).
 
         Returns
         -------
-        jnp.array of shape (len(integ_flavours), )
+        jnp.ndarray
+            Array of shape (len(integ_flavours), )
         """
         integ_pdf_grid = pdf[integ_flavours, :][:, x_idxs]
         # compute integrability penalty term and sum over xgrid points

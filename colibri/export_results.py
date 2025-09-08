@@ -115,7 +115,7 @@ def write_exportgrid(
 
     Parameters
     ----------
-    grid_for_writing: jnp.array
+    grid_for_writing: jnp.ndarray
         An array of shape (Nfl,Nx) containing the PDF values.
         Note that the grid should be in the evolution basis.
 
@@ -181,7 +181,7 @@ def get_pdfgrid_from_exportgrids(fit_path: pathlib.Path):
 
     Returns
     -------
-    pdf_grid: np.array
+    pdf_grid: jnp.ndarray
         Array containing the pdf grid in the evolution basis.
     """
     # Get the list of all the exportgrids

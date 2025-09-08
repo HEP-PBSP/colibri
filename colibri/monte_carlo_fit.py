@@ -67,10 +67,10 @@ def monte_carlo_fit(
 
     Parameters
     ----------
-    _chi2_training_data_with_positivity: PjitFunction
+    _chi2_training_data_with_positivity: Function
         Function that computes the chi2 of the training data.
 
-    _chi2_validation_data_with_positivity: PjitFunction
+    _chi2_validation_data_with_positivity: Function
         Function that computes the chi2 of the validation data.
 
     _pred_data: theory_predictions.make_pred_data
