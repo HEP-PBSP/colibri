@@ -12,6 +12,7 @@ import logging
 import pandas as pd
 import os
 import time
+from functools import partial
 
 from colibri.data_batch import data_batches
 from colibri.mc_utils import write_exportgrid_mc
@@ -176,20 +177,31 @@ def monte_carlo_fit(
 
     data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
 
+    # Pre-bind constant arguments to pass to run_gradient_descent
+    bound_training_loss = partial(
+        loss_training,
+        fast_kernel_arrays=fast_kernel_arrays,
+        positivity_fast_kernel_arrays=positivity_fast_kernel_arrays,
+        alpha=alpha,
+        lambda_positivity=lambda_positivity,
+    )
+    bound_validation_loss = partial(
+        loss_validation,
+        fast_kernel_arrays=fast_kernel_arrays,
+        positivity_fast_kernel_arrays=positivity_fast_kernel_arrays,
+        alpha=alpha,
+        lambda_positivity=lambda_positivity,
+    )
     # Delegate to generic gradient descent
     gd_result = run_gradient_descent(
         initial_parameters=mc_initial_parameters.copy(),
-        training_loss_fn=loss_training,
-        validation_loss_fn=loss_validation,
-        fast_kernel_arrays=fast_kernel_arrays,
-        positivity_fast_kernel_arrays=positivity_fast_kernel_arrays,
+        training_loss_fn=bound_training_loss,
+        validation_loss_fn=bound_validation_loss,
         optimizer=optimizer_provider,
         early_stopper=early_stopper,
         max_epochs=max_epochs,
         data_batch=data_batch,
         record_every=50,
-        alpha=alpha,
-        lambda_positivity=lambda_positivity,
     )
 
     t1 = time.time()

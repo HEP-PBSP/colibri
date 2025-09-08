@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
-from typing import Callable, Iterable, Any, Dict
+from typing import Callable, Any, Dict
 
 import jax
 import jax.numpy as jnp
@@ -51,21 +51,17 @@ def run_gradient_descent(
     initial_parameters: jnp.ndarray,
     training_loss_fn: Callable[[jnp.ndarray, int], jnp.ndarray],
     validation_loss_fn: Callable[[jnp.ndarray], jnp.ndarray],
-    fast_kernel_arrays: jnp.ndarray,
-    positivity_fast_kernel_arrays: jnp.ndarray,
     optimizer: optax.GradientTransformation,
     early_stopper: Any,
     max_epochs: int,
     data_batch: colibri.DataBatches,
     record_every: int = 50,
-    alpha: float = 1e-7,
-    lambda_positivity: float = 1000,
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 
     Parameters
     ----------
-    initial_parameters : PyTree
+    initial_parameters : jnp.ndarray
         Starting parameters.
 
     training_loss_fn : callable -> scalar
@@ -73,12 +69,6 @@ def run_gradient_descent(
 
     validation_loss_fn : callable -> scalar
         Validation loss function (already jit'ed by caller if desired).
-
-    fast_kernel_arrays : jnp.ndarray
-        Fast kernel arrays for convolutions.
-
-    positivity_fast_kernel_arrays : jnp.ndarray
-        Fast kernel arrays for positivity constraints.
 
     optimizer : optax.GradientTransformation
         Optax optimizer.
@@ -89,38 +79,19 @@ def run_gradient_descent(
     max_epochs : int
         Maximum epochs to run.
 
+    data_batch : colibri.DataBatches
+        DataBatches object providing batching information.
+
     record_every : int, default 50
         Record losses every this many epochs.
-
-    alpha : float, default 1e-7
-        Alpha parameter of the ELU positivity penalty term.
-
-    lambda_positivity : float, default 1000
-        Lagrange multiplier of the positivity penalty.
     """
 
     params = initial_parameters
     opt_state = optimizer.init(params)
 
-    # Wrap the gradient computation
     @jax.jit
-    def _step(
-        p,
-        ostate,
-        batch_idx,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
-        alpha,
-        lambda_positivity,
-    ):
-        (loss_value, grads) = jax.value_and_grad(training_loss_fn)(
-            p,
-            batch_idx,
-            fast_kernel_arrays,
-            positivity_fast_kernel_arrays,
-            alpha,
-            lambda_positivity,
-        )
+    def _step(p, ostate, batch_idx):
+        (loss_value, grads) = jax.value_and_grad(training_loss_fn)(p, batch_idx)
         updates, ostate = optimizer.update(grads, ostate, p)
         p = optax.apply_updates(p, updates)
         return p, ostate, loss_value
@@ -128,7 +99,6 @@ def run_gradient_descent(
     train_losses = []
     val_losses = []
 
-    # We need a re-iterable / generator consumption; user provides an iterator.
     batches_iter = data_batch.data_batch_stream_index()
     num_batches = data_batch.num_batches
     batch_size = data_batch.batch_size
@@ -137,24 +107,9 @@ def run_gradient_descent(
         epoch_train_loss = 0.0
         for _ in range(num_batches):
             batch_idx = next(batches_iter)
-            params, opt_state, batch_loss = _step(
-                params,
-                opt_state,
-                batch_idx,
-                fast_kernel_arrays,
-                positivity_fast_kernel_arrays,
-                alpha,
-                lambda_positivity,
-            )
+            params, opt_state, batch_loss = _step(params, opt_state, batch_idx)
             epoch_train_loss += batch_loss
-
-        epoch_val_loss = validation_loss_fn(
-            params,
-            fast_kernel_arrays,
-            positivity_fast_kernel_arrays,
-            alpha,
-            lambda_positivity,
-        )
+        epoch_val_loss = validation_loss_fn(params)
 
         early_stopper = early_stopper.update(epoch_val_loss)
 
