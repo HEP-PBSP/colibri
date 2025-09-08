@@ -43,11 +43,6 @@ jobs:
         run: |
           mamba env update -n colibri-dev -f environment.yml --prune
 
-      - name: Enforce matrix Python
-        shell: bash -l {0}
-        run: |
-          mamba install -n colibri-dev "python=${{ matrix.python-version }}.*" --update-specs -y
-
       - name: Show versions
         shell: bash -l {0}
         run: |
