@@ -8,7 +8,6 @@ This module contains the main Monte Carlo fitting routine of colibri.
 from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
-import optax
 import logging
 import pandas as pd
 import os
@@ -199,7 +198,7 @@ def monte_carlo_fit(
     return MonteCarloFit(
         monte_carlo_specs={
             "max_epochs": max_epochs,
-            "batch_size": batch_size,
+            "batch_size": data_batch.batch_size,
             "batch_seed": batch_seed,
             "alpha": alpha,
             "lambda_positivity": lambda_positivity,

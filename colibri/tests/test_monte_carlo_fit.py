@@ -54,7 +54,6 @@ def test_monte_carlo_fit_runs_without_errors():
         early_stopper=MockEarlyStopper(),
         max_epochs=100,
         FIT_XGRID=np.zeros((10,)),
-        batch_size=100,
     )
 
     # Assert that the function returns an instance of MonteCarloFit
