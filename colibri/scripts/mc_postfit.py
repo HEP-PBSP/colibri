@@ -83,7 +83,7 @@ def main():
                 or df["training_loss"].iloc[-1] is pd.NA
                 or pd.isna(df["training_loss"].iloc[-1])
             ):
-                print(f"Skipping {replica} - empty or NaN training_loss")
+                log.warning(f"Skipping replica {replica} - empty or NaN training_loss")
                 continue
 
             final_loss = df.iloc[-1]["training_loss"]
