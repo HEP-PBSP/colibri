@@ -20,6 +20,7 @@ from typing import Callable, Iterable, Any, Dict
 import jax
 import jax.numpy as jnp
 import optax
+import colibri
 
 log = logging.getLogger(__name__)
 
@@ -55,9 +56,7 @@ def run_gradient_descent(
     optimizer: optax.GradientTransformation,
     early_stopper: Any,
     max_epochs: int,
-    batch_indices: Iterable[int],
-    num_batches: int,
-    batch_size: int,
+    data_batch: colibri.DataBatches,
     record_every: int = 50,
     alpha: float = 1e-7,
     lambda_positivity: float = 1000,
@@ -89,15 +88,6 @@ def run_gradient_descent(
 
     max_epochs : int
         Maximum epochs to run.
-
-    batch_indices : iterable
-        Infinite (or long) iterator yielding batch indices for each step.
-
-    num_batches : int
-        Number of batches per epoch.
-
-    batch_size : int
-        Size of each batch.
 
     record_every : int, default 50
         Record losses every this many epochs.
@@ -138,7 +128,9 @@ def run_gradient_descent(
     val_losses = []
 
     # We need a re-iterable / generator consumption; user provides an iterator.
-    batches_iter = batch_indices
+    batches_iter = data_batch.data_batch_stream_index()
+    num_batches = data_batch.num_batches
+    batch_size = data_batch.batch_size
 
     for epoch in range(max_epochs):
         epoch_train_loss = 0.0
@@ -153,19 +145,14 @@ def run_gradient_descent(
                 alpha,
                 lambda_positivity,
             )
-            epoch_train_loss += (
-                training_loss_fn(
-                    params,
-                    batch_idx,
-                    fast_kernel_arrays,
-                    positivity_fast_kernel_arrays,
-                    alpha,
-                    lambda_positivity,
-                )
-                / batch_size
+            epoch_train_loss += training_loss_fn(
+                params,
+                batch_idx,
+                fast_kernel_arrays,
+                positivity_fast_kernel_arrays,
+                alpha,
+                lambda_positivity,
             )
-
-        epoch_train_loss /= num_batches
 
         epoch_val_loss = validation_loss_fn(
             params,

@@ -127,6 +127,7 @@ def monte_carlo_fit(
     """
 
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
+    len_tr_idx, len_val_idx = len_trval_data
 
     @jax.jit
     def loss_training(
@@ -138,13 +139,16 @@ def monte_carlo_fit(
         lambda_positivity,
     ):
         predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
-        return _chi2_training_data_with_positivity(
-            predictions,
-            pdf,
-            batch_idx,
-            alpha,
-            lambda_positivity,
-            positivity_fast_kernel_arrays,
+        return (
+            _chi2_training_data_with_positivity(
+                predictions,
+                pdf,
+                batch_idx,
+                alpha,
+                lambda_positivity,
+                positivity_fast_kernel_arrays,
+            )
+            / len_tr_idx
         )
 
     @jax.jit
@@ -156,20 +160,22 @@ def monte_carlo_fit(
         lambda_positivity,
     ):
         predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
-        return _chi2_validation_data_with_positivity(
-            predictions, pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
+        return (
+            _chi2_validation_data_with_positivity(
+                predictions,
+                pdf,
+                alpha,
+                lambda_positivity,
+                positivity_fast_kernel_arrays,
+            )
+            / len_val_idx
         )
 
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
-    len_tr_idx, _ = len_trval_data
-
     data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
-    batches = data_batch.data_batch_stream_index()
-    num_batches = data_batch.num_batches
-    batch_size = data_batch.batch_size
 
     # Delegate to generic gradient descent
     gd_result = run_gradient_descent(
@@ -181,9 +187,7 @@ def monte_carlo_fit(
         optimizer=optimizer_provider,
         early_stopper=early_stopper,
         max_epochs=max_epochs,
-        batch_indices=batches,
-        num_batches=num_batches,
-        batch_size=batch_size,
+        data_batch=data_batch,
         record_every=50,
         alpha=alpha,
         lambda_positivity=lambda_positivity,
