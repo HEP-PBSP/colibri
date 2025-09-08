@@ -93,7 +93,7 @@ def main():
             valid_replicas.append(replica)
 
         except (FileNotFoundError, KeyError, IndexError) as e:
-            print(f"Skipping {replica} - error reading file: {e}")
+            log.critical(f"Skipping replica {replica} - error reading file: {e}")
             continue
 
     mean_loss = jnp.mean(final_losses)
