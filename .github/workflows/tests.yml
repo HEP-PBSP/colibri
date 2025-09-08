@@ -1,4 +1,5 @@
 name: Tests
+
 on:
   push:
     branches: [ "main" ]
@@ -11,10 +12,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -25,35 +22,19 @@ jobs:
           miniforge-version: latest
           activate-environment: colibri-dev
           use-mamba: true
+          auto-activate-base: false
 
       - name: Cache Conda packages
         id: conda-pkgs
         uses: actions/cache@v3
         with:
           path: ~/conda_pkgs_dir
-          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ matrix.python-version }}-${{ hashFiles('environment.yml') }}
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
 
-      - name: Create env with matrix Python
+      - name: Create environment from environment.yml
         shell: bash -l {0}
         run: |
-          mamba create -n colibri-dev "python=${{ matrix.python-version }}.*" -y
-
-      - name: Update from environment.yml
-        shell: bash -l {0}
-        run: |
-          mamba env update -n colibri-dev -f environment.yml --prune
-
-      - name: Enforce matrix Python
-        shell: bash -l {0}
-        run: |
-          mamba install -n colibri-dev "python=${{ matrix.python-version }}.*" -y
-
-      - name: Show versions
-        shell: bash -l {0}
-        run: |
-          which python
-          python -V
-          conda list python | sed -n '1,6p'
+          mamba env create -n colibri-dev -f environment.yml
 
       - name: Lint
         shell: bash -l {0}
