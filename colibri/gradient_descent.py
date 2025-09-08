@@ -115,9 +115,9 @@ def run_gradient_descent(
 
         if record_every and (epoch % record_every == 0):
             log.info(
-                f"step {epoch}, loss: {epoch_train_loss:.3f}, validation_loss: {epoch_val_loss:.3f}"
+                f"Epoch {epoch}, loss: {epoch_train_loss:.3f}, validation_loss: {epoch_val_loss:.3f}"
             )
-            log.info(f"    early_stopper: {early_stopper}")
+            log.info(f"    Early_stopper: {early_stopper}")
             train_losses.append(epoch_train_loss)
             val_losses.append(epoch_val_loss)
 
