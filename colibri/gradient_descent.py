@@ -68,10 +68,10 @@ def run_gradient_descent(
     initial_parameters : PyTree
         Starting parameters.
 
-    training_loss_fn : callable(params, batch_idx) -> scalar
+    training_loss_fn : callable -> scalar
         Per-batch loss function (already jit'ed by caller if desired).
 
-    validation_loss_fn : callable(params) -> scalar
+    validation_loss_fn : callable -> scalar
         Validation loss function (already jit'ed by caller if desired).
 
     fast_kernel_arrays : jnp.ndarray
