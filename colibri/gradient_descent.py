@@ -103,6 +103,7 @@ def run_gradient_descent(
     opt_state = optimizer.init(params)
 
     # Wrap the gradient computation
+    @jax.jit
     def _step(
         p,
         ostate,
@@ -136,7 +137,7 @@ def run_gradient_descent(
         epoch_train_loss = 0.0
         for _ in range(num_batches):
             batch_idx = next(batches_iter)
-            params, opt_state, _ = _step(
+            params, opt_state, batch_loss = _step(
                 params,
                 opt_state,
                 batch_idx,
@@ -145,14 +146,7 @@ def run_gradient_descent(
                 alpha,
                 lambda_positivity,
             )
-            epoch_train_loss += training_loss_fn(
-                params,
-                batch_idx,
-                fast_kernel_arrays,
-                positivity_fast_kernel_arrays,
-                alpha,
-                lambda_positivity,
-            )
+            epoch_train_loss += batch_loss
 
         epoch_val_loss = validation_loss_fn(
             params,
@@ -163,9 +157,6 @@ def run_gradient_descent(
         )
 
         early_stopper = early_stopper.update(epoch_val_loss)
-        if early_stopper.should_stop:
-            log.info(f"Early stopping at epoch {epoch}")
-            break
 
         if record_every and (epoch % record_every == 0):
             log.info(
@@ -174,6 +165,10 @@ def run_gradient_descent(
             log.info(f"    early_stopper: {early_stopper}")
             train_losses.append(epoch_train_loss)
             val_losses.append(epoch_val_loss)
+
+        if early_stopper.should_stop:
+            log.info(f"Early stopping at epoch {epoch}")
+            break
 
     return GradientDescentResult(
         optimized_parameters=params,
