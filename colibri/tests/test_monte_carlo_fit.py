@@ -65,8 +65,8 @@ def test_monte_carlo_fit_runs_without_errors():
     assert result.monte_carlo_specs["lambda_positivity"] == 1000
 
     assert_allclose(result.optimized_parameters, jnp.array([0.0, 0.0]))
-    assert_allclose(result.training_loss, jnp.array([]))
-    assert_allclose(result.validation_loss, jnp.array([]))
+    assert_allclose(result.training_loss, jnp.array([0.0]))
+    assert_allclose(result.validation_loss, jnp.array([0.0]))
 
 
 @patch("colibri.monte_carlo_fit.write_exportgrid_mc")
