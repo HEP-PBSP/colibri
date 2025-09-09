@@ -129,6 +129,11 @@ def monte_carlo_fit(
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
     len_tr_idx, len_val_idx = len_trval_data
 
+    if len_val_idx == 0:
+        # Avoid division by zero if no validation data,
+        # The validation loss returns nan in this case
+        len_val_idx = jnp.nan
+
     @jax.jit
     def loss_training(
         parameters,
