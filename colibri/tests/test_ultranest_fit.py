@@ -19,9 +19,9 @@ from colibri.tests.conftest import (
     TEST_FK_ARRAYS,
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
-    UltraNestLogLikelihoodMock,
 )
 from colibri.ultranest_fit import UltranestFit, run_ultranest_fit, ultranest_fit
+from colibri.likelihood import LogLikelihood
 
 jax.config.update("jax_enable_x64", True)
 
@@ -48,14 +48,13 @@ vect_ns_settings["ReactiveNS_settings"]["vectorized"] = True
 def test_ultranest_fit(pos_penalty):
 
     _pred_data = None
-    mock_log_likelihood = UltraNestLogLikelihoodMock(
+    mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        ns_settings,
         chi2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
@@ -63,6 +62,7 @@ def test_ultranest_fit(pos_penalty):
             "alpha": 1e-7,
             "lambda_positivity": 1000,
         },
+        integrability_penalty=integrability_penalty,
     )
 
     fit_result = ultranest_fit(
@@ -88,14 +88,13 @@ def test_ultranest_fit_vectorized(pos_penalty):
     _pred_data = None
     ns_settings["ReactiveNS_settings"]["vectorized"] = True
 
-    mock_log_likelihood = UltraNestLogLikelihoodMock(
+    mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        ns_settings,
         chi2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
@@ -103,6 +102,7 @@ def test_ultranest_fit_vectorized(pos_penalty):
             "alpha": 1e-7,
             "lambda_positivity": 1000,
         },
+        integrability_penalty=integrability_penalty,
     )
 
     fit_result = ultranest_fit(
@@ -137,14 +137,13 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
 
     _pred_data = None
 
-    mock_log_likelihood = UltraNestLogLikelihoodMock(
+    mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        ns_settings,
         chi2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
@@ -152,6 +151,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
             "alpha": 1e-7,
             "lambda_positivity": 1000,
         },
+        integrability_penalty=integrability_penalty,
     )
 
     fit_result = ultranest_fit(
@@ -186,14 +186,13 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
 
     _pred_data = None
 
-    mock_log_likelihood = UltraNestLogLikelihoodMock(
+    mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        ns_settings,
         chi2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
@@ -201,6 +200,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
             "alpha": 1e-7,
             "lambda_positivity": 1000,
         },
+        integrability_penalty=integrability_penalty,
     )
 
     fit_result = ultranest_fit(
