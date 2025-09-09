@@ -290,8 +290,8 @@ class TestPDFModel(PDFModel):
 
 MOCK_PDF_MODEL = Mock()
 MOCK_PDF_MODEL.param_names = ["param1", "param2"]
-MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: np.sum(
-    np.array([param * TEST_PDF_GRID for param in params]), axis=0
+MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: jnp.sum(
+    jnp.array([param * TEST_PDF_GRID for param in params]), axis=0
 )
 """
 Mock PDF model with 2 parameters and grid_values_func simple mult add operation on np.ones grid.
@@ -334,10 +334,10 @@ This mocks a POS fast kernel mapping the PDF grid to 2 datapoints.
 """
 
 
-TEST_FORWARD_MAP_DIS = lambda pdf, fk_arrays: np.einsum("ijk,jk->i", fk_arrays, pdf)
+TEST_FORWARD_MAP_DIS = lambda pdf, fk_arrays: jnp.einsum("ijk,jk->i", fk_arrays[0], pdf)
 """
 Mock DIS forward map function for testing purposes.
-Function expects a DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_N_XGRID) and a PDF of shape (TEST_N_FL, TEST_N_XGRID).
+Function expects a tuple of DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_N_XGRID) and a PDF of shape (TEST_N_FL, TEST_N_XGRID).
 """
 
 
