@@ -1,9 +1,8 @@
 .. _cite:
 
-References
-==========
+Citation guidelines
+===================
 If you use this code please consider citing:
 
-* COLIBRI RELEASE PAPER
-* REPORTENGINE
-* NNPDF
+* NNPDF, :cite:ct:`NNPDF:2021uiq`
+* Reportengine, :cite:ct:`zahari_kassabov_2019_2571601`

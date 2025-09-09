@@ -1,22 +1,23 @@
 .. COLIBRI documentation master file, created by
-   sphinx-quickstart on Mon Oct 29 10:53:50 2018.
+   sphinx-quickstart in February 2025.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 Colibri
 =======
-Colibri is a modern, high-performance framework for fast and flexible PDF fitting. 
-It is a reportengine app to perform PDF fits using arbitrary parametrisations.
-
+Colibri is an adaptable, open source platform for flexible Parton Distribution
+Functions (PDF) fitting. It is a reportengine app that performs PDF fits with
+any given parametrisation. 
 
 The Colibri code
 ================
 Colibri is available to the public. Along with this online documentation, you can
 `access the code here <https://github.com/HEP-PBSP/colibri>`_. 
-The code is made available as an open-source package together with user-friendly
+The code is made available as an open-source package, together with user-friendly
 examples and the documentation presented here.
 
-If you are a new user head along to :ref:`in_get_started` and check out the :ref:`in_tutorials`.
+If you are a new user, head along to :ref:`in_get_started` and check out the
+:ref:`in_tutorials`.
 
 Colibri's workflow
 ------------------
