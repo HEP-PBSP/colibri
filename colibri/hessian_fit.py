@@ -69,6 +69,10 @@ def hessian_fit(
 
     iter_init = hessian_settings["iter_init"]
     tolerance = hessian_settings["tolerance"]
+    # Optional local-minimum checks
+    grad_tol = hessian_settings.get("grad_tol", 1e-6)
+    eig_eps = hessian_settings.get("min_hessian_eigval", 1e-12)
+    require_local_min = hessian_settings.get("require_local_min", False)
 
     t0 = time.time()
     # Generate iter_init random initial parameters
@@ -101,11 +105,18 @@ def hessian_fit(
             training_loss = gd_result.training_loss
 
     log.info(f"Minimum chi2 found: {min_chi2}")
+    # Compute gradient at the candidate minimum to check stationarity
+    grad_at_min = jax.grad(lambda p: train_chi2(p, 0))(parameters_min)
+    grad_norm = jnp.linalg.norm(grad_at_min)
+    if jnp.isnan(grad_norm) | jnp.isinf(grad_norm):
+        log.critical(
+            "Gradient norm at the found minimum is NaN/Inf; local minimum check cannot be trusted."
+        )
     # Compute the Hessian matrix at the minimum, using the train_chi2 function
     # giving the optimized parameters and idx=0 (not used)
     # Note the 0.5 factor because we absorb the 1/2 of the taylor expansion
     # in the definition of the Hessian
-    hessian = 0.5 * jax.hessian(train_chi2)(parameters_min, 0)
+    hessian = 0.5 * jax.hessian(lambda p: train_chi2(p, 0))(parameters_min)
 
     # Verify hessian is positive definite
     eigvals = jnp.linalg.eigvalsh(hessian)
@@ -115,6 +126,25 @@ def hessian_fit(
             f"WARNING: The Hessian matrix is not positive definite. "
             f"Minimum eigenvalue is {min_eigval:.2e}."
         )
+
+    # Local minimum check: small gradient and positive-definite Hessian
+    is_grad_small = grad_norm <= grad_tol
+    is_pd = min_eigval > eig_eps
+    if is_grad_small and is_pd:
+        log.info(
+            f"Local minimum verified: ||grad||={float(grad_norm):.3e}<= {grad_tol:.1e}, "
+            f"min_eig={float(min_eigval):.3e} > {eig_eps:.1e}."
+        )
+    else:
+        log.critical(
+            "Local minimum check failed: "
+            f"||grad||={float(grad_norm):.3e} (tol {grad_tol:.1e}), "
+            f"min_eig={float(min_eigval):.3e} (must be > {eig_eps:.1e})."
+        )
+        if require_local_min:
+            raise ValueError(
+                "Hessian fit did not converge to a verified local minimum (stationary point with PD Hessian)."
+            )
 
     # covariance matrix is inflated by tolerance^2
     cov_params = tolerance**2 * jnp.linalg.inv(hessian)
@@ -138,6 +168,9 @@ def hessian_fit(
             "max_epochs": max_epochs,
             "tolerance": tolerance,
             "iter_init": iter_init,
+            "grad_tol": grad_tol,
+            "min_hessian_eigval": eig_eps,
+            "require_local_min": require_local_min,
         },
         min_chi2=min_chi2,
         training_loss=training_loss,
