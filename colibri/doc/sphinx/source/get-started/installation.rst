@@ -79,7 +79,7 @@ To verify that the installation went through, run:
 
 The installation instructions shown above will install jax in *cpu* mode. It is also
 possible, however, to run Colibri fits using *gpu cuda support*. You will first have
-to install the pachahe following one of the methods described above. Then, if you
+to install the package following one of the methods described above. Then, if you
 are on a linux machine, you can install jax in cuda mode by running:
 
 .. code-block:: bash
