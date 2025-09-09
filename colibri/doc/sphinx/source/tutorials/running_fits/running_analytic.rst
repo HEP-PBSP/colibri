@@ -19,13 +19,12 @@ where :math:`W` is a matrix that maps the parameters, :math:`\theta`, to the
 theory prediction vector, :math:`f(\theta)`. 
 
 Effectively, the analytic fit is treated as a "bayesian fit", where the priors of
-the parameters are used to compute the evidence analytically.
-
-See :ref:`this section <th_analytic_fits>` for an overview of the theoretical
+the parameters are used to compute the evidence analytically. See
+:ref:`this section <th_analytic_fits>` for an overview of the theoretical
 background of the analytic fit methodology, as well as details on when it might
 be appropriate to run an analytic fit.
 
-In this section, we will provide an example that was implemented in the work
+In this tutorial, we will provide an example that was implemented in the work
 presented in Ref. :cite:alp:`Costantini:2025wxp`.
 
 

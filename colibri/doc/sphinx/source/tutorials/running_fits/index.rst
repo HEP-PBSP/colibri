@@ -4,7 +4,7 @@
 Running Fits
 ============
 
-Colibri supports three inference methods for fitting models:
+Colibri supports three inference methods for PDF fitting:
 
 1. **Analytical Fit**:
    Computes the posterior distribution of model parameters by solving the linear regression analytically.
