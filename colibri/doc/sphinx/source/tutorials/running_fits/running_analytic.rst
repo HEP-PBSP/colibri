@@ -1,8 +1,8 @@
 .. _running_analytic:
 
-===============
-Analytical Fits
-===============
+=============
+Analytic Fits
+=============
 
 This section describes how to run an analytic fit with Colibri.
 
