@@ -34,7 +34,7 @@ which follows the structure defined above. We will have a look at them one by on
 ``pyproject.toml``
 ^^^^^^^^^^^^^^^^^^
 The ``pyproject.toml`` file defines the Python package configuration for this model using 
-`Poetry <https://python-poetry.org/docs/pyproject/>`_ as the dependency management and 
+`Poetry <https://python-poetry.org/>`_ as the dependency management and 
 packaging tool. The configuration file structure looks like this:
 
 .. literalinclude:: ../../../../../examples/les_houches_example/pyproject.toml
@@ -59,7 +59,7 @@ This integration provides a structured framework for data processing and report 
 
 * **Provider System**: The ``LesHouchesApp`` accepts a list of providers (``lh_pdf_providers``) containing modules that are recognized by the application framework.
 
-* **Inheritance Hierarchy**: The ``LesHouchesApp`` is a subclass of ``colibriApp``, which means it automatically inherits all providers from both `colibri` and `validphys`, giving access to their full functionality without additional configuration.
+* **Inheritance Hierarchy**: The ``LesHouchesApp`` is a subclass of ``colibriApp``, which means it automatically inherits all providers from both Colibri and `validphys`, giving access to their full functionality without additional configuration.
 
 
 ``config.py``
@@ -77,7 +77,7 @@ Therefore, every model should have this production rule.
 
 If ``dump_model`` is set to ``True``, the method serialises the model using ``dill`` 
 and writes it to ``pdf_model.pkl`` in the ``output_path``, where ``output_path`` will 
-be the output directory created when running a colibri fit 
+be the output directory created when running a Colibri fit 
 (see :ref:`colibri_fit_folders`). ``pdf_model.pkl`` will be loaded by 
 ``scripts/bayesian_resampler.py`` for resampling. 
 
@@ -91,12 +91,12 @@ The ``model.py`` script defines the Les Houches parametrisation model. It looks 
 .. literalinclude:: ../../../../../examples/les_houches_example/les_houches_example/model.py
    :language: python
 
-The LesHouchesPDF class completes the abstract methods of the PDFModel class, which you
+The ``LesHouchesPDF`` class completes the abstract methods of the ``PDFModel`` class, which you
 can read more about :ref:`here <pdf_model_class>`. This allows for the definition of a
-specific model in a way that can be used in the colibri code. The LesHouchesPDF class 
+specific model in a way that can be used in the Colibri code. The ``LesHouchesPDF`` class 
 does the following:
 
-- takes a list of flavours to be fitted (``param_names``), 
+- takes a list of parameters to be fitted (``param_names``), 
 - defines the PDF for each flavour, 
 - computes grid values. 
 

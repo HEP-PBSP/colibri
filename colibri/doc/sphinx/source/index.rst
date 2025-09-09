@@ -5,7 +5,7 @@
 
 Colibri
 =======
-Colibri is an adaptable, open source platform for flexible Parton Distribution
+Colibri is an adaptable, open-source platform for flexible Parton Distribution
 Function (PDF) fitting. It is a reportengine app that performs PDF fits with
 any given parametrisation. 
 

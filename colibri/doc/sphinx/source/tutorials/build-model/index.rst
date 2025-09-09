@@ -6,12 +6,11 @@ Implementing a PDF model
 
 If you have followed the :ref:`installation instructions <installation>`,
 you can follow this tutorial to use Colibri to implement the Les Houches 
-parametrisation model, which is described in the 
-:ref:`theory section <lh_theory>`.
+parametrisation model, which is described in :ref:`this section <lh_theory>`.
 
 This parametrisation is simple enough for us to exemplify the use of Colibri, 
 while still being realistic enough that this tutorial can be used as a 
-template for other, more complex parametrisations or models.
+template for other, more complex models.
 
 First, we will provide a :ref:`description <lh_theory>` of the Les Houches model,
 establishing how many and which are the free parameters to be fitted. since
@@ -22,8 +21,8 @@ like in this basis.
 After establishing how the Les Houches model looks like, we will 
 :ref:`implement it in Colibri <lh_model>`.
 
-This model can then be used to perform fits and run closure tests (see
-:ref:`tutorials <in_tutorials>`).
+This model can then be used to perform fits and run closure tests (see the
+:ref:`tutorials section <in_tutorials>`).
 
 
 .. toctree::
