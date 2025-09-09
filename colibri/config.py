@@ -442,7 +442,7 @@ class colibriConfig(Config):
         For a Monte Carlo fit. Parses the optimizer_settings namespace from the runcard
         """
         # Begin by checking that the user-supplied keys are known; warn the user otherwise.
-        known_keys = {"clipnorm", "learning_rate"}
+        known_keys = {"clipnorm", "learning_rate", "optimizer", "optimizer_hyperparams"}
 
         kdiff = settings.keys() - known_keys
         for k in kdiff:
@@ -452,10 +452,16 @@ class colibriConfig(Config):
                 )
             )
 
-        # Now construct the optimizer_settings dictionary, checking the parameter combinations are valid
         optimizer_settings = {}
-        optimizer_settings["clipnorm"] = settings.get("clipnorm", 1.0)
-        optimizer_settings["learning_rate"] = settings.get("learning_rate", 5e-4)
+
+        hyperparams = settings.get("optimizer_hyperparams", {})
+
+        for key, value in hyperparams.items():
+            optimizer_settings[key] = value
+
+        optimizer_settings["optimizer"] = settings.get("optimizer", "adam")
+        optimizer_settings["clipnorm"] = settings.get("clipnorm", None)
+
         return optimizer_settings
 
     def produce_vectorized(self, ns_settings):

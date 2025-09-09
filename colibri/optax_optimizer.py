@@ -33,9 +33,13 @@ def optimizer_provider(
         Optax optimizer.
 
     """
+
     # if optimizer_settings is empty, fill it with the default values
     if not "learning_rate" in optimizer_settings.keys():
         optimizer_settings["learning_rate"] = 5e-4
+
+    if "optimizer" in optimizer_settings:
+        optimizer = optimizer_settings.pop("optimizer")
 
     if "clipnorm" in optimizer_settings:
         clipnorm = optimizer_settings.pop("clipnorm")
