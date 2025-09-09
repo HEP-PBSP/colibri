@@ -139,13 +139,18 @@ def test_parse_analytic_settings_defaults():
 @patch("colibri.config.log.warning")
 def test_parse_optimizer_settings(mock_warning):
     # Define the settings input
-    settings = {"clipnorm": 6.3e-6, "learning_rate": 0.001}
+    settings = {
+        "clipnorm": 6.3e-6,
+        "optimizer": "adam",
+        "optimizer_hyperparams": {"learning_rate": 0.001},
+    }
 
     # Call the method
     result = BASE_CONFIG.parse_optimizer_settings(settings)
 
     # Assert the result is as expected
-    expected = {"clipnorm": 6.3e-6, "learning_rate": 0.001}
+    expected = {"clipnorm": 6.3e-6, "optimizer": "adam", "learning_rate": 0.001}
+
     print("Testing optimizer settings parsing...")
     assert result == expected
 
