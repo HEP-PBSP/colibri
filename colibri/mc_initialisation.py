@@ -5,7 +5,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
+def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index=0):
     """
     This function initialises the parameters in a Monte Carlo fit.
 

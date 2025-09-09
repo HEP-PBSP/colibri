@@ -31,6 +31,10 @@ class HessianFit:
     cov_params: jnp.ndarray
         Array containing the covariance matrix of the parameters.
         Computed as the inverse of the Hessian matrix.
+    resampled_posterior: jnp.ndarray
+        Array containing the samples of the parameters drawn from a multivariate
+        normal distribution with mean at the optimized parameters and covariance
+        given by cov_params.
     """
 
     hessian_specs: dict
@@ -39,6 +43,7 @@ class HessianFit:
     optimized_parameters: jnp.ndarray
     hessian: jnp.ndarray
     cov_params: jnp.ndarray
+    resampled_posterior: jnp.ndarray
 
 
 def hessian_fit(
@@ -48,6 +53,7 @@ def hessian_fit(
     early_stopper,
     max_epochs,
     hessian_settings,
+    mc_initial_parameters,
 ):
 
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
@@ -60,9 +66,8 @@ def hessian_fit(
     def valid_chi2(params):
         return jnp.nan
 
-    len_params = len(pdf_model.param_names)
     # Generate random initial parameters
-    initial_parameters = jax.random.uniform(jax.random.PRNGKey(0), (len_params,))
+    initial_parameters = mc_initial_parameters
     tolerance = hessian_settings["tolerance"]
     t0 = time.time()
 
@@ -78,24 +83,14 @@ def hessian_fit(
         record_every=50,
     )
 
-    min_chi2 = train_chi2(gd_result.optimized_parameters, 0)
-    # Check that I found a local minimum
-    grad_at_min = jax.grad(train_chi2)(gd_result.optimized_parameters, 0)
-    max_grad = jnp.max(jnp.abs(grad_at_min))
-    rel_grad = max_grad / (1.0 + min_chi2)
-
-    # Check rel_grad smaller than 1e-3
-    if rel_grad > 1e-3:
-        log.critical(
-            f"WARNING: The fit may not have converged to a local minimum. "
-            f"Relative gradient is {rel_grad:.2e}, larger than 1e-3."
-        )
+    parameters_min = gd_result.optimized_parameters
+    min_chi2 = train_chi2(parameters_min, 0)
 
     # Compute the Hessian matrix at the minimum, using the train_chi2 function
     # giving the optimized parameters and idx=0 (not used)
     # Note the 0.5 factor because we absorb the 1/2 of the taylor expansion
     # in the definition of the Hessian
-    hessian = 0.5 * jax.hessian(train_chi2)(gd_result.optimized_parameters, 0)
+    hessian = 0.5 * jax.hessian(train_chi2)(parameters_min, 0)
 
     # Verify hessian is positive definite
     eigvals = jnp.linalg.eigvalsh(hessian)
@@ -106,7 +101,19 @@ def hessian_fit(
             f"Minimum eigenvalue is {min_eigval:.2e}."
         )
 
-    cov_params = jnp.linalg.inv(hessian)
+    # covariance matrix is inflated by tolerance^2
+    cov_params = tolerance**2 * jnp.linalg.inv(hessian)
+
+    n_samples = hessian_settings["n_samples"]
+
+    # Generate samples from a multivariate normal distribution
+    # with mean parameters_min and covariance cov_params
+    resampled_posterior = jax.random.multivariate_normal(
+        key=jax.random.PRNGKey(0),
+        mean=parameters_min,
+        cov=cov_params,
+        shape=(n_samples,),
+    )
 
     t1 = time.time()
     log.info("HESSIAN RUNNING TIME: %f" % (t1 - t0))
@@ -118,9 +125,10 @@ def hessian_fit(
         },
         min_chi2=min_chi2,
         training_loss=gd_result.training_loss,
-        optimized_parameters=gd_result.optimized_parameters,
+        optimized_parameters=parameters_min,
         hessian=hessian,
         cov_params=cov_params,
+        resampled_posterior=resampled_posterior,
     )
 
 
@@ -140,5 +148,4 @@ def run_hessian_fit(hessian_fit, output_path, pdf_model):
 
     # export_hessian_results(hessian_fit, output_path, "hessian_result")
 
-    # write_replicas(hessian_fit, output_path, pdf_model)
-    pass
+    write_replicas(hessian_fit, output_path, pdf_model)
