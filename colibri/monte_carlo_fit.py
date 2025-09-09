@@ -129,11 +129,6 @@ def monte_carlo_fit(
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
     len_tr_idx, len_val_idx = len_trval_data
 
-    if len_val_idx == 0:
-        # Avoid division by zero if no validation data,
-        # The validation loss returns nan in this case
-        len_val_idx = jnp.nan
-
     @jax.jit
     def loss_training(
         parameters,
@@ -165,16 +160,15 @@ def monte_carlo_fit(
         lambda_positivity,
     ):
         predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
-        return (
-            _chi2_validation_data_with_positivity(
-                predictions,
-                pdf,
-                alpha,
-                lambda_positivity,
-                positivity_fast_kernel_arrays,
-            )
-            / len_val_idx
+        val = _chi2_validation_data_with_positivity(
+            predictions,
+            pdf,
+            alpha,
+            lambda_positivity,
+            positivity_fast_kernel_arrays,
         )
+
+        return val / len_val_idx if len_val_idx > 0 else val
 
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
     log.info("Starting Monte Carlo fit...")
