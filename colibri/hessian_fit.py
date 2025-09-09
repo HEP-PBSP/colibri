@@ -22,16 +22,23 @@ class HessianFit:
         Dictionary containing the settings of the Hessian fit.
     min_chi2: jnp.ndarray
         Array containing the minimum chi-squared value.
+    training_loss: jnp.ndarray
+        Array containing the training loss values during the fit.
     optimized_parameters: jnp.ndarray
         Array containing the optimized parameters in the minimum of the chi2.
     hessian: jnp.ndarray
         Array containing the Hessian matrix at the minimum of the chi2.
+    cov_params: jnp.ndarray
+        Array containing the covariance matrix of the parameters.
+        Computed as the inverse of the Hessian matrix.
     """
 
     hessian_specs: dict
     min_chi2: jnp.ndarray
+    training_loss: jnp.ndarray
     optimized_parameters: jnp.ndarray
     hessian: jnp.ndarray
+    cov_params: jnp.ndarray
 
 
 def hessian_fit(
@@ -71,6 +78,36 @@ def hessian_fit(
         record_every=50,
     )
 
+    min_chi2 = train_chi2(gd_result.optimized_parameters, 0)
+    # Check that I found a local minimum
+    grad_at_min = jax.grad(train_chi2)(gd_result.optimized_parameters, 0)
+    max_grad = jnp.max(jnp.abs(grad_at_min))
+    rel_grad = max_grad / (1.0 + min_chi2)
+
+    # Check rel_grad smaller than 1e-3
+    if rel_grad > 1e-3:
+        log.critical(
+            f"WARNING: The fit may not have converged to a local minimum. "
+            f"Relative gradient is {rel_grad:.2e}, larger than 1e-3."
+        )
+
+    # Compute the Hessian matrix at the minimum, using the train_chi2 function
+    # giving the optimized parameters and idx=0 (not used)
+    # Note the 0.5 factor because we absorb the 1/2 of the taylor expansion
+    # in the definition of the Hessian
+    hessian = 0.5 * jax.hessian(train_chi2)(gd_result.optimized_parameters, 0)
+
+    # Verify hessian is positive definite
+    eigvals = jnp.linalg.eigvalsh(hessian)
+    min_eigval = jnp.min(eigvals)
+    if min_eigval <= 0:
+        log.critical(
+            f"WARNING: The Hessian matrix is not positive definite. "
+            f"Minimum eigenvalue is {min_eigval:.2e}."
+        )
+
+    cov_params = jnp.linalg.inv(hessian)
+
     t1 = time.time()
     log.info("HESSIAN RUNNING TIME: %f" % (t1 - t0))
 
@@ -79,9 +116,11 @@ def hessian_fit(
             "max_epochs": max_epochs,
             "tolerance": tolerance,
         },
-        min_chi2=gd_result.training_loss,
+        min_chi2=min_chi2,
+        training_loss=gd_result.training_loss,
         optimized_parameters=gd_result.optimized_parameters,
-        hessian=None,
+        hessian=hessian,
+        cov_params=cov_params,
     )
 
 
