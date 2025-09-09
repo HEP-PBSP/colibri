@@ -7,6 +7,7 @@ import logging
 import time
 import jax
 from colibri.gradient_descent import run_gradient_descent
+from colibri.mc_initialisation import mc_initial_parameters
 
 log = logging.getLogger(__name__)
 
@@ -47,12 +48,13 @@ class HessianFit:
 
 
 def hessian_fit(
+    pdf_model,
     log_likelihood,
     optimizer_provider,
     early_stopper,
     max_epochs,
     hessian_settings,
-    mc_initial_parameters,
+    mc_initialiser_settings,
 ):
 
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
@@ -65,26 +67,40 @@ def hessian_fit(
     def valid_chi2(params):
         return jnp.nan
 
-    # Generate random initial parameters
-    initial_parameters = mc_initial_parameters
+    iter_init = hessian_settings["iter_init"]
     tolerance = hessian_settings["tolerance"]
+
     t0 = time.time()
+    # Generate iter_init random initial parameters
+    # run the fit and pick the one with the lowest chi2
+    min_chi2 = jnp.inf
+    for i in range(iter_init):
+        log.info(f"Hessian fit initialization iteration {i+1}")
+        # Generate random initial parameters
+        initial_parameters = mc_initial_parameters(
+            pdf_model, mc_initialiser_settings, i
+        )
 
-    # Delegate to generic gradient descent
-    gd_result = run_gradient_descent(
-        initial_parameters=initial_parameters,
-        training_loss_fn=train_chi2,
-        validation_loss_fn=valid_chi2,
-        optimizer=optimizer_provider,
-        early_stopper=early_stopper,
-        max_epochs=max_epochs,
-        data_batch=None,
-        record_every=50,
-    )
+        # Delegate to generic gradient descent
+        gd_result = run_gradient_descent(
+            initial_parameters=initial_parameters,
+            training_loss_fn=train_chi2,
+            validation_loss_fn=valid_chi2,
+            optimizer=optimizer_provider,
+            early_stopper=early_stopper,
+            max_epochs=max_epochs,
+            data_batch=None,
+            record_every=50,
+        )
+        parameters_min_iter = gd_result.optimized_parameters
+        min_chi2_iter = train_chi2(parameters_min_iter, 0)
 
-    parameters_min = gd_result.optimized_parameters
-    min_chi2 = train_chi2(parameters_min, 0)
+        if min_chi2_iter < min_chi2:
+            min_chi2 = min_chi2_iter
+            parameters_min = parameters_min_iter
+            training_loss = gd_result.training_loss
 
+    log.info(f"Minimum chi2 found: {min_chi2}")
     # Compute the Hessian matrix at the minimum, using the train_chi2 function
     # giving the optimized parameters and idx=0 (not used)
     # Note the 0.5 factor because we absorb the 1/2 of the taylor expansion
@@ -121,9 +137,10 @@ def hessian_fit(
         hessian_specs={
             "max_epochs": max_epochs,
             "tolerance": tolerance,
+            "iter_init": iter_init,
         },
         min_chi2=min_chi2,
-        training_loss=gd_result.training_loss,
+        training_loss=training_loss,
         optimized_parameters=parameters_min,
         hessian=hessian,
         cov_params=cov_params,
