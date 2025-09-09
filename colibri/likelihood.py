@@ -95,8 +95,13 @@ class LogLikelihood(object):
 
         Parameters
         ----------
-        params: jnp.array
+        params: jnp.ndarray
             The model parameters.
+
+        Returns
+        -------
+        jnp.ndarray
+            The log-likelihood value.
         """
         return self.log_likelihood(
             params,
@@ -109,9 +114,9 @@ class LogLikelihood(object):
     @partial(jax.jit, static_argnames=("self",))
     def log_likelihood(
         self,
-        params: jnp.array,
-        central_values: jnp.array,
-        inv_covmat: jnp.array,
+        params: jnp.ndarray,
+        central_values: jnp.ndarray,
+        inv_covmat: jnp.ndarray,
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
     ) -> jnp.array:
@@ -121,15 +126,15 @@ class LogLikelihood(object):
 
         Parameters
         ----------
-        params: jnp.array
-        central_values: jnp.array
-        inv_covmat: jnp.array
+        params: jnp.ndarray
+        central_values: jnp.ndarray
+        inv_covmat: jnp.ndarray
         fast_kernel_arrays: tuple
         positivity_fast_kernel_arrays: tuple
 
         Returns
         -------
-        jnp.array
+        jnp.ndarray
             jax array with the value of the log-likelihood.
         """
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)

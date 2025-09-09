@@ -124,7 +124,7 @@ def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
 
     Returns
     -------
-    t0grid: jnp.array
+    t0grid: jnp.ndarray
         t0 grid, is N_rep x N_fl x N_x
     """
 
@@ -193,7 +193,7 @@ def get_full_posterior(colibri_fit):
 
     Returns
     -------
-    pandas dataframe
+    pandas.DataFrame
     """
 
     fit_path = get_fit_path(colibri_fit)
@@ -570,7 +570,8 @@ def compute_determinants_of_principal_minors(C):
 
     Parameters
     ----------
-    C (np.ndarray): An nxn covariance matrix (symmetric, positive semi-definite)
+    C: jnp.ndarray
+        An n x n covariance matrix (symmetric, positive semi-definite).
 
     Returns
     -------

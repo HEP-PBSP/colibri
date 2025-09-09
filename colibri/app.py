@@ -44,7 +44,7 @@ class colibriApp(App):
 
     @property
     def argparser(self):
-        """Parser arguments for grid_pdf app can be added here"""
+        """Parser arguments for colibri."""
         parser = super().argparser
 
         parser.add_argument(

@@ -27,7 +27,7 @@ def experimental_commondata_tuple(data):
     Returns
     -------
     tuple
-        tuple of nnpdf_data.coredata.CommonData instances
+        Tuple of nnpdf_data.coredata.CommonData instances.
     """
     return tuple(data.load_commondata_instance())
 
@@ -58,7 +58,7 @@ def level_0_commondata_tuple(
     experimental_commondata_tuple: tuple
         tuple of commondata with experimental central values
 
-    closure_test_central_pdf_grid: jnp.array
+    closure_test_central_pdf_grid: jnp.ndarray
         grid is of shape N_fl x N_x
 
     fast_kernel_arrays: tuple
@@ -78,7 +78,7 @@ def level_0_commondata_tuple(
     Returns
     -------
     tuple
-        tuple of nnpdf_data.coredata.CommonData instances
+        Tuple of nnpdf_data.coredata.CommonData instances.
     """
 
     fake_data = []
@@ -117,7 +117,7 @@ def level_1_commondata_tuple(
     level_0_commondata_tuple: tuple of nnpdf_data.coredata.CommonData instances
         A tuple of level_0 closure test data.
 
-    data_generation_covariance_matrix: jnp.array
+    data_generation_covariance_matrix: jnp.ndarray
         The covariance matrix used for data generation.
 
     level_1_seed: int
@@ -126,7 +126,7 @@ def level_1_commondata_tuple(
     Returns
     -------
     tuple
-        tuple of nnpdf_data.coredata.CommonData instances
+        Tuple of nnpdf_data.coredata.CommonData instances.
     """
 
     # First, construct a jax array from the level_0_commondata_tuple
@@ -175,7 +175,7 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
         (see config.produce_commondata_tuple) and accordingly to the
         specified options.
 
-    fit_covariance_matrix: jnp.array
+    fit_covariance_matrix: jnp.ndarray
         covariance matrix, is generated as explicit node
         (see config.fit_covariance_matrix) can be either experimental
         or t0 covariance matrix depending on whether `use_fit_t0` is
@@ -183,9 +183,9 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
 
     Returns
     -------
-    CentralCovmatIndex dataclass
-        dataclass containing central values, covariance matrix and
-        index of central values
+    CentralCovmatIndex
+        Dataclass containing central values, covariance matrix and
+        index of central values.
     """
     central_values = jnp.array(
         pd.concat([cd.central_values for cd in commondata_tuple], axis=0)
