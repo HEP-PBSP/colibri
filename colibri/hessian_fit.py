@@ -47,7 +47,6 @@ class HessianFit:
 
 
 def hessian_fit(
-    pdf_model,
     log_likelihood,
     optimizer_provider,
     early_stopper,
