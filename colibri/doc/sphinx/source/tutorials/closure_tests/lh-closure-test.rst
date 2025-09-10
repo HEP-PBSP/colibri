@@ -41,7 +41,7 @@ an example runcard called ``lh_fit_closure_test.yaml``, which looks like this:
 
 :underline:`Points to note:`
 
-* **Underlying law:** We will be using the PDF grid ``LH_PARAM_20250519``, which has been produced by computing the relevant PDFs for the Les Houches model with the best-fit values for the parameters, taken from Ref. :cite:`Alekhin:2005xgg`. 
+* **Underlying law:** We will be using the PDF grid ``LH_PARAM_20250519``, which has been produced by computing the relevant PDFs for the Les Houches model with the best-fit values for the parameters, taken from Ref. :cite:alp:`Alekhin:2005xgg`. 
 
 * **Fitting method:** By choosing the action ``run_ultranest_fit``, we are running a bayesian fit. (You can read more about how to run a bayesian fit in :ref:`this tutorial <in_running_bayesian>`.) If you instead want to perform a closure test with the monte carlo replica method, you can find out how to do in :ref:`this tutorial <running_mc_replica>`.
 
@@ -109,6 +109,6 @@ As an example, we show the result of the fit for the gluon PDF.
 The orange line, labelled *LH theory PDF*, shows the gluon PDF used to generate
 the pseudo-data, i.e. the underlying law we are trying to recover. As mentioned
 above, this was computed using the best-fit values for each parameter, as
-presented in Ref. :cite:`Alekhin:2005xgg`. The green curve/section, labelled 
+presented in Ref. :cite:alp:`Alekhin:2005xgg`. The green curve/section, labelled 
 *Les Houches fit 68% c.i. + 1*:math:`\sigma`, shows the result of the closure test
 fit with error band.

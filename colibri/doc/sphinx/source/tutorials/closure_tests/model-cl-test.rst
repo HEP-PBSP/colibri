@@ -10,8 +10,8 @@ do so for the Les Houches parametrisation (implemented :ref:`here <lh_model>`).
 Step 1: runcard
 ---------------
 
-You can adapt the runcard presented :ref:`here <lh-closure-test>` to run a closure test so that it includes
-the following:
+You can adapt the runcard presented :ref:`here <lh-closure-test>` to run a closure
+test so that it includes the following:
 
 .. code-block:: bash
     
@@ -36,13 +36,13 @@ the following:
             beta_sigma: 2.20      
 
 And remove or comment out ``closure_test_pdf: LH_PARAM_20250519``.
-Within the closure_test_model_settings, one needs to specify any of the hyperparameters relevant to build
-the model instance. The example model here shown does not necessitate further settings, but in principle
-one could have additional hyperparameters to tune.
+Within the ``closure_test_model_settings``, you need to specify any of the hyperparameters
+relevant to build the model instance. The example model shown here doesn't need further
+settings, but other models may need additional hyperparameters to tune.
 
 Note that, unlike for a standard closure test, in this case we need to
 specify the initial values for each parameter of the PDF model. For the values above, we 
-have taken the best-fit values, taken from Ref. :cite:`Alekhin:2005xgg`. 
+have taken the best-fit values, taken from Ref. :cite:alp:`Alekhin:2005xgg`. 
 
 Step 2: running the fit
 -----------------------
