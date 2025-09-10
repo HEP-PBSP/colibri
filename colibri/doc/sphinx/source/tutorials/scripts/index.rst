@@ -217,12 +217,12 @@ For a Bayesian fit using the analytical - inference method, set the total number
       full_sample_size: 50000
 
 Likewise, if you instead use the UltraNest nested sampler, specify exactly the same parameter name under 
-``ultranest_settings``:
+``ns_settings``:
 
 .. code-block:: yaml
 
     # ultranest settings
-    ultranest_settings:
+    ns_settings:
       n_posterior_samples: 100
       ...
 

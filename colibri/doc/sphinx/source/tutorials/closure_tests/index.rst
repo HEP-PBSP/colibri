@@ -15,7 +15,8 @@ be added to the runcard to run a model-specific closure test.
 .. note::
 
    In NNPDF terminology, a closure test is a predictive-posterior check.  
-   For further details, see :cite:`Barontini:2025lnl` and :cite:`DelDebbio:2021whr`.
+   For further details, see Refs. :cite:alp:`Barontini:2025lnl` and
+   :cite:alp:`DelDebbio:2021whr`.
 
 If you haven't already done so, you will need to follow the 
 :ref:`installation instructions <installation>` first.

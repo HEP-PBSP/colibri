@@ -71,7 +71,7 @@ should have been created. You can read more about the fit folders
 ^^^^^^^^^^^^^^^^^^^^
 
 If you don't already have it, you will need to download the EKO corresponding to 
-the theory used in this tutorial :cite:`Candido:2022tld`, :cite:`Candido2022EKO`:
+the theory used in this tutorial :cite:`Candido:2022tld,Candido2022EKO`:
 
 .. code-block:: bash
     
