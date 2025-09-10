@@ -86,7 +86,7 @@ def hessian_fit(
         )
 
         # Delegate to generic gradient descent
-        gd_result = run_gradient_descent(
+        gd_result_iter = run_gradient_descent(
             initial_parameters=initial_parameters,
             training_loss_fn=train_chi2,
             validation_loss_fn=valid_chi2,
@@ -96,15 +96,18 @@ def hessian_fit(
             data_batch=None,
             record_every=50,
         )
-        parameters_min_iter = gd_result.optimized_parameters
+        parameters_min_iter = gd_result_iter.optimized_parameters
         min_chi2_iter = train_chi2(parameters_min_iter, 0)
 
         if min_chi2_iter < min_chi2:
             min_chi2 = min_chi2_iter
-            parameters_min = parameters_min_iter
-            training_loss = gd_result.training_loss
+            gd_result = gd_result_iter
 
     log.info(f"Minimum chi2 found: {min_chi2}")
+    # Extract results from the best fit
+    parameters_min = gd_result.optimized_parameters
+    training_loss = gd_result.training_loss
+
     # Compute gradient at the candidate minimum to check stationarity
     grad_at_min = jax.grad(lambda p: train_chi2(p, 0))(parameters_min)
     grad_norm = jnp.linalg.norm(grad_at_min)
