@@ -17,7 +17,7 @@ implementation in Colibri. Note that a complementary discussion of the likelihoo
 function can be found in the
 `NNPDF documentation <https://docs.nnpdf.science/figuresofmerit/index.html>`_
 
-The basic form of the likelihood function used during sampling is a :math:`\Chi^2`
+The basic form of the likelihood function used during sampling is a :math:`\chi^2`
 function and is given by:
 
 .. math::
