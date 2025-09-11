@@ -13,7 +13,7 @@ while still being realistic enough that this tutorial can be used as a
 template for other, more complex models.
 
 First, we will provide a :ref:`description <lh_theory>` of the Les Houches model,
-establishing how many and which are the free parameters to be fitted. since
+establishing how many and which are the free parameters to be fitted. Since
 Colibri works in the `evolution basis`, we will also 
 :ref:`describe in detail <lh-evolution-basis>` what the PDFs to be fitted look 
 like in this basis. 
