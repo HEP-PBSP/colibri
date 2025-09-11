@@ -13,7 +13,7 @@ It can be executed from the command line as follows:
 
 .. code-block:: bash
 
-   evolve_fit evolve <name_fit>
+   evolve_fit <name_fit>
 
 where ``<name_fit>`` is the name of the fit you want to evolve. The script
 also has a ``--help`` option that will show you all the options available.
