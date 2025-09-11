@@ -165,7 +165,7 @@ This can be achieved by setting:
     prior_settings:
         prior_distribution: prior_from_gauss_posterior
         prior_distribution_specs:
-            your_previous_fit
+            prior_fit: your_previous_fit
 
 UltraNest settings
 ^^^^^^^^^^^^^^^^^^
