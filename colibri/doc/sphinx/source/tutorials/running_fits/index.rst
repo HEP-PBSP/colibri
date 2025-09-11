@@ -26,3 +26,5 @@ In the sections that follow, we'll explore the use cases and workflows for each 
    ./running_mc_replica
 
    ./running_analytic
+
+   ./running_positivity

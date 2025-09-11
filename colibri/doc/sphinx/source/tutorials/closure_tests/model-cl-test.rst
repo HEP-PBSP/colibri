@@ -4,7 +4,7 @@
 Model-Specific Closure Test 
 ===========================
 
-Colibri can be used to run a model-specific closure tests. Here we show how to 
+Colibri can be used to run model-specific closure tests. Here we show how to 
 do so for the Les Houches parametrisation (implemented :ref:`here <lh_model>`).
 
 Step 1: runcard
@@ -61,4 +61,4 @@ where you will find the output of the fit. You can read more about it in
 :ref:`this tutorial <bayes_fit_folders>`.
 
 You can evolve it by following the instructions given in 
-:ref:`this tutorial <evolution>`.
+:ref:`this tutorial <evolution_script>`.

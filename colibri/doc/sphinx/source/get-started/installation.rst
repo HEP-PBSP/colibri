@@ -88,7 +88,7 @@ are on a linux machine, you can install jax in cuda mode by running:
 
 
 Note that it is possible to run fits using *float32* precision. The only way of doing
-so currently is to apply a patch to *UltraNest* so that ``json.dump`` is compatible.
+so currently is to apply a patch to UltraNest so that ``json.dump`` is compatible.
 To do this, run the following commands:
 
 .. code-block:: bash

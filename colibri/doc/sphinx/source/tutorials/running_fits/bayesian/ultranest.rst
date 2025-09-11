@@ -14,6 +14,8 @@ Then we will look at the command to execute the runcard.
 We do this using UltraNest as the nested sampler
 :cite:`Buchner2016,Buchner2019,Buchner2021`.
 
+.. _ultranest_runcard:
+
 Runcard
 -------
 
@@ -133,11 +135,14 @@ with, for example:
 in those cases where it is appropriate for the given parameters of the model 
 (eg. only one parameter or all parameters have close numerical values).
 
+For details on general settings (such as ``positivity``) see
+:ref:`this section <general_settings>`.
+
 ``ns_settings``
 ^^^^^^^^^^^^^^^
 * ``ultranest_seed``:  Seed for the numpy random number generator used by UltraNest.
 * ``sampler_plot``: ``true`` will generate diagnostic plots (corner, run and trace plots) in ``fit_output_directory/ultranest_logs/plots``. These help assess the convergence and efficiency of the fit.
-* ``n_posterior_samples``: Number of posterior samples ('replicas') drawn from the posterior distribution. The default is 1000.
+* ``n_posterior_samples``: Number of posterior samples ('replicas') drawn (*resampled*) from the posterior distribution. The default is 1000. See :ref:`this tutorial <resampling_script>` for details on resampling.
 * ``vectorized``: Determines whether the likelihood function supports vectorised evaluation (i.e., evaluating multiple points at once).
 * ``ndraw_max``: Maximum number of points to simultaneously propose. Can be commented out.
 * ``min_num_live_points``: Minimum number of live points throughout the run.

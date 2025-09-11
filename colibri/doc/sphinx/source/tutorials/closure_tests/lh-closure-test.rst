@@ -43,7 +43,7 @@ an example runcard called ``lh_fit_closure_test.yaml``, which looks like this:
 
 * **Underlying law:** We will be using the PDF grid ``LH_PARAM_20250519``, which has been produced by computing the relevant PDFs for the Les Houches model with the best-fit values for the parameters, taken from Ref. :cite:alp:`Alekhin:2005xgg`. 
 
-* **Fitting method:** By choosing the action ``run_ultranest_fit``, we are running a bayesian fit. (You can read more about how to run a bayesian fit in :ref:`this tutorial <in_running_bayesian>`.) If you instead want to perform a closure test with the monte carlo replica method, you can find out how to do in :ref:`this tutorial <running_mc_replica>`.
+* **Fitting method:** By choosing the action ``run_ultranest_fit``, we are running a Bayesian fit. (You can read more about how to run a Bayesian fit in :ref:`this tutorial <in_running_bayesian>`.) If you instead want to perform a closure test with the monte carlo replica method, you can find out how to do in :ref:`this tutorial <running_mc_replica>`.
 
 * **Closure test level:** To run a Level 1 closure test with this runcard, you can simply change ``closure_test_level: 0`` to ``1``. To run a model-specific closure, test, see :ref:`this section <model_cl_test>`.
 
@@ -86,8 +86,8 @@ You can then evolve the fit by running the following command from the
 
 You can read more about evolution in :ref:`this section <evolution_script>`.
 
-3.2 Generating a ``validphys`` report
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+3.2 Generating a `validphys` report
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Finally, you can run:
 
@@ -95,7 +95,7 @@ Finally, you can run:
 
     validphys plot_pdf_fits.yaml
 
-to generate a validphys report :cite:`zahari_kassabov_2019_2571601`.
+to generate a `validphys` report :cite:`zahari_kassabov_2019_2571601`.
 
 The result
 ----------
