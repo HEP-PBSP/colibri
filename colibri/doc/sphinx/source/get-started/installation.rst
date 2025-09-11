@@ -87,8 +87,7 @@ are on a linux machine, you can install jax in cuda mode by running:
     pip install -U "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
 
 
-Note that it is possible to run fits using *float32* precision. The only way of doing
-so currently is to apply a patch to UltraNest so that ``json.dump`` is compatible.
+Note that it is possible to run fits using *float32* precision. This works without a problem for gradient-based methods, while the only way of doing so for UltraNest currently is to apply a patch so that ``json.dump`` is compatible.
 To do this, run the following commands:
 
 .. code-block:: bash
