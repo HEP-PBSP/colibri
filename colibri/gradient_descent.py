@@ -49,7 +49,7 @@ class GradientDescentResult:
 
 def run_gradient_descent(
     initial_parameters: jnp.ndarray,
-    training_loss_fn: Callable[[jnp.ndarray, int], jnp.ndarray],
+    training_loss_fn: Callable[[jnp.ndarray, list], jnp.ndarray],
     validation_loss_fn: Callable[[jnp.ndarray], jnp.ndarray],
     optimizer: optax.GradientTransformation,
     early_stopper: Any,
@@ -66,6 +66,7 @@ def run_gradient_descent(
 
     training_loss_fn : callable -> scalar
         Per-batch loss function (already jit'ed by caller if desired).
+        Takes parameters and a list of batch indices.
 
     validation_loss_fn : callable -> scalar
         Validation loss function (already jit'ed by caller if desired).

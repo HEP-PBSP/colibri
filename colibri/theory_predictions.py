@@ -37,7 +37,8 @@ def fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False):
 
     Returns
     -------
-    jnp.ndarray of indices
+    jnp.ndarray
+        Indices mapping FK x-grid into fit x-grid.
     """
     if fill_fk_xgrid_with_zeros:
         return jnp.arange(len(FIT_XGRID))
@@ -78,7 +79,7 @@ def fast_kernel_arrays(
     Returns
     -------
     tuple
-        tuple of tuples of jax.numpy arrays
+        Tuple of tuples of jax.numpy arrays.
     """
     fk_arrays = []
 
@@ -258,7 +259,8 @@ def pred_funcs_from_dataset(
 
     Returns
     -------
-    list of Mappings
+    list
+        List of forward map callables for each FK spec.
     """
     pred_funcs = []
 

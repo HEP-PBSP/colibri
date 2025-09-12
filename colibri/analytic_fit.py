@@ -48,10 +48,11 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 
     Parameters
     ----------
-    sol_covmat: array
+    sol_covmat: jnp.ndarray
         Covariance matrix of the posterior (X^T Sigma^-1 X)^-1.
 
-    sol_mean
+    sol_mean: jnp.ndarray
+        Posterior mean vector.
 
     a_vec: np.ndarray
         Lower bounds of the Uniform prior.
@@ -61,7 +62,8 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 
     Returns
     -------
-    float: The log evidence.
+    tuple[float, float]
+        The log evidence and the log Occam factor.
     """
 
     # Take into account change of variables of type (x - mu) -> x
