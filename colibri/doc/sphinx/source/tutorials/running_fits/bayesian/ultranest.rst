@@ -5,11 +5,16 @@
 Bayesian Fit with UltraNest
 ===========================
 
-We will first look at an example runcard to run a Bayesian fit with the Les Houches
-parametrisation model (see :ref:`this tutorial <in_les_houches>` for details
-on the Les Houches model and how to build it).
+In this tutorial we will first look at an example runcard to run a Bayesian fit
+with the Les Houches parametrisation model (see :ref:`this tutorial <in_les_houches>`
+for details on the Les Houches model and how to implement it).
 
 Then we will look at the command to execute the runcard. 
+
+We do this using UltraNest as the nested sampler
+:cite:`Buchner2016,Buchner2019,Buchner2021`.
+
+.. _ultranest_runcard:
 
 Runcard
 -------
@@ -52,8 +57,8 @@ Runcard
     #####################
 
     positivity:                            # Positivity datasets, used in the positivity penalty.
-    posdatasets:
-    - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
+        posdatasets:
+        - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
 
     positivity_penalty_settings:
         positivity_penalty: false
@@ -72,22 +77,22 @@ Runcard
     # Methodology specs
     ###################
     prior_settings:
-    prior_distribution: uniform_parameter_prior
-    prior_distribution_specs:
-        bounds:
-            alpha_gluon: [-0.1, 1]
-            beta_gluon: [9, 13]
-            alpha_up: [0.4, 0.9]
-            beta_up: [3, 4.5]
-            epsilon_up: [-3, 3]
-            gamma_up: [1, 6]
-            alpha_down: [1, 2]
-            beta_down: [8, 12]
-            epsilon_down: [-4.5, -3]
-            gamma_down: [3.8, 5.8]
-            norm_sigma: [0.1, 0.5]
-            alpha_sigma: [-0.2, 0.1]
-            beta_sigma: [1.2, 3]
+        prior_distribution: uniform_parameter_prior
+        prior_distribution_specs:
+            bounds:
+                alpha_gluon: [-0.1, 1]
+                beta_gluon: [9, 13]
+                alpha_up: [0.4, 0.9]
+                beta_up: [3, 4.5]
+                epsilon_up: [-3, 3]
+                gamma_up: [1, 6]
+                alpha_down: [1, 2]
+                beta_down: [8, 12]
+                epsilon_down: [-4.5, -3]
+                gamma_down: [3.8, 5.8]
+                norm_sigma: [0.1, 0.5]
+                alpha_sigma: [-0.2, 0.1]
+                beta_sigma: [1.2, 3]
 
 
     # Nested Sampling settings
@@ -130,19 +135,45 @@ with, for example:
 in those cases where it is appropriate for the given parameters of the model 
 (eg. only one parameter or all parameters have close numerical values).
 
+For details on general settings (such as ``positivity``) see
+:ref:`this section <general_settings>`.
+
 ``ns_settings``
 ^^^^^^^^^^^^^^^
-
+* ``ultranest_seed``:  Seed for the numpy random number generator used by UltraNest.
 * ``sampler_plot``: ``true`` will generate diagnostic plots (corner, run and trace plots) in ``fit_output_directory/ultranest_logs/plots``. These help assess the convergence and efficiency of the fit.
-* ``n_posterior_samples``: Number of posterior samples drawn from the posterior distribution.
+* ``n_posterior_samples``: Number of posterior samples ('replicas') drawn (*resampled*) from the posterior distribution. The default is 1000. See :ref:`this tutorial <resampling_script>` for details on resampling.
 * ``vectorized``: Determines whether the likelihood function supports vectorised evaluation (i.e., evaluating multiple points at once).
 * ``ndraw_max``: Maximum number of points to simultaneously propose. Can be commented out.
 * ``min_num_live_points``: Minimum number of live points throughout the run.
 * ``min_ess``: Target number of effective posterior samples.
 * ``frac_remain``: Integrate until this fraction of the integral is left in the remainder. 
-* ``SliceSampler_settings``: Sampling uniformly within "slices" of constant probability. Slice sampling is optional, so these settings can be commented out.
+* ``SliceSampler_settings``: Sampling uniformly within "slices" of constant probability. Slice sampling is optional, so these settings can be commented out. 
 * ``nsteps``: Number of accepted steps until the sample is considered independent.
+* ``posterior_resampling_seed``: Seed for resampling the posterior samples.
 
+``prior_distribution``
+^^^^^^^^^^^^^^^^^^^^^^
+As well as initialising with a uniform prior distribution, such as in the runcard
+above, it is possible to initialise by setting the prior from a gaussian posterior
+as a result from a previous fit. This has shown to yield equivalent results, while
+being more computationally efficient (see Ref. :cite:alp:`Costantini:2025wxp`).
+This can be achieved by setting:
+
+.. code-block:: bash
+
+    prior_settings:
+        prior_distribution: prior_from_gauss_posterior
+        prior_distribution_specs:
+            prior_fit: your_previous_fit
+
+The previous fit `your_previous_fit` folder needs to be placed in ``sys.prefix`/share/colibri/results/``.
+
+UltraNest settings
+^^^^^^^^^^^^^^^^^^
+For ``ReactiveNS_settings`` and ``Run_settings``, you can use any of the options of
+UltraNest's ``ReactiveNestedSampler``, which you can read more about
+`here <https://johannesbuchner.github.io/UltraNest/ultranest.html#>`_.
 
 Running the fit
 ---------------

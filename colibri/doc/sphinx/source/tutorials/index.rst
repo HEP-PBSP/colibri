@@ -3,8 +3,8 @@
 Tutorials
 =========
 
-In this section, you’ll find step-by-step tutorials on using Colibri for various different purposes such as 
-creating a custom PDF model or fitting data with it.
+In this section, you'll find step-by-step tutorials on using Colibri for different purposes,
+such as implementing a custom PDF model or using it to fit data.
 
 
 .. toctree::

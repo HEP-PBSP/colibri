@@ -149,6 +149,12 @@ If you would like contribute to the code, we ask you to kindly follow the [NNPDF
 
 When developing locally, before committing please test your changes by running `pytest` from the root of the repository.
 
+## Citation guidelines
+
+If you use this code, please consider citing:
+
+* **NNPDF**: Ball *et al.* (NNPDF Collaboration). An open-source machine learning framework for global analyses of parton distributions. Eur. Phys. J. C 81 (2021) no. 10, 958.
+* **Reportengine**: Kassabov *et al.* Reportengine: A framework for declarative data analysis. (2025). <a href="https://github.com/NNPDF/reportengine" target="_blank">url.</a>
 
 ## License
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License version 3 as 
