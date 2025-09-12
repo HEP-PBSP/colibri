@@ -4,9 +4,6 @@ colibri.tests.test_likelihood.py
 Tests for the likelihood module.
 """
 
-import copy
-from unittest.mock import patch
-
 import jax
 import jax.numpy as jnp
 import pytest
@@ -31,33 +28,19 @@ bayesian_prior = lambda x: x
 
 integrability_penalty = lambda pdf: jnp.array([0.0])
 
-ns_settings = {
-    "ultranest_seed": 42,
-    "ReactiveNS_settings": {"vectorized": False},
-    "SliceSampler_settings": None,
-    "Run_settings": {"frac_remain": 0.5, "min_num_live_points": 5},
-    "n_posterior_samples": 10,
-    "posterior_resampling_seed": 123,
-    "sampler_plot": False,
-}
-
-vect_ns_settings = copy.deepcopy(ns_settings)
-vect_ns_settings["ReactiveNS_settings"]["vectorized"] = True
-
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_LogLikelihood_class(pos_penalty):
     """
     Tests the LogLikelihood class.
     """
-    ultranest_loglike = LogLikelihood(
+    log_likelihood_class = LogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
-        ns_settings=ns_settings,
         chi2=MOCK_CHI2,
         penalty_posdata=MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
@@ -69,13 +52,14 @@ def test_LogLikelihood_class(pos_penalty):
     )
 
     assert_allclose(
-        MOCK_CENTRAL_INV_COVMAT_INDEX.central_values, ultranest_loglike.central_values
+        MOCK_CENTRAL_INV_COVMAT_INDEX.central_values,
+        log_likelihood_class.central_values,
     )
     assert_allclose(
-        MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat, ultranest_loglike.inv_covmat
+        MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat, log_likelihood_class.inv_covmat
     )
-    assert MOCK_PDF_MODEL == ultranest_loglike.pdf_model
-    assert MOCK_PENALTY_POSDATA == ultranest_loglike.penalty_posdata
+    assert MOCK_PDF_MODEL == log_likelihood_class.pdf_model
+    assert MOCK_PENALTY_POSDATA == log_likelihood_class.penalty_posdata
 
     # Test the __call__ method
     params = jnp.array(
@@ -85,54 +69,18 @@ def test_LogLikelihood_class(pos_penalty):
     )
     if pos_penalty:
         # -0.5 * (10.0 + 5.0) = -7.5
-        assert ultranest_loglike(params) == jnp.array(
+        assert log_likelihood_class(params) == jnp.array(
             [
                 -7.5,
             ]
         )
     else:
         # -0.5 * (10.0) = -5.0
-        assert ultranest_loglike(params) == jnp.array(
+        assert log_likelihood_class(params) == jnp.array(
             [
                 -5.0,
             ]
         )
-
-
-@pytest.mark.parametrize("pos_penalty", [True, False])
-@patch("colibri.ultranest_fit.jax.vmap")
-def test_LogLikelihood_vect_class(mock_jax_vmap, pos_penalty):
-    """
-    Tests the LogLikelihood class with vectorized settings.
-    """
-
-    ultranest_loglike = LogLikelihood(
-        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
-        pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=TEST_XGRID,
-        forward_map=TEST_FORWARD_MAP_DIS,
-        fast_kernel_arrays=TEST_FK_ARRAYS,
-        positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
-        ns_settings=vect_ns_settings,
-        chi2=MOCK_CHI2,
-        penalty_posdata=MOCK_PENALTY_POSDATA,
-        positivity_penalty_settings={
-            "positivity_penalty": pos_penalty,
-            "alpha": 1e-7,
-            "lambda_positivity": 1000,
-        },
-        integrability_penalty=integrability_penalty,
-    )
-
-    assert_allclose(
-        MOCK_CENTRAL_INV_COVMAT_INDEX.central_values, ultranest_loglike.central_values
-    )
-    assert_allclose(
-        MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat, ultranest_loglike.inv_covmat
-    )
-    assert MOCK_PDF_MODEL == ultranest_loglike.pdf_model
-
-    assert mock_jax_vmap.call_count == 4
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
@@ -144,14 +92,13 @@ def test_log_likelihood(pos_penalty):
     POS_PENALTY_SETTINGS = (
         {"positivity_penalty": pos_penalty, "alpha": 1e-7, "lambda_positivity": 1000},
     )
-    ultranest_loglike = LogLikelihood(
+    log_likelihood_class = LogLikelihood(
         central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
-        ns_settings=ns_settings,
         chi2=MOCK_CHI2,
         penalty_posdata=MOCK_PENALTY_POSDATA,
         positivity_penalty_settings=POS_PENALTY_SETTINGS,
@@ -164,20 +111,18 @@ def test_log_likelihood(pos_penalty):
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        ns_settings,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings=POS_PENALTY_SETTINGS,
         integrability_penalty=integrability_penalty,
     )
 
-    assert type(ultranest_loglike) == type(log_like)
+    assert type(log_likelihood_class) == type(log_like)
 
 
 def test_log_likelihood_with_and_without_pos_penalty():
     """
     Tests the log_likelihood function with and without positivity penalty.
     """
-    ns_settings = {"ReactiveNS_settings": {"vectorized": False}}
 
     # Test with positivity_penalty enabled
     positivity_penalty_settings = {
@@ -194,7 +139,6 @@ def test_log_likelihood_with_and_without_pos_penalty():
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        ns_settings,
         MOCK_CHI2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings,
@@ -231,7 +175,6 @@ def test_log_likelihood_with_and_without_pos_penalty():
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        ns_settings,
         MOCK_CHI2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings,

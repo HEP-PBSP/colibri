@@ -92,6 +92,10 @@ def ultranest_fit(
 
     parameters = pdf_model.param_names
 
+    if ns_settings["ReactiveNS_settings"]["vectorized"]:
+        log.info("Vectorized likelihood for ultranest fit.")
+        log_likelihood = jax.vmap(log_likelihood, in_axes=(0,), out_axes=0)
+
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
         log_likelihood,
