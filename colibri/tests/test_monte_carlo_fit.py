@@ -49,7 +49,7 @@ def test_monte_carlo_fit_runs_without_errors():
         positivity_fast_kernel_arrays=(np.zeros((10, 10)), np.zeros((10, 10))),
         len_trval_data=(100, 50),
         pdf_model=mock_pdf_model,
-        mc_initial_parameters=np.zeros((N_PARAMS,)),
+        pdf_initial_parameters=np.zeros((N_PARAMS,)),
         optimizer_provider=MockOptimizerProvider(),
         early_stopper=MockEarlyStopper(),
         max_epochs=100,
