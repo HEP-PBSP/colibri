@@ -29,7 +29,7 @@ integrability, making it unsuitable for fully realistic PDF fits.
    An analytic fit can still be useful to fit linear DIS data without
    constraints, and then use the resulting Gaussian posterior as a prior for
    a subsequent realistic fit on an uncorrelated dataset.
-   (See :ref:`this section <in_prior_distributions>` for details on bayesian prior
+   (See :ref:`this section <prior_distributions>` for details on bayesian prior
    distributions.) This two-step approach can reduce computational load when
    running bayesian fits.
 
@@ -42,14 +42,16 @@ To illustrate the analytical method, let us assume a likelihood of the kind
    = \frac{1}{(2\pi)^{N/2}\,\lvert\Sigma\rvert^{1/2}}
      \exp\!\Bigl(-\tfrac12\,(D - f(\theta))^T\,\Sigma^{-1}\,(D - f(\theta))\Bigr)\,,
 
-where :math:`D` are the central values of the measured data and :math:`\Sigma` the covariance matrix.  If :math:`f(\theta)` is a linear model in :math:`\theta`,
+where :math:`D` are the central values of the measured data and :math:`\Sigma` the
+covariance matrix.  If :math:`f(\theta)` is a linear model in :math:`\theta`,
 
 .. math::
    :label: eq:linear-model
 
    f(\theta) = W\,\theta\,,
 
-then the likelihood is Gaussian in the model parameters :math:`\theta` and can be rewritten as
+then the likelihood is Gaussian in the model parameters :math:`\theta` and can be
+rewritten as:
 
 .. math::
    :label: eq:likelihood-factorised
@@ -68,7 +70,8 @@ then the likelihood is Gaussian in the model parameters :math:`\theta` and can b
         \;p(D \mid \hat{\theta})\,p(\hat{\theta}\mid\theta)\,,
    \end{aligned}
 
-where
+where :math:`\hat{\theta}` and :math:`\hat{D}` are the maximum likelihood estimate of the
+parameters and the corresponding model prediction, respectively, and are defined as:
 
 .. math::
    :label: eq:mle
@@ -76,10 +79,11 @@ where
    \hat{\theta}
    = (W^T\,\Sigma^{-1}\,W)^{-1}\,W^T\,\Sigma^{-1}\,D,
    \quad
-   \hat{D} = W\,\hat{\theta},
+   \hat{D} = W\,\hat{\theta}.
 
-are the maximum likelihood estimate of the parameters and the corresponding model prediction, respectively.
-Moreover, :math:`p(D | \hat{\theta})` is the likelihood of the data evaluated at the maximum likelihood estimate, and
+
+Moreover, :math:`p(D | \hat{\theta})` is the likelihood of the data evaluated at
+the maximum likelihood estimate, and :math:`p(\hat{\theta}\mid\theta)` is given by:
 
 .. math::
    :label: eq:posterior-conditional
@@ -118,29 +122,31 @@ then the posterior distribution becomes
 Bayesian inference
 ^^^^^^^^^^^^^^^^^^
 
-In the most general setting, that is for any type of PDF and forward model, it is recommended to use the 
-Bayesian inference method which is based on a nested sampling implementation given by the 
+In the most general setting, that is, for any type of PDF and forward model, it is
+recommended to use the Bayesian inference method which is based on a nested sampling
+implementation given by the 
 `UltraNest <https://johannesbuchner.github.io/UltraNest/index.html>`_ package.
 
-A tutorial on how to perform a Bayesian fit using nested sampling can be found in the
-(TODOL: add link to the tutorial).
-
+See :ref:`this section <ultranest_fit>` for a tutorial on on how to perform a Bayesian
+fit using UltraNest.
 
 Gradient based methods
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Colibri supports the use of gradient-based methods, trough the `jax <https://docs.jax.dev/en/latest/quickstart.html>`_ and 
-`optax <https://optax.readthedocs.io/en/latest/>`_ libraries, for the inference of the PDF model parameters.
+Colibri supports the use of gradient-based methods, trough the
+`jax <https://docs.jax.dev/en/latest/quickstart.html>`_ and 
+`optax <https://optax.readthedocs.io/en/latest/>`_ libraries, for the inference
+of the PDF model parameters.
 
-A tutorial can be found here (TODO in tutorials).
+A tutorial can be found :ref:`here <running_mc_replica>`.
 
-A gradient-based method used to also perform uncertainty quantification and that can be found in colibri is the
-Monte Carlo replica method.
-This method consists in determining a set of fit outcomes to approximate the posterior probability 
-distribution of the PDF model given a set of experimental input data. 
+A gradient-based method that Colibri can be used for to perform uncertainty quantification
+is the Monte Carlo replica method.
+This method consists in determining a set of fit outcomes to approximate the posterior
+probability distribution of the PDF model given a set of experimental input data. 
 The input data are in turn represented as a MC sample of :math:`N_{\rm rep}` 
-pseudodata replicas whose distribution (typically a multivariate normal) reproduces the covariance matrix 
-of the experimental data. 
+pseudodata replicas whose distribution (typically a multivariate normal) reproduces the
+covariance matrix of the experimental data. 
 The fit outcomes are determined by minimising conditionally on a validation set the likelihood function
 defined in :ref:`Likelihood function <likelihood>`.
 

@@ -9,7 +9,10 @@ We follow the Les Houches parametrisation as presented in Ref. :cite:`Alekhin:20
 Free parameters in the Les Houches Parametrisation
 --------------------------------------------------
 
-As described in Ref. :cite:`Alekhin:2005xgg`, the Les Houches parametrisation assumes that the total sea, :math:`\Sigma=u+\bar{u}+d+\bar{d}+s+\bar{s}`, is constrained to be made 40% by up and anti-up, 40% by down and anti-down, and 20% by strange and anti-strange, which means that we can write:
+As described in Ref. :cite:`Alekhin:2005xgg`, the Les Houches parametrisation assumes
+that the total sea, :math:`\Sigma=u+\bar{u}+d+\bar{d}+s+\bar{s}`, is constrained to
+be made 40% by up and anti-up, 40% by down and anti-down, and 20% by strange and
+anti-strange, which means that we can write:
 
 .. math::
     
@@ -17,7 +20,11 @@ As described in Ref. :cite:`Alekhin:2005xgg`, the Les Houches parametrisation as
     d+\bar{d}=0.4\Sigma,\\
     s+\bar{s}=0.2\Sigma.\notag
 
-It is also assumed that there is no difference between :math:`\bar{u}` and :math:`\bar{d}`, so we are only left with four active flavours, namely :math:`g, u_{v}, d_{v}` and :math:`\Sigma`. Furthermore, :math:`\epsilon_g`, :math:`\gamma_g`, :math:`\epsilon_\Sigma` and :math:`\gamma_\Sigma` are all set to zero. We are therefore left with the set of equations:
+It is also assumed that there is no difference between :math:`\bar{u}` and
+:math:`\bar{d}`, so we are only left with four active flavours, namely
+:math:`g, u_{v}, d_{v}` and :math:`\Sigma`. Furthermore, :math:`\epsilon_g`,
+:math:`\gamma_g`, :math:`\epsilon_\Sigma` and :math:`\gamma_\Sigma` are all
+set to zero. We are therefore left with the set of equations:
 
 .. math::
     :label: eq:flavour-basis-set
@@ -27,7 +34,8 @@ It is also assumed that there is no difference between :math:`\bar{u}` and :math
     xf_{d_v}(x,Q_0) &= A_{d_v}\,x^{\alpha_{d_v}}\,(1 - x)^{\beta_{d_v}}\, (1+\epsilon_{d_v}\sqrt{x}+\gamma_{d_v} x),  \notag \\
     xf_\Sigma(x,Q_0) &=  A_\Sigma\,x^{\alpha_\Sigma}\,(1 - x)^{\beta_\Sigma}.\notag
 
-This amounts to 16 parameters. Moreover, not all parameters are independent. :math:`A_g` is related to :math:`A_\Sigma` by the momentum sum rules:
+This amounts to 16 parameters. Moreover, not all parameters are independent.
+:math:`A_g` is related to :math:`A_\Sigma` by the momentum sum rules:
 
 .. math::
     :label: eq:gluon-sum-rule
@@ -49,9 +57,13 @@ leaving 13 free parameters [#]_ .
 Normalisations
 --------------
 
-In order to be able to perform a fit, we would like to write all PDFs explicitly in terms of free parameters, `x` and :math:`Q_0`. 
+In order to be able to perform a fit, we would like to write all PDFs explicitly in
+terms of free parameters, `x` and :math:`Q_0`. 
 
-We therefore write the expressions for :math:`A_g`, :math:`A_{u_v}` and :math:`A_{d_v}` explicitly by solving the integral spelled out in the sum rules, Equations :eq:`eq:gluon-sum-rule` and :eq:`eq:valence-sum-rules`, which are of the form of Euler beta functions, given by:
+We therefore write the expressions for :math:`A_g`, :math:`A_{u_v}` and
+:math:`A_{d_v}` explicitly by solving the integral spelled out in the sum rules,
+Equations :eq:`eq:gluon-sum-rule` and :eq:`eq:valence-sum-rules`, which are of the
+form of Euler beta functions, given by:
 
 .. math::
     :label: eq:euler-beta-func
@@ -89,9 +101,11 @@ The Les Houches Parametrisation in the evolution basis
 ------------------------------------------------------
 
 
-Colibri works in the evolution basis, whose elements can be written as a linear combination of the elements of the flavour basis. 
+Colibri works in the evolution basis, whose elements can be written as a linear
+combination of the elements of the flavour basis. 
 
-We start by writting the elements of the evolution basis in terms of quark flavours, which is as follows:
+We start by writting the elements of the evolution basis in terms of quark
+flavours, which is as follows:
 
 .. math::
     :label: eq:evolution-basis
@@ -103,18 +117,25 @@ We start by writting the elements of the evolution basis in terms of quark flavo
     V_3 &= (u - \bar{u}) - (d - \bar{d}), \notag \\
     V_8 &= (u-\bar{u} + d-\bar{d}) - 2(s-\bar{s}). \notag
 
-Noting that :math:`u_v = u - \bar{u}`, :math:`d_v = d - \bar{d}` and that, since there are no valence strange quarks, :math:`s_v = s - \bar{s} = 0`, and applying the assumptions stated above, we find:
+Noting that :math:`u_v = u - \bar{u}`, :math:`d_v = d - \bar{d}` and that,
+since there are no valence strange quarks, :math:`s_v = s - \bar{s} = 0`,
+and applying the assumptions stated above, we find:
 
 .. math::
     :label: eq:flavour-basis-elements
 
-    T_3 &= (u-\bar{d})-(d-\bar{u}) = u_v - d_v = V_3, \notag \\
-    T_8 &= \Sigma - 3(s+\bar{s}) = 0.4\Sigma, \\
-    V_8 &= u_v + d_v - 2 \cdot 0 = V. \notag
+    T_3 &= 0.4\Sigma - 0.4\Sigma = 0, \notag \\
+    T_8 &= 0.4\Sigma + 0.4\Sigma -2\cdot(0.2\Sigma) = 0.4\Sigma, \\
+    V_8 &= u_v + d_v - 2 \cdot 0 = V, \\
+    V_{15} &= V_{24} = V_{35} = V. \notag
 
-Therefore, we are again left with only four active flavours; :math:`\Sigma`, :math:`V`, :math:`V_3` and the gluon.
+Therefore, we are again left with only four active flavours; :math:`\Sigma`,
+:math:`V`, :math:`V_3` and the gluon.
 
-We already have an explicit parametrisation for :math:`f_\Sigma` and :math:`f_g`, as stated in Eq. :eq:`eq:flavour-basis-set`. We have the ingredients to write analogous expressions for :math:`f_V` and :math:`f_{V_3}`, which are given by:
+We already have an explicit parametrisation for :math:`f_\Sigma` and
+:math:`f_g`, as stated in Eq. :eq:`eq:flavour-basis-set`. We have the
+ingredients to write analogous expressions for :math:`f_V` and :math:`f_{V_3}`,
+which are given by:
 
 .. math::
     :label: eq:f_V
