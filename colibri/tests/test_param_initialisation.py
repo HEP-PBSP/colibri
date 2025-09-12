@@ -1,5 +1,5 @@
 """
-colibri.tests.test_mc_initialisation
+colibri.tests.test_param_initialisation
 
 Tests for the Monte Carlo initialisation functions in the colibri package.
 """
@@ -14,7 +14,7 @@ import numpy as np
 
 import pytest
 import logging
-from colibri.mc_initialisation import pdf_initial_parameters
+from colibri.param_initialisation import pdf_initial_parameters
 
 logging.basicConfig(level=logging.DEBUG)
 
