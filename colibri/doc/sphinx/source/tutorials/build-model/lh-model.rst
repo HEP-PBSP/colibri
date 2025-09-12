@@ -40,8 +40,8 @@ packaging tool. The configuration file structure looks like this:
 .. literalinclude:: ../../../../../examples/les_houches_example/pyproject.toml
    :language: python
 
-Note that here the executable ``les_houches_exe`` is introduced, which is an executable
-that is specific to this model, and will be used to initialise a fit. 
+Note that every model has its own, specific executable. In this case, the executable
+``les_houches_exe`` is introduced, which will be used to initialise a fit. 
 (See :ref:`Running Fits <in_running_fits>`).
 
 ``app.py``
@@ -101,7 +101,19 @@ does the following:
 - computes grid values. 
 
 Having defined this model, it is used in the production rule ``produce_pdf_model``,
-defined in the ``config.py`` script, shown above. This allows the model to be seen
-by the rest of the code, so that it can be used to run a fit and perform closure tests.
+defined in the ``config.py`` script, shown above. This allows the model to be seen by
+the rest of the code.
+
+Installing the model
+--------------------
+
+Once your model is implemented, it can be installed by running:
+
+.. code-block::
+   
+   pip install -e . 
+   
+This will create the executable to run fits and perform closure tests with
+``les_houches_exe runcard.yaml``. 
 
 You can find an example of how to execute the model :ref:`here <lh-closure-test>`.
