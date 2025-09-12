@@ -30,3 +30,10 @@ This model can then be used to perform fits and run closure tests (see the
    
    ./lh-theory
    ./lh-model
+
+
+.. note::
+
+   If you would like to have a look at the implementation of a more complex model, there is one
+   available in `this repository <https://github.com/HEP-PBSP/wmin-model>`_, which also
+   showcases the potential and flexibility of the platform.
