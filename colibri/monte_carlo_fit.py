@@ -8,14 +8,15 @@ This module contains the main Monte Carlo fitting routine of colibri.
 from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
-import optax
 import logging
 import pandas as pd
 import os
 import time
+from functools import partial
 
 from colibri.data_batch import data_batches
 from colibri.mc_utils import write_exportgrid_mc
+from colibri.gradient_descent import run_gradient_descent
 
 log = logging.getLogger(__name__)
 
@@ -76,6 +77,12 @@ def monte_carlo_fit(
     _pred_data: theory_predictions.make_pred_data
         The function to compute the theory predictions.
 
+    fast_kernel_arrays: jnp.array
+        Fast kernel arrays for convolutions.
+
+    positivity_fast_kernel_arrays: jnp.array
+        Fast kernel arrays for positivity constraints.
+
     len_trval_data: tuple
         Tuple containing the length of the training and validation data.
 
@@ -120,6 +127,7 @@ def monte_carlo_fit(
     """
 
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
+    len_tr_idx, len_val_idx = len_trval_data
 
     @jax.jit
     def loss_training(
@@ -131,14 +139,16 @@ def monte_carlo_fit(
         lambda_positivity,
     ):
         predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
-
-        return _chi2_training_data_with_positivity(
-            predictions,
-            pdf,
-            batch_idx,
-            alpha,
-            lambda_positivity,
-            positivity_fast_kernel_arrays,
+        return (
+            _chi2_training_data_with_positivity(
+                predictions,
+                pdf,
+                batch_idx,
+                alpha,
+                lambda_positivity,
+                positivity_fast_kernel_arrays,
+            )
+            / len_tr_idx
         )
 
     @jax.jit
@@ -150,123 +160,63 @@ def monte_carlo_fit(
         lambda_positivity,
     ):
         predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
-
-        return _chi2_validation_data_with_positivity(
-            predictions, pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
-        )
-
-    @jax.jit
-    def step(
-        params,
-        opt_state,
-        batch_idx,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
-        alpha,
-        lambda_positivity,
-    ):
-        loss_value, grads = jax.value_and_grad(loss_training)(
-            params,
-            batch_idx,
-            fast_kernel_arrays,
-            positivity_fast_kernel_arrays,
+        val = _chi2_validation_data_with_positivity(
+            predictions,
+            pdf,
             alpha,
             lambda_positivity,
+            positivity_fast_kernel_arrays,
         )
-        updates, opt_state = optimizer_provider.update(grads, opt_state, params)
-        params = optax.apply_updates(params, updates)
-        return params, opt_state, loss_value
+
+        return val / len_val_idx if len_val_idx > 0 else val
 
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
-
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
-    len_tr_idx, len_val_idx = len_trval_data
-
-    log.debug(f"len_tr_idx: {len_tr_idx}, len_val_idx: {len_val_idx}")
-
-    loss = []
-    val_loss = []
-
-    opt_state = optimizer_provider.init(mc_initial_parameters)
-    parameters = mc_initial_parameters.copy()
-
     data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
-    batches = data_batch.data_batch_stream_index()
-    num_batches = data_batch.num_batches
-    batch_size = data_batch.batch_size
 
-    for i in range(max_epochs):
-        epoch_loss = 0
-        epoch_val_loss = 0
-
-        for _ in range(num_batches):
-            batch = next(batches)
-
-            parameters, opt_state, loss_value = step(
-                parameters,
-                opt_state,
-                batch,
-                fast_kernel_arrays,
-                positivity_fast_kernel_arrays,
-                alpha,
-                lambda_positivity,
-            )
-
-            epoch_loss += (
-                loss_training(
-                    parameters,
-                    batch,
-                    fast_kernel_arrays,
-                    positivity_fast_kernel_arrays,
-                    alpha,
-                    lambda_positivity,
-                )
-                / batch_size
-            )
-
-        epoch_val_loss += (
-            loss_validation(
-                parameters,
-                fast_kernel_arrays,
-                positivity_fast_kernel_arrays,
-                alpha,
-                lambda_positivity,
-            )
-            / len_val_idx
-        )
-        epoch_loss /= num_batches
-
-        early_stopper = early_stopper.update(epoch_val_loss)
-        if early_stopper.should_stop:
-            log.info("Met early stopping criteria, breaking...")
-            break
-
-        if i % 50 == 0:
-            log.info(
-                f"step {i}, loss: {epoch_loss:.3f}, validation_loss: {epoch_val_loss:.3f}"
-            )
-            log.info(f"epoch:{i}, early_stopper: {early_stopper}")
-            # store loss values every 50 epochs
-            loss.append(epoch_loss)
-            val_loss.append(epoch_val_loss)
+    # Pre-bind constant arguments to pass to run_gradient_descent
+    bound_training_loss = partial(
+        loss_training,
+        fast_kernel_arrays=fast_kernel_arrays,
+        positivity_fast_kernel_arrays=positivity_fast_kernel_arrays,
+        alpha=alpha,
+        lambda_positivity=lambda_positivity,
+    )
+    bound_validation_loss = partial(
+        loss_validation,
+        fast_kernel_arrays=fast_kernel_arrays,
+        positivity_fast_kernel_arrays=positivity_fast_kernel_arrays,
+        alpha=alpha,
+        lambda_positivity=lambda_positivity,
+    )
+    # Delegate to generic gradient descent
+    gd_result = run_gradient_descent(
+        initial_parameters=mc_initial_parameters.copy(),
+        training_loss_fn=bound_training_loss,
+        validation_loss_fn=bound_validation_loss,
+        optimizer=optimizer_provider,
+        early_stopper=early_stopper,
+        max_epochs=max_epochs,
+        data_batch=data_batch,
+        record_every=50,
+    )
 
     t1 = time.time()
-
     log.info("MONTE CARLO RUNNING TIME: %f" % (t1 - t0))
 
     return MonteCarloFit(
         monte_carlo_specs={
             "max_epochs": max_epochs,
-            "batch_size": batch_size,
+            "batch_size": data_batch.batch_size,
             "batch_seed": batch_seed,
             "alpha": alpha,
             "lambda_positivity": lambda_positivity,
         },
-        training_loss=jnp.array(loss),
-        validation_loss=jnp.array(val_loss),
-        optimized_parameters=parameters,
+        training_loss=gd_result.training_loss,
+        validation_loss=gd_result.validation_loss,
+        optimized_parameters=gd_result.optimized_parameters,
     )
 
 
