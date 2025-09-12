@@ -143,7 +143,7 @@ may do so with the following settings:
 
 .. code-block:: bash
 
-    mc_initialiser_settings:               # The initialiser for Monte Carlo training.
+    param_initialiser_settings:               # The initialiser for Monte Carlo training.
         type: normal
         means: 2.0    
         stds: 0.5
@@ -155,7 +155,7 @@ can do so:
 
 .. code-block:: bash
 
-    mc_initialiser_settings:               # The initialiser for Monte Carlo training.
+    param_initialiser_settings:               # The initialiser for Monte Carlo training.
         type: normal
         means:
             alpha_gluon: 0.356
