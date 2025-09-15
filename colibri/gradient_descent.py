@@ -82,6 +82,7 @@ def run_gradient_descent(
 
     data_batch : colibri.DataBatches
         DataBatches object providing batching information.
+        Defaults to None, in which case the loss is assumed to not have been batched.
 
     record_every : int, default 50
         Record losses every this many epochs.
@@ -101,10 +102,12 @@ def run_gradient_descent(
     val_losses = []
 
     if data_batch is None:
-        # we simulate a single batch that is the full dataset
+        # we simulate a fake batch iterator that just yields a dummy batch index
+        # since the training loss fn is assumed to not be batched in this case
+        # (i.e. it ignores the batch indices argument)
         def batch_gen():
             while True:
-                yield [1]
+                yield [0]
 
         batches_iter = batch_gen()
         num_batches = 1

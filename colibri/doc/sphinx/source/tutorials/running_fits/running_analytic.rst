@@ -1,8 +1,8 @@
 .. _running_analytic:
 
-===============
-Analytical Fits
-===============
+=============
+Analytic Fits
+=============
 
 This section describes how to run an analytic fit with Colibri.
 
@@ -18,14 +18,13 @@ in general, can be described by an equation of the following form:
 where :math:`W` is a matrix that maps the parameters, :math:`\theta`, to the
 theory prediction vector, :math:`f(\theta)`. 
 
-Effectively, the analytic fit is treated as a "bayesian fit", where the priors of
-the parameters are used to compute the evidence analytically.
-
-See :ref:`this section <th_analytic_fits>` for an overview of the theoretical
+Effectively, the analytic fit is treated as a "Bayesian fit", where the priors of
+the parameters are used to compute the evidence analytically. See
+:ref:`this section <th_analytic_fits>` for an overview of the theoretical
 background of the analytic fit methodology, as well as details on when it might
 be appropriate to run an analytic fit.
 
-In this section, we will provide an example that was implemented in the work
+In this tutorial, we will provide an example that was implemented in the work
 presented in Ref. :cite:alp:`Costantini:2025wxp`.
 
 
@@ -45,25 +44,25 @@ fit the weight minimisation (``wmin``) model presented in Ref.
     #######################
 
     dataset_inputs:
-        # DIS data
-        # NMC experiment
-        # - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy} # (out-of-sample)
-        # NUCLEAR experiments
-        - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
-        - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
-        - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
-        # - {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw} # (out-of-sample)
+    # DIS data
+    # NMC experiment
+    # - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy} # (out-of-sample)
+    # NUCLEAR experiments
+    - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
+    - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
+    - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
+    # - {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw} # (out-of-sample)
 
-        # HERACOMB experiments
-        - {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
-        # - {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy} # (out-of-sample)
-        - {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
-        - {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
-        - {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
-        # - {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy} # (out-of-sample)
-        - {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
-        - {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
-        - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
+    # HERACOMB experiments
+    - {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
+    # - {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy} # (out-of-sample)
+    - {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
+    - {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
+    - {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
+    # - {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy} # (out-of-sample)
+    - {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
+    - {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
+    - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
 
 
     theoryid: 40_000_000                          # The theory from which the predictions are drawn
@@ -117,6 +116,6 @@ fit the weight minimisation (``wmin``) model presented in Ref.
     actions_:
     - run_analytic_fit                       
 
-Note that the ``prior_settings`` are the same as in a bayesian fit, which you can
+Note that the ``prior_settings`` are the same as in a Bayesian fit, which you can
 find more details about in :ref:`this tutorial <in_running_bayesian>`.
 

@@ -114,7 +114,7 @@ Data Batch
 MC Initialisation
 -----------------
 
-.. automodule:: colibri.mc_initialisation
+.. automodule:: colibri.param_initialisation
    :members:
    :undoc-members:
    :show-inheritance:
