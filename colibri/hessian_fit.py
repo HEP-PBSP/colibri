@@ -8,6 +8,7 @@ import time
 import jax
 from colibri.gradient_descent import run_gradient_descent
 from colibri.param_initialisation import pdf_initial_parameters
+from colibri.export_results import export_hessian_results
 
 log = logging.getLogger(__name__)
 
@@ -45,6 +46,7 @@ class HessianFit:
     hessian: jnp.ndarray
     cov_params: jnp.ndarray
     resampled_posterior: jnp.ndarray
+    param_names: list
 
 
 def hessian_fit(
@@ -204,6 +206,7 @@ def hessian_fit(
         hessian=hessian,
         cov_params=cov_params,
         resampled_posterior=hessian_param_set,
+        param_names=pdf_model.param_names,
     )
 
 
@@ -221,6 +224,6 @@ def run_hessian_fit(hessian_fit, output_path, pdf_model):
         The PDF model used in the fit.
     """
 
-    # export_hessian_results(hessian_fit, output_path, "hessian_result")
+    export_hessian_results(hessian_fit, output_path, "hessian_result")
 
     write_replicas(hessian_fit, output_path, pdf_model)
