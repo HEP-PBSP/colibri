@@ -40,8 +40,8 @@ ultranest_settings = {
     "sampler_plot": False,
 }
 
-vect_ns_settings = copy.deepcopy(ultranest_settings)
-vect_ns_settings["ReactiveNS_settings"]["vectorized"] = True
+vect_ultranest_settings = copy.deepcopy(ultranest_settings)
+vect_ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
