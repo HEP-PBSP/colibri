@@ -122,8 +122,8 @@ def hessian_fit(
     hessian = 0.5 * jax.hessian(lambda p: train_chi2(p, 0))(parameters_min)
 
     # Verify hessian is positive definite
-    eigvals = jnp.linalg.eigvalsh(hessian)
-    min_eigval = jnp.min(eigvals)
+    eigvals_hess = jnp.linalg.eigvalsh(hessian)
+    min_eigval = jnp.min(eigvals_hess)
     if min_eigval <= 0:
         log.critical(
             f"WARNING: The Hessian matrix is not positive definite. "
