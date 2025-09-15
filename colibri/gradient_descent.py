@@ -54,7 +54,7 @@ def run_gradient_descent(
     optimizer: optax.GradientTransformation,
     early_stopper: Any,
     max_epochs: int,
-    data_batch: colibri.DataBatches,
+    data_batch: colibri.DataBatches = None,
     record_every: int = 50,
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
@@ -82,6 +82,7 @@ def run_gradient_descent(
 
     data_batch : colibri.DataBatches
         DataBatches object providing batching information.
+        Defaults to None, in which case the loss is assumed to not have been batched.
 
     record_every : int, default 50
         Record losses every this many epochs.
@@ -100,9 +101,21 @@ def run_gradient_descent(
     train_losses = []
     val_losses = []
 
-    batches_iter = data_batch.data_batch_stream_index()
-    num_batches = data_batch.num_batches
-    batch_size = data_batch.batch_size
+    if data_batch is None:
+        # we simulate a fake batch iterator that just yields a dummy batch index
+        # since the training loss fn is assumed to not be batched in this case
+        # (i.e. it ignores the batch indices argument)
+        def batch_gen():
+            while True:
+                yield [0]
+
+        batches_iter = batch_gen()
+        num_batches = 1
+        batch_size = None
+    else:
+        batches_iter = data_batch.data_batch_stream_index()
+        num_batches = data_batch.num_batches
+        batch_size = data_batch.batch_size
 
     for epoch in range(max_epochs):
         epoch_train_loss = 0.0
