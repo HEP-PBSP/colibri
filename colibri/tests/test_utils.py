@@ -457,8 +457,8 @@ def test_write_resampled_bayesian_fit(
     mock_open,
 ):
     # Setup mock parameters
-    fit_path = "/fake/fit/path"
-    resampled_fit_path = "/fake/resampled/path"
+    fit_path = Path("/fake/fit/path")
+    resampled_fit_path = Path("/fake/resampled/path")
     resampled_posterior = np.array([[0.1, 0.2], [0.3, 0.4]])
     resampled_fit_name = "test_grid"
     parametrisation_scale = 1.0

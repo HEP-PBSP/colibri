@@ -25,6 +25,7 @@ class ColibriFitSpec:
     fit_path: str
 
 
+@dataclass(frozen=True)
 class PriorSettings:
     """
     Dataclass containing the settings for the prior transform.
