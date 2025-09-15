@@ -58,6 +58,25 @@ def hessian_fit(
     hessian_settings,
     param_initialiser_settings,
 ):
+    """Run Hessian-based fit and uncertainty propagation.
+
+    Parameters
+    ----------
+    pdf_model: pdf_model.PDFModel
+        The PDF model to be fitted.
+    log_likelihood: callable
+        The log-likelihood function to be maximized.
+    optimizer_provider: optax.GradientTransformation
+        The optimizer to be used in the gradient descent.
+    early_stopper: Any
+        The early stopping criterion to be used in the gradient descent.
+    max_epochs: int
+        The maximum number of epochs to be used in the gradient descent.
+    hessian_settings: dict
+        Dictionary containing the settings for the Hessian fit.
+    param_initialiser_settings: dict
+        Dictionary containing the settings for the parameter initialisation.
+    """
 
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
     log.info("Starting Hessian fit...")
@@ -141,7 +160,7 @@ def hessian_fit(
             f"min_eig={float(min_eigval):.3e} > {eig_eps:.1e}."
         )
     else:
-        log.critical(
+        log.warning(
             "Local minimum check failed: "
             f"||grad||={float(grad_norm):.3e} (tol {grad_tol:.1e}), "
             f"min_eig={float(min_eigval):.3e} (must be > {eig_eps:.1e})."
@@ -160,11 +179,11 @@ def hessian_fit(
     if hessian_settings["ErrorType"] == "replicas":
         log.info("Using gaussian replicas for error propagation.")
         n_samples = hessian_settings["n_samples"]
-
+        rng_key = hessian_settings.get("rng_key", jax.random.PRNGKey(0))
         # Generate samples from a multivariate normal distribution
         # with mean parameters_min and covariance cov_params
         hessian_param_set = jax.random.multivariate_normal(
-            key=jax.random.PRNGKey(0),
+            key=rng_key,
             mean=parameters_min,
             cov=cov_params,
             shape=(n_samples,),
