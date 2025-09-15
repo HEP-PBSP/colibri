@@ -45,8 +45,6 @@ class LogLikelihood(object):
 
         positivity_fast_kernel_arrays: tuple
 
-        ultranest_settings: dict
-
         chi2: Callable
 
         penalty_posdata: Callable
