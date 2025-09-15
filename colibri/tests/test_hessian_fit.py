@@ -52,7 +52,7 @@ def test_hessian_fit_runs_and_shapes(error_type):
         "ErrorType": error_type,
         # Replicas settings (ignored for ErrorType=="hessian")
         "n_samples": 7,
-        "rng_key": jax.random.PRNGKey(0),
+        "rng_key": 0,
     }
 
     param_initialiser_settings = {"type": "zeros"}
@@ -99,7 +99,7 @@ def test_run_hessian_fit_exports(mock_write_exportgrid, tmp_path):
         "tolerance": 1.0,
         "ErrorType": "replicas",
         "n_samples": n_samples,
-        "rng_key": jax.random.PRNGKey(123),
+        "rng_key": 123,
     }
 
     param_initialiser_settings = {"type": "zeros"}
@@ -132,7 +132,7 @@ def test_hessian_fit_raises_when_require_local_min_fails():
         "tolerance": 1.0,
         "ErrorType": "replicas",
         "n_samples": 3,
-        "rng_key": jax.random.PRNGKey(0),
+        "rng_key": 0,
         "require_local_min": True,
         "grad_tol": 1e-12,  # very small to ensure failure
     }
@@ -158,7 +158,7 @@ def test_hessian_fit_logs_warning_on_local_min_check_failed(caplog):
         "tolerance": 1.0,
         "ErrorType": "replicas",
         "n_samples": 2,
-        "rng_key": jax.random.PRNGKey(0),
+        "rng_key": 0,
         "require_local_min": False,
         "grad_tol": 1e-12,  # ensure gradient not small
     }
@@ -192,7 +192,7 @@ def test_hessian_fit_logs_critical_on_non_pd_hessian(caplog):
         "tolerance": 1.0,
         "ErrorType": "replicas",
         "n_samples": 2,
-        "rng_key": jax.random.PRNGKey(0),
+        "rng_key": 0,
     }
     param_initialiser_settings = {"type": "zeros"}
 
