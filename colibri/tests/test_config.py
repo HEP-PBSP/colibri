@@ -8,7 +8,6 @@ import unittest
 import unittest.mock as mock
 from pathlib import Path
 from unittest.mock import mock_open, patch
-import jax
 
 import pytest
 import reportengine
