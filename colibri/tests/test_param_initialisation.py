@@ -1,5 +1,5 @@
 """
-colibri.tests.test_mc_initialisation
+colibri.tests.test_param_initialisation
 
 Tests for the Monte Carlo initialisation functions in the colibri package.
 """
@@ -14,7 +14,7 @@ import numpy as np
 
 import pytest
 import logging
-from colibri.mc_initialisation import mc_initial_parameters
+from colibri.param_initialisation import pdf_initial_parameters
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -26,7 +26,7 @@ pdf_model.param_names = ["param1", "param2", "param3"]
 def test_zeros_initializer():
     settings = {"type": "zeros"}
     replica_index = 0
-    result = mc_initial_parameters(pdf_model, settings, replica_index)
+    result = pdf_initial_parameters(pdf_model, settings, replica_index)
     expected_result = jnp.array([0.0] * len(pdf_model.param_names))
     np.testing.assert_array_equal(result, expected_result)
 
@@ -41,14 +41,14 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     mock_normal.return_value = jnp.array([0.1, -0.1, 0.2])
 
     with caplog.at_level("WARNING"):
-        result = mc_initial_parameters(pdf_model, settings, replica_index)
+        result = pdf_initial_parameters(pdf_model, settings, replica_index)
 
     mock_PRNGKey.assert_called_once_with(42)
     mock_normal.assert_called_once_with(
         key=jax.random.PRNGKey(42), shape=(len(pdf_model.param_names),)
     )
 
-    assert "mc_initialiser_settings: No 'means' or 'stds' provided." in caplog.text
+    assert "param_initialiser_settings: No 'means' or 'stds' provided." in caplog.text
     np.testing.assert_array_equal(result, jnp.array([0.1, -0.1, 0.2]))
 
     # ---- Test case where random_seed is not provided ----
@@ -56,7 +56,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     replica_index = 1
     mock_normal.return_value = jnp.array([0.5, -0.5, 0.0])
 
-    result = mc_initial_parameters(pdf_model, settings, replica_index)
+    result = pdf_initial_parameters(pdf_model, settings, replica_index)
 
     mock_PRNGKey.assert_called_with(1)
 
@@ -83,7 +83,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        result = mc_initial_parameters(pdf_model, settings_both, replica_index=0)
+        result = pdf_initial_parameters(pdf_model, settings_both, replica_index=0)
 
     # No warning should be issued when both are provided
     assert len(caplog.records) == 0
@@ -107,7 +107,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        mc_initial_parameters(pdf_model, settings_means_dict_only, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_means_dict_only, replica_index=0)
 
     assert "'means' provided without 'stds'" in caplog.text
     assert "Using default std=1.0 for all parameters." in caplog.text
@@ -121,7 +121,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        mc_initial_parameters(pdf_model, settings_means_scalar_only, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_means_scalar_only, replica_index=0)
 
     assert "'means' provided without 'stds'" in caplog.text
     assert "Using default std=1.0 for all parameters." in caplog.text
@@ -135,7 +135,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        mc_initial_parameters(pdf_model, settings_stds_dict_only, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_stds_dict_only, replica_index=0)
 
     assert "'stds' provided without 'means'" in caplog.text
     assert "Using default mean=0.0 for all parameters." in caplog.text
@@ -149,7 +149,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        mc_initial_parameters(pdf_model, settings_stds_scalar_only, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_stds_scalar_only, replica_index=0)
 
     assert "'stds' provided without 'means'" in caplog.text
     assert "Using default mean=0.0 for all parameters." in caplog.text
@@ -170,7 +170,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        result = mc_initial_parameters(pdf_model, settings_scalars, replica_index=0)
+        result = pdf_initial_parameters(pdf_model, settings_scalars, replica_index=0)
 
     # No warning should be issued when both are provided
     assert len(caplog.records) == 0
@@ -198,7 +198,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        result = mc_initial_parameters(pdf_model, settings_mixed, replica_index=0)
+        result = pdf_initial_parameters(pdf_model, settings_mixed, replica_index=0)
 
     # No warning should be issued
     assert len(caplog.records) == 0
@@ -225,7 +225,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     with pytest.raises(
         ValueError, match="'means' dict must have one entry per parameter"
     ):
-        mc_initial_parameters(pdf_model, settings_few_means, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_few_means, replica_index=0)
 
     # Too few stds in dict
     settings_few_stds = {
@@ -238,7 +238,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     with pytest.raises(
         ValueError, match="'stds' dict must have one entry per parameter"
     ):
-        mc_initial_parameters(pdf_model, settings_few_stds, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_few_stds, replica_index=0)
 
     # Invalid type for means
     settings_invalid_means = {
@@ -248,7 +248,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     }
 
     with pytest.raises(TypeError, match="'means' must be dict or scalar"):
-        mc_initial_parameters(pdf_model, settings_invalid_means, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_invalid_means, replica_index=0)
 
     # Invalid type for stds
     settings_invalid_stds = {
@@ -258,7 +258,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     }
 
     with pytest.raises(TypeError, match="'stds' must be dict or scalar"):
-        mc_initial_parameters(pdf_model, settings_invalid_stds, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_invalid_stds, replica_index=0)
 
 
 @patch("jax.random.PRNGKey")
@@ -268,7 +268,7 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     replica_index = 1
     mock_uniform.return_value = jnp.array([0.5, -0.5, 0.0])
 
-    result = mc_initial_parameters(pdf_model, settings, replica_index)
+    result = pdf_initial_parameters(pdf_model, settings, replica_index)
 
     mock_PRNGKey.assert_called_once_with(43)
     mock_uniform.assert_called_once_with(
@@ -297,7 +297,7 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     # Mock return value to match param count
     mock_uniform.return_value = jnp.array([0.1, 1.5, 0.0])
 
-    result_bounds = mc_initial_parameters(pdf_model, settings_bounds, replica_index)
+    result_bounds = pdf_initial_parameters(pdf_model, settings_bounds, replica_index)
 
     np.testing.assert_array_equal(result_bounds, jnp.array([0.1, 1.5, 0.0]))
 
@@ -328,7 +328,7 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     }
 
     with pytest.raises(ValueError, match="Missing bounds for parameters"):
-        mc_initial_parameters(pdf_model, settings_missing_bounds, 1)
+        pdf_initial_parameters(pdf_model, settings_missing_bounds, 1)
 
     # ---- Test missing min_val/max_val and bounds ----
     settings_invalid = {
@@ -337,15 +337,17 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
         # neither "bounds" nor min/max
     }
 
-    with pytest.raises(ValueError, match="mc_initialiser_settings must define either"):
-        mc_initial_parameters(pdf_model, settings_invalid, 1)
+    with pytest.raises(
+        ValueError, match="param_initialiser_settings must define either"
+    ):
+        pdf_initial_parameters(pdf_model, settings_invalid, 1)
 
 
 def test_invalid_initializer_type():
     settings = {"type": "invalid_type"}
     replica_index = 0
     with unittest.TestCase().assertLogs(level="WARNING") as log:
-        result = mc_initial_parameters(pdf_model, settings, replica_index)
+        result = pdf_initial_parameters(pdf_model, settings, replica_index)
         # Asserting that at least one warning was logged
         assert log.output
     expected_result = jnp.array([0.0] * len(pdf_model.param_names))

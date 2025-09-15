@@ -5,67 +5,74 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
+def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=-1):
     """
-    This function initialises the parameters in a Monte Carlo fit.
+    This function provides initial parameters for the PDF model.
 
     Parameters
     ----------
     pdf_model: pdf_mode.PDFModel
         The PDF model to initialise the parameters for.
 
-    mc_initialiser_settings: dict
+    param_initialiser_settings: dict
         The settings for the initialiser.
 
     replica_index: int
         The index of the replica.
+        Default is -1, in case no replica index is provided.
 
     Returns
     -------
     initial_values: jnp.array
         The initial values for the parameters.
     """
-    if mc_initialiser_settings["type"] not in ("zeros", "normal", "uniform"):
+    if param_initialiser_settings["type"] not in ("zeros", "normal", "uniform"):
         log.warning(
-            f"MC initialiser type {mc_initialiser_settings['type']} not recognised, using default: 'zeros' instead."
+            f"MC initialiser type {param_initialiser_settings['type']} not recognised, using default: 'zeros' instead."
         )
 
-        mc_initialiser_settings["type"] = "zeros"
+        param_initialiser_settings["type"] = "zeros"
 
-    if mc_initialiser_settings["type"] == "zeros":
+    if param_initialiser_settings["type"] == "zeros":
         return jnp.array([0.0] * len(pdf_model.param_names))
 
-    if "random_seed" in mc_initialiser_settings:
+    if "random_seed" in param_initialiser_settings:
         random_seed = jax.random.PRNGKey(
-            mc_initialiser_settings["random_seed"] + replica_index
+            param_initialiser_settings["random_seed"] + replica_index
         )
     else:
         random_seed = jax.random.PRNGKey(replica_index)
 
     param_names = pdf_model.param_names
 
-    if mc_initialiser_settings["type"] == "normal":
-        means_setting = mc_initialiser_settings.get("means", 0.0)
-        stds_setting = mc_initialiser_settings.get("stds", 1.0)
+    if param_initialiser_settings["type"] == "normal":
+        means_setting = param_initialiser_settings.get("means", 0.0)
+        stds_setting = param_initialiser_settings.get("stds", 1.0)
 
         if (
-            "means" not in mc_initialiser_settings
-            and "stds" not in mc_initialiser_settings
+            "means" not in param_initialiser_settings
+            and "stds" not in param_initialiser_settings
         ):
             log.warning(
-                "mc_initialiser_settings: No 'means' or 'stds' provided. "
+                "param_initialiser_settings: No 'means' or 'stds' provided. "
                 "Using default normal distribution N(0, 1) for all parameters."
             )
 
-        if "means" in mc_initialiser_settings and "stds" not in mc_initialiser_settings:
+        if (
+            "means" in param_initialiser_settings
+            and "stds" not in param_initialiser_settings
+        ):
             log.warning(
-                "mc_initialiser_settings: 'means' provided without 'stds'. "
+                "param_initialiser_settings: 'means' provided without 'stds'. "
                 "Using default std=1.0 for all parameters."
             )
 
-        if "stds" in mc_initialiser_settings and "means" not in mc_initialiser_settings:
+        if (
+            "stds" in param_initialiser_settings
+            and "means" not in param_initialiser_settings
+        ):
             log.warning(
-                "mc_initialiser_settings: 'stds' provided without 'means'. "
+                "param_initialiser_settings: 'stds' provided without 'means'. "
                 "Using default mean=0.0 for all parameters."
             )
 
@@ -90,10 +97,10 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
         normal_samples = jax.random.normal(key=random_seed, shape=(len(param_names),))
         return means + stds * normal_samples
 
-    if mc_initialiser_settings["type"] == "uniform":
-        if "bounds" in mc_initialiser_settings:
+    if param_initialiser_settings["type"] == "uniform":
+        if "bounds" in param_initialiser_settings:
             # Use param names from the model to order bounds correctly
-            bounds_dict = mc_initialiser_settings["bounds"]
+            bounds_dict = param_initialiser_settings["bounds"]
 
             missing = [p for p in param_names if p not in bounds_dict]
             if missing:
@@ -105,17 +112,17 @@ def mc_initial_parameters(pdf_model, mc_initialiser_settings, replica_index):
             max_val = bounds[:, 1]
 
         elif (
-            "min_val" in mc_initialiser_settings
-            and "max_val" in mc_initialiser_settings
+            "min_val" in param_initialiser_settings
+            and "max_val" in param_initialiser_settings
         ):
             # Global bounds for all parameters
 
-            max_val = mc_initialiser_settings["max_val"]
-            min_val = mc_initialiser_settings["min_val"]
+            max_val = param_initialiser_settings["max_val"]
+            min_val = param_initialiser_settings["min_val"]
 
         else:
             raise ValueError(
-                "mc_initialiser_settings must define either 'bounds' or 'min_val' and 'max_val'"
+                "param_initialiser_settings must define either 'bounds' or 'min_val' and 'max_val'"
             )
 
         initial_values = jax.random.uniform(

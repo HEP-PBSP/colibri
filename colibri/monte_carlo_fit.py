@@ -52,7 +52,7 @@ def monte_carlo_fit(
     positivity_fast_kernel_arrays,
     len_trval_data,
     pdf_model,
-    mc_initial_parameters,
+    pdf_initial_parameters,
     optimizer_provider,
     early_stopper,
     max_epochs,
@@ -90,7 +90,7 @@ def monte_carlo_fit(
         A PDFModel specifying the way in which the PDF is constructed from
         the parameters.
 
-    mc_initial_parameters: jnp.array
+    pdf_initial_parameters: jnp.array
         Initial parameters for the Monte Carlo fit.
 
     optimizer_provider: optax._src.base.GradientTransformationExtraArgs
@@ -193,7 +193,7 @@ def monte_carlo_fit(
     )
     # Delegate to generic gradient descent
     gd_result = run_gradient_descent(
-        initial_parameters=mc_initial_parameters.copy(),
+        initial_parameters=pdf_initial_parameters.copy(),
         training_loss_fn=bound_training_loss,
         validation_loss_fn=bound_validation_loss,
         optimizer=optimizer_provider,
