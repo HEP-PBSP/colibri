@@ -1,0 +1,69 @@
+meta: 'Closure test fit (Level 0) using wmin parameterisation on DIS dataset excluding DEUTERON experiment and positivity'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:
+# DIS data
+# NMC experiment
+- {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
+# NUCLEAR experiments
+- {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
+- {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
+- {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
+- {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw}
+# HERACOMB experiments
+- {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy}
+- {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
+
+
+theoryid: 40_000_000                          # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0
+closure_test_pdf: NNPDF40_nnlo_as_01180
+
+#####################
+# Loss function specs
+#####################
+use_fit_t0: true                    # Whether the t0 covariance is used in the chi2 loss.
+t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
+
+#############
+# Model specs
+#############
+
+# Weight minimisation settings
+wmin_settings:
+  wminpdfset: NNPDF40_nnlo_as_01180
+  n_basis: 20
+
+###################
+# Methodology specs
+###################
+
+# Analytic settings
+analytic_settings:
+  n_posterior_samples: 1
+  full_sample_size: 5000
+  sampling_seed: 91234
+
+
+prior_settings:
+  prior_distribution: uniform_parameter_prior
+  prior_distribution_specs: 
+        {
+          "min_val": -5,
+          "max_val": 5,
+        }
+
+actions_:
+- run_analytic_fit                       

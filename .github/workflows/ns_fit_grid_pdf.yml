@@ -4,17 +4,16 @@
 name: Nested Sampling CI grid_pdf model
 
 on:
-  pull_request_review:
+  pull_request:
     types:
-      - submitted
-      - edited
+      - labeled
 
 env:
   CACHE_NUMBER: 0  # increase to reset cache manually
 
 jobs:
   build:
-
+    if: ${{ github.event.label.name == 'run-nested-sampling_ct' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -51,13 +50,6 @@ jobs:
         source $(conda info --base)/etc/profile.d/conda.sh  # Initialize Conda
         conda activate colibri-dev
         pip install git+https://${{ secrets.COLIBRI_TOKEN }}@github.com/HEP-PBSP/grid_pdf-model.git
-
-    - name: Copy theory to Conda environment
-      shell: bash -l {0}
-      run: |
-        mkdir -p $CONDA_PREFIX/share/NNPDF/theories
-        mkdir $CONDA_PREFIX/share/NNPDF/theories/theory_401
-        cp -r colibri/tests/test_theoryID/theory_401/* $CONDA_PREFIX/share/NNPDF/theories/theory_401/
 
     - name: Run NS fit
       shell: bash -l {0}

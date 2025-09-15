@@ -1,11 +1,19 @@
+"""
+colibri.tests.test_mc_loss_functions
+
+Tests for the Monte Carlo loss functions in the colibri package.
+"""
+
 import jax.numpy as jnp
+
 from colibri.mc_loss_functions import (
     make_chi2_training_data,
-    make_chi2_validation_data,
     make_chi2_training_data_with_positivity,
+    make_chi2_validation_data,
     make_chi2_validation_data_with_positivity,
 )
 from colibri.mc_utils import MCPseudodata
+from colibri.tests.conftest import TEST_POS_FK_ARRAYS
 from colibri.training_validation import PosdataTrainValidationSplit
 
 # Mock data
@@ -28,7 +36,6 @@ pdf = jnp.array([1.0, 1.0, 1.0, 1.0])
 
 alpha = 0.5
 lambda_positivity = 1.0
-positivity_fast_kernel_arrays = jnp.array([1.0, 1.0, 1.0, 1.0])
 
 
 def test_chi2_training_data():
@@ -93,7 +100,7 @@ def test_chi2_training_data_with_positivity():
     )
 
     mock_penalty_posdata = (
-        lambda pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays: jnp.array(
+        lambda pdf, alpha, lambda_positivity, TEST_POS_FK_ARRAYS: jnp.array(
             [1.0, 2.0, 3.0, 4.0]
         )
     )
@@ -108,7 +115,7 @@ def test_chi2_training_data_with_positivity():
         batch_idx,
         alpha,
         lambda_positivity,
-        positivity_fast_kernel_arrays,
+        TEST_POS_FK_ARRAYS,
     )
 
     # Calculate expected chi2 manually for verification
@@ -133,7 +140,7 @@ def test_chi2_validation_data_with_positivity():
     )
 
     mock_penalty_posdata = (
-        lambda pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays: jnp.array(
+        lambda pdf, alpha, lambda_positivity, TEST_POS_FK_ARRAYS: jnp.array(
             [1.0, 2.0, 3.0, 4.0]
         )
     )
@@ -147,7 +154,7 @@ def test_chi2_validation_data_with_positivity():
         pdf,
         alpha,
         lambda_positivity,
-        positivity_fast_kernel_arrays,
+        TEST_POS_FK_ARRAYS,
     )
 
     # Calculate expected chi2 manually for verification

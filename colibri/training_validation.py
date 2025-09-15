@@ -42,18 +42,18 @@ def training_validation_split(
 
     Parameters
     ----------
-    indices: jaxlib.xla_extension.Array
+    indices: jnp.ndarray
 
     mc_validation_fraction: float
 
-    random_seed: jaxlib.xla_extension.Array
+    random_seed: jax.random.PRNGKey
         PRNGKey, obtained as jax.random.PRNGKey(random_number)
 
     shuffle_indices: bool
 
     Returns
     -------
-    dataclass
+    TrainValidationSplit
     """
 
     if shuffle_indices:

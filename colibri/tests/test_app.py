@@ -1,10 +1,16 @@
+"""
+colibri.tests.test_app
+
+Module to test the colibri app.
+"""
+
 import colibri
 from colibri.app import colibriApp
 from colibri.tests.conftest import CONFIG_YML_PATH
 
 
 def test_version():
-    assert colibri.__version__ == "0.1.0"
+    assert colibri.__version__ == "1.0.0"
 
 
 def test_app_initialisation():

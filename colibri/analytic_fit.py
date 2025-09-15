@@ -48,10 +48,11 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 
     Parameters
     ----------
-    sol_covmat: array
+    sol_covmat: jnp.ndarray
         Covariance matrix of the posterior (X^T Sigma^-1 X)^-1.
 
-    sol_mean
+    sol_mean: jnp.ndarray
+        Posterior mean vector.
 
     a_vec: np.ndarray
         Lower bounds of the Uniform prior.
@@ -61,7 +62,8 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 
     Returns
     -------
-    float: The log evidence.
+    tuple[float, float]
+        The log evidence and the log Occam factor.
     """
 
     # Take into account change of variables of type (x - mu) -> x
@@ -101,7 +103,7 @@ def analytic_fit(
     _pred_data,
     pdf_model,
     analytic_settings,
-    bayesian_prior,
+    prior_settings,
     FIT_XGRID,
     fast_kernel_arrays,
 ):
@@ -128,9 +130,15 @@ def analytic_fit(
     analytic_settings: dict
         Settings for the analytic fit.
 
+    prior_settings: PriorSettings
+        Settings for the prior.
+
     FIT_XGRID: np.ndarray
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
+
+    fast_kernel_arrays: tuple
+        Tuple containing the fast kernel arrays.
     """
 
     log.warning("The prior is assumed to be flat in the parameters.")
@@ -157,7 +165,7 @@ def analytic_fit(
     Sigma = inv_covmat
     X = predictions.T - intercept[:, None]
 
-    # * Check that cov mat is positive definite
+    # * Check that covmat is positive definite
     if jnp.any(jla.eigh(X.T @ Sigma @ X)[0] <= 0.0):
         raise ValueError(
             "The obtained covariance matrix for the analytic solution is not positive definite."
@@ -169,6 +177,7 @@ def analytic_fit(
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
+    # full samples with no cuts from the prior bounds
     full_samples = jax.random.multivariate_normal(
         key,
         sol_mean,
@@ -183,21 +192,56 @@ def analytic_fit(
     # over the prior. The prior is uniform with width prior_width.
     log.info("Computing the evidence...")
 
-    if analytic_settings["optimal_prior"]:
-        log.info("Using optimal prior")
+    if prior_settings.prior_distribution == "n_sigma_prior":
+        nsigma = prior_settings.prior_distribution_specs["n_sigma_value"]
+
+        log.info(f"Using +- {nsigma} sigma of covmat")
+        diags = np.sqrt(np.diag(sol_covmat))
+
+        prior_lower = sol_mean - nsigma * diags
+        prior_upper = sol_mean + nsigma * diags
+
+    elif prior_settings.prior_distribution == "custom_uniform_parameter_prior":
+        log.info("Using custom uniform prior")
+        prior_lower = jnp.array(prior_settings.prior_distribution_specs["lower_bounds"])
+        prior_upper = jnp.array(prior_settings.prior_distribution_specs["upper_bounds"])
+
+    elif prior_settings.prior_distribution == "min_max_prior":
+        log.info("Using min-max prior")
         prior_lower = full_samples.min(axis=0)
         prior_upper = full_samples.max(axis=0)
+
     else:
         # Extract lower and upper bounds of the prior
-        prior_lower = bayesian_prior(jnp.zeros(len(parameters)))
-        prior_upper = bayesian_prior(jnp.ones(len(parameters)))
+        prior_lower = prior_settings.prior_distribution_specs["min_val"] * jnp.ones(
+            len(parameters)
+        )
+        prior_upper = prior_settings.prior_distribution_specs["max_val"] * jnp.ones(
+            len(parameters)
+        )
 
     prior_width = prior_upper - prior_lower
+
+    # Check that the prior is wide enough
+    if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
+        log.error(
+            "The prior is not wide enough to cover the posterior samples. Increase the prior width."
+        )
+
+    log.warning(f"Discarding samples outside the prior bounds.")
+
+    # discard samples outside the prior
+    full_samples = full_samples[
+        (full_samples > prior_lower).all(axis=1)
+        & (full_samples < prior_upper).all(axis=1)
+    ]
 
     gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
     log_prior = jnp.log(1 / prior_width).sum()
     # Compute maximum log likelihood
-    max_logl = -0.5 * (Y @ Sigma @ Y - Y @ Sigma @ X @ sol_mean)
+    min_chi2 = (Y - X @ sol_mean) @ Sigma @ (Y - X @ sol_mean)
+    # Compute the log likelihood
+    max_logl = -0.5 * min_chi2
 
     logZ_laplace = gaussian_integral + max_logl + log_prior
 
@@ -218,12 +262,6 @@ def analytic_fit(
 
     BIC = min_chi2 + sol_covmat.shape[0] * np.log(Sigma.shape[0])
     AIC = min_chi2 + 2 * sol_covmat.shape[0]
-
-    # Check that the prior is wide enough
-    if jnp.any(full_samples < prior_lower) or jnp.any(full_samples > prior_upper):
-        log.error(
-            "The prior is not wide enough to cover the posterior samples. Increase the prior width."
-        )
 
     # Compute average chi2
     diffs = Y[:, None] - X @ full_samples.T

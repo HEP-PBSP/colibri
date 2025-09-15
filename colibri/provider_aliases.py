@@ -30,6 +30,11 @@ def _pred_t0data(make_pred_t0data):
     return make_pred_t0data
 
 
+##############################################
+# Aliases of colibri.penalties.py #
+##############################################
+
+
 def _penalty_posdataset(make_penalty_posdataset):
     """
     Internal alias function for make_penalty_posdataset.

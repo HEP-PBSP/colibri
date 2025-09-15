@@ -9,6 +9,7 @@ import pandas as pd
 import argparse
 import logging
 import pathlib
+import jax.numpy as jnp
 
 from reportengine import colors
 
@@ -30,6 +31,12 @@ def main():
         help="The chi2 threshold, above which an MC replica will be rejected.",
     )
     parser.add_argument(
+        "--nsigma",
+        type=float,
+        default=5,
+        help="The nsigma threshold above which replicas are rejected.",
+    )
+    parser.add_argument(
         "--target_replicas",
         "-t",
         type=int,
@@ -43,6 +50,8 @@ def main():
 
     # Give names to other arguments
     chi2_threshold = args.chi2_threshold
+
+    nsigma_threshold = args.nsigma
 
     # Check that the folder fit_replicas exists
     if not os.path.exists(fit_path / "fit_replicas"):
@@ -62,20 +71,49 @@ def main():
 
     replicas_list = sorted(list(replicas_path.iterdir()))
 
+    final_losses = jnp.array([])
+
+    valid_replicas = []  # Keep track of which replicas are valid
+
+    for replica in replicas_list:
+        try:
+            df = pd.read_csv(replica / "mc_loss.csv")
+            if (
+                df.empty
+                or df["training_loss"].iloc[-1] is pd.NA
+                or pd.isna(df["training_loss"].iloc[-1])
+            ):
+                log.warning(f"Skipping replica {replica} - empty or NaN training_loss")
+                continue
+
+            final_loss = df.iloc[-1]["training_loss"]
+            final_losses = jnp.concatenate(
+                (final_losses, jnp.array([final_loss])), axis=0
+            )
+            valid_replicas.append(replica)
+
+        except (FileNotFoundError, KeyError, IndexError) as e:
+            log.critical(f"Skipping replica {replica} - error reading file: {e}")
+            continue
+
+    mean_loss = jnp.mean(final_losses)
+    std_loss = jnp.std(final_losses)
+
     # List of replicas to keep
     good_replicas = []
 
     # We will copy the replicas and order them starting with 0
     # and increasing the index for each good replica we find
     i = 0
-    for replica in replicas_list:
-        # Get last iteration from the mc_loss.csv file
-        final_loss = pd.read_csv(replica / "mc_loss.csv").iloc[-1]["training_loss"]
+    for replica, loss in zip(valid_replicas, final_losses):
 
         index = int(replica.name.split("_")[1])
 
+        chi2_pass = loss <= chi2_threshold
+        nsigma_pass = loss - mean_loss <= nsigma_threshold * std_loss
+
         # Check if final loss is above the threshold
-        if final_loss < chi2_threshold:
+        if chi2_pass and nsigma_pass:
             # We found a good replica
             good_replicas.append(index)
             # Increase replica index

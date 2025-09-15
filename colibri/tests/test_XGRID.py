@@ -1,9 +1,11 @@
 """
-Main scope of this module is to test that the union of the xgrid of the fktables of the 
+Main scope of this module is to test that the union of the xgrid of the fktables of the
 DIS and Hadronic datasets are the the same as the XGRID stored in the constants.py file.
 """
 
 import numpy as np
+from numpy.testing import assert_allclose
+
 from colibri.api import API as cAPI
 from colibri.constants import XGRID
 from colibri.tests.conftest import (
@@ -11,7 +13,6 @@ from colibri.tests.conftest import (
     TEST_FULL_HAD_DATASET,
     TEST_FULL_POS_DATASET,
 )
-from numpy.testing import assert_allclose
 
 
 def test_dis_xgrid():

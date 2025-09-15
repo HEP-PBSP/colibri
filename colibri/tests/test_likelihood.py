@@ -1,0 +1,193 @@
+"""
+colibri.tests.test_likelihood.py
+
+Tests for the likelihood module.
+"""
+
+import jax
+import jax.numpy as jnp
+import pytest
+from numpy.testing import assert_allclose
+
+from colibri.likelihood import LogLikelihood, log_likelihood
+from colibri.tests.conftest import (
+    MOCK_CENTRAL_INV_COVMAT_INDEX,
+    MOCK_CHI2,
+    MOCK_PDF_MODEL,
+    MOCK_PENALTY_POSDATA,
+    TEST_FK_ARRAYS,
+    TEST_FORWARD_MAP_DIS,
+    TEST_POS_FK_ARRAYS,
+    TEST_XGRID,
+)
+
+jax.config.update("jax_enable_x64", True)
+
+# Define mock input parameters
+bayesian_prior = lambda x: x
+
+integrability_penalty = lambda pdf: jnp.array([0.0])
+
+
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_LogLikelihood_class(pos_penalty):
+    """
+    Tests the LogLikelihood class.
+    """
+    log_likelihood_class = LogLikelihood(
+        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        pdf_model=MOCK_PDF_MODEL,
+        fit_xgrid=TEST_XGRID,
+        forward_map=TEST_FORWARD_MAP_DIS,
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+        positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
+        chi2=MOCK_CHI2,
+        penalty_posdata=MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
+        integrability_penalty=integrability_penalty,
+    )
+
+    assert_allclose(
+        MOCK_CENTRAL_INV_COVMAT_INDEX.central_values,
+        log_likelihood_class.central_values,
+    )
+    assert_allclose(
+        MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat, log_likelihood_class.inv_covmat
+    )
+    assert MOCK_PDF_MODEL == log_likelihood_class.pdf_model
+    assert MOCK_PENALTY_POSDATA == log_likelihood_class.penalty_posdata
+
+    # Test the __call__ method
+    params = jnp.array(
+        [
+            2.0,
+        ]
+    )
+    if pos_penalty:
+        # -0.5 * (10.0 + 5.0) = -7.5
+        assert log_likelihood_class(params) == jnp.array(
+            [
+                -7.5,
+            ]
+        )
+    else:
+        # -0.5 * (10.0) = -5.0
+        assert log_likelihood_class(params) == jnp.array(
+            [
+                -5.0,
+            ]
+        )
+
+
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_log_likelihood(pos_penalty):
+    """
+    Tests that the log_likeliihodd function just returns an
+    LogLikelihood instance.
+    """
+    POS_PENALTY_SETTINGS = (
+        {"positivity_penalty": pos_penalty, "alpha": 1e-7, "lambda_positivity": 1000},
+    )
+    log_likelihood_class = LogLikelihood(
+        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        pdf_model=MOCK_PDF_MODEL,
+        fit_xgrid=TEST_XGRID,
+        forward_map=TEST_FORWARD_MAP_DIS,
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+        positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
+        chi2=MOCK_CHI2,
+        penalty_posdata=MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings=POS_PENALTY_SETTINGS,
+        integrability_penalty=integrability_penalty,
+    )
+    log_like = log_likelihood(
+        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_PDF_MODEL,
+        TEST_XGRID,
+        TEST_FORWARD_MAP_DIS,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
+        MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings=POS_PENALTY_SETTINGS,
+        integrability_penalty=integrability_penalty,
+    )
+
+    assert type(log_likelihood_class) == type(log_like)
+
+
+def test_log_likelihood_with_and_without_pos_penalty():
+    """
+    Tests the log_likelihood function with and without positivity penalty.
+    """
+
+    # Test with positivity_penalty enabled
+    positivity_penalty_settings = {
+        "positivity_penalty": True,
+        "alpha": 0.1,
+        "lambda_positivity": 0.5,
+    }
+
+    # Instantiate the class
+    log_likelihood_class = LogLikelihood(
+        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_PDF_MODEL,
+        TEST_XGRID,
+        TEST_FORWARD_MAP_DIS,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
+        MOCK_CHI2,
+        MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings,
+        integrability_penalty=integrability_penalty,
+    )
+
+    # Mock the params
+    params = jnp.array([0.3, 0.4])
+
+    # Call log_likelihood with positivity penalty enabled
+    ll_value_with_penalty = log_likelihood_class.log_likelihood(
+        params,
+        log_likelihood_class.central_values,
+        log_likelihood_class.inv_covmat,
+        log_likelihood_class.fast_kernel_arrays,
+        log_likelihood_class.positivity_fast_kernel_arrays,
+    )
+
+    # Expectation: chi2 value + penalty (5.0) => -0.5 * (10.0 + 5.0)
+    assert ll_value_with_penalty == pytest.approx(-7.5)
+
+    # Test with positivity_penalty disabled
+    positivity_penalty_settings = {
+        "positivity_penalty": False,
+        "alpha": 0.1,
+        "lambda_positivity": 0.5,
+    }
+
+    # Instantiate the class
+    log_likelihood_class = LogLikelihood(
+        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_PDF_MODEL,
+        TEST_XGRID,
+        TEST_FORWARD_MAP_DIS,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
+        MOCK_CHI2,
+        MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings,
+        integrability_penalty=integrability_penalty,
+    )
+
+    ll_value_without_penalty = log_likelihood_class.log_likelihood(
+        params,
+        log_likelihood_class.central_values,
+        log_likelihood_class.inv_covmat,
+        log_likelihood_class.fast_kernel_arrays,
+        log_likelihood_class.positivity_fast_kernel_arrays,
+    )
+
+    # Expectation: Only chi2 value, no penalty => -0.5 * (10.0)
+    assert ll_value_without_penalty == pytest.approx(-5.0)

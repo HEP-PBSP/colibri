@@ -89,7 +89,7 @@ def colibri_dataset_inputs_t0_predictions(
         function taking a pdf grid and returning
         theory prediction for one data group
 
-    t0_pdf_grid: jnp.array
+    t0_pdf_grid: jnp.ndarray
 
     Returns
     -------

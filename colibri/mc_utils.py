@@ -13,7 +13,7 @@ import numpy as np
 from dataclasses import dataclass, asdict
 
 from colibri.training_validation import training_validation_split
-from colibri.constants import LHAPDF_XGRID, evolution_to_flavour_matrix, EXPORT_LABELS
+from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from colibri.export_results import write_exportgrid
 
 import logging
@@ -118,7 +118,6 @@ def write_exportgrid_mc(
 
     # Rotate the grid from the evolution basis into the export grid basis
     grid_for_writing = np.array(lhapdf_interpolator(parameters))
-    grid_for_writing = evolution_to_flavour_matrix @ grid_for_writing
 
     write_exportgrid(
         grid_for_writing=grid_for_writing,

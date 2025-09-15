@@ -1,11 +1,18 @@
+"""
+colibri.tests.test_monte_carlo_fit
+
+Tests for the monte_carlo_fit module.
+"""
+
 import os
 from unittest.mock import Mock, patch
 
 import jax.numpy as jnp
 import numpy as np
+from numpy.testing import assert_allclose
+
 from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_carlo_fit
 from colibri.tests.conftest import MOCK_PDF_MODEL
-from numpy.testing import assert_allclose
 
 mock_pdf_model = MOCK_PDF_MODEL
 N_PARAMS = len(MOCK_PDF_MODEL.param_names)
@@ -58,8 +65,8 @@ def test_monte_carlo_fit_runs_without_errors():
     assert result.monte_carlo_specs["lambda_positivity"] == 1000
 
     assert_allclose(result.optimized_parameters, jnp.array([0.0, 0.0]))
-    assert_allclose(result.training_loss, jnp.array([]))
-    assert_allclose(result.validation_loss, jnp.array([]))
+    assert_allclose(result.training_loss, jnp.array([0.0]))
+    assert_allclose(result.validation_loss, jnp.array([0.0]))
 
 
 @patch("colibri.monte_carlo_fit.write_exportgrid_mc")

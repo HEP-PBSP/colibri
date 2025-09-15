@@ -11,6 +11,7 @@ import pathlib
 
 colibri_providers = [
     "colibri.theory_predictions",
+    "colibri.theory_penalties",
     "colibri.loss_functions",
     "colibri.mc_loss_functions",
     "colibri.optax_optimizer",
@@ -19,9 +20,9 @@ colibri_providers = [
     "colibri.commondata_utils",
     "colibri.training_validation",
     "colibri.covmats",
-    "colibri.plots_and_tables.plotting",
     "colibri.provider_aliases",
     "colibri.mc_utils",
+    "colibri.likelihood",
     "colibri.ultranest_fit",
     "colibri.monte_carlo_fit",
     "colibri.analytic_fit",
@@ -30,6 +31,7 @@ colibri_providers = [
     "colibri.mc_initialisation",
     "colibri.export_results",
     "colibri.model_average",
+    "colibri.closure_test",
     "reportengine.report",
 ]
 
@@ -43,7 +45,7 @@ class colibriApp(App):
 
     @property
     def argparser(self):
-        """Parser arguments for grid_pdf app can be added here"""
+        """Parser arguments for colibri."""
         parser = super().argparser
 
         parser.add_argument(
