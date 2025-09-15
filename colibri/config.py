@@ -158,7 +158,7 @@ class colibriConfig(Config):
         settings,
         output_path,
     ):
-        """For an UltraNest fit, parses the ultranest_settings namespace from the runcard,
+        """For a Nested Sampling fit, parses the ultranest_settings namespace from the runcard,
         and ensures the choice of settings is valid.
         """
 
@@ -177,9 +177,7 @@ class colibriConfig(Config):
         kdiff = settings.keys() - known_keys
         for k in kdiff:
             log.warning(
-                ConfigError(
-                    f"Key '{k}' in ultranest_settings not known.", k, known_keys
-                )
+                ConfigError(f"Key '{k}' in ultranest_settings not known.", k, known_keys)
             )
 
         # Now construct the ultranest_settings dictionary, checking the parameter combinations are
@@ -190,21 +188,15 @@ class colibriConfig(Config):
         ultranest_settings["ultranest_seed"] = settings.get("ultranest_seed", 123456)
 
         # Set the posterior resampling parameters
-        ultranest_settings["n_posterior_samples"] = settings.get(
-            "n_posterior_samples", 1000
-        )
+        ultranest_settings["n_posterior_samples"] = settings.get("n_posterior_samples", 1000)
         ultranest_settings["posterior_resampling_seed"] = settings.get(
             "posterior_resampling_seed", 123456
         )
 
         # Parse internal settings, if they are not mentioned, set to empty dict
-        ultranest_settings["ReactiveNS_settings"] = settings.get(
-            "ReactiveNS_settings", {}
-        )
+        ultranest_settings["ReactiveNS_settings"] = settings.get("ReactiveNS_settings", {})
         ultranest_settings["Run_settings"] = settings.get("Run_settings", {})
-        ultranest_settings["SliceSampler_settings"] = settings.get(
-            "SliceSampler_settings", {}
-        )
+        ultranest_settings["SliceSampler_settings"] = settings.get("SliceSampler_settings", {})
 
         # set sampler plot to True by default
         ultranest_settings["sampler_plot"] = settings.get("sampler_plot", True)
@@ -255,74 +247,6 @@ class colibriConfig(Config):
             ultranest_settings["ReactiveNS_settings"]["resume"] = "overwrite"
 
         return ultranest_settings
-
-    def parse_blackjax_settings(
-        self,
-        settings,
-    ):
-        """For a BlackJAX fit, parses the blackjax_settings namespace from the runcard,
-        and ensures the choice of settings is valid.
-        """
-
-        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
-        known_keys = {
-            "n_posterior_samples",
-            "posterior_resampling_seed",
-            "sampler",
-            "sampler_settings",
-            "blackjax_seed",
-            "seed",  # alternative to blackjax_seed
-            "n_warmup",
-            "n_chains",
-            "sampler_plot",
-            # Nested sampling specific settings
-            "n_live",
-            "repeats",
-            "delete_fraction",
-            "log_precision",
-        }
-
-        kdiff = settings.keys() - known_keys
-        for k in kdiff:
-            log.warning(
-                ConfigError(f"Key '{k}' in blackjax_settings not known.", k, known_keys)
-            )
-
-        # Now construct the blackjax_settings dictionary, checking the parameter combinations are
-        # valid
-        blackjax_settings = {}
-
-        # Set the blackjax seed (support both 'seed' and 'blackjax_seed')
-        if "seed" in settings:
-            blackjax_settings["seed"] = settings["seed"]
-        else:
-            blackjax_settings["seed"] = settings.get("blackjax_seed", 123456)
-
-        # Set the posterior resampling parameters
-        blackjax_settings["n_posterior_samples"] = settings.get(
-            "n_posterior_samples", 1000
-        )
-        blackjax_settings["posterior_resampling_seed"] = settings.get(
-            "posterior_resampling_seed", 123456
-        )
-
-        # Set the sampler type (e.g., "nuts", "hmc", "mala", "nested_sampling", etc.)
-        blackjax_settings["sampler"] = settings.get("sampler", "nuts")
-
-        # Parse sampler-specific settings, if they are not mentioned, set to empty dict
-        blackjax_settings["sampler_settings"] = settings.get("sampler_settings", {})
-
-        # MCMC-specific settings (for NUTS, HMC, etc.)
-        blackjax_settings["n_warmup"] = settings.get("n_warmup", 1000)
-        blackjax_settings["n_chains"] = settings.get("n_chains", 4)
-
-        # Nested sampling specific settings
-        blackjax_settings["n_live"] = settings.get("n_live", 500)
-        blackjax_settings["repeats"] = settings.get("repeats", 3)
-        blackjax_settings["delete_fraction"] = settings.get("delete_fraction", 0.5)
-        blackjax_settings["log_precision"] = settings.get("log_precision", -3)
-
-        return blackjax_settings
 
     def parse_positivity_penalty_settings(self, settings):
         """
