@@ -149,7 +149,11 @@ def test_parse_optimizer_settings(mock_warning):
     result = BASE_CONFIG.parse_optimizer_settings(settings)
 
     # Assert the result is as expected
-    expected = {"clipnorm": 6.3e-6, "optimizer": "adam", "learning_rate": 0.001}
+    expected = {
+        "clipnorm": 6.3e-6,
+        "optimizer": "adam",
+        "optimizer_hyperparams": {"learning_rate": 0.001},
+    }
 
     print("Testing optimizer settings parsing...")
     assert result == expected

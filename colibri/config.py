@@ -442,7 +442,7 @@ class colibriConfig(Config):
         For a Monte Carlo fit. Parses the optimizer_settings namespace from the runcard
         """
         # Begin by checking that the user-supplied keys are known; warn the user otherwise.
-        known_keys = {"clipnorm", "learning_rate", "optimizer", "optimizer_hyperparams"}
+        known_keys = {"clipnorm", "optimizer", "optimizer_hyperparams"}
 
         kdiff = settings.keys() - known_keys
         for k in kdiff:
@@ -454,11 +454,7 @@ class colibriConfig(Config):
 
         optimizer_settings = {}
 
-        hyperparams = settings.get("optimizer_hyperparams", {})
-
-        for key, value in hyperparams.items():
-            optimizer_settings[key] = value
-
+        optimizer_settings["optimizer_hyperparams"] = settings.get("optimizer_hyperparams", {})
         optimizer_settings["optimizer"] = settings.get("optimizer", "adam")
         optimizer_settings["clipnorm"] = settings.get("clipnorm", None)
 

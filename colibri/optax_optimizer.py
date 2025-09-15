@@ -34,23 +34,20 @@ def optimizer_provider(
 
     """
 
-    # if optimizer_settings is empty, fill it with the default values
-    if not "learning_rate" in optimizer_settings.keys():
-        optimizer_settings["learning_rate"] = 5e-4
+    optimizer = optimizer_settings["optimizer"]
 
-    if "optimizer" in optimizer_settings:
-        optimizer = optimizer_settings.pop("optimizer")
+    optimizer_hyperparams = optimizer_settings["optimizer_hyperparams"] 
 
     if "clipnorm" in optimizer_settings:
-        clipnorm = optimizer_settings.pop("clipnorm")
+        clipnorm = optimizer_settings["clipnorm"]
         opt = getattr(optax, optimizer)
         return optax.chain(
             optax.clip_by_global_norm(clipnorm),
-            opt(**optimizer_settings),
+            opt(**optimizer_hyperparams),
         )
     else:
         opt = getattr(optax, optimizer)
-        return opt(**optimizer_settings)
+        return opt(**optimizer_hyperparams)
 
 
 def early_stopper(
