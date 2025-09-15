@@ -45,8 +45,6 @@ class LogLikelihood(object):
 
         positivity_fast_kernel_arrays: tuple
 
-        ns_settings: dict
-
         chi2: Callable
 
         penalty_posdata: Callable

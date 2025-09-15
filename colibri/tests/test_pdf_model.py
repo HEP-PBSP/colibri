@@ -44,7 +44,7 @@ def test_pred_and_pdf_func():
     pred_and_pdf = model.pred_and_pdf_func(TEST_XGRID, TEST_FORWARD_MAP_DIS)
 
     params = jnp.array([2, 3])
-    predictions, pdf = pred_and_pdf(params, TEST_FK_ARRAYS[0])
+    predictions, pdf = pred_and_pdf(params, TEST_FK_ARRAYS)
 
     expected_predictions = jnp.einsum("ijk,jk->i", TEST_FK_ARRAYS[0], pdf)
 
