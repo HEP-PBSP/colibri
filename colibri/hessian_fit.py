@@ -7,7 +7,7 @@ import logging
 import time
 import jax
 from colibri.gradient_descent import run_gradient_descent
-from colibri.mc_initialisation import mc_initial_parameters
+from colibri.param_initialisation import pdf_initial_parameters
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def hessian_fit(
     early_stopper,
     max_epochs,
     hessian_settings,
-    mc_initialiser_settings,
+    param_initialiser_settings,
 ):
 
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
@@ -81,8 +81,8 @@ def hessian_fit(
     for i in range(iter_init):
         log.info(f"Hessian fit initialization iteration {i+1}")
         # Generate random initial parameters
-        initial_parameters = mc_initial_parameters(
-            pdf_model, mc_initialiser_settings, i
+        initial_parameters = pdf_initial_parameters(
+            pdf_model, param_initialiser_settings, i
         )
 
         # Delegate to generic gradient descent
