@@ -124,3 +124,114 @@ def test_run_hessian_fit_exports(mock_write_exportgrid, tmp_path):
     # Files from export_hessian_results
     assert (tmp_path / "hessian_result.csv").exists()
     assert (tmp_path / "hessian_fit_summary.json").exists()
+
+
+def test_hessian_fit_raises_when_require_local_min_fails():
+    # Start away from the optimum so gradient != 0, triggering local-minimum failure
+    hessian_settings = {
+        "iter_init": 1,
+        "tolerance": 1.0,
+        "ErrorType": "replicas",
+        "n_samples": 3,
+        "rng_key": jax.random.PRNGKey(0),
+        "require_local_min": True,
+        "grad_tol": 1e-12,  # very small to ensure failure
+    }
+
+    # Force non-zero initial params via Normal with mean=1, std=0
+    param_initialiser_settings = {"type": "normal", "means": 1.0, "stds": 0.0}
+
+    with pytest.raises(ValueError):
+        hessian_fit(
+            pdf_model=MOCK_PDF_MODEL,
+            log_likelihood=log_likelihood,
+            optimizer_provider=MockOptimizerProvider(),
+            early_stopper=MockEarlyStopper(),
+            max_epochs=1,
+            hessian_settings=hessian_settings,
+            param_initialiser_settings=param_initialiser_settings,
+        )
+
+
+def test_hessian_fit_logs_warning_on_local_min_check_failed(caplog):
+    hessian_settings = {
+        "iter_init": 1,
+        "tolerance": 1.0,
+        "ErrorType": "replicas",
+        "n_samples": 2,
+        "rng_key": jax.random.PRNGKey(0),
+        "require_local_min": False,
+        "grad_tol": 1e-12,  # ensure gradient not small
+    }
+    param_initialiser_settings = {"type": "normal", "means": 1.0, "stds": 0.0}
+
+    with caplog.at_level("WARNING"):
+        res = hessian_fit(
+            pdf_model=MOCK_PDF_MODEL,
+            log_likelihood=log_likelihood,
+            optimizer_provider=MockOptimizerProvider(),
+            early_stopper=MockEarlyStopper(),
+            max_epochs=1,
+            hessian_settings=hessian_settings,
+            param_initialiser_settings=param_initialiser_settings,
+        )
+
+    # Expect a warning about local minimum check failed
+    assert any(
+        (rec.levelname == "WARNING" and "Local minimum check failed" in rec.message)
+        for rec in caplog.records
+    )
+    assert isinstance(res, HessianFit)
+
+
+def test_hessian_fit_logs_critical_on_non_pd_hessian(caplog):
+    # Define a convex log-likelihood so chi2 is negative definite -> Hessian not PD
+    bad_loglike = lambda p: 0.5 * jnp.sum(p**2)
+
+    hessian_settings = {
+        "iter_init": 1,
+        "tolerance": 1.0,
+        "ErrorType": "replicas",
+        "n_samples": 2,
+        "rng_key": jax.random.PRNGKey(0),
+    }
+    param_initialiser_settings = {"type": "zeros"}
+
+    with caplog.at_level("CRITICAL"):
+        hessian_fit(
+            pdf_model=MOCK_PDF_MODEL,
+            log_likelihood=bad_loglike,
+            optimizer_provider=MockOptimizerProvider(),
+            early_stopper=MockEarlyStopper(),
+            max_epochs=1,
+            hessian_settings=hessian_settings,
+            param_initialiser_settings=param_initialiser_settings,
+        )
+
+    assert any(
+        (
+            rec.levelname == "CRITICAL"
+            and "Hessian matrix is not positive definite" in rec.message
+        )
+        for rec in caplog.records
+    )
+
+
+def test_hessian_fit_unknown_error_type_raises():
+    hessian_settings = {
+        "iter_init": 1,
+        "tolerance": 1.0,
+        "ErrorType": "unknown_mode",
+    }
+    param_initialiser_settings = {"type": "zeros"}
+
+    with pytest.raises(ValueError):
+        hessian_fit(
+            pdf_model=MOCK_PDF_MODEL,
+            log_likelihood=log_likelihood,
+            optimizer_provider=MockOptimizerProvider(),
+            early_stopper=MockEarlyStopper(),
+            max_epochs=1,
+            hessian_settings=hessian_settings,
+            param_initialiser_settings=param_initialiser_settings,
+        )

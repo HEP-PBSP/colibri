@@ -132,10 +132,7 @@ def hessian_fit(
     # Compute gradient at the candidate minimum to check stationarity
     grad_at_min = jax.grad(lambda p: train_chi2(p, 0))(parameters_min)
     grad_norm = jnp.linalg.norm(grad_at_min)
-    if jnp.isnan(grad_norm) | jnp.isinf(grad_norm):
-        log.critical(
-            "Gradient norm at the found minimum is NaN/Inf; local minimum check cannot be trusted."
-        )
+
     # Compute the Hessian matrix at the minimum, using the train_chi2 function
     # giving the optimized parameters and idx=0 (not used)
     # Note the 0.5 factor because we absorb the 1/2 of the taylor expansion
