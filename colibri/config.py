@@ -445,12 +445,6 @@ class colibriConfig(Config):
 
         return analytic_settings
 
-    def produce_vectorized(self, ultranest_settings):
-        """Returns True if the fit is vectorized, False otherwise.
-        This is required for the predictions functions, which do not take ultranest_settings as an argument.
-        """
-        return ultranest_settings["ReactiveNS_settings"]["vectorized"]
-
     @explicit_node
     def produce_commondata_tuple(self, closure_test_level=False):
         """
