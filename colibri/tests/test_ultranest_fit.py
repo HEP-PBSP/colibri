@@ -30,7 +30,7 @@ bayesian_prior = lambda x: x
 
 integrability_penalty = lambda pdf: jnp.array([0.0])
 
-ns_settings = {
+ultranest_settings = {
     "ultranest_seed": 42,
     "ReactiveNS_settings": {"vectorized": False},
     "SliceSampler_settings": None,
@@ -40,7 +40,7 @@ ns_settings = {
     "sampler_plot": False,
 }
 
-vect_ns_settings = copy.deepcopy(ns_settings)
+vect_ns_settings = copy.deepcopy(ultranest_settings)
 vect_ns_settings["ReactiveNS_settings"]["vectorized"] = True
 
 
@@ -68,17 +68,17 @@ def test_ultranest_fit(pos_penalty):
     fit_result = ultranest_fit(
         MOCK_PDF_MODEL,
         bayesian_prior,
-        ns_settings,
+        ultranest_settings,
         mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
-        ns_settings["n_posterior_samples"],
+        ultranest_settings["n_posterior_samples"],
         len(MOCK_PDF_MODEL.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
-    assert fit_result.ultranest_specs == ns_settings
+    assert fit_result.ultranest_specs == ultranest_settings
     assert isinstance(fit_result.ultranest_result, dict)
 
 
@@ -86,7 +86,7 @@ def test_ultranest_fit(pos_penalty):
 def test_ultranest_fit_vectorized(pos_penalty):
 
     _pred_data = None
-    ns_settings["ReactiveNS_settings"]["vectorized"] = True
+    ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_INV_COVMAT_INDEX,
@@ -108,23 +108,23 @@ def test_ultranest_fit_vectorized(pos_penalty):
     fit_result = ultranest_fit(
         MOCK_PDF_MODEL,
         bayesian_prior,
-        ns_settings,
+        ultranest_settings,
         mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
-        ns_settings["n_posterior_samples"],
+        ultranest_settings["n_posterior_samples"],
         len(MOCK_PDF_MODEL.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
-    assert fit_result.ultranest_specs == ns_settings
+    assert fit_result.ultranest_specs == ultranest_settings
     assert isinstance(fit_result.ultranest_result, dict)
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit_with_SliceSampler(pos_penalty):
-    ns_settings = {
+    ultranest_settings = {
         "ultranest_seed": 42,
         "ReactiveNS_settings": {"vectorized": False},
         "SliceSampler_settings": {"nsteps": 10},
@@ -157,23 +157,23 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     fit_result = ultranest_fit(
         MOCK_PDF_MODEL,
         bayesian_prior,
-        ns_settings,
+        ultranest_settings,
         mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
-        ns_settings["n_posterior_samples"],
+        ultranest_settings["n_posterior_samples"],
         len(MOCK_PDF_MODEL.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
-    assert fit_result.ultranest_specs == ns_settings
+    assert fit_result.ultranest_specs == ultranest_settings
     assert isinstance(fit_result.ultranest_result, dict)
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit_with_popSliceSampler(pos_penalty):
-    ns_settings = {
+    ultranest_settings = {
         "ultranest_seed": 42,
         "ReactiveNS_settings": {"vectorized": False},
         "SliceSampler_settings": {"nsteps": 10, "popsize": 10},
@@ -206,17 +206,17 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     fit_result = ultranest_fit(
         MOCK_PDF_MODEL,
         bayesian_prior,
-        ns_settings,
+        ultranest_settings,
         mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
-        ns_settings["n_posterior_samples"],
+        ultranest_settings["n_posterior_samples"],
         len(MOCK_PDF_MODEL.param_names),
     )
     assert fit_result.param_names == ["param1", "param2"]
-    assert fit_result.ultranest_specs == ns_settings
+    assert fit_result.ultranest_specs == ultranest_settings
     assert isinstance(fit_result.ultranest_result, dict)
 
 
