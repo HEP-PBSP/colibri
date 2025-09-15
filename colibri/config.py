@@ -177,7 +177,9 @@ class colibriConfig(Config):
         kdiff = settings.keys() - known_keys
         for k in kdiff:
             log.warning(
-                ConfigError(f"Key '{k}' in ultranest_settings not known.", k, known_keys)
+                ConfigError(
+                    f"Key '{k}' in ultranest_settings not known.", k, known_keys
+                )
             )
 
         # Now construct the ultranest_settings dictionary, checking the parameter combinations are
@@ -188,15 +190,21 @@ class colibriConfig(Config):
         ultranest_settings["ultranest_seed"] = settings.get("ultranest_seed", 123456)
 
         # Set the posterior resampling parameters
-        ultranest_settings["n_posterior_samples"] = settings.get("n_posterior_samples", 1000)
+        ultranest_settings["n_posterior_samples"] = settings.get(
+            "n_posterior_samples", 1000
+        )
         ultranest_settings["posterior_resampling_seed"] = settings.get(
             "posterior_resampling_seed", 123456
         )
 
         # Parse internal settings, if they are not mentioned, set to empty dict
-        ultranest_settings["ReactiveNS_settings"] = settings.get("ReactiveNS_settings", {})
+        ultranest_settings["ReactiveNS_settings"] = settings.get(
+            "ReactiveNS_settings", {}
+        )
         ultranest_settings["Run_settings"] = settings.get("Run_settings", {})
-        ultranest_settings["SliceSampler_settings"] = settings.get("SliceSampler_settings", {})
+        ultranest_settings["SliceSampler_settings"] = settings.get(
+            "SliceSampler_settings", {}
+        )
 
         # set sampler plot to True by default
         ultranest_settings["sampler_plot"] = settings.get("sampler_plot", True)
