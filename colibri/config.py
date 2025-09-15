@@ -492,20 +492,11 @@ class colibriConfig(Config):
         hessian_settings["require_local_min"] = bool(
             settings.get("require_local_min", False)
         )
+        hessian_settings["rng_key"] = int(settings.get("rng_seed", 123456))
 
         # If replicas mode, set default for number of samples
         if hessian_settings["ErrorType"] == "replicas":
             hessian_settings["n_samples"] = int(settings.get("n_samples", 100))
-
-        # Optional RNG seed for replicas sampling
-        if "rng_seed" in settings:
-            try:
-                seed = int(settings["rng_seed"])
-                hessian_settings["rng_key"] = jax.random.PRNGKey(seed)
-            except Exception as e:
-                raise ConfigError(
-                    f"Invalid rng_seed in hessian_settings: {settings['rng_seed']}"
-                ) from e
 
         # Validate values
         if hessian_settings["tolerance"] <= 0:

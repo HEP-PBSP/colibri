@@ -8,6 +8,7 @@ import unittest
 import unittest.mock as mock
 from pathlib import Path
 from unittest.mock import mock_open, patch
+import jax
 
 import pytest
 import reportengine
@@ -434,6 +435,7 @@ def test_parse_hessian_settings_defaults():
         "grad_tol": 1e-6,
         "min_hessian_eigval": 1e-12,
         "require_local_min": False,
+        "rng_key": 123456,
     }
 
 
@@ -448,7 +450,7 @@ def test_parse_hessian_settings_replicas_with_seed():
     # default n_samples applied
     assert res["n_samples"] == 100
     # rng_key built from seed
-    assert (res["rng_key"] == jax.random.PRNGKey(123)).all()
+    assert res["rng_key"] == 123
 
 
 @patch("colibri.config.log.warning")

@@ -176,7 +176,7 @@ def hessian_fit(
     if hessian_settings["ErrorType"] == "replicas":
         log.info("Using gaussian replicas for error propagation.")
         n_samples = hessian_settings["n_samples"]
-        rng_key = hessian_settings.get("rng_key", jax.random.PRNGKey(0))
+        rng_key = jax.random.PRNGKey(hessian_settings["rng_key"])
         # Generate samples from a multivariate normal distribution
         # with mean parameters_min and covariance cov_params
         hessian_param_set = jax.random.multivariate_normal(
