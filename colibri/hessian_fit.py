@@ -152,19 +152,41 @@ def hessian_fit(
     # covariance matrix is inflated by tolerance^2
     cov_params = tolerance**2 * jnp.linalg.inv(hessian)
 
-    n_samples = hessian_settings["n_samples"]
-
-    # Generate samples from a multivariate normal distribution
-    # with mean parameters_min and covariance cov_params
-    resampled_posterior = jax.random.multivariate_normal(
-        key=jax.random.PRNGKey(0),
-        mean=parameters_min,
-        cov=cov_params,
-        shape=(n_samples,),
-    )
-
     t1 = time.time()
     log.info("HESSIAN RUNNING TIME: %f" % (t1 - t0))
+
+    if hessian_settings["ErrorType"] == "replicas":
+        log.info("Using gaussian replicas for error propagation.")
+        n_samples = hessian_settings["n_samples"]
+
+        # Generate samples from a multivariate normal distribution
+        # with mean parameters_min and covariance cov_params
+        hessian_param_set = jax.random.multivariate_normal(
+            key=jax.random.PRNGKey(0),
+            mean=parameters_min,
+            cov=cov_params,
+            shape=(n_samples,),
+        )
+    elif hessian_settings["ErrorType"] == "hessian":
+        log.info("Using hessian method for error propagation.")
+        # Find eingenvectors and eigenvalues of the covariance matrix
+        eigvals, eigvecs = jnp.linalg.eigh(cov_params)
+        # Generate symmetric parameter variations along each eigenvector
+        # scaled by sqrt of the corresponding eigenvalue
+        param_shift = (eigvecs * jnp.sqrt(eigvals)).T  # (n_eig, n_par)
+        # Shift the optimized parameters along the eigenvectors
+        # to generate the error sets
+        param_plus = parameters_min + param_shift
+        param_minus = parameters_min - param_shift
+        hessian_param_set = jnp.empty(
+            (2 * param_plus.shape[0], param_plus.shape[1]), dtype=param_plus.dtype
+        )
+        hessian_param_set = hessian_param_set.at[0::2].set(param_plus)  # even rows: +
+        hessian_param_set = hessian_param_set.at[1::2].set(param_minus)  # odd  rows: −
+    else:
+        raise ValueError(
+            f"Unknown ErrorType {hessian_settings['ErrorType']}. Choose 'replicas' or 'hessian'."
+        )
 
     return HessianFit(
         hessian_specs={
@@ -174,13 +196,14 @@ def hessian_fit(
             "grad_tol": grad_tol,
             "min_hessian_eigval": eig_eps,
             "require_local_min": require_local_min,
+            "ErrorType": hessian_settings["ErrorType"],
         },
         min_chi2=min_chi2,
         training_loss=training_loss,
         optimized_parameters=parameters_min,
         hessian=hessian,
         cov_params=cov_params,
-        resampled_posterior=resampled_posterior,
+        resampled_posterior=hessian_param_set,
     )
 
 
