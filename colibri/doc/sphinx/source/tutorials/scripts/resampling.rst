@@ -24,12 +24,12 @@ number of posterior draws via the ``analytic_settings`` block. For example:
       full_sample_size: 50000
 
 Likewise, if you instead use the UltraNest nested sampler, you can specify the
-same parameter name under ``ns_settings``:
+same parameter name under ``ultranest_settings``:
 
 .. code-block:: yaml
 
     # ultranest settings
-    ns_settings:
+    ultranest_settings:
       n_posterior_samples: 100
       ...
 
