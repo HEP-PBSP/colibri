@@ -418,3 +418,64 @@ def test_produce_commondata_tuple():
     closure_test_level = 2
     with pytest.raises(ConfigError):
         BASE_CONFIG.produce_commondata_tuple(closure_test_level)
+
+
+# -----------------------------
+# parse_hessian_settings tests
+# -----------------------------
+
+
+def test_parse_hessian_settings_defaults():
+    res = BASE_CONFIG.parse_hessian_settings({})
+    assert res == {
+        "tolerance": 1.0,
+        "iter_init": 1,
+        "ErrorType": "hessian",
+        "grad_tol": 1e-6,
+        "min_hessian_eigval": 1e-12,
+        "require_local_min": False,
+    }
+
+
+def test_parse_hessian_settings_replicas_with_seed():
+    import jax
+
+    settings = {"ErrorType": "replicas", "rng_seed": 123, "iter_init": 2}
+    res = BASE_CONFIG.parse_hessian_settings(settings)
+
+    assert res["ErrorType"] == "replicas"
+    assert res["iter_init"] == 2
+    # default n_samples applied
+    assert res["n_samples"] == 100
+    # rng_key built from seed
+    assert (res["rng_key"] == jax.random.PRNGKey(123)).all()
+
+
+@patch("colibri.config.log.warning")
+def test_parse_hessian_settings_unknown_key_warns(mock_warning):
+    settings = {"tolerance": 1.0, "unknown": True}
+    res = BASE_CONFIG.parse_hessian_settings(settings)
+    # defaults returned and warning emitted
+    assert res["tolerance"] == 1.0
+    assert mock_warning.called
+    args, _ = mock_warning.call_args
+    assert isinstance(args[0], ConfigError)
+
+
+@pytest.mark.parametrize(
+    "settings, match",
+    [
+        ({"tolerance": 0}, "tolerance.*must be > 0"),
+        ({"iter_init": 0}, "iter_init.*must be >= 1"),
+        ({"grad_tol": 0.0}, "grad_tol.*must be > 0"),
+        ({"min_hessian_eigval": 0.0}, "min_hessian_eigval.*must be > 0"),
+        ({"ErrorType": "unknown"}, "ErrorType.*either 'replicas' or 'hessian'"),
+        (
+            {"ErrorType": "replicas", "n_samples": 0},
+            "n_samples.*must be >= 1",
+        ),
+    ],
+)
+def test_parse_hessian_settings_invalid_values(settings, match):
+    with pytest.raises(ConfigError, match=match):
+        BASE_CONFIG.parse_hessian_settings(settings)
