@@ -36,7 +36,7 @@ def optimizer_provider(
 
     optimizer = optimizer_settings["optimizer"]
 
-    optimizer_hyperparams = optimizer_settings["optimizer_hyperparams"] 
+    optimizer_hyperparams = optimizer_settings["optimizer_hyperparams"]
 
     if "clipnorm" in optimizer_settings:
         clipnorm = optimizer_settings["clipnorm"]

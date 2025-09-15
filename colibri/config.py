@@ -454,7 +454,9 @@ class colibriConfig(Config):
 
         optimizer_settings = {}
 
-        optimizer_settings["optimizer_hyperparams"] = settings.get("optimizer_hyperparams", {})
+        optimizer_settings["optimizer_hyperparams"] = settings.get(
+            "optimizer_hyperparams", {}
+        )
         optimizer_settings["optimizer"] = settings.get("optimizer", "adam")
         optimizer_settings["clipnorm"] = settings.get("clipnorm", None)
 
