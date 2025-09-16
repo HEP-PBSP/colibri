@@ -59,7 +59,7 @@ class BlackJAXFit(BayesianFit):
 def blackjax_fit(
     pdf_model,
     bayesian_prior,
-    ns_settings,
+    blackjax_settings,
     log_likelihood,
 ):
     """
@@ -73,8 +73,8 @@ def blackjax_fit(
     bayesian_prior: @jax.jit CompiledFunction
         The prior function for the model.
 
-    ns_settings: dict
-        Settings for the Nested Sampling fit.
+    blackjax_settings: dict
+        Settings for the BlackJAX Nested Sampling fit.
 
     log_likelihood: Callable
         The log likelihood function for the model.
@@ -88,10 +88,10 @@ def blackjax_fit(
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
 
     # set the BlackJAX seed
-    rng_key = jax.random.PRNGKey(ns_settings["blackjax_settings"]["seed"])
+    rng_key = jax.random.PRNGKey(blackjax_settings["seed"])
     n_dims = pdf_model.n_parameters
-    n_live = ns_settings["blackjax_settings"]["n_live"]
-    n_delete = int(ns_settings["blackjax_settings"]["delete_fraction"] * n_live)
+    n_live = blackjax_settings["n_live"]
+    n_delete = int(blackjax_settings["delete_fraction"] * n_live)
 
     inital_particles = bayesian_prior["sample"](rng_key, n_live)
 
@@ -99,7 +99,7 @@ def blackjax_fit(
         logprior_fn=bayesian_prior["log_prob"],
         loglikelihood_fn=log_likelihood,
         num_delete=n_delete,
-        num_inner_steps=int(ns_settings["blackjax_settings"]["repeats"] * n_dims),
+        num_inner_steps=int(blackjax_settings["repeats"] * n_dims),
     )
 
     @jax.jit
@@ -115,10 +115,7 @@ def blackjax_fit(
 
     t0 = time.time()
     with tqdm.tqdm(desc="Dead points", unit=" dead points") as pbar:
-        while (
-            not state.logZ_live - state.logZ
-            < ns_settings["blackjax_settings"]["log_precision"]
-        ):
+        while not state.logZ_live - state.logZ < blackjax_settings["log_precision"]:
             (state, rng_key), dead_info = one_step((state, rng_key), None)
             dead.append(dead_info)
             pbar.update(n_delete)
@@ -138,7 +135,7 @@ def blackjax_fit(
     full_samples = sample(sample_key, final_states, ess_value)
 
     # Get number of posterior samples to resample
-    n_posterior_samples = ns_settings["n_posterior_samples"]
+    n_posterior_samples = blackjax_settings["n_posterior_samples"]
 
     # Check if we have enough samples
     if n_posterior_samples > full_samples.shape[0]:
@@ -150,7 +147,7 @@ def blackjax_fit(
         )
 
     # Resample the posterior
-    posterior_resampling_seed = ns_settings.get("posterior_resampling_seed", 42)
+    posterior_resampling_seed = blackjax_settings["posterior_resampling_seed"]
     log.info(f"Resampling posterior with seed: {posterior_resampling_seed}")
     resampled_posterior = resample_from_ns_posterior(
         full_samples,
@@ -166,7 +163,7 @@ def blackjax_fit(
         columns=pdf_model.param_names,
     )
     # write nested_samples.csv to blackjax_logs
-    log_dir = ns_settings.get("blackjax_settings", {}).get("log_dir", "./blackjax_logs")
+    log_dir = blackjax_settings["log_dir"]
     os.makedirs(log_dir, exist_ok=True)  # Create directory if it doesn't exist
     nested_samples.to_csv(log_dir + "/nested_samples.csv")
 
@@ -184,7 +181,7 @@ def blackjax_fit(
 
     # todo: interface properly to expected output
     fit_result = BlackJAXFit(
-        blackjax_specs=ns_settings,
+        blackjax_specs=blackjax_settings,
         blackjax_result={
             "logZ": logzs.mean(),
             "logZ_err": logzs.std(),

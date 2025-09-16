@@ -101,8 +101,6 @@ def ultranest_fit(
         log_likelihood,
         bayesian_prior,
         **ultranest_settings["ReactiveNS_settings"],
-        bayesian_prior["prior_transform"],
-        **ultranest_settings["ReactiveNS_settings"],
     )
 
     if ultranest_settings["SliceSampler_settings"]:

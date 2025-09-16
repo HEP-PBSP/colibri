@@ -81,14 +81,14 @@ prior_settings:
 
 
 # Nested Sampling settings
-ns_settings:
+  
+blackjax_settings:
   n_posterior_samples: 100
-  blackjax_settings:
-    n_live: 500
-    repeats: 3
-    delete_fraction: 0.5
-    log_precision: -3
-    seed: 0
+  n_live: 500
+  repeats: 3
+  delete_fraction: 0.5
+  log_precision: -3
+  seed: 0
 
 
 actions_:
