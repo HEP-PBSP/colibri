@@ -76,6 +76,14 @@ def bayesian_prior(prior_settings, pdf_model):
 
         sqrt_cov_posterior = jnp.linalg.cholesky(cov_posterior)
 
+        # Define dummy log_prob and sample for now
+        @jax.jit
+        def log_prob(x):
+            raise NotImplementedError("log_prob not implemented for Gaussian prior")
+
+        def sample(rng_key, n_samples):
+            raise NotImplementedError("sample not implemented for Gaussian prior")
+
         @cast_to_numpy
         @jax.jit
         def prior_transform(cube):
