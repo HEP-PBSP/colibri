@@ -15,6 +15,7 @@ def test_optimizer_provider_returns_adam():
     """Check that optimizer_provider returns an Adam optimizer with given hyperparams."""
     optimizer_settings = {
         "optimizer": "adam",
+        "clipnorm": None,
         "optimizer_hyperparams": {"learning_rate": 0.01},
     }
 
@@ -57,6 +58,7 @@ def test_optimizer_provider_invalid_optimizer_raises():
     optimizer_settings = {
         "optimizer": "not_an_optimizer",
         "optimizer_hyperparams": {},
+        "clipnorm": None,
     }
 
     with pytest.raises(AttributeError):
