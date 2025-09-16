@@ -65,6 +65,11 @@ grid_pdf_settings:
 ###################
 # Methodology specs
 ###################
+optimizer_settings:
+    optimizer: adam # Any of the optax optimizers can be used.
+    # clipnorm: 1.0 # Gradient clipping norm value. Set to null to disable or omit.
+    optimizer_hyperparams:
+        learning_rate: 5e-4
 
 # Monte Carlo settings
 use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
