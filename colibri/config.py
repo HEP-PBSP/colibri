@@ -187,7 +187,6 @@ class colibriConfig(Config):
             "ultranest_seed",
             "sampler_plot",
             "popstepsampler",
-            "blackjax_settings",
         }
 
         kdiff = settings.keys() - known_keys
@@ -221,7 +220,6 @@ class colibriConfig(Config):
         ultranest_settings["SliceSampler_settings"] = settings.get(
             "SliceSampler_settings", {}
         )
-        blackjax_settings["blackjax_settings"] = settings.get("blackjax_settings", {})
 
         # set sampler plot to True by default
         ultranest_settings["sampler_plot"] = settings.get("sampler_plot", True)
@@ -230,7 +228,7 @@ class colibriConfig(Config):
         ultranest_settings["popstepsampler"] = settings.get("popstepsampler", False)
 
         # Check that the ReactiveNS_settings key was provided, if not set to default
-        if "ReactiveNS_settings" in ultranest_settings and ultranest_settings["ReactiveNS_settings"]:
+        if ultranest_settings["ReactiveNS_settings"]:
             # Set the directory where the ultranest logs will be stored; by default
             # they are stored in output_path/ultranest_logs
             ultranest_settings["ReactiveNS_settings"]["log_dir"] = settings[
@@ -250,13 +248,6 @@ class colibriConfig(Config):
             )
             ultranest_settings["ReactiveNS_settings"]["resume"] = False
             ultranest_settings["ReactiveNS_settings"]["vectorized"] = False
-
-        # Handle BlackJAX settings
-        if "blackjax_settings" in ultranest_settings and ultranest_settings["blackjax_settings"]:
-            # Set the directory where the blackjax logs will be stored
-            ultranest_settings["blackjax_settings"]["log_dir"] = ultranest_settings[
-                "blackjax_settings"
-            ].get("log_dir", str(output_path / "blackjax_logs"))
 
         # In the case that the fit is resuming from a previous ultranest fit, the logs
         # directory must exist
@@ -279,6 +270,49 @@ class colibriConfig(Config):
             ultranest_settings["ReactiveNS_settings"]["resume"] = "overwrite"
 
         return ultranest_settings
+
+    def parse_blackjax_settings(self, settings, output_path):
+        """For a BlackJAX fit, parses the blackjax_settings namespace from the runcard,
+        and ensures the choice of settings is valid.
+        """
+
+        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
+        known_keys = {
+            "n_posterior_samples",
+            "n_live",
+            "repeats",
+            "delete_fraction",
+            "log_precision",
+            "posterior_resampling_seed" "seed",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in blackjax_settings not known.", k, known_keys)
+            )
+
+        # Now construct the blackjax_settings dictionary
+        blackjax_settings = {}
+
+        # Extract settings and set default values
+        blackjax_settings["n_posterior_samples"] = settings.get(
+            "n_posterior_samples", 1000
+        )
+        blackjax_settings["n_live"] = settings.get("n_live", 500)
+        blackjax_settings["repeats"] = settings.get("repeats", 3)
+        blackjax_settings["delete_fraction"] = settings.get("delete_fraction", 0.5)
+        blackjax_settings["log_precision"] = settings.get("log_precision", -3)
+        blackjax_settings["seed"] = settings.get("seed", 0)
+        blackjax_settings["posterior_resampling_seed"] = settings.get(
+            "posterior_resampling_seed", 123456
+        )
+        # Set directoty where blackjax_logs will be saved
+        blackjax_settings["log_dir"] = settings.get(
+            "log_dir", str(output_path / "blackjax_logs")
+        )
+
+        return blackjax_settings
 
     def parse_positivity_penalty_settings(self, settings):
         """
