@@ -447,7 +447,7 @@ class colibriConfig(Config):
 
     def parse_optimizer_settings(self, settings):
         """
-        For a Monte Carlo fit. Parses the optimizer_settings namespace from the runcard
+        For a gradient descent based fit. Parses the optimizer_settings namespace from the runcard.
         """
         # Begin by checking that the user-supplied keys are known; warn the user otherwise.
         known_keys = {"clipnorm", "optimizer", "optimizer_hyperparams"}
