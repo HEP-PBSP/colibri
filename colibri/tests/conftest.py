@@ -290,8 +290,8 @@ class TestPDFModel(PDFModel):
 
 MOCK_PDF_MODEL = Mock()
 MOCK_PDF_MODEL.param_names = ["param1", "param2"]
-MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: np.sum(
-    np.array([param * TEST_PDF_GRID for param in params]), axis=0
+MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: jnp.sum(
+    jnp.array([param * TEST_PDF_GRID for param in params]), axis=0
 )
 """
 Mock PDF model with 2 parameters and grid_values_func simple mult add operation on np.ones grid.
@@ -334,10 +334,10 @@ This mocks a POS fast kernel mapping the PDF grid to 2 datapoints.
 """
 
 
-TEST_FORWARD_MAP_DIS = lambda pdf, fk_arrays: np.einsum("ijk,jk->i", fk_arrays, pdf)
+TEST_FORWARD_MAP_DIS = lambda pdf, fk_arrays: jnp.einsum("ijk,jk->i", fk_arrays[0], pdf)
 """
 Mock DIS forward map function for testing purposes.
-Function expects a DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_N_XGRID) and a PDF of shape (TEST_N_FL, TEST_N_XGRID).
+Function expects a tuple of DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_N_XGRID) and a PDF of shape (TEST_N_FL, TEST_N_XGRID).
 """
 
 
@@ -359,98 +359,6 @@ MOCK_PENALTY_POSDATA = MagicMock(return_value=jnp.array([5.0]))
 """
 Mock penalty_posdata function for testing purposes.
 """
-
-
-class UltraNestLogLikelihoodMock:
-    def __init__(
-        self,
-        central_inv_covmat_index,
-        pdf_model,
-        fit_xgrid,
-        forward_map,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
-        ns_settings,
-        chi2,
-        penalty_posdata,
-        positivity_penalty_settings,
-    ):
-        """
-        Mock version of UltraNestLogLikelihood class for testing purposes.
-
-        Parameters
-        ----------
-        central_inv_covmat_index: commondata_utils.CentralInvCovmatIndex
-
-        pdf_model: pdf_model.PDFModel
-
-        fit_xgrid: np.ndarray
-
-        forward_map: Callable
-
-        fast_kernel_arrays: tuple
-
-        positivity_fast_kernel_arrays: tuple
-
-        ns_settings: dict
-
-        chi2: Callable
-
-        penalty_posdata: Callable
-
-        positivity_penalty_settings: dict
-        """
-        self.central_values = central_inv_covmat_index.central_values
-        self.inv_covmat = central_inv_covmat_index.inv_covmat
-        self.pdf_model = pdf_model
-        self.chi2 = chi2
-        self.penalty_posdata = penalty_posdata
-        self.positivity_penalty_settings = positivity_penalty_settings
-
-        self.pred_and_pdf = pdf_model.pred_and_pdf_func(
-            fit_xgrid, forward_map=forward_map
-        )
-
-        if ns_settings["ReactiveNS_settings"]["vectorized"]:
-            self.pred_and_pdf = jax.vmap(
-                self.pred_and_pdf, in_axes=(0, None), out_axes=(0, 0)
-            )
-
-            self.chi2 = jax.vmap(self.chi2, in_axes=(None, 0, None), out_axes=0)
-            self.penalty_posdata = jax.vmap(
-                self.penalty_posdata, in_axes=(0, None, None, None), out_axes=0
-            )
-
-        self.fast_kernel_arrays = fast_kernel_arrays
-        self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
-
-    def __call__(self, params):
-        """
-        Mock function called by the ultranest sampler.
-
-        Parameters
-        ----------
-        params: np.array
-            The model parameters.
-        """
-        return self.log_likelihood(
-            params,
-            self.central_values,
-            self.inv_covmat,
-            self.fast_kernel_arrays,
-            self.positivity_fast_kernel_arrays,
-        )
-
-    def log_likelihood(
-        self,
-        params,
-        central_values,
-        inv_covmat,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
-    ):
-        predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
-        return -0.5 * (self.chi2(central_values, predictions, inv_covmat))
 
 
 TEST_PRIOR_SETTINGS_UNIFORM = PriorSettings(

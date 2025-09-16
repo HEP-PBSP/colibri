@@ -15,8 +15,6 @@ class LogLikelihood(object):
     """
     This class takes care of constructing the log-likelihood that is passed to
     the bayesian samplers.
-
-    TODO: class should be generalised so as to be suited for MC replica fits.
     """
 
     def __init__(
@@ -27,7 +25,6 @@ class LogLikelihood(object):
         forward_map,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
-        ns_settings,
         chi2,
         penalty_posdata,
         positivity_penalty_settings,
@@ -47,8 +44,6 @@ class LogLikelihood(object):
         fast_kernel_arrays: tuple
 
         positivity_fast_kernel_arrays: tuple
-
-        ns_settings: dict
 
         chi2: Callable
 
@@ -71,20 +66,6 @@ class LogLikelihood(object):
             fit_xgrid, forward_map=forward_map
         )
 
-        # TODO: is ultranest specific and should be changed at some point
-        if ns_settings["ReactiveNS_settings"]["vectorized"]:
-            self.pred_and_pdf = jax.vmap(
-                self.pred_and_pdf, in_axes=(0, None), out_axes=(0, 0)
-            )
-
-            self.chi2 = jax.vmap(self.chi2, in_axes=(None, 0, None), out_axes=0)
-            self.penalty_posdata = jax.vmap(
-                self.penalty_posdata, in_axes=(0, None, None, None), out_axes=0
-            )
-            self.integrability_penalty = jax.vmap(
-                self.integrability_penalty, in_axes=(0,), out_axes=0
-            )
-
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
 
@@ -95,8 +76,13 @@ class LogLikelihood(object):
 
         Parameters
         ----------
-        params: jnp.array
+        params: jnp.ndarray
             The model parameters.
+
+        Returns
+        -------
+        jnp.ndarray
+            The log-likelihood value.
         """
         return self.log_likelihood(
             params,
@@ -109,9 +95,9 @@ class LogLikelihood(object):
     @partial(jax.jit, static_argnames=("self",))
     def log_likelihood(
         self,
-        params: jnp.array,
-        central_values: jnp.array,
-        inv_covmat: jnp.array,
+        params: jnp.ndarray,
+        central_values: jnp.ndarray,
+        inv_covmat: jnp.ndarray,
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
     ) -> jnp.array:
@@ -121,15 +107,15 @@ class LogLikelihood(object):
 
         Parameters
         ----------
-        params: jnp.array
-        central_values: jnp.array
-        inv_covmat: jnp.array
+        params: jnp.ndarray
+        central_values: jnp.ndarray
+        inv_covmat: jnp.ndarray
         fast_kernel_arrays: tuple
         positivity_fast_kernel_arrays: tuple
 
         Returns
         -------
-        jnp.array
+        jnp.ndarray
             jax array with the value of the log-likelihood.
         """
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
@@ -168,7 +154,6 @@ def log_likelihood(
     _pred_data,
     fast_kernel_arrays,
     positivity_fast_kernel_arrays,
-    ns_settings,
     _penalty_posdata,
     positivity_penalty_settings,
     integrability_penalty,
@@ -186,7 +171,6 @@ def log_likelihood(
         _pred_data,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
-        ns_settings,
         chi2,
         _penalty_posdata,
         positivity_penalty_settings,

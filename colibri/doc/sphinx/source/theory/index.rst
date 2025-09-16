@@ -9,12 +9,12 @@ This section discusses some relevant theoretical background to Colibri.
 .. toctree::
    :maxdepth: 1
 
-   ./pdf_model/index
+   ./pdf_model.rst
 
-   ./likelihood/index
+   ./likelihood.rst
    
-   ./theory_predictions/index
+   ./theory_predictions.rst
 
-   ./bayesian_prior/index
+   ./prior_distributions.rst
 
-   ./inference/index
+   ./inference_methods.rst

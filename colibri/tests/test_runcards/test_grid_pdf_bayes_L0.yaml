@@ -68,7 +68,7 @@ grid_pdf_settings:
 # Methodology specs
 ###################
 # Nested Sampling settings
-ns_settings:
+ultranest_settings:
   sampler_plot: False
   n_posterior_samples: 1
   ReactiveNS_settings:

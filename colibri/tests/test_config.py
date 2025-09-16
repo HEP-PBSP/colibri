@@ -181,7 +181,7 @@ def test_parse_optimizer_settings(mock_warning):
 @patch("colibri.config.os.path.exists")
 @patch("colibri.config.log.warning")
 @patch("colibri.config.log.info")
-def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
+def test_parse_ultranest_settings(mock_info, mock_warning, mock_exists, tmp_path):
     # Test known key settings
     settings = {
         "n_posterior_samples": 500,
@@ -200,7 +200,7 @@ def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
     mock_exists.return_value = True
 
     # Call the function
-    ns_settings = BASE_CONFIG.parse_ns_settings(settings, tmp_path)
+    ultranest_settings = BASE_CONFIG.parse_ultranest_settings(settings, tmp_path)
 
     # Check that the settings were parsed correctly
     expected_settings = {
@@ -218,13 +218,15 @@ def test_parse_ns_settings(mock_info, mock_warning, mock_exists, tmp_path):
         "popstepsampler": True,
     }
 
-    assert ns_settings == expected_settings
+    assert ultranest_settings == expected_settings
     assert mock_info.called
 
 
 @patch("colibri.config.os.path.exists")
 @patch("colibri.config.log.warning")
-def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path):
+def test_parse_ultranest_settings_with_unknown_keys(
+    mock_warning, mock_exists, tmp_path
+):
     # Test with unknown keys in settings
     settings = {
         "unknown_key": "value",
@@ -236,7 +238,7 @@ def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path
     mock_exists.return_value = False
 
     # Call the function
-    ns_settings = BASE_CONFIG.parse_ns_settings(settings, tmp_path)
+    ultranest_settings = BASE_CONFIG.parse_ultranest_settings(settings, tmp_path)
 
     # Check that the settings were parsed correctly
     expected_settings = {
@@ -254,13 +256,15 @@ def test_parse_ns_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path
         "popstepsampler": False,
     }
 
-    assert ns_settings == expected_settings
+    assert ultranest_settings == expected_settings
     assert mock_warning.called
 
 
 @patch("colibri.config.os.path.exists")
 @patch("colibri.config.log.info")
-def test_parse_ns_settings_with_missing_log_dir(mock_info, mock_exists, tmp_path):
+def test_parse_ultranest_settings_with_missing_log_dir(
+    mock_info, mock_exists, tmp_path
+):
     # Test missing log directory
     settings = {
         "ReactiveNS_settings": {
@@ -273,15 +277,15 @@ def test_parse_ns_settings_with_missing_log_dir(mock_info, mock_exists, tmp_path
     mock_exists.return_value = False
 
     with unittest.TestCase.assertRaises(unittest.TestCase(), FileNotFoundError):
-        BASE_CONFIG.parse_ns_settings(settings, tmp_path)
+        BASE_CONFIG.parse_ultranest_settings(settings, tmp_path)
 
 
-def test_parse_ns_settings_with_defaults(tmp_path):
+def test_parse_ultranest_settings_with_defaults(tmp_path):
     # Test default settings
     settings = {}
 
     # Call the function
-    ns_settings = BASE_CONFIG.parse_ns_settings(settings, tmp_path)
+    ultranest_settings = BASE_CONFIG.parse_ultranest_settings(settings, tmp_path)
 
     # Check that the settings were parsed correctly
     expected_settings = {
@@ -299,7 +303,7 @@ def test_parse_ns_settings_with_defaults(tmp_path):
         "popstepsampler": False,
     }
 
-    assert ns_settings == expected_settings
+    assert ultranest_settings == expected_settings
 
 
 def test_parse_positivity_penalty_settings_defaults():

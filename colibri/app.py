@@ -28,7 +28,7 @@ colibri_providers = [
     "colibri.analytic_fit",
     "colibri.pdf_model",
     "colibri.bayes_prior",
-    "colibri.mc_initialisation",
+    "colibri.param_initialisation",
     "colibri.export_results",
     "colibri.closure_test",
     "reportengine.report",
@@ -44,7 +44,7 @@ class colibriApp(App):
 
     @property
     def argparser(self):
-        """Parser arguments for grid_pdf app can be added here"""
+        """Parser arguments for colibri."""
         parser = super().argparser
 
         parser.add_argument(

@@ -15,7 +15,7 @@ from colibri.covmats import sqrt_covmat_jax
 
 def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix):
     """
-    Returns a jax.jit compiled function that computes the chi2
+    Returns a function that computes the chi2
     of a pdf grid on a training data batch.
 
     Notes:
@@ -32,7 +32,7 @@ def make_chi2_training_data(mc_pseudodata, fit_covariance_matrix):
 
     Returns
     -------
-    @jax.jit Callable
+    Callable
         function to compute chi2 of a pdf grid on a data batch.
 
     """
@@ -75,7 +75,7 @@ def make_chi2_training_data_with_positivity(
     mc_pseudodata, mc_posdata_split, fit_covariance_matrix, _penalty_posdata
 ):
     """
-    Returns a jax.jit compiled function that computes the chi2
+    Returns a function that computes the chi2
     of a pdf grid on a training data batch including positivity penalty.
 
     Notes:
@@ -98,7 +98,7 @@ def make_chi2_training_data_with_positivity(
 
     Returns
     -------
-    @jax.jit Callable
+    Callable
         function to compute chi2 of a pdf grid on a data batch.
     """
 
@@ -159,7 +159,7 @@ def make_chi2_training_data_with_positivity(
 
 def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix):
     """
-    Returns a jax.jit compiled function that computes the chi2
+    Returns a function that computes the chi2
     of a pdf grid on validation data.
 
     Notes:
@@ -176,7 +176,7 @@ def make_chi2_validation_data(mc_pseudodata, fit_covariance_matrix):
 
     Returns
     -------
-    @jax.jit Callable
+    Callable
         function to compute chi2 of a pdf grid on validation data.
     """
     val_idx = mc_pseudodata.validation_indices
@@ -202,7 +202,7 @@ def make_chi2_validation_data_with_positivity(
     mc_pseudodata, mc_posdata_split, fit_covariance_matrix, _penalty_posdata
 ):
     """
-    Returns a jax.jit compiled function that computes the chi2
+    Returns a function that computes the chi2
     of a pdf grid on validation data.
 
     Notes:
@@ -225,7 +225,7 @@ def make_chi2_validation_data_with_positivity(
 
     Returns
     -------
-    @jax.jit Callable
+    Callable
         function to compute chi2 of a pdf grid on validation data.
     """
     if not mc_pseudodata.trval_split:

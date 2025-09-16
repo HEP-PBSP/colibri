@@ -59,7 +59,7 @@ class UltranestFit(BayesianFit):
 def ultranest_fit(
     pdf_model,
     bayesian_prior,
-    ns_settings,
+    ultranest_settings,
     log_likelihood,
 ):
     """
@@ -73,7 +73,7 @@ def ultranest_fit(
     bayesian_prior: @jax.jit CompiledFunction
         The prior function for the model.
 
-    ns_settings: dict
+    ultranest_settings: dict
         Settings for the Nested Sampling fit.
 
     log_likelihood: Callable
@@ -88,39 +88,43 @@ def ultranest_fit(
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
 
     # set the ultranest seed
-    np.random.seed(ns_settings["ultranest_seed"])
+    np.random.seed(ultranest_settings["ultranest_seed"])
 
     parameters = pdf_model.param_names
+
+    if ultranest_settings["ReactiveNS_settings"]["vectorized"]:
+        log.info("Vectorized likelihood for ultranest fit.")
+        log_likelihood = jax.vmap(log_likelihood, in_axes=(0,), out_axes=0)
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
         log_likelihood,
         bayesian_prior,
-        **ns_settings["ReactiveNS_settings"],
+        **ultranest_settings["ReactiveNS_settings"],
     )
 
-    if ns_settings["SliceSampler_settings"]:
-        if ns_settings["popstepsampler"]:
+    if ultranest_settings["SliceSampler_settings"]:
+        if ultranest_settings["popstepsampler"]:
 
             sampler.stepsampler = popstepsampler.PopulationSliceSampler(
                 generate_direction=ultranest.popstepsampler.generate_mixture_random_direction,
-                **ns_settings["SliceSampler_settings"],
+                **ultranest_settings["SliceSampler_settings"],
             )
         else:
 
             sampler.stepsampler = ustepsampler.SliceSampler(
                 generate_direction=ultranest.stepsampler.generate_mixture_random_direction,
-                **ns_settings["SliceSampler_settings"],
+                **ultranest_settings["SliceSampler_settings"],
             )
 
     t0 = time.time()
-    ultranest_result = sampler.run(**ns_settings["Run_settings"])
+    ultranest_result = sampler.run(**ultranest_settings["Run_settings"])
     t1 = time.time()
 
     if rank == 0:
         log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
 
-    n_posterior_samples = ns_settings["n_posterior_samples"]
+    n_posterior_samples = ultranest_settings["n_posterior_samples"]
 
     # Initialize fit_result to avoid UnboundLocalError
     fit_result = None
@@ -138,10 +142,10 @@ def ultranest_fit(
         resampled_posterior = resample_from_ns_posterior(
             ultranest_result["samples"],
             n_posterior_samples,
-            ns_settings["posterior_resampling_seed"],
+            ultranest_settings["posterior_resampling_seed"],
         )
 
-        if ns_settings["sampler_plot"]:
+        if ultranest_settings["sampler_plot"]:
             log.info("Plotting sampler plots")
             # Store run plots to ultranest_logs folder (within output_path folder)
             sampler.plot()
@@ -153,7 +157,7 @@ def ultranest_fit(
         min_chi2 = -2 * ultranest_result["maximum_likelihood"]["logl"]
 
         # the log_likelihood function here should never be vectorized as the samples do not come in batches
-        if ns_settings["ReactiveNS_settings"]["vectorized"]:
+        if ultranest_settings["ReactiveNS_settings"]["vectorized"]:
             avg_chi2 = jnp.array([-2 * log_likelihood(full_samples)]).mean()
         else:
             avg_chi2 = jnp.array(
@@ -165,7 +169,7 @@ def ultranest_fit(
         Cb = avg_chi2 - min_chi2
 
         fit_result = UltranestFit(
-            ultranest_specs=ns_settings,
+            ultranest_specs=ultranest_settings,
             ultranest_result=ultranest_result,
             param_names=parameters,
             resampled_posterior=resampled_posterior,

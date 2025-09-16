@@ -1,12 +1,12 @@
-.. _running_bayesian:
+.. _in_running_bayesian:
 
 =============
 Bayesian Fits
 =============
 
-In this section, we discuss how to run a bayesian fit in Colibri.
+In this section, we discuss how to run a Bayesian fit in Colibri.
 
-In bayesian statistics, the parameters :math:`\theta` that describe the theory are
+In Bayesian statistics, the parameters :math:`\theta` that describe the theory are
 treated as random variables. They have a `prior probability density` (or `prior`),
 :math:`P(\theta)`, which encodes what is known or assumed about the parameters 
 prior to experimental observation.
@@ -19,8 +19,8 @@ from `Bayes' theorem`:
 
 where :math:`P(\mathrm{data} \mid \theta)` is the `likelihood function`.
 
-In a bayesian fit, the posterior distribution of the PDF model parameters is sampled
-using a sampling method. Colibri currently supports bayesian sampling with the
+In a Bayesian fit, the posterior distribution of the PDF model parameters is sampled
+using a sampling method. Colibri currently supports Bayesian sampling with the
 following packages:
 
 .. toctree::
@@ -29,4 +29,4 @@ following packages:
     ./ultranest
 
 Following the links above will take you to a tutorial on how to run a
-bayesian fit with the respective package.
+Bayesian fit with the respective package.

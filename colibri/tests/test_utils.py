@@ -10,6 +10,8 @@ import shutil
 from pathlib import Path
 from unittest import mock
 from unittest.mock import MagicMock, mock_open, patch
+import sys
+import types
 
 import jax
 import jax.numpy as jnp
@@ -786,29 +788,33 @@ def test_large_psd_matrix():
 
 
 def test_pdf_model_from_colibri_model_not_found():
-    with patch("importlib.import_module", side_effect=ModuleNotFoundError):
+    with patch(
+        "colibri.utils.importlib.import_module", side_effect=ModuleNotFoundError
+    ):
         settings = {"model": "nonexistent_model"}
         with pytest.raises(ModuleNotFoundError):
             pdf_model_from_colibri_model(settings)
 
 
-@patch("importlib.import_module")
-def test_pdf_model_from_colibri_model_missing_config(mock_import_module):
-    # Explicitly remove the 'config' attribute
-    mock_module = MagicMock()
-    del mock_module.config  # Ensure 'config' attribute doesn't exist
-    mock_import_module.return_value = mock_module
+def test_pdf_model_from_colibri_model_missing_config():
+    # Simulate module import succeeding but config submodule missing via sys.modules
+    parent_module = types.ModuleType("mock_model")
     settings = {"model": "mock_model"}
-    with pytest.raises(AttributeError):
-        pdf_model_from_colibri_model(settings)
+    with patch.dict(sys.modules, {"mock_model": parent_module}):
+        with patch("colibri.utils.importlib.util.find_spec", return_value=None):
+            with pytest.raises(ImportError):
+                pdf_model_from_colibri_model(settings)
 
 
-@patch("importlib.import_module")
 @patch("inspect.getmembers")
-def test_pdf_model_from_colibri_model_success(
-    mock_getmembers, mock_import_module, mock_colibri_model
-):
-    mock_import_module.return_value = MagicMock()
+def test_pdf_model_from_colibri_model_success(mock_getmembers, mock_colibri_model):
+    # Provide fake modules through sys.modules so importlib can import them
+    parent_module = types.ModuleType("mock_colibri_model")
+    config_module = types.ModuleType("mock_colibri_model.config")
+    sysmods = {
+        "mock_colibri_model": parent_module,
+        "mock_colibri_model.config": config_module,
+    }
     # Mock the colibriConfig class and its subclass
     from colibri.config import colibriConfig
 
@@ -828,17 +834,25 @@ def test_pdf_model_from_colibri_model_success(
         "param2": 2,
     }
 
-    # Call the function and assert the result
-    result = pdf_model_from_colibri_model(model_settings)
+    # Ensure the config submodule is considered present
+    with patch.dict(sys.modules, sysmods), patch(
+        "colibri.utils.importlib.util.find_spec", return_value=object()
+    ):
+        # Call the function and assert the result
+        result = pdf_model_from_colibri_model(model_settings)
     assert result == mock_colibri_model
 
 
-@patch("importlib.import_module")
 @patch("inspect.getmembers")
 def test_pdf_model_from_colibri_model_incorrect_inputs(
-    mock_getmembers, mock_import_module, mock_colibri_model
+    mock_getmembers, mock_colibri_model
 ):
-    mock_import_module.return_value = MagicMock()
+    parent_module = types.ModuleType("mock_colibri_model")
+    config_module = types.ModuleType("mock_colibri_model.config")
+    sysmods = {
+        "mock_colibri_model": parent_module,
+        "mock_colibri_model.config": config_module,
+    }
     # Mock the colibriConfig class and its subclass
     from colibri.config import colibriConfig
 
@@ -857,5 +871,8 @@ def test_pdf_model_from_colibri_model_incorrect_inputs(
         "param1": 1,
     }
 
-    with pytest.raises(ValueError):
-        pdf_model_from_colibri_model(model_settings)
+    with patch.dict(sys.modules, sysmods), patch(
+        "colibri.utils.importlib.util.find_spec", return_value=object()
+    ):
+        with pytest.raises(ValueError):
+            pdf_model_from_colibri_model(model_settings)

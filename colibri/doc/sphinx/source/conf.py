@@ -111,6 +111,7 @@ html_theme_options = {"logo_only": True}
 html_static_path = ["_static"]
 
 html_css_files = ["css/custom.css"]
+html_js_files = ["custom.js"]
 
 html_logo = "_static/colibri-logo-name.png"
 

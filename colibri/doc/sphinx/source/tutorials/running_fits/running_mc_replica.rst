@@ -10,10 +10,9 @@ in Colibri.
 
 The Monte Carlo replica method introduces a `pseudodata distribution`,
 :math:`d_p \sim N(d_0, \Sigma)`, which is an approximation to the actual distribution
-from which the measurement :math:`d_0` was drawn. 
-
-We then define the corresponding 'best-fit parameter' values to be those which
-minimise the :math:`\chi^2` evaluated on the pseudodata:
+from which the measurement :math:`d_0` was drawn. It then defines the corresponding
+'best-fit parameter' values to be those which minimise the :math:`\chi^2` evaluated
+on the pseudodata:
 
 .. math::
 
@@ -98,7 +97,7 @@ executable.
     max_epochs: 300                        # The max number of epochs in Monte Carlo training.
     mc_validation_fraction: 0.2            # The fraction of the data used for validation in Monte Carlo training.
 
-    mc_initialiser_settings:               # The initialiser for Monte Carlo training.
+    param_initialiser_settings:               # The initialiser for Monte Carlo training.
         type: uniform
         bounds:
             alpha_gluon: [-0.1, 1]
@@ -135,6 +134,42 @@ with, for example:
     
     min_val: -4.5
     max_val: 13
+
+Initialising parameters with a normal distribution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If you want to initialise with parameters that are distributed
+normally rather than uniformally (as in the runcard above) you
+may do so with the following settings:
+
+.. code-block:: bash
+
+    param_initialiser_settings:               # The initialiser for Monte Carlo training.
+        type: normal
+        means: 2.0    
+        stds: 0.5
+
+This will set the mean to 2.0 and standard deviation to 0.5 for all
+parameters. If instead you want to specify different values for each
+parameter, either for the means or standard deviations or both, you
+can do so:
+
+.. code-block:: bash
+
+    param_initialiser_settings:               # The initialiser for Monte Carlo training.
+        type: normal
+        means:
+            alpha_gluon: 0.356
+            beta_gluon: 10.9      
+            [...]
+        stds:
+            alpha_gluon: 0.06    
+            beta_gluon: 0.55              
+            [...]
+
+.. note::
+    If you use initialise with a normal distribution and don't specify
+    means or standard deviations, default values of **0.0** and **1.0**
+    will be used respectively.
 
 Running the fit
 ---------------
