@@ -215,7 +215,7 @@ class colibriConfig(Config):
         ultranest_settings["popstepsampler"] = settings.get("popstepsampler", False)
 
         # Check that the ReactiveNS_settings key was provided, if not set to default
-        if ultranest_settings["ReactiveNS_settings"]:
+        if "ReactiveNS_settings" in ultranest_settings and ultranest_settings["ReactiveNS_settings"]:
             # Set the directory where the ultranest logs will be stored; by default
             # they are stored in output_path/ultranest_logs
             ultranest_settings["ReactiveNS_settings"]["log_dir"] = settings[
@@ -235,6 +235,13 @@ class colibriConfig(Config):
             )
             ultranest_settings["ReactiveNS_settings"]["resume"] = False
             ultranest_settings["ReactiveNS_settings"]["vectorized"] = False
+
+        # Handle BlackJAX settings  
+        if "blackjax_settings" in ultranest_settings and ultranest_settings["blackjax_settings"]:
+            # Set the directory where the blackjax logs will be stored
+            ultranest_settings["blackjax_settings"]["log_dir"] = ultranest_settings["blackjax_settings"].get(
+                "log_dir", str(output_path / "blackjax_logs")
+            )
 
         # In the case that the fit is resuming from a previous ultranest fit, the logs
         # directory must exist
