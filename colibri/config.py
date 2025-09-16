@@ -236,12 +236,12 @@ class colibriConfig(Config):
             ultranest_settings["ReactiveNS_settings"]["resume"] = False
             ultranest_settings["ReactiveNS_settings"]["vectorized"] = False
 
-        # Handle BlackJAX settings  
+        # Handle BlackJAX settings
         if "blackjax_settings" in ultranest_settings and ultranest_settings["blackjax_settings"]:
             # Set the directory where the blackjax logs will be stored
-            ultranest_settings["blackjax_settings"]["log_dir"] = ultranest_settings["blackjax_settings"].get(
-                "log_dir", str(output_path / "blackjax_logs")
-            )
+            ultranest_settings["blackjax_settings"]["log_dir"] = ultranest_settings[
+                "blackjax_settings"
+            ].get("log_dir", str(output_path / "blackjax_logs"))
 
         # In the case that the fit is resuming from a previous ultranest fit, the logs
         # directory must exist
