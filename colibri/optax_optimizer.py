@@ -38,7 +38,7 @@ def optimizer_provider(
 
     optimizer_hyperparams = optimizer_settings["optimizer_hyperparams"]
 
-    if "clipnorm" in optimizer_settings:
+    if optimizer_settings["clipnorm"] is not None:
         clipnorm = optimizer_settings["clipnorm"]
         opt = getattr(optax, optimizer)
         return optax.chain(
