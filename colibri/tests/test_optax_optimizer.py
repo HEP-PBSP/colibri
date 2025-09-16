@@ -19,7 +19,7 @@ def test_optimizer_provider_returns_adam():
         "optimizer_hyperparams": {"learning_rate": 0.01},
     }
 
-    opt = optimizer_provider(optimizer="adam", optimizer_settings=optimizer_settings)
+    opt = optimizer_provider(optimizer_settings=optimizer_settings)
 
     # It should be an Optax optimizer
     assert isinstance(opt, optax.GradientTransformation)
@@ -38,7 +38,7 @@ def test_optimizer_provider_with_clipnorm():
         "clipnorm": 1.0,
     }
 
-    opt = optimizer_provider(optimizer="adam", optimizer_settings=optimizer_settings)
+    opt = optimizer_provider(optimizer_settings=optimizer_settings)
 
     assert isinstance(opt, optax.GradientTransformation)
 
@@ -62,4 +62,4 @@ def test_optimizer_provider_invalid_optimizer_raises():
     }
 
     with pytest.raises(AttributeError):
-        optimizer_provider(optimizer="adam", optimizer_settings=optimizer_settings)
+        optimizer_provider(optimizer_settings=optimizer_settings)
