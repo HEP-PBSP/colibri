@@ -155,6 +155,12 @@ def main():
         choices=["evolve"],
         help="The action to run (defaults to 'evolve').",
     )
+    parser.add_argument(
+        "--hessian_fit",
+        type=bool,
+        default=False,
+        help="Specify if the fit is hessian (default is False)",
+    )
     parser.add_argument("name_fit", help="The name of the fit directory")
     args = parser.parse_args()
 
@@ -178,6 +184,10 @@ def main():
 
     # Run evolven3fit: invoke the underlying CLI with both args
     sys.argv = ["evolven3fit", args.action, args.name_fit]
+    # The evolven3fit arg parser has a misuse and if you pass --hessian_fit False
+    # it will evaluate as bool("False")=True, so we only pass --hessian_fit True if needed
+    if args.hessian_fit:
+        sys.argv += ["--hessian_fit", "True"]
     evolven3fit_main()
 
     # Run postfit emulator to generate the postfit directory and symlinks
