@@ -14,15 +14,13 @@ log = logging.getLogger(__name__)
 
 
 def optimizer_provider(
-    optimizer="adam", optimizer_settings={}
+    optimizer_settings,
 ) -> optax._src.base.GradientTransformationExtraArgs:
     """
     Define the optimizer.
 
     Parameters
     ----------
-    optimizer : str, default = "adam"
-        Name of the optimizer to use.
 
     optimizer_settings : dict, default = {}
         Dictionary containing the optimizer settings.
@@ -35,11 +33,14 @@ def optimizer_provider(
     """
 
     optimizer = optimizer_settings["optimizer"]
+    log.info(f"Using {optimizer} optimizer.")
     opt = getattr(optax, optimizer)
     optimizer_hyperparams = optimizer_settings["optimizer_hyperparams"]
+    log.info(f"Optimizer hyperparameters: {optimizer_hyperparams}.")
 
     if optimizer_settings["clipnorm"] is not None:
         clipnorm = optimizer_settings["clipnorm"]
+        log.info(f"Using gradient clipping with norm {clipnorm}.")
         return optax.chain(
             optax.clip_by_global_norm(clipnorm),
             opt(**optimizer_hyperparams),
