@@ -25,10 +25,6 @@ from colibri.export_results import BayesianFit, export_bayes_results, write_repl
 from colibri.utils import resample_from_ns_posterior
 
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
-
 log = logging.getLogger(__name__)
 
 # Check if --debug flag is present
@@ -95,11 +91,9 @@ def blackjax_fit(
     rng_key = jax.random.PRNGKey(ns_settings["blackjax_settings"]["seed"])
     n_dims = pdf_model.n_parameters
     n_live = ns_settings["blackjax_settings"]["n_live"]
-    n_delete = int(ns_settings["blackjax_settings"]["delete_fraction"] * n_live )
+    n_delete = int(ns_settings["blackjax_settings"]["delete_fraction"] * n_live)
 
-    inital_particles = bayesian_prior["sample"](
-        rng_key, n_live
-    )
+    inital_particles = bayesian_prior["sample"](rng_key, n_live)
 
     algo = blackjax.nss(
         logprior_fn=bayesian_prior["log_prob"],
@@ -119,60 +113,57 @@ def blackjax_fit(
 
     dead = []
 
-
     t0 = time.time()
     with tqdm.tqdm(desc="Dead points", unit=" dead points") as pbar:
-        while not state.logZ_live - state.logZ < ns_settings["blackjax_settings"]["log_precision"]:
+        while (
+            not state.logZ_live - state.logZ
+            < ns_settings["blackjax_settings"]["log_precision"]
+        ):
             (state, rng_key), dead_info = one_step((state, rng_key), None)
             dead.append(dead_info)
             pbar.update(n_delete)
     t1 = time.time()
 
-    if rank == 0:
-        log.info("BLACKJAX RUNNING TIME: %f" % (t1 - t0))
+    log.info("BLACKJAX RUNNING TIME: %f" % (t1 - t0))
 
-    final_states = finalise(
-        state,
-        dead
-    )
+    final_states = finalise(state, dead)
     rng_key, ess_key, weights_key, sample_key = jax.random.split(rng_key, 4)
 
     # Initialize fit_result to avoid UnboundLocalError
     fit_result = None
 
-    ess_value = int(ess(ess_key,final_states))
-    logw = log_weights(rng_key,final_states)
-    logzs = logsumexp(logw, axis =0)
+    ess_value = int(ess(ess_key, final_states))
+    logw = log_weights(rng_key, final_states)
+    logzs = logsumexp(logw, axis=0)
     full_samples = sample(sample_key, final_states, ess_value)
-    
+
     # Get number of posterior samples to resample
     n_posterior_samples = ns_settings["n_posterior_samples"]
-    
-    if rank == 0:
-        # Check if we have enough samples
-        if n_posterior_samples > full_samples.shape[0]:
-            n_posterior_samples = full_samples.shape[0]
-            log.warning(
-                f"The chosen number of posterior samples exceeds the number of posterior "
-                f"samples computed by BlackJAX. Setting the number of resampled posterior "
-                f"samples to {n_posterior_samples}"
-            )
-        
-        # Resample the posterior
-        posterior_resampling_seed = ns_settings.get("posterior_resampling_seed", 42)
-        log.info(f"Resampling posterior with seed: {posterior_resampling_seed}")
-        resampled_posterior = resample_from_ns_posterior(
-            full_samples,
-            n_posterior_samples,
-            posterior_resampling_seed,
+
+    # Check if we have enough samples
+    if n_posterior_samples > full_samples.shape[0]:
+        n_posterior_samples = full_samples.shape[0]
+        log.warning(
+            f"The chosen number of posterior samples exceeds the number of posterior "
+            f"samples computed by BlackJAX. Setting the number of resampled posterior "
+            f"samples to {n_posterior_samples}"
         )
 
-    #write out an anesthetic dataframe
+    # Resample the posterior
+    posterior_resampling_seed = ns_settings.get("posterior_resampling_seed", 42)
+    log.info(f"Resampling posterior with seed: {posterior_resampling_seed}")
+    resampled_posterior = resample_from_ns_posterior(
+        full_samples,
+        n_posterior_samples,
+        posterior_resampling_seed,
+    )
+
+    # write out an anesthetic dataframe
     nested_samples = anesthetic.NestedSamples(
-        data = final_states.particles,
-        logL = final_states.loglikelihood,
-        logL_birth = final_states.loglikelihood_birth,
-        columns = pdf_model.param_names,
+        data=final_states.particles,
+        logL=final_states.loglikelihood,
+        logL_birth=final_states.loglikelihood_birth,
+        columns=pdf_model.param_names,
     )
     # write nested_samples.csv to blackjax_logs
     log_dir = ns_settings.get("blackjax_settings", {}).get("log_dir", "./blackjax_logs")
@@ -183,17 +174,15 @@ def blackjax_fit(
     # Find maximum likelihood point
     max_ll_idx = jnp.argmax(final_states.loglikelihood)
     min_chi2 = -2 * final_states.loglikelihood[max_ll_idx]
-    
+
     # Compute average chi2 over full samples
     avg_chi2 = jnp.array(
         [-2 * log_likelihood(jnp.array(sample)).item() for sample in full_samples]
     ).mean()
-    
+
     Cb = avg_chi2 - min_chi2
 
-    
-
-    #todo: interface properly to expected output
+    # todo: interface properly to expected output
     fit_result = BlackJAXFit(
         blackjax_specs=ns_settings,
         blackjax_result={
@@ -203,20 +192,14 @@ def blackjax_fit(
         },
         param_names=pdf_model.param_names,
         resampled_posterior=resampled_posterior,
-        full_posterior_samples=full_samples, 
+        full_posterior_samples=full_samples,
         bayesian_metrics={
             "bayes_complexity": Cb,
             "avg_chi2": avg_chi2,
             "min_chi2": min_chi2,
             "logz": logzs.mean(),
         },
-        
     )
-
-    # Synchronize to ensure all processes have finished
-    comm.Barrier()
-
-    fit_result = comm.bcast(fit_result, root=0)
 
     return fit_result
 
@@ -235,7 +218,6 @@ def run_blackjax_fit(blackjax_fit, output_path, pdf_model):
         The PDF model used in the fit.
     """
 
-    if rank == 0:
-        export_bayes_results(blackjax_fit, output_path, "ns_result")
+    export_bayes_results(blackjax_fit, output_path, "ns_result")
 
     write_replicas(blackjax_fit, output_path, pdf_model)
