@@ -91,6 +91,13 @@ executable.
     # Integrability Settings
     #integrability_settings:
     #  integrability: False
+    
+    optimizer_settings:
+        optimizer: adam # Any of the optax optimizers can be used.
+        clipnorm: 1.0 # Gradient clipping norm value. Set to null to disable or omit.
+        optimizer_hyperparams:
+            learning_rate: 0.001
+            # any hyperparameters specific to the chosen optimizer can be set here
 
     # Monte Carlo settings
     use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.

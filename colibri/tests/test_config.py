@@ -136,6 +136,48 @@ def test_parse_analytic_settings_defaults():
     assert result == expected
 
 
+@patch("colibri.config.log.warning")
+def test_parse_optimizer_settings(mock_warning):
+
+    settings = {
+        "clipnorm": 6.3e-6,
+        "optimizer": "adam",
+        "optimizer_hyperparams": {"learning_rate": 0.001},
+        "unknown_key": "some_value",  # This should trigger the warning
+        "another_unknown": "value",  # This should also trigger a warning
+    }
+
+    # Call the method
+    result = BASE_CONFIG.parse_optimizer_settings(settings)
+
+    # Assert the result is as expected (unknown keys should be filtered out)
+    expected = {
+        "clipnorm": 6.3e-6,
+        "optimizer": "adam",
+        "optimizer_hyperparams": {"learning_rate": 0.001},
+    }
+
+    print("Testing optimizer settings parsing...")
+    assert result == expected
+
+    # Assert that the warning was called twice (once for each unknown key)
+    assert mock_warning.call_count == 2
+
+    # Check that both unknown keys triggered warnings
+    warning_messages = [
+        str(call_args[0][0]) for call_args in mock_warning.call_args_list
+    ]
+
+    assert any(
+        "Key 'unknown_key' in optimizer_settings not known." in msg
+        for msg in warning_messages
+    )
+    assert any(
+        "Key 'another_unknown' in optimizer_settings not known." in msg
+        for msg in warning_messages
+    )
+
+
 @patch("colibri.config.os.path.exists")
 @patch("colibri.config.log.warning")
 @patch("colibri.config.log.info")
