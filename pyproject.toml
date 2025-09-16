@@ -32,7 +32,8 @@ sphinx-copybutton = {version="*", optional=true}
 # nnpdf dependency
 nnpdf = { git = "https://github.com/NNPDF/nnpdf" }
 anesthetic = "^2.10.2"
-tensorflow-probability = "^0.25.0"
+#tensorflow-probability = "^0.25.0"
+tfp-nightly = { extras = ["jax"], version = "*" }
 blackjax = {git = "https://github.com/handley-lab/blackjax", rev = "nested_sampling"}
 
 
