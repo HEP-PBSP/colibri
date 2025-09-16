@@ -8,8 +8,8 @@ dataset_inputs:
   # DIS          
 - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
 - {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
-- {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
-- {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+# - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+# - {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
 # - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
 # - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
 # - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
@@ -82,6 +82,7 @@ prior_settings:
 
 # Nested Sampling settings
 ns_settings:
+  n_posterior_samples: 100
   blackjax_settings:
     n_live: 500
     repeats: 3
@@ -91,4 +92,4 @@ ns_settings:
 
 
 actions_:
-- blackjax_fit                      # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- run_blackjax_fit                      # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
