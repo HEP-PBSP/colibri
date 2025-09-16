@@ -17,6 +17,15 @@ It can be executed from the command line as follows:
 
 where ``<name_fit>`` is the name of the fit you want to evolve. The script
 also has a ``--help`` option that will show you all the options available.
+If the performed fit is a fit which requires ``ErrorType=hessian``, 
+i.e. the PDF grids to evolve are eigenvectors of the covariance matrix, 
+you can specify the option
+
+.. code-block:: bash
+
+   evolve_fit <name_fit> --hessian_fit True
+
+to correctly produce the LHAPDF set.
 For more information on the evolution see also the helper from the
 ``evolven3fit`` script.
 
