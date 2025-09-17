@@ -519,6 +519,31 @@ class colibriConfig(Config):
 
         return hessian_settings
 
+    def parse_optimizer_settings(self, settings):
+        """
+        For a gradient descent based fit. Parses the optimizer_settings namespace from the runcard.
+        """
+        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
+        known_keys = {"clipnorm", "optimizer", "optimizer_hyperparams"}
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(
+                    f"Key '{k}' in optimizer_settings not known.", k, known_keys
+                )
+            )
+
+        optimizer_settings = {}
+
+        optimizer_settings["optimizer_hyperparams"] = settings.get(
+            "optimizer_hyperparams", {}
+        )
+        optimizer_settings["optimizer"] = settings.get("optimizer", "adam")
+        optimizer_settings["clipnorm"] = settings.get("clipnorm", None)
+
+        return optimizer_settings
+
     @explicit_node
     def produce_commondata_tuple(self, closure_test_level=False):
         """
