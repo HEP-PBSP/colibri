@@ -268,7 +268,9 @@ class colibriConfig(Config):
             "repeats",
             "delete_fraction",
             "log_precision",
-            "posterior_resampling_seed" "seed",
+            "posterior_resampling_seed",
+            "seed",
+            "vectorized",
         }
 
         kdiff = settings.keys() - known_keys
@@ -292,6 +294,7 @@ class colibriConfig(Config):
         blackjax_settings["posterior_resampling_seed"] = settings.get(
             "posterior_resampling_seed", 123456
         )
+        blackjax_settings["vectorized"] = settings.get("vectorized", False)
         # Set directoty where blackjax_logs will be saved
         blackjax_settings["log_dir"] = settings.get(
             "log_dir", str(output_path / "blackjax_logs")
