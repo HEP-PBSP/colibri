@@ -4,7 +4,7 @@ Resampling script
 -----------------
 
 The final step in a Bayesian or analytic fit in Colibri (before evolution)
-is to write out posterior samples as ``.exportgrid`` files in the ``replicas\``
+is to write out posterior samples as ``.exportgrid`` files in the ``replicas/``
 folder. These samples will then be evolved into a PDF set by the
 :ref:`evolution script <evolution_script>`.
 
@@ -47,7 +47,7 @@ same parameter name under ``ultranest_settings``:
 
 .. note::
     
-    In the case of a fit done using the ``ultranest`` nested sampling sampler, 
+    In the case of a fit done using the UltraNest nested sampler, 
     the ``full_sample_size`` defaults to an internal number that might depends on the 
     specific run.
 
