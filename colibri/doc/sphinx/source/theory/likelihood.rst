@@ -25,7 +25,7 @@ function:
 .. math::
     :label: eq:likelihood
 
-     \mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) \propto \chi^2,
+     \mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) \propto -\chi^2,
 
 where :math:`\chi^2` is defined as:
 
