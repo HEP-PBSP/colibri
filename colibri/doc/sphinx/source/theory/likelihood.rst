@@ -18,7 +18,7 @@ function can be found in the
 `NNPDF documentation <https://docs.nnpdf.science/figuresofmerit/index.html>`_
 
 In general, it is more convenient to work in terms of the *log-likelihood*,
-:math:`\mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) = log(\mathcal{l}(\mathbf{D} | \boldsymbol{\theta}))`.
+:math:`\mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) = \log (\mathcal{l}(\mathbf{D} | \boldsymbol{\theta}))`.
 The basic form of the log-likelihood function used during sampling is proportional to a :math:`\chi^2`
 function:
 
