@@ -88,23 +88,20 @@ def blackjax_fit(
 
     # Store original likelihood for later use
     original_log_likelihood = log_likelihood
-
+    
     # Apply vectorization if requested
     if blackjax_settings["vectorized"]:
         log.info("Vectorized likelihood for BlackJAX fit.")
-
         # Create a wrapper that handles both single and batch inputs
         def vectorized_log_likelihood(params):
             # Check if input is batched (2D) or single (1D)
             if params.ndim == 2:
                 # Batched input - use vmap
-                return jax.vmap(original_log_likelihood, in_axes=(0,), out_axes=0)(
-                    params
-                )
+                return jax.vmap(original_log_likelihood, in_axes=(0,), out_axes=0)(params)
             else:
                 # Single input - use original function
                 return original_log_likelihood(params)
-
+        
         log_likelihood = vectorized_log_likelihood
 
     # set the BlackJAX seed
@@ -116,7 +113,7 @@ def blackjax_fit(
     inital_particles = bayesian_prior["sample"](rng_key, n_live)
 
     # ------------------- VECTORISATION DEBUG -------------------
-    debug_batch_size = min(10, n_live)  # small batch for testing
+    debug_batch_size = min(5, n_live)  # small batch for testing
 
     if blackjax_settings["vectorized"]:
         # For vectorized likelihood, test with batch input
@@ -236,7 +233,6 @@ def blackjax_fit(
 
     Cb = avg_chi2 - min_chi2
 
-    # todo: interface properly to expected output
     fit_result = BlackJAXFit(
         blackjax_specs=blackjax_settings,
         blackjax_result={
