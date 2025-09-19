@@ -88,20 +88,23 @@ def blackjax_fit(
 
     # Store original likelihood for later use
     original_log_likelihood = log_likelihood
-    
+
     # Apply vectorization if requested
     if blackjax_settings["vectorized"]:
         log.info("Vectorized likelihood for BlackJAX fit.")
+
         # Create a wrapper that handles both single and batch inputs
         def vectorized_log_likelihood(params):
             # Check if input is batched (2D) or single (1D)
             if params.ndim == 2:
                 # Batched input - use vmap
-                return jax.vmap(original_log_likelihood, in_axes=(0,), out_axes=0)(params)
+                return jax.vmap(original_log_likelihood, in_axes=(0,), out_axes=0)(
+                    params
+                )
             else:
                 # Single input - use original function
                 return original_log_likelihood(params)
-        
+
         log_likelihood = vectorized_log_likelihood
 
     # set the BlackJAX seed
@@ -111,37 +114,6 @@ def blackjax_fit(
     n_delete = int(blackjax_settings["delete_fraction"] * n_live)
 
     inital_particles = bayesian_prior["sample"](rng_key, n_live)
-
-    # ------------------- VECTORISATION DEBUG -------------------
-    debug_batch_size = min(5, n_live)  # small batch for testing
-
-    if blackjax_settings["vectorized"]:
-        # For vectorized likelihood, test with batch input
-        thetas_batch = jnp.ones((debug_batch_size, pdf_model.n_parameters))
-        batch_val = log_likelihood(thetas_batch)
-        print("[DEBUG] Vectorized batch log-likelihood shape:", batch_val.shape)
-        print("[DEBUG] Vectorized batch log-likelihood values:", batch_val)
-        print("[DEBUG] Vectorized likelihood test completed ✅")
-    else:
-        # Original non-vectorized tests
-        # single-point test
-        theta_single = jnp.ones(pdf_model.n_parameters)
-        single_val = log_likelihood(theta_single)
-        print("[DEBUG] Single-point log-likelihood:", single_val)
-
-        # batch test
-        thetas_batch = jnp.ones((debug_batch_size, pdf_model.n_parameters))
-        batch_val = log_likelihood(thetas_batch)
-        print("[DEBUG] Batch log-likelihood shape:", batch_val.shape)
-        print("[DEBUG] Batch log-likelihood values:", batch_val)
-
-        # consistency check
-        manual_val = jnp.array([log_likelihood(theta) for theta in thetas_batch])
-        if jnp.allclose(batch_val, manual_val):
-            print("[DEBUG] Vectorisation test passed ✅")
-        else:
-            print("[DEBUG] Vectorisation mismatch ❌")
-    # ------------------------------------------------------------
 
     algo = blackjax.nss(
         logprior_fn=bayesian_prior["log_prob"],
@@ -233,6 +205,7 @@ def blackjax_fit(
 
     Cb = avg_chi2 - min_chi2
 
+    # write output of the fit result
     fit_result = BlackJAXFit(
         blackjax_specs=blackjax_settings,
         blackjax_result={
