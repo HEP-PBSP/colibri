@@ -125,6 +125,10 @@ def hessian_fit(
             gd_result = gd_result_iter
 
     log.info(f"Minimum chi2 found: {min_chi2}")
+    if not jnp.isfinite(min_chi2):
+        raise ValueError(
+            "Hessian fit failed: none of the gradient descent iterations produced a finite minimum chi2."
+        )
     # Extract results from the best fit
     parameters_min = gd_result.optimized_parameters
     training_loss = gd_result.training_loss
