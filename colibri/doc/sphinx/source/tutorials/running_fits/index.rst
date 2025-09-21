@@ -27,4 +27,6 @@ In the sections that follow, we'll explore the use cases and workflows for each 
 
    ./running_analytic
 
+   ./running_hessian
+
    ./running_positivity
