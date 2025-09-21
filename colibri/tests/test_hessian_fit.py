@@ -234,3 +234,28 @@ def test_hessian_fit_unknown_error_type_raises():
             hessian_settings=hessian_settings,
             param_initialiser_settings=param_initialiser_settings,
         )
+
+
+def test_hessian_fit_raises_on_nonfinite_min_chi2():
+    # Define a log-likelihood that always returns NaN, making chi2 non-finite
+    nan_loglike = lambda p: jnp.nan
+
+    hessian_settings = {
+        "iter_init": 1,
+        "tolerance": 1.0,
+        "ErrorType": "replicas",
+        "n_samples": 2,
+        "rng_key": 0,
+    }
+    param_initialiser_settings = {"type": "zeros"}
+
+    with pytest.raises(ValueError):
+        hessian_fit(
+            pdf_model=MOCK_PDF_MODEL,
+            log_likelihood=nan_loglike,
+            optimizer_provider=MockOptimizerProvider(),
+            early_stopper=MockEarlyStopper(),
+            max_epochs=1,
+            hessian_settings=hessian_settings,
+            param_initialiser_settings=param_initialiser_settings,
+        )
