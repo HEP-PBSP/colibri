@@ -1,4 +1,3 @@
-
 .. _ultranest_fit:
 
 ===========================
@@ -203,6 +202,8 @@ Then, you can use the above runcard with the following command:
 
 Running fits will generate fit folders, the details of which can be found in 
 :ref:`this section <bayes_fit_folders>`.
+
+The next step would be to :ref:`evolve your fit <evolution_script>`.
 
 Terminal output
 ^^^^^^^^^^^^^^^
