@@ -28,5 +28,7 @@ following packages:
 
     ./ultranest
 
+    ./blackjax
+
 Following the links above will take you to a tutorial on how to run a
 Bayesian fit with the respective package.
