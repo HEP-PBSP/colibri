@@ -10,23 +10,32 @@ Having defined a PDF model,
 (see the practical example in :ref:`Les Houches Tutorial <in_les_houches>`)
 Colibri allows us to sample the posterior distribution of its parameters
 :math:`\boldsymbol{\theta}` given a prior distribution :math:`\pi(\boldsymbol{\theta})`
-and a likelihood function :math:`\mathcal{L}(\mathbf{D} | \boldsymbol{\theta})`.
+and a likelihood function, :math:`\mathcal{l}(\mathbf{D} | \boldsymbol{\theta})`.
 
 In this section, we will discuss the form of the likelihood function and its
 implementation in Colibri. Note that a complementary discussion of the likelihood
 function can be found in the
 `NNPDF documentation <https://docs.nnpdf.science/figuresofmerit/index.html>`_
 
-The basic form of the likelihood function used during sampling is a :math:`\chi^2`
-function and is given by:
+In general, it is more convenient to work in terms of the *log-likelihood*,
+:math:`\mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) = \log (\mathcal{l}(\mathbf{D} | \boldsymbol{\theta}))`.
+The basic form of the log-likelihood function used during sampling is proportional to a :math:`\chi^2`
+function:
 
 .. math::
-    \begin{align}
-    \label{eq:likelihood}
-    \mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) &= (\mathbf{D} - FK[\mathbf{f}(\boldsymbol{\theta})])^T C_{\rm t_0}^{-1} (\mathbf{D} - FK[\mathbf{f}(\boldsymbol{\theta})]) \; ,
-    \end{align}
+    :label: eq:likelihood
 
-where :math:`\mathbf{D}` is the data vector, :math:`FK[\mathbf{f}(\boldsymbol{\theta})]`
+     \mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) \propto -\chi^2,
+
+where :math:`\chi^2` is defined as:
+
+.. math::
+    :label: eq:chi2
+
+    \chi^2 = (\mathbf{D} - FK[\mathbf{f}(\boldsymbol{\theta})])^T C_{\rm t_0}^{-1} (\mathbf{D} - FK[\mathbf{f}(\boldsymbol{\theta})]),
+
+
+and :math:`\mathbf{D}` is the data vector, :math:`FK[\mathbf{f}(\boldsymbol{\theta})]`
 is the forward model (described in detail in :ref:`this section <theory_predictions>`)
 and :math:`C_{\rm t_0}` is the :math:`t_0` covariance matrix used to avoid the d'Agostini
 bias when the data has multiplicative uncertainties, as described in the
