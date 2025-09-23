@@ -473,6 +473,7 @@ def test_parse_hessian_settings_defaults():
         "tolerance": 1.0,
         "iter_init": 1,
         "ErrorType": "hessian",
+        "n_eigvec": 20,
         "grad_tol": 1e-6,
         "min_hessian_eigval": 1e-12,
         "require_local_min": False,

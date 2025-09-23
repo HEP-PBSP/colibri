@@ -50,6 +50,7 @@ def test_hessian_fit_runs_and_shapes(error_type):
         "iter_init": 2,
         "tolerance": 1.0,
         "ErrorType": error_type,
+        "n_eigvec": 20,
         # Replicas settings (ignored for ErrorType=="hessian")
         "n_samples": 7,
         "rng_key": 0,
