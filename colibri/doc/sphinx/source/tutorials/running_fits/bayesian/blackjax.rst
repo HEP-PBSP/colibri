@@ -5,9 +5,9 @@ Bayesian Fit with BlackJAX
 ==========================
 
 In this tutorial, we will look at an example runcard to run a Bayesian fit with the
-BlackJAX nested sampler  **TO DO: add blackjax reference**. We will do so for the Les Houches parametrisation model
-(see :ref:`this tutorial <in_les_houches>` for details on the Les Houches model and
-how to implement it).
+BlackJAX nested sampler :cite:`cabezas2024blackjax, yallup2025nested`. We will do
+so for the Les Houches parametrisation model (see :ref:`this tutorial <in_les_houches>`
+for details on the Les Houches model and how to implement it).
 
 We will then loot at the command to execute the runcard.
 
@@ -123,10 +123,10 @@ and so all the settings described there can be used (e.g. global bounds).
 
 * ``n_posterior_samples``: Number of posterior samples ('replicas') drawn (*resampled*) from the posterior distribution. The default is 1000. See :ref:`this tutorial <resampling_script>` for details on resampling.
 * ``vectorized``: Determines whether the likelihood function supports vectorised evaluation (i.e., evaluating multiple points at once).
-* ``n_live``: **TO DO: fill in settings**
-* ``repeats``: 
-* ``delete_fraction``: 
-* ``log_precision``: 
+* ``n_live``: Number of live points at any given time. More live points results in a better estimate of the error.
+* ``repeats``: Number of successful Monte Carlo steps required. Should be a multiple of the dimentionality of parameter space. 
+* ``delete_fraction``: Fraction of live points allowed to be deleted. The more deleted points, the higher the risk of getting stuck at a local minimum, but the lower the memory usage. This setting is analogous to ``min_live_points`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``delete_fraction`` of 0.5 is equivalent to 250 ``min_live_points``.
+* ``log_precision``: Termination ratio. This setting is analogous to ``frac_remain`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``log_precision`` of -3 would be equivalent to a ``frac_remain`` of 0.01.
 * ``seed``: 
 
 Running the fit
