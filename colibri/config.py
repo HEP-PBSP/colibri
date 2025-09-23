@@ -453,8 +453,9 @@ class colibriConfig(Config):
         Expected keys
         -------------
         - tolerance: float > 0
-        - iter_init: int >= 1
+        - iter_init: int >= 1. Number of different parameter initialisations to try in the gradient descent
         - ErrorType: one of {"replicas", "hessian"}
+        - n_eigvec: int >= 1 (used only when ErrorType == "hessian")
         - n_samples: int >= 1 (used only when ErrorType == "replicas")
         - rng_seed: int (optional, converted to jax.random.PRNGKey)
         - grad_tol: float > 0 (optional, gradient norm tolerance for local-min check)
