@@ -1,6 +1,5 @@
 from colibri.export_results import write_replicas
 
-# from colibri.export_results import export_hessian_results
 import jax.numpy as jnp
 from dataclasses import dataclass
 import logging
