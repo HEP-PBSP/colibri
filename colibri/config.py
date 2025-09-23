@@ -467,6 +467,7 @@ class colibriConfig(Config):
             "tolerance",
             "iter_init",
             "ErrorType",
+            "n_eigvec",
             "n_samples",
             "rng_seed",
             "grad_tol",
@@ -493,6 +494,7 @@ class colibriConfig(Config):
             settings.get("require_local_min", False)
         )
         hessian_settings["rng_key"] = int(settings.get("rng_seed", 123456))
+        hessian_settings["n_eigvec"] = int(settings.get("n_eigvec", 20))
 
         # If replicas mode, set default for number of samples
         if hessian_settings["ErrorType"] == "replicas":

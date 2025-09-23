@@ -191,11 +191,25 @@ def hessian_fit(
         )
     elif hessian_settings["ErrorType"] == "hessian":
         log.info("Using hessian method for error propagation.")
+        eigvec_to_use = hessian_settings["n_eigvec"]
         # Find eingenvectors and eigenvalues of the covariance matrix
         eigvals, eigvecs = jnp.linalg.eigh(cov_params)
+        # Sort eigenvalues and eigenvectors in descending order, so that the first
+        # eigenvectors correspond to the largest eigenvalues (variances)
+        sorted_idx = jnp.argsort(eigvals)[::-1]
+        eigvals, eigvecs = eigvals[sorted_idx], eigvecs[:, sorted_idx]
         # Generate symmetric parameter variations along each eigenvector
         # scaled by sqrt of the corresponding eigenvalue
         param_shift = (eigvecs * jnp.sqrt(eigvals)).T  # (n_eig, n_par)
+        # Use only the first eigvec_to_use eigenvectors
+        if eigvec_to_use > param_shift.shape[0]:
+            log.warning(
+                f"Requested number of eigenvectors {eigvec_to_use} "
+                f"exceeds total number of parameters {param_shift.shape[0]}. "
+                f"Using all eigenvectors."
+            )
+            eigvec_to_use = param_shift.shape[0]
+        param_shift = param_shift[:eigvec_to_use]
         # Shift the optimized parameters along the eigenvectors
         # to generate the error sets
         param_plus = parameters_min + param_shift
