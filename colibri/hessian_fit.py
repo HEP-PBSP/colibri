@@ -8,6 +8,7 @@ import jax
 from colibri.gradient_descent import run_gradient_descent
 from colibri.param_initialisation import pdf_initial_parameters
 from colibri.export_results import export_hessian_results
+from flax.training.early_stopping import EarlyStopping
 
 log = logging.getLogger(__name__)
 
@@ -52,7 +53,6 @@ def hessian_fit(
     pdf_model,
     log_likelihood,
     optimizer_provider,
-    early_stopper,
     max_epochs,
     hessian_settings,
     param_initialiser_settings,
@@ -67,8 +67,6 @@ def hessian_fit(
         The log-likelihood function to be maximized.
     optimizer_provider: optax.GradientTransformation
         The optimizer to be used in the gradient descent.
-    early_stopper: Any
-        The early stopping criterion to be used in the gradient descent.
     max_epochs: int
         The maximum number of epochs to be used in the gradient descent.
     hessian_settings: dict
@@ -93,6 +91,9 @@ def hessian_fit(
     grad_tol = hessian_settings.get("grad_tol", 1e-6)
     eig_eps = hessian_settings.get("min_hessian_eigval", 1e-12)
     require_local_min = hessian_settings.get("require_local_min", False)
+    # Dummy early stopper to satisfy the interface
+    # We run for max_epochs in any case
+    early_stopper = EarlyStopping(patience=max_epochs)
 
     t0 = time.time()
     # Generate iter_init random initial parameters
