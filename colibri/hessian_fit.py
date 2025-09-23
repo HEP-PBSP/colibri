@@ -56,6 +56,7 @@ def hessian_fit(
     max_epochs,
     hessian_settings,
     param_initialiser_settings,
+    record_every=50,
 ):
     """Run Hessian-based fit and uncertainty propagation.
 
@@ -73,6 +74,8 @@ def hessian_fit(
         Dictionary containing the settings for the Hessian fit.
     param_initialiser_settings: dict
         Dictionary containing the settings for the parameter initialisation.
+    record_every: int, default = 50
+        Frequency of recording the training loss during the gradient descent.
     """
 
     log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
@@ -115,7 +118,7 @@ def hessian_fit(
             early_stopper=early_stopper,
             max_epochs=max_epochs,
             data_batch=None,
-            record_every=50,
+            record_every=record_every,
         )
         parameters_min_iter = gd_result_iter.optimized_parameters
         min_chi2_iter = train_chi2(parameters_min_iter, 0)
