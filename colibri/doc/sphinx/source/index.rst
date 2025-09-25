@@ -24,7 +24,7 @@ Colibri's workflow
 
 The following diagram presents the workflow of the Colibri code.
 
-.. figure:: /_static/figures/colibri-diagram-long.png
+.. figure:: /_static/figures/colibri-diagram-hessian.png
    :width: 100%
    :align: left
 
