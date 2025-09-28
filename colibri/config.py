@@ -454,9 +454,7 @@ class colibriConfig(Config):
         -------------
         - tolerance: float > 0
         - iter_init: int >= 1. Number of different parameter initialisations to try in the gradient descent
-        - ErrorType: one of {"replicas", "hessian"}
-        - n_eigvec: int >= 1 (used only when ErrorType == "hessian")
-        - n_samples: int >= 1 (used only when ErrorType == "replicas")
+        - n_eigvec: int >= 1
         - rng_seed: int (optional, converted to jax.random.PRNGKey)
         - grad_tol: float > 0 (optional, gradient norm tolerance for local-min check)
         - min_hessian_eigval: float > 0 (optional, PD check epsilon)
@@ -467,9 +465,7 @@ class colibriConfig(Config):
         known_keys = {
             "tolerance",
             "iter_init",
-            "ErrorType",
             "n_eigvec",
-            "n_samples",
             "rng_seed",
             "grad_tol",
             "min_hessian_eigval",
@@ -486,7 +482,6 @@ class colibriConfig(Config):
         hessian_settings = {}
         hessian_settings["tolerance"] = float(settings.get("tolerance", 1.0))
         hessian_settings["iter_init"] = int(settings.get("iter_init", 1))
-        hessian_settings["ErrorType"] = settings.get("ErrorType", "hessian")
         hessian_settings["grad_tol"] = float(settings.get("grad_tol", 1e-6))
         hessian_settings["min_hessian_eigval"] = float(
             settings.get("min_hessian_eigval", 1e-12)
@@ -497,10 +492,6 @@ class colibriConfig(Config):
         hessian_settings["rng_key"] = int(settings.get("rng_seed", 123456))
         hessian_settings["n_eigvec"] = int(settings.get("n_eigvec", 20))
 
-        # If replicas mode, set default for number of samples
-        if hessian_settings["ErrorType"] == "replicas":
-            hessian_settings["n_samples"] = int(settings.get("n_samples", 100))
-
         # Validate values
         if hessian_settings["tolerance"] <= 0:
             raise ConfigError("'tolerance' in hessian_settings must be > 0")
@@ -510,15 +501,6 @@ class colibriConfig(Config):
             raise ConfigError("'grad_tol' in hessian_settings must be > 0")
         if hessian_settings["min_hessian_eigval"] <= 0:
             raise ConfigError("'min_hessian_eigval' in hessian_settings must be > 0")
-        if hessian_settings["ErrorType"] not in {"replicas", "hessian"}:
-            raise ConfigError(
-                "'ErrorType' in hessian_settings must be either 'replicas' or 'hessian'"
-            )
-        if (
-            hessian_settings["ErrorType"] == "replicas"
-            and hessian_settings["n_samples"] < 1
-        ):
-            raise ConfigError("'n_samples' in hessian_settings must be >= 1")
 
         return hessian_settings
 

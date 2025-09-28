@@ -6,7 +6,6 @@ Unit tests for the Hessian-based fit and its export routine.
 
 from unittest.mock import patch
 
-import jax
 import jax.numpy as jnp
 import pytest
 from numpy.testing import assert_allclose
@@ -44,15 +43,11 @@ class MockEarlyStopper:
 log_likelihood = lambda p: -0.5 * jnp.sum(p**2)
 
 
-@pytest.mark.parametrize("error_type", ["replicas", "hessian"])
-def test_hessian_fit_runs_and_shapes(error_type):
+def test_hessian_fit_runs_and_shapes():
     hessian_settings = {
         "iter_init": 2,
         "tolerance": 1.0,
-        "ErrorType": error_type,
         "n_eigvec": 20,
-        # Replicas settings (ignored for ErrorType=="hessian")
-        "n_samples": 7,
         "rng_key": 0,
     }
 
@@ -76,29 +71,22 @@ def test_hessian_fit_runs_and_shapes(error_type):
     # Covariance should be tolerance^2 * I with tol=1.0
     assert_allclose(result.cov_params, jnp.eye(N_PARAMS), rtol=1e-12, atol=1e-12)
 
-    if error_type == "replicas":
-        assert result.resampled_posterior.shape == (
-            hessian_settings["n_samples"],
-            N_PARAMS,
-        )
-    else:
-        # Expect 2 eigen-variations per parameter
-        assert result.resampled_posterior.shape == (2 * N_PARAMS, N_PARAMS)
-        # Pairs are +/- symmetric
-        plus = result.resampled_posterior[0::2]
-        minus = result.resampled_posterior[1::2]
-        assert_allclose(plus, -minus, rtol=1e-12, atol=1e-12)
+    # Expect 2 eigen-variations per parameter
+    assert result.resampled_posterior.shape == (2 * N_PARAMS, N_PARAMS)
+    # Pairs are +/- symmetric
+    plus = result.resampled_posterior[0::2]
+    minus = result.resampled_posterior[1::2]
+    assert_allclose(plus, -minus, rtol=1e-12, atol=1e-12)
 
 
 @patch("colibri.export_results.write_exportgrid")
 def test_run_hessian_fit_exports(mock_write_exportgrid, tmp_path):
-    # Build a small Hessian fit result using replicas mode for deterministic count
-    n_samples = 5
+
+    pdf_replicas = 4  # these will be 2 times n_eigvec
     hessian_settings = {
         "iter_init": 1,
         "tolerance": 1.0,
-        "ErrorType": "replicas",
-        "n_samples": n_samples,
+        "n_eigvec": 2,
         "rng_key": 123,
     }
 
@@ -117,7 +105,7 @@ def test_run_hessian_fit_exports(mock_write_exportgrid, tmp_path):
     run_hessian_fit(fit_result, tmp_path, MOCK_PDF_MODEL)
 
     # One exportgrid per resampled set
-    assert mock_write_exportgrid.call_count == n_samples
+    assert mock_write_exportgrid.call_count == pdf_replicas
 
     # Files from export_hessian_results
     assert (tmp_path / "hessian_result.csv").exists()
@@ -129,9 +117,8 @@ def test_hessian_fit_raises_when_require_local_min_fails():
     hessian_settings = {
         "iter_init": 1,
         "tolerance": 1.0,
-        "ErrorType": "replicas",
-        "n_samples": 3,
         "rng_key": 0,
+        "n_eigvec": 2,
         "require_local_min": True,
         "grad_tol": 1e-12,  # very small to ensure failure
     }
@@ -154,9 +141,8 @@ def test_hessian_fit_logs_warning_on_local_min_check_failed(caplog):
     hessian_settings = {
         "iter_init": 1,
         "tolerance": 1.0,
-        "ErrorType": "replicas",
-        "n_samples": 2,
         "rng_key": 0,
+        "n_eigvec": 2,
         "require_local_min": False,
         "grad_tol": 1e-12,  # ensure gradient not small
     }
@@ -187,8 +173,7 @@ def test_hessian_fit_logs_critical_on_non_pd_hessian(caplog):
     hessian_settings = {
         "iter_init": 1,
         "tolerance": 1.0,
-        "ErrorType": "replicas",
-        "n_samples": 2,
+        "n_eigvec": 2,
         "rng_key": 0,
     }
     param_initialiser_settings = {"type": "zeros"}
@@ -212,25 +197,6 @@ def test_hessian_fit_logs_critical_on_non_pd_hessian(caplog):
     )
 
 
-def test_hessian_fit_unknown_error_type_raises():
-    hessian_settings = {
-        "iter_init": 1,
-        "tolerance": 1.0,
-        "ErrorType": "unknown_mode",
-    }
-    param_initialiser_settings = {"type": "zeros"}
-
-    with pytest.raises(ValueError):
-        hessian_fit(
-            pdf_model=MOCK_PDF_MODEL,
-            log_likelihood=log_likelihood,
-            optimizer_provider=MockOptimizerProvider(),
-            max_epochs=1,
-            hessian_settings=hessian_settings,
-            param_initialiser_settings=param_initialiser_settings,
-        )
-
-
 def test_hessian_fit_raises_on_nonfinite_min_chi2():
     # Define a log-likelihood that always returns NaN, making chi2 non-finite
     nan_loglike = lambda p: jnp.nan
@@ -238,8 +204,7 @@ def test_hessian_fit_raises_on_nonfinite_min_chi2():
     hessian_settings = {
         "iter_init": 1,
         "tolerance": 1.0,
-        "ErrorType": "replicas",
-        "n_samples": 2,
+        "n_eigvec": 2,
         "rng_key": 0,
     }
     param_initialiser_settings = {"type": "zeros"}

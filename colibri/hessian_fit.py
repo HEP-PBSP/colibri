@@ -180,52 +180,35 @@ def hessian_fit(
     t1 = time.time()
     log.info("HESSIAN RUNNING TIME: %f" % (t1 - t0))
 
-    if hessian_settings["ErrorType"] == "replicas":
-        log.info("Using gaussian replicas for error propagation.")
-        n_samples = hessian_settings["n_samples"]
-        rng_key = jax.random.PRNGKey(hessian_settings["rng_key"])
-        # Generate samples from a multivariate normal distribution
-        # with mean parameters_min and covariance cov_params
-        hessian_param_set = jax.random.multivariate_normal(
-            key=rng_key,
-            mean=parameters_min,
-            cov=cov_params,
-            shape=(n_samples,),
+    log.info("Using hessian method for error propagation.")
+    eigvec_to_use = hessian_settings["n_eigvec"]
+    # Find eingenvectors and eigenvalues of the covariance matrix
+    eigvals, eigvecs = jnp.linalg.eigh(cov_params)
+    # Sort eigenvalues and eigenvectors in descending order, so that the first
+    # eigenvectors correspond to the largest eigenvalues (variances)
+    sorted_idx = jnp.argsort(eigvals)[::-1]
+    eigvals, eigvecs = eigvals[sorted_idx], eigvecs[:, sorted_idx]
+    # Generate symmetric parameter variations along each eigenvector
+    # scaled by sqrt of the corresponding eigenvalue
+    param_shift = (eigvecs * jnp.sqrt(eigvals)).T  # (n_eig, n_par)
+    # Use only the first eigvec_to_use eigenvectors
+    if eigvec_to_use > param_shift.shape[0]:
+        log.warning(
+            f"Requested number of eigenvectors {eigvec_to_use} "
+            f"exceeds total number of parameters {param_shift.shape[0]}. "
+            f"Using all eigenvectors."
         )
-    elif hessian_settings["ErrorType"] == "hessian":
-        log.info("Using hessian method for error propagation.")
-        eigvec_to_use = hessian_settings["n_eigvec"]
-        # Find eingenvectors and eigenvalues of the covariance matrix
-        eigvals, eigvecs = jnp.linalg.eigh(cov_params)
-        # Sort eigenvalues and eigenvectors in descending order, so that the first
-        # eigenvectors correspond to the largest eigenvalues (variances)
-        sorted_idx = jnp.argsort(eigvals)[::-1]
-        eigvals, eigvecs = eigvals[sorted_idx], eigvecs[:, sorted_idx]
-        # Generate symmetric parameter variations along each eigenvector
-        # scaled by sqrt of the corresponding eigenvalue
-        param_shift = (eigvecs * jnp.sqrt(eigvals)).T  # (n_eig, n_par)
-        # Use only the first eigvec_to_use eigenvectors
-        if eigvec_to_use > param_shift.shape[0]:
-            log.warning(
-                f"Requested number of eigenvectors {eigvec_to_use} "
-                f"exceeds total number of parameters {param_shift.shape[0]}. "
-                f"Using all eigenvectors."
-            )
-            eigvec_to_use = param_shift.shape[0]
-        param_shift = param_shift[:eigvec_to_use]
-        # Shift the optimized parameters along the eigenvectors
-        # to generate the error sets
-        param_plus = parameters_min + param_shift
-        param_minus = parameters_min - param_shift
-        hessian_param_set = jnp.empty(
-            (2 * param_plus.shape[0], param_plus.shape[1]), dtype=param_plus.dtype
-        )
-        hessian_param_set = hessian_param_set.at[0::2].set(param_plus)  # even rows: +
-        hessian_param_set = hessian_param_set.at[1::2].set(param_minus)  # odd  rows: −
-    else:
-        raise ValueError(
-            f"Unknown ErrorType {hessian_settings['ErrorType']}. Choose 'replicas' or 'hessian'."
-        )
+        eigvec_to_use = param_shift.shape[0]
+    param_shift = param_shift[:eigvec_to_use]
+    # Shift the optimized parameters along the eigenvectors
+    # to generate the error sets
+    param_plus = parameters_min + param_shift
+    param_minus = parameters_min - param_shift
+    hessian_param_set = jnp.empty(
+        (2 * param_plus.shape[0], param_plus.shape[1]), dtype=param_plus.dtype
+    )
+    hessian_param_set = hessian_param_set.at[0::2].set(param_plus)  # even rows: +
+    hessian_param_set = hessian_param_set.at[1::2].set(param_minus)  # odd  rows: −
 
     return HessianFit(
         hessian_specs={
@@ -235,7 +218,6 @@ def hessian_fit(
             "grad_tol": grad_tol,
             "min_hessian_eigval": eig_eps,
             "require_local_min": require_local_min,
-            "ErrorType": hessian_settings["ErrorType"],
         },
         min_chi2=min_chi2,
         training_loss=training_loss,

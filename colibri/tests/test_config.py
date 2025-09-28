@@ -472,7 +472,6 @@ def test_parse_hessian_settings_defaults():
     assert res == {
         "tolerance": 1.0,
         "iter_init": 1,
-        "ErrorType": "hessian",
         "n_eigvec": 20,
         "grad_tol": 1e-6,
         "min_hessian_eigval": 1e-12,
@@ -481,16 +480,13 @@ def test_parse_hessian_settings_defaults():
     }
 
 
-def test_parse_hessian_settings_replicas_with_seed():
+def test_parse_hessian_settings_with_seed():
     import jax
 
-    settings = {"ErrorType": "replicas", "rng_seed": 123, "iter_init": 2}
+    settings = {"rng_seed": 123, "iter_init": 2}
     res = BASE_CONFIG.parse_hessian_settings(settings)
 
-    assert res["ErrorType"] == "replicas"
     assert res["iter_init"] == 2
-    # default n_samples applied
-    assert res["n_samples"] == 100
     # rng_key built from seed
     assert res["rng_key"] == 123
 
@@ -513,11 +509,6 @@ def test_parse_hessian_settings_unknown_key_warns(mock_warning):
         ({"iter_init": 0}, "iter_init.*must be >= 1"),
         ({"grad_tol": 0.0}, "grad_tol.*must be > 0"),
         ({"min_hessian_eigval": 0.0}, "min_hessian_eigval.*must be > 0"),
-        ({"ErrorType": "unknown"}, "ErrorType.*either 'replicas' or 'hessian'"),
-        (
-            {"ErrorType": "replicas", "n_samples": 0},
-            "n_samples.*must be >= 1",
-        ),
     ],
 )
 def test_parse_hessian_settings_invalid_values(settings, match):
