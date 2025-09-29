@@ -455,7 +455,7 @@ class colibriConfig(Config):
         - tolerance: float > 0
         - iter_init: int >= 1. Number of different parameter initialisations to try in the gradient descent
         - n_eigvec: int >= 1
-        - rng_seed: int (optional, converted to jax.random.PRNGKey)
+        - rng_seed: int (optional)
         - grad_tol: float > 0 (optional, gradient norm tolerance for local-min check)
         - min_hessian_eigval: float > 0 (optional, PD check epsilon)
         - require_local_min: bool (optional, fail if local-min checks fail)
