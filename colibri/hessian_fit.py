@@ -90,6 +90,7 @@ def hessian_fit(
 
     iter_init = hessian_settings["iter_init"]
     tolerance = hessian_settings["tolerance"]
+    rng_seed = hessian_settings["rng_seed"]
     # Optional local-minimum checks
     grad_tol = hessian_settings.get("grad_tol", 1e-6)
     eig_eps = hessian_settings.get("min_hessian_eigval", 1e-12)
@@ -106,7 +107,7 @@ def hessian_fit(
         log.info(f"Hessian fit initialization iteration {i+1}")
         # Generate random initial parameters
         initial_parameters = pdf_initial_parameters(
-            pdf_model, param_initialiser_settings, i
+            pdf_model, param_initialiser_settings, rng_seed + i
         )
 
         # Delegate to generic gradient descent

@@ -48,7 +48,7 @@ def test_hessian_fit_runs_and_shapes():
         "iter_init": 2,
         "tolerance": 1.0,
         "n_eigvec": 20,
-        "rng_key": 0,
+        "rng_seed": 0,
     }
 
     param_initialiser_settings = {"type": "zeros"}
@@ -87,7 +87,7 @@ def test_run_hessian_fit_exports(mock_write_exportgrid, tmp_path):
         "iter_init": 1,
         "tolerance": 1.0,
         "n_eigvec": 2,
-        "rng_key": 123,
+        "rng_seed": 123,
     }
 
     param_initialiser_settings = {"type": "zeros"}
@@ -117,7 +117,7 @@ def test_hessian_fit_raises_when_require_local_min_fails():
     hessian_settings = {
         "iter_init": 1,
         "tolerance": 1.0,
-        "rng_key": 0,
+        "rng_seed": 0,
         "n_eigvec": 2,
         "require_local_min": True,
         "grad_tol": 1e-12,  # very small to ensure failure
@@ -141,7 +141,7 @@ def test_hessian_fit_logs_warning_on_local_min_check_failed(caplog):
     hessian_settings = {
         "iter_init": 1,
         "tolerance": 1.0,
-        "rng_key": 0,
+        "rng_seed": 0,
         "n_eigvec": 2,
         "require_local_min": False,
         "grad_tol": 1e-12,  # ensure gradient not small
@@ -174,7 +174,7 @@ def test_hessian_fit_logs_critical_on_non_pd_hessian(caplog):
         "iter_init": 1,
         "tolerance": 1.0,
         "n_eigvec": 2,
-        "rng_key": 0,
+        "rng_seed": 0,
     }
     param_initialiser_settings = {"type": "zeros"}
 
@@ -205,7 +205,7 @@ def test_hessian_fit_raises_on_nonfinite_min_chi2():
         "iter_init": 1,
         "tolerance": 1.0,
         "n_eigvec": 2,
-        "rng_key": 0,
+        "rng_seed": 0,
     }
     param_initialiser_settings = {"type": "zeros"}
 

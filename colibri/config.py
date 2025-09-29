@@ -489,7 +489,7 @@ class colibriConfig(Config):
         hessian_settings["require_local_min"] = bool(
             settings.get("require_local_min", False)
         )
-        hessian_settings["rng_key"] = int(settings.get("rng_seed", 123456))
+        hessian_settings["rng_seed"] = int(settings.get("rng_seed", 123456))
         hessian_settings["n_eigvec"] = int(settings.get("n_eigvec", 20))
 
         # Validate values

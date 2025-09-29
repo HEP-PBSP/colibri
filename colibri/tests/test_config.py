@@ -476,7 +476,7 @@ def test_parse_hessian_settings_defaults():
         "grad_tol": 1e-6,
         "min_hessian_eigval": 1e-12,
         "require_local_min": False,
-        "rng_key": 123456,
+        "rng_seed": 123456,
     }
 
 
@@ -487,8 +487,8 @@ def test_parse_hessian_settings_with_seed():
     res = BASE_CONFIG.parse_hessian_settings(settings)
 
     assert res["iter_init"] == 2
-    # rng_key built from seed
-    assert res["rng_key"] == 123
+    # rng_seed built from seed
+    assert res["rng_seed"] == 123
 
 
 @patch("colibri.config.log.warning")
