@@ -2,7 +2,7 @@
 
 Citation guidelines
 ===================
-If you use this code, please consider citing:
+If you use this code, please cite:
 
 * **Colibri**: :cite:ct:`tmp:2025`
 * **NNPDF**: :cite:ct:`NNPDF:2021uiq`
