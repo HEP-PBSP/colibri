@@ -8,29 +8,7 @@ In this tutorial, we will demonstrate how to perform a closure test using Colibr
 We will do so by performing a closure test with the Les Houches parametrisation
 model, which was implemented in :ref:`this tutorial <in_les_houches>`.
 
-.. _enable-executable:
-
-Step 1: enable the executable
------------------------------
-
-The first step is to enable the executable for this model. 
-
-In your ``colibri-dev`` conda environment, go to the ``les_houches_example`` 
-directory, found in:
-
-.. code-block:: bash
-    
-    cd colibri/examples/les_houches_example 
-
-Then run:
-
-.. code-block:: bash
-    
-    pip install -e .
-
-This will enable an executable called ``les_houches_exe``. 
-
-Step 2: runcard
+Step 1: runcard
 ---------------
 
 In the ``colibri/examples/les_houches_example/runcards`` directory you will find
@@ -47,68 +25,20 @@ an example runcard called ``lh_fit_closure_test.yaml``, which looks like this:
 
 * **Closure test level:** To run a Level 1 closure test with this runcard, you can simply change ``closure_test_level: 0`` to ``1``. To run a model-specific closure, test, see :ref:`this section <model_cl_test>`.
 
-Step 3: producing the fit
+Step 2: producing the fit
 -------------------------
 
-To produce the fit, run the following command from the ``colibri/les_houches_example`` 
-directory:
+If you have :ref:`enabled the executable for this model <enable-executable>`, you are ready to
+run a fit by following command from the ``colibri/les_houches_example`` directory:
 
 .. code-block:: bash
 
     les_houches_exe runcards/lh_fit_closure_test.yaml
 
-This step will download the PDF grid ``LH_PARAM_20250519``. 
-
-If you don't have it already, it will also download the theory ``40000000``.
-
-After you run the fit the first time, any subsequent fits should be faster.
-
 A directory called ``lh_fit_closure_test``, containing the output of the fit, 
 should have been created. You can read more about the fit folders 
 :ref:`here <bayes_fit_folders>`.
 
-3.1 Evolving the fit
-^^^^^^^^^^^^^^^^^^^^
+You are now ready to evovle your fit, which you can learn more about in
+:ref:`this section <evolution_script>`.
 
-If you don't already have it, you will need to download the EKO corresponding to 
-the theory used in this tutorial :cite:`Candido:2022tld,Candido2022EKO`:
-
-.. code-block:: bash
-    
-    vp-get EKO 40000000
-
-You can then evolve the fit by running the following command from the 
-``les_houches_example`` directory:
-
-.. code-block:: bash
-
-    evolve_fit lh_fit_closure_test
-
-You can read more about evolution in :ref:`this section <evolution_script>`.
-
-3.2 Generating a `validphys` report
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Finally, you can run:
-
-.. code-block:: bash
-
-    validphys plot_pdf_fits.yaml
-
-to generate a `validphys` report :cite:`zahari_kassabov_2019_2571601`.
-
-The result
-----------
-
-As an example, we show the result of the fit for the gluon PDF. 
-
-.. image:: ../../_static/figures/g_pdf.png
-   :width: 600px
-   :align: center
-
-The orange line, labelled *LH theory PDF*, shows the gluon PDF used to generate
-the pseudo-data, i.e. the underlying law we are trying to recover. As mentioned
-above, this was computed using the best-fit values for each parameter, as
-presented in Ref. :cite:alp:`Alekhin:2005xgg`. The green curve/section, labelled 
-*Les Houches fit 68% c.i. + 1*:math:`\sigma`, shows the result of the closure test
-fit with error band.

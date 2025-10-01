@@ -14,4 +14,5 @@ If you use the public Colibri code, please cite all references listed in :ref:`c
   :maxdepth: 1
 
   ./installation.rst
+  ./first-fit.rst
   ./cite.rst

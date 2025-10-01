@@ -14,10 +14,9 @@ sampling of these parametrisations.
 The Colibri PDF model class
 --------------------------------
 
-In order to decouple the implementation of PDF parametrisations from their
-numerical inference, we introduce an abstract base class, ``PDFModel``, in
-the Colibri framework. See the code-block below for an overview of the class
-structure.
+In order to separate the definition of PDF parametrisations from their numerical
+inference, we introduce an abstract base class, ``PDFModel``, in the Colibri
+framework. See the code-block below for an overview of the class structure.
 
 At its core, a ``PDFModel`` must provide:
 
