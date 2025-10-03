@@ -445,6 +445,65 @@ class colibriConfig(Config):
 
         return analytic_settings
 
+    def parse_hessian_settings(self, settings):
+        """
+        Parses the hessian_settings namespace from the runcard and ensures
+        the choice of settings is valid.
+
+        Expected keys
+        -------------
+        - tolerance: float > 0
+        - iter_init: int >= 1. Number of different parameter initialisations to try in the gradient descent
+        - n_eigvec: int >= 1
+        - rng_seed: int (optional)
+        - grad_tol: float > 0 (optional, gradient norm tolerance for local-min check)
+        - min_hessian_eigval: float > 0 (optional, PD check epsilon)
+        - require_local_min: bool (optional, fail if local-min checks fail)
+        """
+
+        # Warn on unknown keys to help users catch typos
+        known_keys = {
+            "tolerance",
+            "iter_init",
+            "n_eigvec",
+            "rng_seed",
+            "grad_tol",
+            "min_hessian_eigval",
+            "require_local_min",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in hessian_settings not known.", k, known_keys)
+            )
+
+        # Defaults
+        hessian_settings = {}
+        hessian_settings["tolerance"] = float(settings.get("tolerance", 1.0))
+        hessian_settings["iter_init"] = int(settings.get("iter_init", 1))
+        hessian_settings["grad_tol"] = float(settings.get("grad_tol", 1e-6))
+        hessian_settings["min_hessian_eigval"] = float(
+            settings.get("min_hessian_eigval", 1e-12)
+        )
+        hessian_settings["require_local_min"] = bool(
+            settings.get("require_local_min", False)
+        )
+        hessian_settings["rng_seed"] = int(settings.get("rng_seed", 123456))
+        hessian_settings["n_eigvec"] = int(settings.get("n_eigvec", 20))
+
+        # Validate values
+        if hessian_settings["tolerance"] <= 0:
+            raise ConfigError("'tolerance' in hessian_settings must be > 0")
+        if hessian_settings["iter_init"] < 1:
+            raise ConfigError("'iter_init' in hessian_settings must be >= 1")
+        if hessian_settings["grad_tol"] <= 0:
+            raise ConfigError("'grad_tol' in hessian_settings must be > 0")
+        if hessian_settings["min_hessian_eigval"] <= 0:
+            raise ConfigError("'min_hessian_eigval' in hessian_settings must be > 0")
+
+        return hessian_settings
+
     def parse_optimizer_settings(self, settings):
         """
         For a gradient descent based fit. Parses the optimizer_settings namespace from the runcard.
