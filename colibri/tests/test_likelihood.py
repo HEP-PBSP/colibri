@@ -8,10 +8,11 @@ import jax
 import jax.numpy as jnp
 import pytest
 from numpy.testing import assert_allclose
+import colibri
 
 from colibri.likelihood import LogLikelihood, log_likelihood
 from colibri.tests.conftest import (
-    MOCK_CENTRAL_INV_COVMAT_INDEX,
+    MOCK_CENTRAL_COVMAT_INDEX,
     MOCK_CHI2,
     MOCK_PDF_MODEL,
     MOCK_PENALTY_POSDATA,
@@ -20,6 +21,9 @@ from colibri.tests.conftest import (
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
 )
+
+# Monkey patch chi2 imported in likelihood
+colibri.likelihood.chi2 = MOCK_CHI2
 
 jax.config.update("jax_enable_x64", True)
 
@@ -35,13 +39,12 @@ def test_LogLikelihood_class(pos_penalty):
     Tests the LogLikelihood class.
     """
     log_likelihood_class = LogLikelihood(
-        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
-        chi2=MOCK_CHI2,
         penalty_posdata=MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
@@ -52,12 +55,10 @@ def test_LogLikelihood_class(pos_penalty):
     )
 
     assert_allclose(
-        MOCK_CENTRAL_INV_COVMAT_INDEX.central_values,
+        MOCK_CENTRAL_COVMAT_INDEX.central_values,
         log_likelihood_class.central_values,
     )
-    assert_allclose(
-        MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat, log_likelihood_class.inv_covmat
-    )
+    assert_allclose(MOCK_CENTRAL_COVMAT_INDEX.covmat, log_likelihood_class.covmat)
     assert MOCK_PDF_MODEL == log_likelihood_class.pdf_model
     assert MOCK_PENALTY_POSDATA == log_likelihood_class.penalty_posdata
 
@@ -93,19 +94,18 @@ def test_log_likelihood(pos_penalty):
         {"positivity_penalty": pos_penalty, "alpha": 1e-7, "lambda_positivity": 1000},
     )
     log_likelihood_class = LogLikelihood(
-        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
-        chi2=MOCK_CHI2,
         penalty_posdata=MOCK_PENALTY_POSDATA,
         positivity_penalty_settings=POS_PENALTY_SETTINGS,
         integrability_penalty=integrability_penalty,
     )
     log_like = log_likelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
@@ -133,13 +133,12 @@ def test_log_likelihood_with_and_without_pos_penalty():
 
     # Instantiate the class
     log_likelihood_class = LogLikelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        MOCK_CHI2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings,
         integrability_penalty=integrability_penalty,
@@ -169,13 +168,12 @@ def test_log_likelihood_with_and_without_pos_penalty():
 
     # Instantiate the class
     log_likelihood_class = LogLikelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        MOCK_CHI2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings,
         integrability_penalty=integrability_penalty,
