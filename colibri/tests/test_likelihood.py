@@ -10,7 +10,8 @@ import pytest
 from numpy.testing import assert_allclose
 import colibri
 
-from colibri.likelihood import LogLikelihood, log_likelihood
+from colibri.likelihood import LogLikelihood, log_likelihood, mc_log_likelihood
+from colibri.mc_utils import MCPseudodata
 from colibri.tests.conftest import (
     MOCK_CENTRAL_COVMAT_INDEX,
     MOCK_CHI2,
@@ -189,3 +190,107 @@ def test_log_likelihood_with_and_without_pos_penalty():
 
     # Expectation: Only chi2 value, no penalty => -0.5 * (10.0)
     assert ll_value_without_penalty == pytest.approx(-5.0)
+
+
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_mc_log_likelihood_with_split(pos_penalty):
+    """
+    Tests mc_log_likelihood returns two LogLikelihood instances when a
+    train/validation split exists, and that they produce expected values.
+    """
+
+    # Create a tiny pseudodata setup consistent with TEST_N_DATA = 2
+    pseudodata = jnp.array([1.0, 2.0])
+    fit_covariance_matrix = jnp.eye(2)
+    training_indices = jnp.array([0])
+    validation_indices = jnp.array([1])
+
+    mc_pd = MCPseudodata(
+        pseudodata=pseudodata,
+        training_indices=training_indices,
+        validation_indices=validation_indices,
+        trval_split=True,
+    )
+
+    positivity_penalty_settings = {
+        "positivity_penalty": pos_penalty,
+        "alpha": 1e-7,
+        "lambda_positivity": 1000,
+    }
+
+    train_loglike, val_loglike = mc_log_likelihood(
+        mc_pd,
+        fit_covariance_matrix,
+        MOCK_PDF_MODEL,
+        TEST_XGRID,
+        TEST_FORWARD_MAP_DIS,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
+        MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings,
+        integrability_penalty,
+    )
+
+    # Both should be instances of LogLikelihood
+    assert isinstance(train_loglike, LogLikelihood)
+    assert isinstance(val_loglike, LogLikelihood)
+
+    params = jnp.array([0.3, 0.4])
+
+    train_val = train_loglike(params)
+    val_val = val_loglike(params)
+
+    expected = -7.5 if pos_penalty else -5.0
+    assert_allclose(train_val, jnp.array([expected]))
+    assert_allclose(val_val, jnp.array([expected]))
+
+
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty):
+    """
+    Tests mc_log_likelihood when no train/validation split is requested: the
+    validation log-likelihood should return NaN.
+    """
+
+    # Pseudodata across both points; training uses all when no split
+    pseudodata = jnp.array([1.0, 2.0])
+    fit_covariance_matrix = jnp.eye(2)
+    training_indices = jnp.array([0, 1])
+    validation_indices = jnp.array([])
+
+    mc_pd = MCPseudodata(
+        pseudodata=pseudodata,
+        training_indices=training_indices,
+        validation_indices=validation_indices,
+        trval_split=False,
+    )
+
+    positivity_penalty_settings = {
+        "positivity_penalty": pos_penalty,
+        "alpha": 1e-7,
+        "lambda_positivity": 1000,
+    }
+
+    train_loglike, val_loglike = mc_log_likelihood(
+        mc_pd,
+        fit_covariance_matrix,
+        MOCK_PDF_MODEL,
+        TEST_XGRID,
+        TEST_FORWARD_MAP_DIS,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
+        MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings,
+        integrability_penalty,
+    )
+
+    # Train should be a LogLikelihood, validation is a callable returning NaN
+    assert isinstance(train_loglike, LogLikelihood)
+
+    params = jnp.array([0.3, 0.4])
+    train_val = train_loglike(params)
+    expected = -7.5 if pos_penalty else -5.0
+    assert_allclose(train_val, jnp.array([expected]))
+
+    val_val = val_loglike(params)
+    assert jnp.isnan(val_val)

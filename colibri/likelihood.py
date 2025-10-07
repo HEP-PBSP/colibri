@@ -78,6 +78,10 @@ class LogLikelihood(object):
         params: jnp.ndarray
             The model parameters.
 
+        batch_idx: jnp.ndarray, optional
+            If provided, computes the log-likelihood only for the subset of data
+            indexed by batch_idx.
+
         Returns
         -------
         jnp.ndarray

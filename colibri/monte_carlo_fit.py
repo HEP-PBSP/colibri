@@ -60,7 +60,7 @@ def monte_carlo_fit(
     Parameters
     ----------
     mc_log_likelihood: tuple
-        Tuple containing the training and validation likelihoods
+        Tuple containing the training and validation likelihoods.
 
     len_trval_data: tuple
         Tuple containing the length of the training and validation data.
