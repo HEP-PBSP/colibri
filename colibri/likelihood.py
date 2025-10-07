@@ -33,7 +33,7 @@ class LogLikelihood(object):
         """
         Parameters
         ----------
-        central_covmat_index: commondata_utils.CentralInvCovmatIndex
+        central_covmat_index: commondata_utils.CentralCovmatIndex
 
         pdf_model: pdf_model.PDFModel
 
