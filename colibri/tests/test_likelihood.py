@@ -294,3 +294,40 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
 
     val_val = val_loglike(params)
     assert jnp.isnan(val_val)
+
+
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_LogLikelihood_call_with_batch_idx(pos_penalty):
+    """
+    Tests that calling LogLikelihood with a batch_idx computes the
+    log-likelihood on the selected subset without errors and returns
+    the expected value given our mocks.
+    """
+
+    positivity_penalty_settings = {
+        "positivity_penalty": pos_penalty,
+        "alpha": 1e-7,
+        "lambda_positivity": 1000,
+    }
+
+    log_likelihood_class = LogLikelihood(
+        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
+        pdf_model=MOCK_PDF_MODEL,
+        fit_xgrid=TEST_XGRID,
+        forward_map=TEST_FORWARD_MAP_DIS,
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+        positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
+        penalty_posdata=MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings=positivity_penalty_settings,
+        integrability_penalty=integrability_penalty,
+    )
+
+    params = jnp.array([0.3, 0.4])
+
+    # Select only the first data point
+    batch_idx = jnp.array([0])
+
+    ll_value_batched = log_likelihood_class(params, batch_idx=batch_idx)
+
+    expected = -7.5 if pos_penalty else -5.0
+    assert_allclose(ll_value_batched, jnp.array([expected]))
