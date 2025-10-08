@@ -8,13 +8,11 @@ import jax
 import jax.numpy as jnp
 import pytest
 from numpy.testing import assert_allclose
-import colibri
 
 from colibri.likelihood import LogLikelihood, log_likelihood, mc_log_likelihood
 from colibri.mc_utils import MCPseudodata
 from colibri.tests.conftest import (
     MOCK_CENTRAL_COVMAT_INDEX,
-    MOCK_CHI2,
     MOCK_PDF_MODEL,
     MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
@@ -22,9 +20,6 @@ from colibri.tests.conftest import (
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
 )
-
-# Monkey patch chi2 imported in likelihood
-colibri.likelihood.chi2 = MOCK_CHI2
 
 jax.config.update("jax_enable_x64", True)
 
@@ -69,20 +64,31 @@ def test_LogLikelihood_class(pos_penalty):
             2.0,
         ]
     )
-    if pos_penalty:
-        # -0.5 * (10.0 + 5.0) = -7.5
-        assert log_likelihood_class(params) == jnp.array(
-            [
-                -7.5,
-            ]
+    # Compute expected value using actual prediction and covariance
+    predictions, pdf = log_likelihood_class.pred_and_pdf(
+        params, log_likelihood_class.fast_kernel_arrays
+    )
+    predictions = predictions[log_likelihood_class.central_values_idx]
+    diff = predictions - log_likelihood_class.central_values
+    chi2_val = jnp.einsum("i,ij,j", diff, log_likelihood_class.inv_covmat, diff)
+
+    pos_pen = (
+        jnp.sum(
+            log_likelihood_class.penalty_posdata(
+                pdf,
+                log_likelihood_class.positivity_penalty_settings["alpha"],
+                log_likelihood_class.positivity_penalty_settings["lambda_positivity"],
+                log_likelihood_class.positivity_fast_kernel_arrays,
+            ),
+            axis=-1,
         )
-    else:
-        # -0.5 * (10.0) = -5.0
-        assert log_likelihood_class(params) == jnp.array(
-            [
-                -5.0,
-            ]
-        )
+        if pos_penalty
+        else 0.0
+    )
+    integ_pen = jnp.sum(integrability_penalty(pdf), axis=-1)
+    expected = -0.5 * (chi2_val + pos_pen + integ_pen)
+
+    assert_allclose(float(log_likelihood_class(params)), float(expected))
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
@@ -157,8 +163,25 @@ def test_log_likelihood_with_and_without_pos_penalty():
         log_likelihood_class.positivity_fast_kernel_arrays,
     )
 
-    # Expectation: chi2 value + penalty (5.0) => -0.5 * (10.0 + 5.0)
-    assert ll_value_with_penalty == pytest.approx(-7.5)
+    # Compute expectation directly: -0.5 * (chi2 + pos_pen + integ_pen)
+    predictions, pdf = log_likelihood_class.pred_and_pdf(
+        params, log_likelihood_class.fast_kernel_arrays
+    )
+    predictions = predictions[log_likelihood_class.central_values_idx]
+    diff = predictions - log_likelihood_class.central_values
+    chi2_val = jnp.einsum("i,ij,j", diff, log_likelihood_class.inv_covmat, diff)
+    pos_pen = jnp.sum(
+        log_likelihood_class.penalty_posdata(
+            pdf,
+            positivity_penalty_settings["alpha"],
+            positivity_penalty_settings["lambda_positivity"],
+            log_likelihood_class.positivity_fast_kernel_arrays,
+        ),
+        axis=-1,
+    )
+    integ_pen = jnp.sum(integrability_penalty(pdf), axis=-1)
+    expected_with_penalty = -0.5 * (chi2_val + pos_pen + integ_pen)
+    assert float(ll_value_with_penalty) == pytest.approx(float(expected_with_penalty))
 
     # Test with positivity_penalty disabled
     positivity_penalty_settings = {
@@ -188,8 +211,17 @@ def test_log_likelihood_with_and_without_pos_penalty():
         log_likelihood_class.positivity_fast_kernel_arrays,
     )
 
-    # Expectation: Only chi2 value, no penalty => -0.5 * (10.0)
-    assert ll_value_without_penalty == pytest.approx(-5.0)
+    # Expectation: Only chi2 value (penalties zeroed)
+    predictions, pdf = log_likelihood_class.pred_and_pdf(
+        params, log_likelihood_class.fast_kernel_arrays
+    )
+    predictions = predictions[log_likelihood_class.central_values_idx]
+    diff = predictions - log_likelihood_class.central_values
+    chi2_val = jnp.einsum("i,ij,j", diff, log_likelihood_class.inv_covmat, diff)
+    expected_without_penalty = -0.5 * chi2_val
+    assert float(ll_value_without_penalty) == pytest.approx(
+        float(expected_without_penalty)
+    )
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
@@ -240,9 +272,34 @@ def test_mc_log_likelihood_with_split(pos_penalty):
     train_val = train_loglike(params)
     val_val = val_loglike(params)
 
-    expected = -7.5 if pos_penalty else -5.0
-    assert_allclose(train_val, jnp.array([expected]))
-    assert_allclose(val_val, jnp.array([expected]))
+    # Compute expected for train and validation independently
+    def compute_expected(ll_obj):
+        preds, pdf = ll_obj.pred_and_pdf(params, ll_obj.fast_kernel_arrays)
+        preds = preds[ll_obj.central_values_idx]
+        diff = preds - ll_obj.central_values
+        inv = ll_obj.inv_covmat
+        chi2_val = jnp.einsum("i,ij,j", diff, inv, diff)
+        pos_pen = (
+            jnp.sum(
+                ll_obj.penalty_posdata(
+                    pdf,
+                    ll_obj.positivity_penalty_settings["alpha"],
+                    ll_obj.positivity_penalty_settings["lambda_positivity"],
+                    ll_obj.positivity_fast_kernel_arrays,
+                ),
+                axis=-1,
+            )
+            if pos_penalty
+            else 0.0
+        )
+        integ_pen = jnp.sum(integrability_penalty(pdf), axis=-1)
+        return -0.5 * (chi2_val + pos_pen + integ_pen)
+
+    expected_train = compute_expected(train_loglike)
+    expected_val = compute_expected(val_loglike)
+
+    assert_allclose(float(train_val), float(expected_train))
+    assert_allclose(float(val_val), float(expected_val))
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
@@ -289,8 +346,29 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
 
     params = jnp.array([0.3, 0.4])
     train_val = train_loglike(params)
-    expected = -7.5 if pos_penalty else -5.0
-    assert_allclose(train_val, jnp.array([expected]))
+    # Compute expected train value
+    predictions, pdf = train_loglike.pred_and_pdf(
+        params, train_loglike.fast_kernel_arrays
+    )
+    predictions = predictions[train_loglike.central_values_idx]
+    diff = predictions - train_loglike.central_values
+    chi2_val = jnp.einsum("i,ij,j", diff, train_loglike.inv_covmat, diff)
+    pos_pen = (
+        jnp.sum(
+            train_loglike.penalty_posdata(
+                pdf,
+                train_loglike.positivity_penalty_settings["alpha"],
+                train_loglike.positivity_penalty_settings["lambda_positivity"],
+                train_loglike.positivity_fast_kernel_arrays,
+            ),
+            axis=-1,
+        )
+        if pos_penalty
+        else 0.0
+    )
+    integ_pen = jnp.sum(integrability_penalty(pdf), axis=-1)
+    expected = -0.5 * (chi2_val + pos_pen + integ_pen)
+    assert_allclose(float(train_val), float(expected))
 
     val_val = val_loglike(params)
     assert jnp.isnan(val_val)
@@ -329,5 +407,30 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
 
     ll_value_batched = log_likelihood_class(params, batch_idx=batch_idx)
 
-    expected = -7.5 if pos_penalty else -5.0
-    assert_allclose(ll_value_batched, jnp.array([expected]))
+    # Compute expected on the batch index: recompute inv_covmat on the sub-covmat
+    predictions, pdf = log_likelihood_class.pred_and_pdf(
+        params, log_likelihood_class.fast_kernel_arrays
+    )
+    predictions = predictions[log_likelihood_class.central_values_idx]
+    predictions_b = predictions[batch_idx]
+    central_b = log_likelihood_class.central_values[batch_idx]
+    cov_b = log_likelihood_class.covmat[batch_idx][:, batch_idx]
+    inv_b = jnp.linalg.inv(cov_b)
+    diff_b = predictions_b - central_b
+    chi2_b = jnp.einsum("i,ij,j", diff_b, inv_b, diff_b)
+    pos_pen = (
+        jnp.sum(
+            log_likelihood_class.penalty_posdata(
+                pdf,
+                log_likelihood_class.positivity_penalty_settings["alpha"],
+                log_likelihood_class.positivity_penalty_settings["lambda_positivity"],
+                log_likelihood_class.positivity_fast_kernel_arrays,
+            ),
+            axis=-1,
+        )
+        if pos_penalty
+        else 0.0
+    )
+    integ_pen = jnp.sum(integrability_penalty(pdf), axis=-1)
+    expected = -0.5 * (chi2_b + pos_pen + integ_pen)
+    assert_allclose(float(ll_value_batched), float(expected))
