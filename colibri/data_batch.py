@@ -30,9 +30,9 @@ class DataBatches:
 
 def data_batches(
     n_training_points: int,
-    batch_size: Optional[int],
+    batch_size=None,
     batch_seed: int = 1,
-    fit_covariance_matrix: Optional[jax.Array] = None,
+    fit_covariance_matrix=None,
     shuffle_each_epoch: bool = False,
 ) -> DataBatches:
     """

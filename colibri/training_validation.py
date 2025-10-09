@@ -72,20 +72,20 @@ def training_validation_split(
     return TrainValidationSplit(training=indices_train, validation=indices_validation)
 
 
-def n_training_points(training_validation_split):
+def n_training_points(len_trval_data):
     """
-    Returns the number of training points in a TrainValidationSplit dataclass.
+    Returns the number of training points.
 
     Parameters
     ----------
-    training_validation_split: TrainValidationSplit
+    len_trval_data: tuple
 
     Returns
     -------
     int
         number of training points
     """
-    return len(training_validation_split.training)
+    return len_trval_data[0]
 
 
 def mc_posdata_split(
