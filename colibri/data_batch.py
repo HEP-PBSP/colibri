@@ -29,11 +29,11 @@ class DataBatches:
 
 
 def data_batches(
-    n_training_points: int,
+    training_indices,
     batch_size=None,
-    batch_seed: int = 1,
+    batch_seed=1,
     fit_covariance_matrix=None,
-    shuffle_each_epoch: bool = False,
+    shuffle_each_epoch=False,
 ) -> DataBatches:
     """
     Parameters
@@ -58,6 +58,8 @@ def data_batches(
     -------
     DataBatches dataclass
     """
+
+    n_training_points = len(training_indices)
 
     if not batch_size:
         log.warning(
@@ -101,9 +103,8 @@ def data_batches(
         fixed_batches = _slice_batches_from_perm(perm0)
 
         if fit_covariance_matrix is not None:
-            fixed_inv_covmats = _precompute_inv_for_batches(
-                fixed_batches, fit_covariance_matrix
-            )
+            train_covmat = fit_covariance_matrix[training_indices][:, training_indices]
+            fixed_inv_covmats = _precompute_inv_for_batches(fixed_batches, train_covmat)
 
     # --- generators ---
     def data_batch_stream_index() -> Iterator[jax.Array]:
