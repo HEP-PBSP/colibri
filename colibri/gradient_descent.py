@@ -92,14 +92,17 @@ def run_gradient_descent(
     opt_state = optimizer.init(params)
 
     @jax.jit
-    def _step(p, ostate, batch_idx):
-        (loss_value, grads) = jax.value_and_grad(training_loss_fn)(p, batch_idx)
+    def _step(p, ostate, batch_idx, inv_cov=None):
+        (loss_value, grads) = jax.value_and_grad(training_loss_fn)(
+            p, batch_idx, inv_cov
+        )
         updates, ostate = optimizer.update(grads, ostate, p)
         p = optax.apply_updates(p, updates)
         return p, ostate, loss_value
 
     train_losses = []
     val_losses = []
+    _use_inv = False
 
     if data_batch is None:
         # we simulate a fake batch iterator that just yields a dummy batch index
@@ -113,15 +116,26 @@ def run_gradient_descent(
         num_batches = 1
         batch_size = None
     else:
-        batches_iter = data_batch.data_batch_stream_index()
+        # Prefer fast path with precomputed inverses if available
+        if data_batch.data_batch_stream_index_and_inv is not None:
+            batches_iter = data_batch.data_batch_stream_index_and_inv()
+            _use_inv = True
+        else:
+            batches_iter = data_batch.data_batch_stream_index()
         num_batches = data_batch.num_batches
         batch_size = data_batch.batch_size
 
     for epoch in range(max_epochs):
         epoch_train_loss = 0.0
         for _ in range(num_batches):
-            batch_idx = next(batches_iter)
-            params, opt_state, batch_loss = _step(params, opt_state, batch_idx)
+            if _use_inv:
+                batch_idx, inv_cov = next(batches_iter)
+                params, opt_state, batch_loss = _step(
+                    params, opt_state, batch_idx, inv_cov
+                )
+            else:
+                batch_idx = next(batches_iter)
+                params, opt_state, batch_loss = _step(params, opt_state, batch_idx)
             epoch_train_loss += batch_loss
         epoch_val_loss = validation_loss_fn(params)
 

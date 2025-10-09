@@ -13,7 +13,6 @@ import pandas as pd
 import os
 import time
 
-from colibri.data_batch import data_batches
 from colibri.mc_utils import write_exportgrid_mc
 from colibri.gradient_descent import run_gradient_descent
 
