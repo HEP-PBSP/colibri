@@ -92,10 +92,17 @@ def run_gradient_descent(
     opt_state = optimizer.init(params)
 
     @jax.jit
-    def _step(p, ostate, batch_idx, inv_cov=None):
+    def _step_with_invcov(p, ostate, batch_idx, inv_cov):
         (loss_value, grads) = jax.value_and_grad(training_loss_fn)(
             p, batch_idx, inv_cov
         )
+        updates, ostate = optimizer.update(grads, ostate, p)
+        p = optax.apply_updates(p, updates)
+        return p, ostate, loss_value
+
+    @jax.jit
+    def _step(p, ostate, batch_idx):
+        (loss_value, grads) = jax.value_and_grad(training_loss_fn)(p, batch_idx)
         updates, ostate = optimizer.update(grads, ostate, p)
         p = optax.apply_updates(p, updates)
         return p, ostate, loss_value
@@ -130,7 +137,7 @@ def run_gradient_descent(
         for _ in range(num_batches):
             if _use_inv:
                 batch_idx, inv_cov = next(batches_iter)
-                params, opt_state, batch_loss = _step(
+                params, opt_state, batch_loss = _step_with_invcov(
                     params, opt_state, batch_idx, inv_cov
                 )
             else:
