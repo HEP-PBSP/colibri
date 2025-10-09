@@ -50,8 +50,7 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
-    batch_size=None,
-    batch_seed=1,
+    data_batches,
 ):
     """
     This function performs a Monte Carlo fit.
@@ -77,11 +76,8 @@ def monte_carlo_fit(
     max_epochs: int
         Number of maximum epochs.
 
-    batch_size: int, default is None which sets it to the full size of data
-        Size of batches during training.
-
-    batch_seed: int, optional
-        Seed used to construct the batches. Defaults to 1.
+    data_batches: colibri.data_batch.DataBatches
+        Data batches provider.
 
     Returns
     -------
@@ -97,8 +93,13 @@ def monte_carlo_fit(
     def loss_training(
         parameters,
         batch_idx,
+        inv_covmat_batch=None,
     ):
-        return -2 * mc_log_likelihood[0](parameters, batch_idx) / len_tr_idx
+        return (
+            -2
+            * mc_log_likelihood[0](parameters, batch_idx, inv_covmat_batch)
+            / len_tr_idx
+        )
 
     @jax.jit
     def loss_validation(parameters):
@@ -111,8 +112,6 @@ def monte_carlo_fit(
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
-    data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
-
     # Delegate to generic gradient descent
     gd_result = run_gradient_descent(
         initial_parameters=pdf_initial_parameters.copy(),
@@ -121,7 +120,7 @@ def monte_carlo_fit(
         optimizer=optimizer_provider,
         early_stopper=early_stopper,
         max_epochs=max_epochs,
-        data_batch=data_batch,
+        data_batch=data_batches,
         record_every=50,
     )
 
@@ -131,8 +130,8 @@ def monte_carlo_fit(
     return MonteCarloFit(
         monte_carlo_specs={
             "max_epochs": max_epochs,
-            "batch_size": data_batch.batch_size,
-            "batch_seed": batch_seed,
+            "batch_size": data_batches.batch_size,
+            "batch_seed": data_batches.batch_seed,
         },
         training_loss=gd_result.training_loss,
         validation_loss=gd_result.validation_loss,
