@@ -68,7 +68,7 @@ class LogLikelihood(object):
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
 
-    def __call__(self, params, batch_idx=None):
+    def __call__(self, params, batch_idx=None, inv_covmat_batch=None):
         """
         Note that this function is called by the samplers, and it must be
         a function of the model parameters only.
@@ -94,6 +94,7 @@ class LogLikelihood(object):
             self.fast_kernel_arrays,
             self.positivity_fast_kernel_arrays,
             batch_idx=batch_idx,
+            inv_covmat_batch=inv_covmat_batch,
         )
 
     @partial(jax.jit, static_argnames=("self",))
@@ -105,6 +106,7 @@ class LogLikelihood(object):
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
         batch_idx: jnp.ndarray = None,
+        inv_covmat_batch: jnp.ndarray = None,
     ) -> jnp.array:
         """
         This function takes care of computing the log_likelihood that is defined in LogLikelihood.
@@ -129,8 +131,11 @@ class LogLikelihood(object):
         if batch_idx is not None:
             predictions = predictions[batch_idx]
             central_values = central_values[batch_idx]
-            batched_covmat = self.covmat[batch_idx][:, batch_idx]
-            inv_covmat = jnp.linalg.inv(batched_covmat)
+            if inv_covmat_batch is None:
+                batched_covmat = self.covmat[batch_idx][:, batch_idx]
+                inv_covmat = jnp.linalg.inv(batched_covmat)
+            else:
+                inv_covmat = inv_covmat_batch
 
         if self.positivity_penalty_settings["positivity_penalty"]:
             pos_penalty = jnp.sum(

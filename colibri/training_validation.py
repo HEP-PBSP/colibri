@@ -72,6 +72,22 @@ def training_validation_split(
     return TrainValidationSplit(training=indices_train, validation=indices_validation)
 
 
+def n_training_points(training_validation_split):
+    """
+    Returns the number of training points in a TrainValidationSplit dataclass.
+
+    Parameters
+    ----------
+    training_validation_split: TrainValidationSplit
+
+    Returns
+    -------
+    int
+        number of training points
+    """
+    return len(training_validation_split.training)
+
+
 def mc_posdata_split(
     posdatasets,
     trval_seed,
