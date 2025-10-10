@@ -33,7 +33,7 @@ positivity:                            # Positivity datasets, used in the positi
 positivity_penalty_settings:
   positivity_penalty: true
   alpha: 1e-7                           
-  lambda_positivity: 10
+  lambda_positivity: 1000
 
 
 use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.

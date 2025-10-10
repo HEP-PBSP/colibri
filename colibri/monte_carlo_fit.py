@@ -57,10 +57,9 @@ def monte_carlo_fit(
     early_stopper,
     max_epochs,
     FIT_XGRID,
+    positivity_penalty_settings,
     batch_size=None,
     batch_seed=1,
-    alpha=1e-7,
-    lambda_positivity=1000,
 ):
     """
     This function performs a Monte Carlo fit.
@@ -106,17 +105,14 @@ def monte_carlo_fit(
         xgrid of the theory, computed by a production rule by taking
         the sorted union of the xgrids of the datasets entering the fit.
 
+    positivity_penalty_settings: dict, optional
+        Dictionary containing the settings for the positivity penalty.
+
     batch_size: int, default is None which sets it to the full size of data
         Size of batches during training.
 
     batch_seed: int, optional
         Seed used to construct the batches. Defaults to 1.
-
-    alpha: float, optional
-        Alpha parameter of the ELU positivity penalty term. Defaults to 1e-7.
-
-    lambda_positivity: int, optional
-        Lagrange multiplier of the positivity penalty. Defaults to 1000.
 
     Returns
     -------
@@ -128,6 +124,8 @@ def monte_carlo_fit(
 
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
     len_tr_idx, len_val_idx = len_trval_data
+    alpha = positivity_penalty_settings["alpha"]
+    lambda_positivity = positivity_penalty_settings["lambda_positivity"]
 
     @jax.jit
     def loss_training(
