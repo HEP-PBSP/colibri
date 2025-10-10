@@ -80,10 +80,13 @@ def ultranest_fit(
         log.info("Vectorized likelihood for ultranest fit.")
         log_likelihood = jax.vmap(log_likelihood, in_axes=(0,), out_axes=0)
 
+    # Call bayesian_prior to get the prior_transform function
+    prior_transform = bayesian_prior["prior_transform"]
+
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
         log_likelihood,
-        bayesian_prior,
+        prior_transform,
         **ultranest_settings["ReactiveNS_settings"],
     )
 

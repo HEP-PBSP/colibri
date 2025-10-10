@@ -13,13 +13,11 @@ import os
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 import blackjax
 from blackjax.ns.utils import finalise, sample, log_weights, ess
 from jax.scipy.special import logsumexp
 import tqdm
 import anesthetic
-from mpi4py import MPI
 
 from colibri.export_results import BayesianFit, export_bayes_results, write_replicas
 from colibri.utils import resample_from_ns_posterior
