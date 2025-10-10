@@ -268,7 +268,8 @@ class colibriConfig(Config):
             "repeats",
             "delete_fraction",
             "log_precision",
-            "posterior_resampling_seed" "seed",
+            "posterior_resampling_seed",
+            "seed",
         }
 
         kdiff = settings.keys() - known_keys
