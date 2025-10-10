@@ -89,8 +89,8 @@ executable.
     ###################
 
     # Integrability Settings
-    #integrability_settings:
-    #  integrability: False
+    integrability_settings:
+      integrability: False
     
     optimizer_settings:
         optimizer: adam # Any of the optax optimizers can be used.
