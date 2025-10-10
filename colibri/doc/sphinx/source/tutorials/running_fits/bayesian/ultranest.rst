@@ -167,7 +167,7 @@ This can be achieved by setting:
         prior_distribution_specs:
             prior_fit: your_previous_fit
 
-The previous fit `your_previous_fit` folder needs to be placed in ``sys.prefix`/share/colibri/results/``.
+The previous fit ``your_previous_fit`` folder needs to be placed in ``sys.prefix/share/colibri/results/``.
 
 UltraNest settings
 ^^^^^^^^^^^^^^^^^^

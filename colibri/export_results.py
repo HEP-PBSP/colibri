@@ -10,6 +10,7 @@ import yaml
 import numpy as np
 import pathlib
 from pathlib import Path
+import json
 
 import jax.numpy as jnp
 import pandas as pd
@@ -96,6 +97,40 @@ def export_bayes_results(
         float_format="%.5e",
         index=False,
     )
+
+
+def export_hessian_results(
+    hessian_fit,
+    output_path,
+    results_name,
+):
+    """
+    Export the results of a Hessian fit to a csv file.
+
+    Parameters
+    ----------
+    hessian_fit: HessianFit
+        The results of the Hessian fit.
+    output_path: pathlib.PosixPath
+        Path to the output folder.
+    results_name: str
+        Name of the results file.
+    """
+
+    # Save the resampled results
+    df = pd.DataFrame(hessian_fit.resampled_posterior, columns=hessian_fit.param_names)
+    df.to_csv(str(output_path) + f"/{results_name}.csv", float_format="%.5e")
+
+    # Write the optimized parameters, the covmat and the min chi2, the training loss to a csv file
+    to_dump = {
+        "min_chi2": float(hessian_fit.min_chi2),
+        "training_loss": hessian_fit.training_loss.tolist(),
+        "optimized_parameters": hessian_fit.optimized_parameters.tolist(),
+        "cov_params": hessian_fit.cov_params.tolist(),
+    }
+
+    with open(output_path / "hessian_fit_summary.json", "w") as f:
+        json.dump(to_dump, f, indent=2)
 
 
 def write_exportgrid(

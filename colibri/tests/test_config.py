@@ -136,6 +136,48 @@ def test_parse_analytic_settings_defaults():
     assert result == expected
 
 
+@patch("colibri.config.log.warning")
+def test_parse_optimizer_settings(mock_warning):
+
+    settings = {
+        "clipnorm": 6.3e-6,
+        "optimizer": "adam",
+        "optimizer_hyperparams": {"learning_rate": 0.001},
+        "unknown_key": "some_value",  # This should trigger the warning
+        "another_unknown": "value",  # This should also trigger a warning
+    }
+
+    # Call the method
+    result = BASE_CONFIG.parse_optimizer_settings(settings)
+
+    # Assert the result is as expected (unknown keys should be filtered out)
+    expected = {
+        "clipnorm": 6.3e-6,
+        "optimizer": "adam",
+        "optimizer_hyperparams": {"learning_rate": 0.001},
+    }
+
+    print("Testing optimizer settings parsing...")
+    assert result == expected
+
+    # Assert that the warning was called twice (once for each unknown key)
+    assert mock_warning.call_count == 2
+
+    # Check that both unknown keys triggered warnings
+    warning_messages = [
+        str(call_args[0][0]) for call_args in mock_warning.call_args_list
+    ]
+
+    assert any(
+        "Key 'unknown_key' in optimizer_settings not known." in msg
+        for msg in warning_messages
+    )
+    assert any(
+        "Key 'another_unknown' in optimizer_settings not known." in msg
+        for msg in warning_messages
+    )
+
+
 @patch("colibri.config.os.path.exists")
 @patch("colibri.config.log.warning")
 @patch("colibri.config.log.info")
@@ -418,3 +460,57 @@ def test_produce_commondata_tuple():
     closure_test_level = 2
     with pytest.raises(ConfigError):
         BASE_CONFIG.produce_commondata_tuple(closure_test_level)
+
+
+# -----------------------------
+# parse_hessian_settings tests
+# -----------------------------
+
+
+def test_parse_hessian_settings_defaults():
+    res = BASE_CONFIG.parse_hessian_settings({})
+    assert res == {
+        "tolerance": 1.0,
+        "iter_init": 1,
+        "n_eigvec": 20,
+        "grad_tol": 1e-6,
+        "min_hessian_eigval": 1e-12,
+        "require_local_min": False,
+        "rng_seed": 123456,
+    }
+
+
+def test_parse_hessian_settings_with_seed():
+    import jax
+
+    settings = {"rng_seed": 123, "iter_init": 2}
+    res = BASE_CONFIG.parse_hessian_settings(settings)
+
+    assert res["iter_init"] == 2
+    # rng_seed built from seed
+    assert res["rng_seed"] == 123
+
+
+@patch("colibri.config.log.warning")
+def test_parse_hessian_settings_unknown_key_warns(mock_warning):
+    settings = {"tolerance": 1.0, "unknown": True}
+    res = BASE_CONFIG.parse_hessian_settings(settings)
+    # defaults returned and warning emitted
+    assert res["tolerance"] == 1.0
+    assert mock_warning.called
+    args, _ = mock_warning.call_args
+    assert isinstance(args[0], ConfigError)
+
+
+@pytest.mark.parametrize(
+    "settings, match",
+    [
+        ({"tolerance": 0}, "tolerance.*must be > 0"),
+        ({"iter_init": 0}, "iter_init.*must be >= 1"),
+        ({"grad_tol": 0.0}, "grad_tol.*must be > 0"),
+        ({"min_hessian_eigval": 0.0}, "min_hessian_eigval.*must be > 0"),
+    ],
+)
+def test_parse_hessian_settings_invalid_values(settings, match):
+    with pytest.raises(ConfigError, match=match):
+        BASE_CONFIG.parse_hessian_settings(settings)

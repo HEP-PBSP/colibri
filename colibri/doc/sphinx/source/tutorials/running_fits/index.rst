@@ -4,7 +4,7 @@
 Running Fits
 ============
 
-Colibri supports three inference methods for PDF fitting:
+Colibri supports four inference methods for PDF fitting:
 
 1. **Bayesian Fit**:
    Employs Markov Chain Monte Carlo (MCMC) sampling to explore the posterior distribution.
@@ -14,6 +14,9 @@ Colibri supports three inference methods for PDF fitting:
 
 3. **Analytic Fit**:
    Computes the posterior distribution of model parameters by solving the linear regression analytically.
+
+4. **Hessian Fit**:
+   Utilizes the Hessian matrix to estimate uncertainties in the fit parameters.
 
 In the sections that follow, we'll explore the use cases and workflows for each method.
 
@@ -26,5 +29,7 @@ In the sections that follow, we'll explore the use cases and workflows for each 
    ./running_mc_replica
 
    ./running_analytic
+
+   ./running_hessian
 
    ./running_positivity

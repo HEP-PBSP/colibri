@@ -1,19 +1,15 @@
 
 .. references
+% Colibri code paper
 
-%   LES HOUCHES PARAMETRISATION
-
-@inproceedings{Alekhin:2005xgg,
-  author = "Alekhin, S. I. and others",
-  title = "{DGLAP evolution and parton fits}",
-  booktitle = "{HERA and the LHC: A Workshop on the Implications of HERA for LHC Physics: CERN - DESY Workshop 2004/2005 (Midterm Meeting, CERN, 11-13 October 2004; Final Meeting, DESY, 17-21 January 2005)}",
-  publisher = "CERN",
-  address = "Geneva",
-  pages = "119--159",
-  year = "2005",
-  eprint={hep-ph/0601012},
-  archivePrefix={arXiv},
-  primaryClass={hep-ph},
+@article{Costantini:2025agd,
+    author = "Costantini, Mark N. and Mantani, Luca and Moore, James M. and Sanchez, Valentina Schutze and Ubiali, Maria",
+    title = "{Colibri: A new tool for fast-flying PDF fits}",
+    eprint = "2510.03391",
+    archivePrefix = "arXiv",
+    primaryClass = "hep-ph",
+    month = "10",
+    year = "2025"
 }
 
 % reportengine 
@@ -26,19 +22,49 @@
   howpublished = {\url{https://doi.org/10.5281/zenodo.14803041}}
 }
 
+% NNPDF4.0 and code
 
-% monte carlo replica method vs bayesian study
-@article{Costantini:2024wby,
-    author = "Costantini, Mark N. and Madigan, Maeve and Mantani, Luca and Moore, James M.",
-    title = "{A critical study of the Monte Carlo replica method}",
-    eprint = "2404.10056",
+@article{NNPDF:2021uiq,
+    author = "Ball, Richard D. and others",
+    collaboration = "NNPDF",
+    title = "{An open-source machine learning framework for global analyses of parton distributions}",
+    eprint = "2109.02671",
     archivePrefix = "arXiv",
     primaryClass = "hep-ph",
-    doi = "10.1007/JHEP12(2024)064",
-    journal = "JHEP",
-    volume = "12",
-    pages = "064",
-    year = "2024"
+    reportNumber = "Edinburgh 2021/13, Nikhef-2021-020, TIF-UNIMI-2021-12",
+    doi = "10.1140/epjc/s10052-021-09747-9",
+    journal = "Eur. Phys. J. C",
+    volume = "81",
+    number = "10",
+    pages = "958",
+    year = "2021"
+}
+
+@misc{zaharid_2025_17219358,
+  author       = "{Kassabov, Zahari and others}",
+  title        = "{NNPDF/nnpdf: 4.1.1}",
+  year         = {2025},
+  publisher    = {Zenodo},
+  version      = {4.1.1},
+  doi          = {10.5281/zenodo.17219358},
+  url          = {https://doi.org/10.5281/zenodo.17219358},
+  note         = {Software release}
+}
+
+@article{NNPDF:2021njg,
+    author = "Ball, Richard D. and others",
+    collaboration = "NNPDF",
+    title = "{The path to proton structure at 1{\%} accuracy}",
+    eprint = "2109.02653",
+    archivePrefix = "arXiv",
+    primaryClass = "hep-ph",
+    reportNumber = "Edinburgh 2021/12, Nikhef-2021-013, TIF-UNIMI-2021-11",
+    doi = "10.1140/epjc/s10052-022-10328-7",
+    journal = "Eur. Phys. J. C",
+    volume = "82",
+    number = "5",
+    pages = "428",
+    year = "2022"
 }
 
 % eko references
@@ -67,19 +93,35 @@
   note         = {Software release}
 }
 
-% inconsistent closure test study
-@article{Barontini:2025lnl,
-    author = "Barontini, Andrea and Costantini, Mark N. and De Crescenzo, Giovanni and Forte, Stefano and Ubiali, Maria",
-    title = "{Evaluating the faithfulness of PDF uncertainties in the presence of inconsistent data}",
-    eprint = "2503.17447",
-    archivePrefix = "arXiv",
-    primaryClass = "hep-ph",
-    journal = "JHEP",
-    reportNumber = "TIF-UNIMI-2025-7",
-    month = "3",
-    year = "2025"
+%   LES HOUCHES PARAMETRISATION
+
+@inproceedings{Alekhin:2005xgg,
+  author = "Alekhin, S. I. and others",
+  title = "{DGLAP evolution and parton fits}",
+  booktitle = "{HERA and the LHC: A Workshop on the Implications of HERA for LHC Physics: CERN - DESY Workshop 2004/2005 (Midterm Meeting, CERN, 11-13 October 2004; Final Meeting, DESY, 17-21 January 2005)}",
+  publisher = "CERN",
+  address = "Geneva",
+  pages = "119--159",
+  year = "2005",
+  eprint={hep-ph/0601012},
+  archivePrefix={arXiv},
+  primaryClass={hep-ph},
 }
 
+
+% monte carlo replica method vs bayesian study
+@article{Costantini:2024wby,
+    author = "Costantini, Mark N. and Madigan, Maeve and Mantani, Luca and Moore, James M.",
+    title = "{A critical study of the Monte Carlo replica method}",
+    eprint = "2404.10056",
+    archivePrefix = "arXiv",
+    primaryClass = "hep-ph",
+    doi = "10.1007/JHEP12(2024)064",
+    journal = "JHEP",
+    volume = "12",
+    pages = "064",
+    year = "2024"
+}
 
 % closure test nnpdf
 @article{DelDebbio:2021whr,
@@ -96,8 +138,20 @@
     year = "2022"
 }
 
-% wmin linear model analytic fits
+% inconsistent closure test study
+@article{Barontini:2025lnl,
+    author = "Barontini, Andrea and Costantini, Mark N. and De Crescenzo, Giovanni and Forte, Stefano and Ubiali, Maria",
+    title = "{Evaluating the faithfulness of PDF uncertainties in the presence of inconsistent data}",
+    eprint = "2503.17447",
+    archivePrefix = "arXiv",
+    primaryClass = "hep-ph",
+    journal = "JHEP",
+    reportNumber = "TIF-UNIMI-2025-7",
+    month = "3",
+    year = "2025"
+}
 
+% wmin linear model analytic fits
 @misc{Costantini:2025wxp,
     author = "Costantini, Mark N. and Mantani, Luca and Moore, James M. and Ubiali, Maria",
     title = "{A linear PDF model for Bayesian inference}",
@@ -108,27 +162,7 @@
     year = "2025"
 }
 
-% NNPDF4.0
-
-@article{NNPDF:2021uiq,
-    author = "Richard D. Ball and Stefano Carrazza and Juan Cruz-Martinez and Luigi Del Debbio and Stefano Forte and Tommaso Giani and Shayan Iranipour and Zahari Kassabov and Jose I. Latorre and Emanuele R. Nocera and Rosalyn L. Pearson and Juan Rojo and Roy Stegeman and Christopher Schwan and Maria Ubiali and Cameron Voisey and Michael Wilson",
-    collaboration = "NNPDF",
-    title = "{An open-source machine learning framework for global analyses of parton distributions}",
-    eprint = "2109.02671",
-    archivePrefix = "arXiv",
-    primaryClass = "hep-ph",
-    reportNumber = "Edinburgh 2021/13, Nikhef-2021-020, TIF-UNIMI-2021-12",
-    doi = "10.1140/epjc/s10052-021-09747-9",
-    journal = "Eur. Phys. J. C",
-    volume = "81",
-    number = "10",
-    pages = "958",
-    year = "2021"
-}
-
-
 % ultranest
-
 @article{Buchner2016,
     author = {{Buchner}, Johannes},
     title = "{A statistical test for Nested Sampling algorithms}",
@@ -184,4 +218,31 @@
     adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 
+# Hessian fit
+@article{Bailey:2020ooq,
+    author = "Bailey, S. and Cridge, T. and Harland-Lang, L. A. and Martin, A. D. and Thorne, R. S.",
+    title = "{Parton distributions from LHC, HERA, Tevatron and fixed target data: MSHT20 PDFs}",
+    eprint = "2012.04684",
+    archivePrefix = "arXiv",
+    primaryClass = "hep-ph",
+    reportNumber = "IPPP/20/58",
+    doi = "10.1140/epjc/s10052-021-09057-0",
+    journal = "Eur. Phys. J. C",
+    volume = "81",
+    number = "4",
+    pages = "341",
+    year = "2021"
+}
 
+@article{Pumplin:2002vw,
+    author = "Pumplin, J. and Stump, D. R. and Huston, J. and Lai, H. L. and Nadolsky, Pavel M. and Tung, W. K.",
+    title = "{New generation of parton distributions with uncertainties from global QCD analysis}",
+    eprint = "hep-ph/0201195",
+    archivePrefix = "arXiv",
+    reportNumber = "MSU-HEP-011101",
+    doi = "10.1088/1126-6708/2002/07/012",
+    journal = "JHEP",
+    volume = "07",
+    pages = "012",
+    year = "2002"
+}

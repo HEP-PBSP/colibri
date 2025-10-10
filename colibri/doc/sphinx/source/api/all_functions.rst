@@ -21,51 +21,6 @@ Bayes Prior
    :show-inheritance:
    :noindex:
 
-Core
-----
-
-.. automodule:: colibri.core
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
-Export Results
---------------
-
-.. automodule:: colibri.export_results
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
-Monte Carlo Fit
----------------
-
-.. automodule:: colibri.monte_carlo_fit
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
-Provider Aliases
-----------------
-
-.. automodule:: colibri.provider_aliases
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
-Ultranest Fit
--------------
-
-.. automodule:: colibri.ultranest_fit
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
 Checks
 ------
 
@@ -75,19 +30,10 @@ Checks
    :show-inheritance:
    :noindex:
 
-Covariance Matrices
--------------------
+Closure Test
+------------
 
-.. automodule:: colibri.covmats
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
-Loss Functions
---------------
-
-.. automodule:: colibri.loss_functions
+.. automodule:: colibri.closure_test
    :members:
    :undoc-members:
    :show-inheritance:
@@ -102,6 +48,33 @@ Common Data Utils
    :show-inheritance:
    :noindex:
 
+Config
+------
+
+.. automodule:: colibri.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Core
+----
+
+.. automodule:: colibri.core
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Covariance Matrices
+-------------------
+
+.. automodule:: colibri.covmats
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
 Data Batch
 ----------
 
@@ -111,28 +84,46 @@ Data Batch
    :show-inheritance:
    :noindex:
 
-MC Initialisation
------------------
+Export Results
+--------------
 
-.. automodule:: colibri.param_initialisation
+.. automodule:: colibri.export_results
    :members:
    :undoc-members:
    :show-inheritance:
    :noindex:
 
-Optax Optimizer
----------------
+Gradient Descent
+----------------
 
-.. automodule:: colibri.optax_optimizer
+.. automodule:: colibri.gradient_descent
    :members:
    :undoc-members:
    :show-inheritance:
    :noindex:
 
-Config
-------
+Hessian Fit
+-----------
 
-.. automodule:: colibri.config
+.. automodule:: colibri.hessian_fit
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Likelihood
+----------
+
+.. automodule:: colibri.likelihood
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Loss Functions
+--------------
+
+.. automodule:: colibri.loss_functions
    :members:
    :undoc-members:
    :show-inheritance:
@@ -147,10 +138,64 @@ MC Loss Functions
    :show-inheritance:
    :noindex:
 
-PDF Model
+MC Utils
+--------
+
+.. automodule:: colibri.mc_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Monte Carlo Fit
+---------------
+
+.. automodule:: colibri.monte_carlo_fit
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Optax Optimizer
+---------------
+
+.. automodule:: colibri.optax_optimizer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Parameter Initialisation
+------------------------
+
+.. automodule:: colibri.param_initialisation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+PDF model
 ---------
 
 .. automodule:: colibri.pdf_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Provider Aliases
+----------------
+
+.. automodule:: colibri.provider_aliases
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+Scripts
+-------
+
+.. automodule:: colibri.scripts
    :members:
    :undoc-members:
    :show-inheritance:
@@ -165,15 +210,6 @@ Theory Predictions
    :show-inheritance:
    :noindex:
 
-MC Utils
---------
-
-.. automodule:: colibri.mc_utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
 Training and Validation
 -----------------------
 
@@ -183,18 +219,19 @@ Training and Validation
    :show-inheritance:
    :noindex:
 
-Utils
------
+Ultranest Fit
+-------------
 
-.. automodule:: colibri.utils
+.. automodule:: colibri.ultranest_fit
    :members:
    :undoc-members:
    :show-inheritance:
    :noindex:
 
-Scripts
--------
-.. automodule:: colibri.scripts
+Utils
+-----
+
+.. automodule:: colibri.utils
    :members:
    :undoc-members:
    :show-inheritance:

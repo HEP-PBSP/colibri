@@ -27,6 +27,7 @@ colibri_providers = [
     "colibri.blackjax_fit",
     "colibri.monte_carlo_fit",
     "colibri.analytic_fit",
+    "colibri.hessian_fit",
     "colibri.pdf_model",
     "colibri.bayes_prior",
     "colibri.param_initialisation",
