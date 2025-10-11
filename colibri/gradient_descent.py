@@ -92,13 +92,16 @@ def run_gradient_descent(
 
     params = initial_parameters
     opt_state = optimizer.init(params)
+    loss_and_grad = jax.value_and_grad(training_loss_fn)
+    # JIT the validation loss in case it isn't already
+    validation_loss_fn = jax.jit(validation_loss_fn)
 
     # Sentinel for "use full dataset" inside the loss
     EMPTY_BATCH = BatchSpec(idx=jnp.array([], dtype=jnp.int32), inv_cov=None)
 
     @jax.jit
     def _step(p, ostate, batch: BatchSpec):
-        loss_value, grads = jax.value_and_grad(training_loss_fn)(p, batch)
+        loss_value, grads = loss_and_grad(p, batch)
         updates, ostate = optimizer.update(grads, ostate, p)
         p = optax.apply_updates(p, updates)
         return p, ostate, loss_value
