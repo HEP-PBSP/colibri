@@ -89,16 +89,8 @@ def monte_carlo_fit(
     len_tr_idx, len_val_idx = len_trval_data
 
     @jax.jit
-    def loss_training(
-        parameters,
-        batch_idx,
-        inv_covmat_batch=None,
-    ):
-        return (
-            -2
-            * mc_log_likelihood[0](parameters, batch_idx, inv_covmat_batch)
-            / len_tr_idx
-        )
+    def loss_training(parameters, batch):
+        return -2 * mc_log_likelihood[0](parameters, batch) / len_tr_idx
 
     @jax.jit
     def loss_validation(parameters):

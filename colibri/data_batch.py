@@ -4,7 +4,7 @@ colibri.data_batch.py
 Module containing data batches provider.
 """
 
-from typing import Callable, Optional, Iterator, Tuple, List
+from typing import Callable, Optional, Iterator, List, NamedTuple
 from dataclasses import dataclass
 import logging
 
@@ -14,18 +14,19 @@ import jax.numpy as jnp
 log = logging.getLogger(__name__)
 
 
+class BatchSpec(NamedTuple):
+    idx: jnp.ndarray
+    inv_cov: Optional[jnp.ndarray] = None
+
+
 @dataclass(frozen=True)
 class DataBatches:
-    data_batch_stream_index: Callable[[], Iterator[jax.Array]]
+    data_batch_stream: Callable[[], Iterator[BatchSpec]]
     num_batches: int
     batch_size: int
     batch_seed: int
-    # Optional advanced batching: fixed batches with precomputed inverses
-    data_batch_stream_index_and_inv: Optional[
-        Callable[[], Iterator[Tuple[jax.Array, jax.Array]]]
-    ] = None
-    fixed_batches: Optional[List[jax.Array]] = None
-    fixed_inv_covmats: Optional[List[jax.Array]] = None
+    # Optional cache for visibility / reuse
+    fixed_batches: Optional[List[BatchSpec]] = None
 
 
 def data_batches(
@@ -83,19 +84,9 @@ def data_batches(
         # Slice contiguous chunks without Python loops over jnp (keeps it simple/readability)
         return [perm[i * batch_size : (i + 1) * batch_size] for i in range(num_batches)]
 
-    def _precompute_inv_for_batches(
-        batches: List[jax.Array], cov: jax.Array
-    ) -> List[jax.Array]:
-        invs = []
-        for b in batches:
-            cov_b = cov[b][:, b]
-            invs.append(jnp.linalg.inv(cov_b))
-        return invs
-
     key = jax.random.PRNGKey(batch_seed)
 
-    fixed_batches = None
-    fixed_inv_covmats = None
+    fixed_batches_specs = None
 
     if not shuffle_each_epoch:
         # Single permutation → fixed batches
@@ -104,46 +95,35 @@ def data_batches(
 
         if fit_covariance_matrix is not None:
             train_covmat = fit_covariance_matrix[training_indices][:, training_indices]
-            fixed_inv_covmats = _precompute_inv_for_batches(fixed_batches, train_covmat)
+            fixed_batches_specs = [
+                BatchSpec(
+                    idx=b,
+                    inv_cov=jnp.linalg.inv(train_covmat[b][:, b]),
+                )
+                for b in fixed_batches
+            ]
+        else:
+            fixed_batches_specs = [BatchSpec(idx=b) for b in fixed_batches]
 
-    # --- generators ---
-    def data_batch_stream_index() -> Iterator[jax.Array]:
-        """
-        Yields indices of each batch, epoch after epoch.
-        - shuffle_each_epoch=True: new permutation every epoch (key is advanced).
-        - shuffle_each_epoch=False: cycles over fixed batches.
-        """
-        nonlocal key  # important: advance the outer key safely inside the closure
-
+    def data_batch_stream() -> Iterator[BatchSpec]:
+        nonlocal key
         if shuffle_each_epoch:
             while True:
                 key, subkey = jax.random.split(key)
                 perm = _make_perm(subkey)
                 for b in _slice_batches_from_perm(perm):
-                    yield b
+                    # no cached inverse when shuffling each epoch
+                    yield BatchSpec(idx=b)
         else:
-            # Cycle forever over fixed batches
             while True:
-                for b in fixed_batches:
-                    yield b
-
-    data_batch_stream_index_and_inv = None
-
-    if (fixed_batches is not None) and (fixed_inv_covmats is not None):
-
-        def _gen_idx_and_inv() -> Iterator[Tuple[jax.Array, jax.Array]]:
-            while True:
-                for b, inv in zip(fixed_batches, fixed_inv_covmats):
-                    yield b, inv
-
-        data_batch_stream_index_and_inv = _gen_idx_and_inv
+                # cycle through precomputed specs (with inv_cov if available)
+                for spec in fixed_batches_specs:
+                    yield spec
 
     return DataBatches(
-        data_batch_stream_index=data_batch_stream_index,
+        data_batch_stream=data_batch_stream,
         num_batches=num_batches,
         batch_size=batch_size,
         batch_seed=batch_seed,
-        data_batch_stream_index_and_inv=data_batch_stream_index_and_inv,
-        fixed_batches=fixed_batches,
-        fixed_inv_covmats=fixed_inv_covmats,
+        fixed_batches=fixed_batches_specs,
     )

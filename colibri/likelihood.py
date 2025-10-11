@@ -10,6 +10,7 @@ import jax
 import jax.numpy as jnp
 from colibri.loss_functions import chi2
 from colibri.commondata_utils import CentralCovmatIndex
+from colibri.data_batch import BatchSpec
 
 
 class LogLikelihood(object):
@@ -68,19 +69,21 @@ class LogLikelihood(object):
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
 
-    def __call__(self, params, batch_idx=None, inv_covmat_batch=None):
+    def __call__(self, params, batch: BatchSpec | None = None):
         """
         Note that this function is called by the samplers, and it must be
-        a function of the model parameters only.
+        a function of the model parameters only by default.
+        If a batch is provided, the log-likelihood is computed only for the
+        subset of data indexed by batch.
 
         Parameters
         ----------
         params: jnp.ndarray
             The model parameters.
 
-        batch_idx: jnp.ndarray, optional
+        batch: BatchSpec, optional
             If provided, computes the log-likelihood only for the subset of data
-            indexed by batch_idx.
+            indexed by batch.idx, using precomputed batch.inv_cov if available.
 
         Returns
         -------
@@ -93,8 +96,7 @@ class LogLikelihood(object):
             self.inv_covmat,
             self.fast_kernel_arrays,
             self.positivity_fast_kernel_arrays,
-            batch_idx=batch_idx,
-            inv_covmat_batch=inv_covmat_batch,
+            batch=batch,
         )
 
     @partial(jax.jit, static_argnames=("self",))
@@ -105,8 +107,7 @@ class LogLikelihood(object):
         inv_covmat: jnp.ndarray,
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
-        batch_idx: jnp.ndarray = None,
-        inv_covmat_batch: jnp.ndarray = None,
+        batch: BatchSpec | None = None,
     ) -> jnp.array:
         """
         This function takes care of computing the log_likelihood that is defined in LogLikelihood.
@@ -128,14 +129,14 @@ class LogLikelihood(object):
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
         predictions = predictions[self.central_values_idx]
 
-        if batch_idx is not None:
-            predictions = predictions[batch_idx]
-            central_values = central_values[batch_idx]
-            if inv_covmat_batch is None:
-                batched_covmat = self.covmat[batch_idx][:, batch_idx]
+        if batch is not None:
+            predictions = predictions[batch.idx]
+            central_values = central_values[batch.idx]
+            if batch.inv_cov is None:
+                batched_covmat = self.covmat[batch.idx][:, batch.idx]
                 inv_covmat = jnp.linalg.inv(batched_covmat)
             else:
-                inv_covmat = inv_covmat_batch
+                inv_covmat = batch.inv_cov
 
         if self.positivity_penalty_settings["positivity_penalty"]:
             pos_penalty = jnp.sum(
