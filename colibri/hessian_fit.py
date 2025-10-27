@@ -1,6 +1,7 @@
 from colibri.export_results import write_replicas
 
 import jax.numpy as jnp
+from jax.extend import backend as jbackend
 from dataclasses import dataclass
 import logging
 import time
@@ -78,7 +79,7 @@ def hessian_fit(
         Frequency of recording the training loss during the gradient descent.
     """
 
-    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+    log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
     log.info("Starting Hessian fit...")
 
     # run_gradient_descent expects a data batch object, but we don't use it here

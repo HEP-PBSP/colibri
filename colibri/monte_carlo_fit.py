@@ -8,6 +8,7 @@ This module contains the main Monte Carlo fitting routine of colibri.
 from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
+from jax.extend import backend as jbackend
 import logging
 import pandas as pd
 import os
@@ -107,7 +108,7 @@ def monte_carlo_fit(
 
         return val / len_val_idx if len_val_idx > 0 else val
 
-    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+    log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 

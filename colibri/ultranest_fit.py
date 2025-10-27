@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 import jax
 import jax.numpy as jnp
+from jax.extend import backend as jbackend
 import numpy as np
 import ultranest
 import ultranest.popstepsampler as popstepsampler
@@ -85,7 +86,7 @@ def ultranest_fit(
         Dataclass containing the results and specs of an Ultranest fit.
     """
 
-    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+    log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
 
     # set the ultranest seed
     np.random.seed(ultranest_settings["ultranest_seed"])
