@@ -44,7 +44,7 @@ def time_log_likelihood(log_likelihood, bayesian_prior, pdf_model, output_path):
     sizes = [1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]
 
     # Pre-generate samples for each size
-    log.info("Generating samples...")
+    log.info("Generating samples for log likelihood timing...")
     samples_list = []
     rng_key = jax.random.PRNGKey(0)
 
@@ -76,7 +76,6 @@ def time_log_likelihood(log_likelihood, bayesian_prior, pdf_model, output_path):
 
         avg_time = (t1 - t0) / n_repeats
         times.append(avg_time)
-        log.info(f"Size: {size:6d}, Time: {avg_time:.6f} s")
 
     # Save to CSV in the output_path
     save_path = output_path / "log_likelihood_times.csv"
