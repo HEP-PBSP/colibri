@@ -110,6 +110,20 @@ class colibriConfig(Config):
     Config class
     """
 
+    def produce_Q0(self, data):
+        """
+        Produces the scale Q0 at which the PDFs are evaluated in the fit
+        by taking the Q0 from the theory that is used in the fit.
+
+        Returns
+        -------
+        Q0: float
+            Scale at which the PDFs are evaluated in the fit.
+        """
+        # NOTE: all fkspecs have the same theory and thus the same Q0.
+        Q0 = load_fktable(data.datasets[0].fkspecs[0]).Q0
+        return float(Q0)
+
     def produce_FIT_XGRID(self, data=None, posdatasets=None):
         """
         Produces the xgrid for the fit from the union of all xgrids

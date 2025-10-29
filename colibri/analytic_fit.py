@@ -294,7 +294,7 @@ def analytic_fit(
     )
 
 
-def run_analytic_fit(analytic_fit, output_path, pdf_model):
+def run_analytic_fit(analytic_fit, output_path, pdf_model, Q0):
     """
     Export the results of an analytic fit.
 
@@ -306,8 +306,10 @@ def run_analytic_fit(analytic_fit, output_path, pdf_model):
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
+    Q0: float
+        The scale at which to export the PDFs.
     """
 
     export_bayes_results(analytic_fit, output_path, "analytic_result")
 
-    write_replicas(analytic_fit, output_path, pdf_model)
+    write_replicas(analytic_fit, output_path, pdf_model, Q0)

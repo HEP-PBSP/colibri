@@ -219,7 +219,7 @@ def monte_carlo_fit(
     )
 
 
-def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
+def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, Q0):
     """
     Runs the Monte Carlo fit and writes the output to the output directory.
 
@@ -235,6 +235,10 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
         Path to the output folder.
 
     replica_index: int
+        The index of the replica being written.
+
+    Q0: float
+        The scale at which to export the PDFs.
     """
     mc_fit = monte_carlo_fit
 
@@ -254,6 +258,7 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
         pdf_model,
         replica_index,
         output_path,
+        Q0,
     )
 
     df.to_csv(
