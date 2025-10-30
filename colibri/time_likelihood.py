@@ -12,6 +12,7 @@ import csv
 import jax
 import jax.numpy as jnp
 import numpy as np
+from colibri.param_initialisation import pdf_initial_parameters
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +22,6 @@ def time_log_likelihood(
 ):
     """
     Time the vectorized log likelihood across different batch sizes.
-    Replicates Figure 1 from the paper.
 
     Parameters
     ----------
@@ -34,10 +34,6 @@ def time_log_likelihood(
     output_path : pathlib.PosixPath
         Path to the output folder where log_likelihood_times.csv will be saved
     """
-    from colibri.param_initialisation import pdf_initial_parameters
-
-    # Get number of parameters from pdf_model
-    n_params = len(pdf_model.param_names)
 
     # Create vectorized version
     log_likelihood_vec = jax.vmap(log_likelihood, in_axes=(0,), out_axes=0)
@@ -45,22 +41,24 @@ def time_log_likelihood(
     # Batch sizes to test
     sizes = [1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]
 
-    # Pre-generate samples for each size
+    # Pre-generate samples for the largest size only
     log.info("Generating samples for log likelihood timing...")
+    max_size = max(sizes)
+
+    all_samples = []
+    for replica_idx in range(max_size):
+        params = pdf_initial_parameters(
+            pdf_model, param_initialiser_settings, replica_idx
+        )
+        all_samples.append(params)
+
+    # Stack all samples into one large batch
+    all_samples_batch = jnp.stack(all_samples)
+
+    # Create subsets for each size
     samples_list = []
-
     for size in sizes:
-        # Generate samples using pdf_initial_parameters with different replica indices
-        samples = []
-        for replica_idx in range(size):
-            params = pdf_initial_parameters(
-                pdf_model, param_initialiser_settings, replica_idx
-            )
-            samples.append(params)
-
-        # Stack into a batch
-        samples_batch = jnp.stack(samples)
-        samples_list.append(samples_batch)
+        samples_list.append(all_samples_batch[:size])
 
     # Warm-up: compile the function by calling it a couple times
     log.info("Warming up (JIT compilation)...")
