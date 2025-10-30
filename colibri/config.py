@@ -122,6 +122,7 @@ class colibriConfig(Config):
         """
         # NOTE: all fkspecs have the same theory and thus the same Q0.
         Q0 = load_fktable(data.datasets[0].fkspecs[0]).Q0
+        log.info(f"Using Q0 = {Q0} GeV as the parametrisation scale.")
         return float(Q0)
 
     def produce_FIT_XGRID(self, data=None, posdatasets=None):
