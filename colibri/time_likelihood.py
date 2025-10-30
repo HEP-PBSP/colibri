@@ -10,12 +10,15 @@ import time
 import csv
 
 import jax
+import jax.numpy as jnp
 import numpy as np
 
 log = logging.getLogger(__name__)
 
 
-def time_log_likelihood(log_likelihood, bayesian_prior, pdf_model, output_path):
+def time_log_likelihood(
+    log_likelihood, param_initialiser_settings, pdf_model, output_path
+):
     """
     Time the vectorized log likelihood across different batch sizes.
     Replicates Figure 1 from the paper.
@@ -24,15 +27,14 @@ def time_log_likelihood(log_likelihood, bayesian_prior, pdf_model, output_path):
     ----------
     log_likelihood : callable
         The log likelihood function that takes parameter vector(s)
-    bayesian_prior : dict
-        Dictionary containing prior_transform and other prior functions
+    param_initialiser_settings : dict
+        Settings for parameter initialization
     pdf_model : pdf_model.PDFModel
         The PDF model to fit
     output_path : pathlib.PosixPath
         Path to the output folder where log_likelihood_times.csv will be saved
     """
-    # Extract prior_transform from bayesian_prior
-    prior_transform = bayesian_prior["prior_transform"]
+    from colibri.param_initialisation import pdf_initial_parameters
 
     # Get number of parameters from pdf_model
     n_params = len(pdf_model.param_names)
@@ -46,15 +48,19 @@ def time_log_likelihood(log_likelihood, bayesian_prior, pdf_model, output_path):
     # Pre-generate samples for each size
     log.info("Generating samples for log likelihood timing...")
     samples_list = []
-    rng_key = jax.random.PRNGKey(0)
 
-    for i, size in enumerate(sizes):
-        # Generate uniform samples in [0,1]
-        key = jax.random.fold_in(rng_key, i)
-        cube = jax.random.uniform(key, shape=(size, n_params))
-        # Transform through prior
-        samples = prior_transform(cube)
-        samples_list.append(samples)
+    for size in sizes:
+        # Generate samples using pdf_initial_parameters with different replica indices
+        samples = []
+        for replica_idx in range(size):
+            params = pdf_initial_parameters(
+                pdf_model, param_initialiser_settings, replica_idx
+            )
+            samples.append(params)
+
+        # Stack into a batch
+        samples_batch = jnp.stack(samples)
+        samples_list.append(samples_batch)
 
     # Warm-up: compile the function by calling it a couple times
     log.info("Warming up (JIT compilation)...")
@@ -76,6 +82,7 @@ def time_log_likelihood(log_likelihood, bayesian_prior, pdf_model, output_path):
 
         avg_time = (t1 - t0) / n_repeats
         times.append(avg_time)
+        log.info(f"Size: {size:6d}, Time: {avg_time:.6f} s")
 
     # Save to CSV in the output_path
     save_path = output_path / "log_likelihood_times.csv"
