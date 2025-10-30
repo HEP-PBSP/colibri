@@ -482,7 +482,7 @@ def write_resampled_bayesian_fit(
             grid_for_writing=grid_for_writing,
             grid_name=grid_name,
             replica_index=replica_index,
-            Q=parametrisation_scale,
+            Q0=parametrisation_scale,
             xgrid=LHAPDF_XGRID,
             export_labels=EXPORT_LABELS,
         )
