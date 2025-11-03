@@ -18,7 +18,11 @@ log = logging.getLogger(__name__)
 
 
 def time_log_likelihood(
-    log_likelihood, param_initialiser_settings, pdf_model, output_path
+    log_likelihood,
+    param_initialiser_settings,
+    pdf_model,
+    output_path,
+    batch_sample_sizes=None,
 ):
     """
     Time the vectorized log likelihood across different batch sizes.
@@ -38,8 +42,13 @@ def time_log_likelihood(
     # Create vectorized version
     log_likelihood_vec = jax.vmap(log_likelihood, in_axes=(0,), out_axes=0)
 
-    # Batch sizes to test
-    sizes = [1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]
+    # Batch sizes to test - use provided or default
+    if batch_sample_sizes is None:
+        sizes = [1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]
+        log.info("Using default batch sample sizes")
+    else:
+        sizes = batch_sample_sizes
+        log.info(f"Using custom batch sample sizes: {sizes}")
 
     # Pre-generate samples for the largest size only
     log.info("Generating samples for log likelihood timing...")
@@ -80,7 +89,6 @@ def time_log_likelihood(
 
         avg_time = (t1 - t0) / n_repeats
         times.append(avg_time)
-        log.info(f"Size: {size:6d}, Time: {avg_time:.6f} s")
 
     # Save to CSV in the output_path
     save_path = output_path / "log_likelihood_times.csv"
