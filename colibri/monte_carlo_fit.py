@@ -147,7 +147,6 @@ def monte_carlo_fit(
                 lambda_positivity,
                 positivity_fast_kernel_arrays,
             )
-            / len_tr_idx
         )
 
     @jax.jit
