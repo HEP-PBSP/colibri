@@ -231,7 +231,7 @@ def hessian_fit(
     )
 
 
-def run_hessian_fit(hessian_fit, output_path, pdf_model):
+def run_hessian_fit(hessian_fit, output_path, pdf_model, Q0):
     """
     Export the results of a Hessian fit.
 
@@ -243,8 +243,10 @@ def run_hessian_fit(hessian_fit, output_path, pdf_model):
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
+    Q0: float
+        The scale at which to export the PDFs.
     """
 
     export_hessian_results(hessian_fit, output_path, "hessian_result")
 
-    write_replicas(hessian_fit, output_path, pdf_model)
+    write_replicas(hessian_fit, output_path, pdf_model, Q0)

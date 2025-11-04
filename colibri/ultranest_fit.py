@@ -192,7 +192,7 @@ def ultranest_fit(
     return fit_result
 
 
-def run_ultranest_fit(ultranest_fit, output_path, pdf_model):
+def run_ultranest_fit(ultranest_fit, output_path, pdf_model, Q0):
     """
     Export the results of an Ultranest fit.
 
@@ -204,9 +204,11 @@ def run_ultranest_fit(ultranest_fit, output_path, pdf_model):
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
+    Q0: float
+        The scale at which to export the PDFs.
     """
 
     if rank == 0:
         export_bayes_results(ultranest_fit, output_path, "ns_result")
 
-    write_replicas(ultranest_fit, output_path, pdf_model)
+    write_replicas(ultranest_fit, output_path, pdf_model, Q0)

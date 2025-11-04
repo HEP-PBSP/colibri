@@ -311,7 +311,7 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
 
     # Run the run_ultranest_fit function
     output_path = str(tmp_path)
-    run_ultranest_fit(mock_ultranest_fit, output_path, MOCK_PDF_MODEL)
+    run_ultranest_fit(mock_ultranest_fit, output_path, MOCK_PDF_MODEL, Q0=1.65)
 
     # Check if the write_exportgrid function was called for each sample
     assert (
