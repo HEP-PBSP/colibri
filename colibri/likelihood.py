@@ -123,6 +123,8 @@ class LogLikelihood(object):
         jnp.ndarray
             jax array with the value of the log-likelihood.
         """
+        # NOTE: here when passing params to pred_and_pdf (or more generally to predictions), we could first 
+        # change it's data structure to separate pdf model parameters and extra parameters
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
         # Select only the data relevant for this likelihood
         # Especially important when using a training/validation split

@@ -20,11 +20,24 @@ class PDFModel(ABC):
     @property
     @abstractmethod
     def param_names(self) -> list:
-        """This should return a list of names for the fitted parameters of the model.
+        """This should return a list of names for the fitted parameters of the PDF model.
         The order of the names is important as it will be assumed to be the order of the parameters
         fed to the model.
         """
         pass
+    
+    def extra_params(self) -> list:
+        """
+        This should return a list of names for parameters that are not used to parametrize the PDF model,
+        but are still relevant for the model (e.g. heavy quark masses, SMEFT parameters, etc.).
+        
+        Default is an empty list.
+        """
+        return []
+    
+    def all_param_names(self) -> list:
+        """Returns a list of all parameter names, including both PDF model parameters and extra parameters."""
+        return self.param_names + self.extra_params
 
     @abstractmethod
     def grid_values_func(self, xgrid: ArrayLike) -> Callable[[jnp.array], jnp.ndarray]:
@@ -90,3 +103,48 @@ class PDFModel(ABC):
             return predictions, pdf
 
         return pred_and_pdf
+
+    def extra_forward_map(self, predictions, extra_params):
+        """
+        NOTE: 
+        this function here is user specified and can potentially be anything.
+        The default forward_map always computes theory predictions from PDFs and FK tables.
+
+        This function can be completed to modify the predictions computed from the PDFs,
+        using extra parameters that are not part of the PDF parametrization.
+
+        e.g. (how the function could look like for SMEFT):
+        def extra_forward_map(self, predictions, extra_params):
+            # extra_params could contain SMEFT Wilson coefficients
+            # Modify predictions based on SMEFT contributions
+            modified_predictions = predictions + compute_smeft_contributions(predictions, extra_params)
+            return modified_predictions
+        
+        Parameters
+        ----------
+        predictions: jnp.ndarray
+            The theory predictions computed from the PDFs.
+        extra_params: list
+            The extra parameters to modify the predictions.    
+        """
+        raise NotImplementedError(
+            "extra_forward_map is not implemented for this PDFModel."
+        )
+    
+    def predictions(self, xgrid, forward_map):
+        """
+        The default simply returns self.pred_and_pdf_func when the extra_forward_map is NotImplemented.
+
+        TODO: ...
+        """
+        pred_and_pdf = self.pred_and_pdf_func(xgrid, forward_map)
+
+        # Check if extra_forward_map is implemented
+        if self.extra_forward_map.__func__ is PDFModel.extra_forward_map:
+            return pred_and_pdf
+        else:
+            def modified_pred_and_pdf(params, fast_kernel_arrays):
+                predictions, pdf = pred_and_pdf(params.pdf, fast_kernel_arrays)
+                modified_predictions = self.extra_forward_map(predictions, params.extra)
+                return modified_predictions, pdf
+            return modified_pred_and_pdf
