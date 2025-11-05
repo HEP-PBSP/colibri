@@ -50,6 +50,16 @@ def time_log_likelihood(
         sizes = batch_sample_sizes
         log.info(f"Using custom batch sample sizes: {sizes}")
 
+    # Set up CSV file path
+    save_path = output_path / "log_likelihood_times.csv"
+
+    # Initialize CSV file with headers
+    with open(save_path, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["batch_size", "avg_time_seconds", "relative_time"])
+
+    log.info(f"Results will be saved incrementally to {save_path}")
+
     # Pre-generate samples for the largest size only
     log.info("Generating samples for log likelihood timing...")
     max_size = max(sizes)
@@ -71,37 +81,56 @@ def time_log_likelihood(
 
     # Warm-up: compile the function by calling it a couple times
     log.info("Warming up (JIT compilation)...")
-    _ = log_likelihood_vec(samples_list[0])
-    _ = log_likelihood_vec(samples_list[1])
-    jax.block_until_ready(_)  # Wait for compilation to finish
+    try:
+        _ = log_likelihood_vec(samples_list[0])
+        _ = log_likelihood_vec(samples_list[1])
+        jax.block_until_ready(_)  # Wait for compilation to finish
+    except Exception as e:
+        log.error(f"Warm-up failed: {e}")
+        raise
 
     # Now time each batch size
     log.info("Timing different batch sizes...")
     times = []
+    successful_sizes = []
     n_repeats = 100  # Number of times to repeat for averaging
 
     for i, size in enumerate(sizes):
-        t0 = time.time()
-        for _ in range(n_repeats):
-            result = log_likelihood_vec(samples_list[i])
-            jax.block_until_ready(result)  # Critical: wait for GPU to finish
-        t1 = time.time()
+        try:
+            log.info(f"Timing batch size: {size}")
+            t0 = time.time()
+            for _ in range(n_repeats):
+                result = log_likelihood_vec(samples_list[i])
+                jax.block_until_ready(result)  # Critical: wait for GPU to finish
+            t1 = time.time()
 
-        avg_time = (t1 - t0) / n_repeats
-        times.append(avg_time)
+            avg_time = (t1 - t0) / n_repeats
+            times.append(avg_time)
+            successful_sizes.append(size)
 
-    # Save to CSV in the output_path
-    save_path = output_path / "log_likelihood_times.csv"
-    with open(save_path, "w", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["batch_size", "avg_time_seconds", "relative_time"])
+            # Compute relative time (relative to first successful timing)
+            relative_time = avg_time / times[0] if times else 1.0
 
-        # Compute relative times
-        relative_times = np.array(times) / times[0]
+            # Append result to CSV immediately
+            with open(save_path, "a", newline="") as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow([size, avg_time, relative_time])
 
-        for size, time_val, rel_time in zip(sizes, times, relative_times):
-            writer.writerow([size, time_val, rel_time])
+            log.info(
+                f"Size: {size:6d}, Time: {avg_time:.6f} s, Relative: {relative_time:.4f}x"
+            )
 
-    log.info(f"Results saved to {save_path}")
+        except Exception as e:
+            log.error(f"Error at batch size {size}: {e}")
+            log.warning(
+                f"Stopping timing. Results for batch sizes up to {successful_sizes[-1] if successful_sizes else 'none'} have been saved."
+            )
+            break
 
-    return sizes, times
+    if successful_sizes:
+        log.info(f"Timing completed for {len(successful_sizes)} batch sizes")
+        log.info(f"Final results saved to {save_path}")
+    else:
+        log.error("No batch sizes were successfully timed")
+
+    return successful_sizes, times
