@@ -115,6 +115,7 @@ def make_chi2_training_data_with_positivity(
         alpha,
         lambda_positivity,
         positivity_fast_kernel_arrays,
+        positivity_penalty,
     ):
         """
         Parameters
@@ -147,10 +148,11 @@ def make_chi2_training_data_with_positivity(
         loss = jnp.sum(chi2_vec**2)
 
         # add penalty term due to positivity
-        pos_penalty = _penalty_posdata(
-            pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
-        )[posdata_training_idx]
-        loss += jnp.sum(pos_penalty)
+        if positivity_penalty == True:
+            pos_penalty = _penalty_posdata(
+                pdf, alpha, lambda_positivity, positivity_fast_kernel_arrays
+            )[posdata_training_idx]
+            loss += jnp.sum(pos_penalty)
 
         return loss
 

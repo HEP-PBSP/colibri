@@ -127,6 +127,7 @@ def monte_carlo_fit(
     len_tr_idx, len_val_idx = len_trval_data
     alpha = positivity_penalty_settings["alpha"]
     lambda_positivity = positivity_penalty_settings["lambda_positivity"]
+    positivity_penalty = positivity_penalty_settings["positivity_penalty"]
 
     @jax.jit
     def loss_training(
@@ -138,15 +139,14 @@ def monte_carlo_fit(
         lambda_positivity,
     ):
         predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
-        return (
-            _chi2_training_data_with_positivity(
-                predictions,
-                pdf,
-                batch_idx,
-                alpha,
-                lambda_positivity,
-                positivity_fast_kernel_arrays,
-            )
+        return _chi2_training_data_with_positivity(
+            predictions,
+            pdf,
+            batch_idx,
+            alpha,
+            lambda_positivity,
+            positivity_fast_kernel_arrays,
+            positivity_penalty,
         )
 
     @jax.jit
