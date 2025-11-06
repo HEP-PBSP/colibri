@@ -11,7 +11,6 @@ import csv
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 from colibri.param_initialisation import pdf_initial_parameters
 
 log = logging.getLogger(__name__)
@@ -40,7 +39,7 @@ def time_log_likelihood(
     """
 
     # Create vectorized version
-    log_likelihood_vec = jax.vmap(log_likelihood, in_axes=(0,), out_axes=0)
+    log_likelihood_vec = jax.jit(jax.vmap(log_likelihood, in_axes=(0,), out_axes=0))
 
     # Batch sizes to test - use provided or default
     if batch_sample_sizes is None:
@@ -79,16 +78,6 @@ def time_log_likelihood(
     for size in sizes:
         samples_list.append(all_samples_batch[:size])
 
-    # Warm-up: compile the function by calling it a couple times
-    log.info("Warming up (JIT compilation)...")
-    try:
-        _ = log_likelihood_vec(samples_list[0])
-        _ = log_likelihood_vec(samples_list[1])
-        jax.block_until_ready(_)  # Wait for compilation to finish
-    except Exception as e:
-        log.error(f"Warm-up failed: {e}")
-        raise
-
     # Now time each batch size
     log.info("Timing different batch sizes...")
     times = []
@@ -96,14 +85,22 @@ def time_log_likelihood(
     n_repeats = 100  # Number of times to repeat for averaging
 
     for i, size in enumerate(sizes):
+        # Warm-up: compile the function by calling it a couple times
+        log.info("Warming up (JIT compilation)...")
+        try:
+            _ = log_likelihood_vec(samples_list[i])
+            _ = log_likelihood_vec(samples_list[i])
+            jax.block_until_ready(_)  # Wait for compilation to finish
+        except Exception as e:
+            log.error(f"Warm-up failed: {e}")
+            raise
         try:
             log.info(f"Timing batch size: {size}")
-            t0 = time.time()
+            t0 = time.perf_counter()
             for _ in range(n_repeats):
                 result = log_likelihood_vec(samples_list[i])
-                jax.block_until_ready(result)  # Critical: wait for GPU to finish
-            t1 = time.time()
-
+                jax.block_until_ready(result)  # ensure this iteration finished
+            t1 = time.perf_counter()
             avg_time = (t1 - t0) / n_repeats
             times.append(avg_time)
             successful_sizes.append(size)
