@@ -20,6 +20,7 @@ from colibri.tests.conftest import (
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
 )
+from colibri.data_batch import BatchSpec
 
 jax.config.update("jax_enable_x64", True)
 
@@ -403,18 +404,18 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     params = jnp.array([0.3, 0.4])
 
     # Select only the first data point
-    batch_idx = jnp.array([0])
+    batch = BatchSpec(idx=jnp.array([0]))
 
-    ll_value_batched = log_likelihood_class(params, batch_idx=batch_idx)
+    ll_value_batched = log_likelihood_class(params, batch=batch)
 
     # Compute expected on the batch index: recompute inv_covmat on the sub-covmat
     predictions, pdf = log_likelihood_class.pred_and_pdf(
         params, log_likelihood_class.fast_kernel_arrays
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
-    predictions_b = predictions[batch_idx]
-    central_b = log_likelihood_class.central_values[batch_idx]
-    cov_b = log_likelihood_class.covmat[batch_idx][:, batch_idx]
+    predictions_b = predictions[batch.idx]
+    central_b = log_likelihood_class.central_values[batch.idx]
+    cov_b = log_likelihood_class.covmat[batch.idx][:, batch.idx]
     inv_b = jnp.linalg.inv(cov_b)
     diff_b = predictions_b - central_b
     chi2_b = jnp.einsum("i,ij,j", diff_b, inv_b, diff_b)
