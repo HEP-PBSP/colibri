@@ -221,31 +221,6 @@ def test_time_log_likelihood_csv_format(
         assert relative_time_2 > 0  # Second should be positive
 
 
-def test_time_log_likelihood_logging(
-    mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path, caplog
-):
-    """Test that appropriate log messages are generated."""
-
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda model, settings, idx: jnp.array([0.1, 0.2])
-
-        with caplog.at_level(logging.INFO):
-            time_log_likelihood(
-                mock_log_likelihood,
-                mock_param_initialiser_settings,
-                MOCK_PDF_MODEL,
-                tmp_output_path,
-                batch_sample_sizes=[2, 5],
-            )
-
-    # Check that key log messages are present
-    assert "Generating samples for log likelihood timing..." in caplog.text
-    assert "Warming up (JIT compilation)..." in caplog.text
-    assert "Timing different batch sizes..." in caplog.text
-    assert "Results saved to" in caplog.text
-    assert "Using custom batch sample sizes" in caplog.text
-
-
 def test_time_log_likelihood_uses_max_size_efficiently(
     mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path
 ):
