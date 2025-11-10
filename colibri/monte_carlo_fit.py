@@ -8,6 +8,7 @@ This module contains the main Monte Carlo fitting routine of colibri.
 from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
+from jax.extend import backend as jbackend
 import logging
 import pandas as pd
 import os
@@ -99,7 +100,7 @@ def monte_carlo_fit(
 
         return val / len_val_idx if len_val_idx > 0 else val
 
-    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+    log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
@@ -130,7 +131,7 @@ def monte_carlo_fit(
     )
 
 
-def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
+def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, Q0):
     """
     Runs the Monte Carlo fit and writes the output to the output directory.
 
@@ -146,6 +147,10 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
         Path to the output folder.
 
     replica_index: int
+        The index of the replica being written.
+
+    Q0: float
+        The scale at which to export the PDFs.
     """
     mc_fit = monte_carlo_fit
 
@@ -165,6 +170,7 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
         pdf_model,
         replica_index,
         output_path,
+        Q0,
     )
 
     df.to_csv(

@@ -102,7 +102,7 @@ def test_run_hessian_fit_exports(mock_write_exportgrid, tmp_path):
     )
 
     # Run export routine
-    run_hessian_fit(fit_result, tmp_path, MOCK_PDF_MODEL)
+    run_hessian_fit(fit_result, tmp_path, MOCK_PDF_MODEL, Q0=1.65)
 
     # One exportgrid per resampled set
     assert mock_write_exportgrid.call_count == pdf_replicas

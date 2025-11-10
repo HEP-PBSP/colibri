@@ -127,6 +127,8 @@ class LogLikelihood(object):
             jax array with the value of the log-likelihood.
         """
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
+        # Select only the data relevant for this likelihood
+        # Especially important when using a training/validation split
         predictions = predictions[self.central_values_idx]
 
         if batch is not None:
@@ -205,6 +207,12 @@ def mc_log_likelihood(
     positivity_penalty_settings,
     integrability_penalty,
 ):
+    """
+    Instantiates the LogLikelihood class for training and validation datasets
+    when using Monte Carlo pseudodata with a training/validation split.
+    The function, being a node of the reportengine graph, can be overriden by the user for
+    model specific applications by changing the log_likelihood method of the LogLikelihood class.
+    """
 
     tr_idx = mc_pseudodata.training_indices
     central_values_train = mc_pseudodata.pseudodata[tr_idx]

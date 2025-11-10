@@ -137,7 +137,7 @@ def write_exportgrid(
     grid_for_writing,
     grid_name,
     replica_index,
-    Q=1.65,
+    Q0=1.65,
     xgrid=LHAPDF_XGRID,
     export_labels=EXPORT_LABELS,
 ):
@@ -165,7 +165,7 @@ def write_exportgrid(
 
     # Prepare a dictionary for the exportgrid
     export_grid = {
-        "q20": Q**2,
+        "q20": Q0**2,
         "xgrid": xgrid,
         "replica": int(replica_index),
         "labels": export_labels,
@@ -243,7 +243,7 @@ def write_replicas(
     bayes_fit,
     output_path,
     pdf_model,
-    Q=1.65,
+    Q0=1.65,
     xgrid=LHAPDF_XGRID,
     export_labels=EXPORT_LABELS,
 ):
@@ -292,7 +292,7 @@ def write_replicas(
             grid_for_writing=grid_for_writing,
             grid_name=str(grid_name),
             replica_index=replica_index,
-            Q=Q,
+            Q0=Q0,
             xgrid=xgrid,
             export_labels=export_labels,
         )

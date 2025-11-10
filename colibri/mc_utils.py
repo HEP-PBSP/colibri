@@ -100,7 +100,7 @@ def write_exportgrid_mc(
     pdf_model,
     replica_index,
     output_path,
-    Q=1.65,
+    Q0=1.65,
     xgrid=LHAPDF_XGRID,
     export_labels=EXPORT_LABELS,
 ):
@@ -128,7 +128,7 @@ def write_exportgrid_mc(
         grid_for_writing=grid_for_writing,
         grid_name=rep_path + "/" + fit_name,
         replica_index=replica_index,
-        Q=Q,
+        Q0=Q0,
         xgrid=xgrid,
         export_labels=export_labels,
     )

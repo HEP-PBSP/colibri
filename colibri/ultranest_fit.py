@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 import jax
 import jax.numpy as jnp
+from jax.extend import backend as jbackend
 import numpy as np
 import ultranest
 import ultranest.popstepsampler as popstepsampler
@@ -85,7 +86,7 @@ def ultranest_fit(
         Dataclass containing the results and specs of an Ultranest fit.
     """
 
-    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+    log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
 
     # set the ultranest seed
     np.random.seed(ultranest_settings["ultranest_seed"])
@@ -191,7 +192,7 @@ def ultranest_fit(
     return fit_result
 
 
-def run_ultranest_fit(ultranest_fit, output_path, pdf_model):
+def run_ultranest_fit(ultranest_fit, output_path, pdf_model, Q0):
     """
     Export the results of an Ultranest fit.
 
@@ -203,9 +204,11 @@ def run_ultranest_fit(ultranest_fit, output_path, pdf_model):
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
+    Q0: float
+        The scale at which to export the PDFs.
     """
 
     if rank == 0:
         export_bayes_results(ultranest_fit, output_path, "ns_result")
 
-    write_replicas(ultranest_fit, output_path, pdf_model)
+    write_replicas(ultranest_fit, output_path, pdf_model, Q0)
