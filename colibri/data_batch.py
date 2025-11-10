@@ -39,7 +39,8 @@ def data_batches(
     """
     Parameters
     ----------
-    n_training_points: int
+    training_indices: jax.Array
+        Indices of training data points.
 
     batch_size: int, default is None which sets it to n_training_points
 
