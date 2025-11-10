@@ -435,3 +435,69 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     integ_pen = jnp.sum(integrability_penalty(pdf), axis=-1)
     expected = -0.5 * (chi2_b + pos_pen + integ_pen)
     assert_allclose(float(ll_value_batched), float(expected))
+
+
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_LogLikelihood_call_with_batch_with_inv_cov(pos_penalty):
+    """
+    Tests that calling LogLikelihood with a BatchSpec that already has a
+    precomputed `inv_cov` uses the provided inverse covariance instead of
+    recomputing it.
+    """
+
+    positivity_penalty_settings = {
+        "positivity_penalty": pos_penalty,
+        "alpha": 1e-7,
+        "lambda_positivity": 1000,
+    }
+
+    log_likelihood_class = LogLikelihood(
+        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
+        pdf_model=MOCK_PDF_MODEL,
+        fit_xgrid=TEST_XGRID,
+        forward_map=TEST_FORWARD_MAP_DIS,
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+        positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
+        penalty_posdata=MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings=positivity_penalty_settings,
+        integrability_penalty=integrability_penalty,
+    )
+
+    params = jnp.array([0.3, 0.4])
+
+    # Select first two data points and precompute their inverse covariance
+    batch_idx = jnp.array([0, 1])
+    cov_b = log_likelihood_class.covmat[batch_idx][:, batch_idx]
+    inv_b = jnp.linalg.inv(cov_b)
+
+    # Provide the precomputed inverse covariance in the BatchSpec
+    batch = BatchSpec(idx=batch_idx, inv_cov=inv_b)
+
+    ll_value_batched = log_likelihood_class(params, batch=batch)
+
+    # Compute expected value using the provided inv_b (should be identical)
+    predictions, pdf = log_likelihood_class.pred_and_pdf(
+        params, log_likelihood_class.fast_kernel_arrays
+    )
+    predictions = predictions[log_likelihood_class.central_values_idx]
+    predictions_b = predictions[batch.idx]
+    central_b = log_likelihood_class.central_values[batch.idx]
+    diff_b = predictions_b - central_b
+    chi2_b = jnp.einsum("i,ij,j", diff_b, inv_b, diff_b)
+    pos_pen = (
+        jnp.sum(
+            log_likelihood_class.penalty_posdata(
+                pdf,
+                log_likelihood_class.positivity_penalty_settings["alpha"],
+                log_likelihood_class.positivity_penalty_settings["lambda_positivity"],
+                log_likelihood_class.positivity_fast_kernel_arrays,
+            ),
+            axis=-1,
+        )
+        if pos_penalty
+        else 0.0
+    )
+    integ_pen = jnp.sum(integrability_penalty(pdf), axis=-1)
+    expected = -0.5 * (chi2_b + pos_pen + integ_pen)
+
+    assert_allclose(float(ll_value_batched), float(expected))

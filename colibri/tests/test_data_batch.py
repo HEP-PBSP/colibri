@@ -6,6 +6,7 @@ Module for testing the data_batch module.
 
 from typing import Callable, Generator
 
+import pytest
 import jax
 import jax.numpy as jnp
 
@@ -45,3 +46,58 @@ def test_data_batches():
     # When shuffle_each_epoch=False (default) fixed_batches should be available
     assert isinstance(data_batch.fixed_batches, list)
     assert len(data_batch.fixed_batches) == data_batch.num_batches
+
+
+def test_data_batches_value_error():
+    """Batch size larger than number of training points should raise."""
+    n_training_points = 10
+    training_indices = jnp.arange(n_training_points)
+    # batch size too large
+    with pytest.raises(ValueError):
+        data_batches(training_indices, batch_size=n_training_points + 1)
+
+
+def test_data_batches_with_covmat():
+    """When a covariance matrix is provided, BatchSpec.inv_cov should be set."""
+    n_training_points = 20
+    batch_size = 5
+    training_indices = jnp.arange(n_training_points)
+
+    # simple positive-definite covariance (scaled identity)
+    cov = jnp.eye(n_training_points) * 2.0
+
+    db = data_batches(
+        training_indices,
+        batch_size=batch_size,
+        fit_covariance_matrix=cov,
+        batch_seed=42,
+    )
+
+    # fixed_batches_specs should be populated and include inv_cov
+    assert isinstance(db.fixed_batches, list)
+    assert len(db.fixed_batches) == db.num_batches
+
+    spec = next(db.data_batch_stream())
+    assert hasattr(spec, "inv_cov")
+    assert isinstance(spec.inv_cov, jax.Array)
+    assert spec.inv_cov.shape == (batch_size, batch_size)
+
+
+def test_data_batches_shuffle_each_epoch():
+    """When shuffle_each_epoch=True, fixed_batches is None and inv_cov is not cached."""
+    n_training_points = 30
+    batch_size = 6
+    training_indices = jnp.arange(n_training_points)
+
+    db = data_batches(
+        training_indices, batch_size=batch_size, shuffle_each_epoch=True, batch_seed=7
+    )
+
+    assert db.fixed_batches is None
+
+    spec = next(db.data_batch_stream())
+    assert hasattr(spec, "idx")
+    assert isinstance(spec.idx, jax.Array)
+    assert len(spec.idx) == batch_size
+    # no cached inverse when shuffling each epoch
+    assert getattr(spec, "inv_cov", None) is None
