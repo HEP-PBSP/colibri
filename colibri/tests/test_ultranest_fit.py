@@ -11,9 +11,8 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from colibri.loss_functions import chi2
 from colibri.tests.conftest import (
-    MOCK_CENTRAL_INV_COVMAT_INDEX,
+    MOCK_CENTRAL_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
@@ -47,15 +46,14 @@ vect_ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit(pos_penalty):
 
-    _pred_data = None
+    _pred_data = lambda *args: jnp.array([0.0])
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        chi2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
@@ -85,17 +83,16 @@ def test_ultranest_fit(pos_penalty):
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit_vectorized(pos_penalty):
 
-    _pred_data = None
+    _pred_data = lambda *args: jnp.array([0.0])
     ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        chi2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
@@ -135,16 +132,15 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
         "popstepsampler": False,
     }
 
-    _pred_data = None
+    _pred_data = lambda *args: jnp.array([0.0])
 
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        chi2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
@@ -184,16 +180,15 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
         "popstepsampler": True,
     }
 
-    _pred_data = None
+    _pred_data = lambda *args: jnp.array([0.0])
 
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        chi2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,
@@ -237,16 +232,15 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
         "popstepsampler": False,
     }
 
-    _pred_data = None
+    _pred_data = lambda *args: jnp.array([0.0])
 
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
-        chi2,
         MOCK_PENALTY_POSDATA,
         positivity_penalty_settings={
             "positivity_penalty": pos_penalty,

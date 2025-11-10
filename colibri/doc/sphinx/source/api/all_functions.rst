@@ -129,15 +129,6 @@ Loss Functions
    :show-inheritance:
    :noindex:
 
-MC Loss Functions
------------------
-
-.. automodule:: colibri.mc_loss_functions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
 MC Utils
 --------
 

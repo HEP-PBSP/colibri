@@ -13,7 +13,6 @@ colibri_providers = [
     "colibri.theory_predictions",
     "colibri.theory_penalties",
     "colibri.loss_functions",
-    "colibri.mc_loss_functions",
     "colibri.optax_optimizer",
     "colibri.data_batch",
     "colibri.utils",
