@@ -44,7 +44,7 @@ The first step is to create a conda environment from your base environment. For 
 
 .. code-block:: bash
 
-    conda create -n colibri-dev python>=3.11
+    conda create -n colibri-dev 'python>=3.11'
 
 In this new environment, install the following conda packages:
 
