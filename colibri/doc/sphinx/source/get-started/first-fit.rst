@@ -68,7 +68,7 @@ the theory used in this tutorial :cite:`Candido:2022tld,Candido2022EKO`:
 
 .. code-block:: bash
     
-    vp-get EKO 40000000
+    vp-get eko 40000000
 
 You can then evolve the fit by running the following command from the 
 ``les_houches_example`` directory:
