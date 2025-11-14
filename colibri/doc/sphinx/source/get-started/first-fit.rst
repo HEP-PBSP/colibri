@@ -22,7 +22,7 @@ To run this fit, you will need to be in the right directory:
 
 .. code-block:: bash
 
-    cd colibri/colibri/examples/les_houches_examples/
+    cd colibri/colibri/examples/les_houches_example/
 
 
 You will see that, in this directory, there is a ``pyproject.py`` script.
@@ -48,7 +48,7 @@ simply run this runcard with the following command:
 
 .. code-block::
 
-    les_houches_exe lh_fit_closure_test.yaml
+    les_houches_exe runcards/lh_fit_closure_test.yaml
 
 This step will download the PDF grid ``LH_PARAM_20250519``. 
 
@@ -68,7 +68,7 @@ the theory used in this tutorial :cite:`Candido:2022tld,Candido2022EKO`:
 
 .. code-block:: bash
     
-    vp-get EKO 40000000
+    vp-get eko 40000000
 
 You can then evolve the fit by running the following command from the 
 ``les_houches_example`` directory:
