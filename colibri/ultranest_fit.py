@@ -8,7 +8,6 @@ This module contains the main Bayesian fitting routine of colibri.
 import logging
 import sys
 import time
-from dataclasses import dataclass
 
 import jax
 import jax.numpy as jnp
@@ -19,7 +18,8 @@ import ultranest.popstepsampler as popstepsampler
 import ultranest.stepsampler as ustepsampler
 from mpi4py import MPI
 
-from colibri.export_results import BayesianFit, export_bayes_results, write_replicas
+from colibri.core import UltranestFit
+from colibri.export_results import export_bayes_results, write_replicas
 from colibri.utils import resample_from_ns_posterior
 
 comm = MPI.COMM_WORLD
@@ -38,23 +38,6 @@ ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
 # Configure the handler and formatter
 handler = logging.StreamHandler(sys.stdout)
 ultranest_logger.addHandler(handler)
-
-
-@dataclass(frozen=True)
-class UltranestFit(BayesianFit):
-    """
-    Dataclass containing the results and specs of an Ultranest fit.
-
-    Attributes
-    ----------
-    ultranest_specs: dict
-        Dictionary containing the settings of the Ultranest fit.
-    ultranest_result: dict
-        result from ultranest, can be used eg for corner plots
-    """
-
-    ultranest_specs: dict
-    ultranest_result: dict
 
 
 def ultranest_fit(
