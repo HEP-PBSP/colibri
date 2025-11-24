@@ -74,7 +74,7 @@ def ultranest_fit(
     # set the ultranest seed
     np.random.seed(ultranest_settings["ultranest_seed"])
 
-    parameters = pdf_model.param_names
+    parameters = pdf_model.full_param_names
 
     if ultranest_settings["ReactiveNS_settings"]["vectorized"]:
         log.info("Vectorized likelihood for ultranest fit.")

@@ -28,7 +28,7 @@ def bayesian_prior(prior_settings, pdf_model):
 
         if "bounds" in prior_specs:
             # Use param names from the model to order bounds correctly
-            param_names = pdf_model.param_names
+            param_names = pdf_model.full_param_names
             bounds_dict = prior_specs["bounds"]
 
             missing = [p for p in param_names if p not in bounds_dict]
