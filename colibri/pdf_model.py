@@ -25,17 +25,19 @@ class PDFModel(ABC):
         fed to the model.
         """
         pass
-    
+
+    @property
     def extra_params(self) -> list:
         """
         This should return a list of names for parameters that are not used to parametrize the PDF model,
         but are still relevant for the model (e.g. heavy quark masses, SMEFT parameters, etc.).
-        
+
         Default is an empty list.
         """
         return []
-    
-    def all_param_names(self) -> list:
+
+    @property
+    def full_param_names(self) -> list:
         """Returns a list of all parameter names, including both PDF model parameters and extra parameters."""
         return self.param_names + self.extra_params
 
@@ -106,7 +108,7 @@ class PDFModel(ABC):
 
     def extra_forward_map(self, predictions, extra_params):
         """
-        NOTE: 
+        NOTE:
         this function here is user specified and can potentially be anything.
         The default forward_map always computes theory predictions from PDFs and FK tables.
 
@@ -119,18 +121,18 @@ class PDFModel(ABC):
             # Modify predictions based on SMEFT contributions
             modified_predictions = predictions + compute_smeft_contributions(predictions, extra_params)
             return modified_predictions
-        
+
         Parameters
         ----------
         predictions: jnp.ndarray
             The theory predictions computed from the PDFs.
         extra_params: list
-            The extra parameters to modify the predictions.    
+            The extra parameters to modify the predictions.
         """
         raise NotImplementedError(
             "extra_forward_map is not implemented for this PDFModel."
         )
-    
+
     def predictions(self, xgrid, forward_map):
         """
         The default simply returns self.pred_and_pdf_func when the extra_forward_map is NotImplemented.
