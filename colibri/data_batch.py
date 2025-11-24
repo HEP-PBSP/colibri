@@ -4,21 +4,13 @@ colibri.data_batch.py
 Module containing data batches provider.
 """
 
-from typing import Callable
-from dataclasses import dataclass
 import logging
 
 import jax
 import jax.numpy as jnp
+from colibri.core import DataBatches
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class DataBatches:
-    data_batch_stream_index: Callable
-    num_batches: int
-    batch_size: int
 
 
 def data_batches(n_training_points, batch_size, batch_seed=1):

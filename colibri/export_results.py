@@ -5,7 +5,6 @@ This module contains the functions to export the results of the fit.
 
 """
 
-from dataclasses import dataclass
 import yaml
 import numpy as np
 import pathlib
@@ -30,35 +29,6 @@ size = comm.Get_size()
 import logging
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class BayesianFit:
-    """
-    Dataclass containing the results and specs of a Bayesian fit.
-
-    Attributes
-    ----------
-    param_names: list
-        List of the names of the parameters.
-    resampled_posterior: jnp.array
-        Array containing the resampled posterior samples.
-    full_posterior_samples: jnp.array
-        Array containing the full posterior samples.
-    bayes_complexity: float
-        The Bayesian complexity of the model.
-    avg_chi2: float
-        The average chi2 of the model.
-    min_chi2: float
-        The minimum chi2 of the model.
-    logz: float
-        The log evidence of the model.
-    """
-
-    param_names: list
-    resampled_posterior: jnp.array
-    full_posterior_samples: jnp.array
-    bayesian_metrics: dict
 
 
 def export_bayes_results(
