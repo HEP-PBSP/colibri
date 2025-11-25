@@ -4,30 +4,14 @@ colibri.data_batch.py
 Module containing data batches provider.
 """
 
-from typing import Callable, Optional, Iterator, List, NamedTuple
-from dataclasses import dataclass
+from typing import Iterator, List
 import logging
 
 import jax
 import jax.numpy as jnp
-from colibri.core import DataBatches
+from colibri.core import DataBatches, BatchSpec
 
 log = logging.getLogger(__name__)
-
-
-class BatchSpec(NamedTuple):
-    idx: jnp.ndarray
-    inv_cov: Optional[jnp.ndarray] = None
-
-
-@dataclass(frozen=True)
-class DataBatches:
-    data_batch_stream: Callable[[], Iterator[BatchSpec]]
-    num_batches: int
-    batch_size: int
-    batch_seed: int
-    # Optional cache for visibility / reuse
-    fixed_batches: Optional[List[BatchSpec]] = None
 
 
 def data_batches(
