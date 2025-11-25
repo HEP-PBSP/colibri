@@ -84,7 +84,7 @@ def test_analytic_fit(caplog):
     assert (
         result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]
     )
-    assert len(result.param_names) == len(MOCK_PDF_MODEL.param_names)
+    assert len(result.full_param_names) == len(MOCK_PDF_MODEL.full_param_names)
 
     # Check that it works if min_max_prior is False
     analytic_settings["min_max_prior"] = False
@@ -109,7 +109,7 @@ def test_analytic_fit(caplog):
         result_2.resampled_posterior.shape[0]
         == analytic_settings["n_posterior_samples"]
     )
-    assert len(result_2.param_names) == len(MOCK_PDF_MODEL.param_names)
+    assert len(result_2.full_param_names) == len(MOCK_PDF_MODEL.full_param_names)
 
 
 def test_analytic_fit_different_priors(caplog):
@@ -144,7 +144,7 @@ def test_analytic_fit_different_priors(caplog):
     assert (
         result.resampled_posterior.shape[0] == analytic_settings["n_posterior_samples"]
     )
-    assert len(result.param_names) == len(MOCK_PDF_MODEL.param_names)
+    assert len(result.full_param_names) == len(MOCK_PDF_MODEL.full_param_names)
 
     PRIOR_SETTINGS2 = PriorSettings(
         **{
@@ -174,7 +174,7 @@ def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
     mock_analytic_fit.resampled_posterior = jax.random.normal(
         jax.random.PRNGKey(0), (10, 2)
     )
-    mock_analytic_fit.param_names = ["param1", "param2"]
+    mock_analytic_fit.full_param_names = ["param1", "param2"]
     mock_analytic_fit.full_posterior_samples = jax.random.normal(
         jax.random.PRNGKey(0), (100, 2)
     )

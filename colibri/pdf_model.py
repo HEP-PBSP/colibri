@@ -145,8 +145,14 @@ class PDFModel(ABC):
         if self.extra_forward_map.__func__ is PDFModel.extra_forward_map:
             return pred_and_pdf
         else:
+
             def modified_pred_and_pdf(params, fast_kernel_arrays):
-                predictions, pdf = pred_and_pdf(params.pdf, fast_kernel_arrays)
-                modified_predictions = self.extra_forward_map(predictions, params.extra)
+                predictions, pdf = pred_and_pdf(
+                    params[: len(self.param_names)], fast_kernel_arrays
+                )
+                modified_predictions = self.extra_forward_map(
+                    predictions, params[len(self.param_names) :]
+                )
                 return modified_predictions, pdf
+
             return modified_pred_and_pdf

@@ -155,7 +155,7 @@ def ultranest_fit(
         fit_result = UltranestFit(
             ultranest_specs=ultranest_settings,
             ultranest_result=ultranest_result,
-            param_names=parameters,
+            full_param_names=parameters,
             resampled_posterior=resampled_posterior,
             full_posterior_samples=full_samples,
             bayesian_metrics={

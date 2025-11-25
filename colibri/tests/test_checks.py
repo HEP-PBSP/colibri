@@ -123,7 +123,7 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
 
     # Create a mock for the PDF model
     mock_pdf_model = MagicMock()
-    mock_pdf_model.param_names = ["a", "b", "c"]
+    mock_pdf_model.full_param_names = ["a", "b", "c"]
 
     # Mock the behavior of pred_and_pdf_func to return a linear model
     def linear_model(params, fk):

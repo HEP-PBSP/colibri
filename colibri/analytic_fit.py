@@ -130,7 +130,7 @@ def analytic_fit(
         "Assuming that the prior is wide enough to fully cover the gaussian likelihood."
     )
 
-    parameters = pdf_model.param_names
+    parameters = pdf_model.full_param_names
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     # Precompute predictions for the basis of the model
@@ -263,7 +263,7 @@ def analytic_fit(
     return AnalyticFit(
         analytic_specs=analytic_settings,
         resampled_posterior=samples,
-        param_names=parameters,
+        full_param_names=parameters,
         full_posterior_samples=full_samples,
         bayesian_metrics={
             "bayes_complexity": Cb,

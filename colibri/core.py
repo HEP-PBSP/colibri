@@ -61,7 +61,7 @@ class BayesianFit:
 
     Attributes
     ----------
-    param_names: list
+    full_param_names: list
         List of the names of the parameters.
     resampled_posterior: jnp.array
         Array containing the resampled posterior samples.
@@ -77,7 +77,7 @@ class BayesianFit:
         The log evidence of the model.
     """
 
-    param_names: list
+    full_param_names: list
     resampled_posterior: jnp.array
     full_posterior_samples: jnp.array
     bayesian_metrics: dict
@@ -149,7 +149,7 @@ class HessianFit:
     hessian: jnp.ndarray
     cov_params: jnp.ndarray
     resampled_posterior: jnp.ndarray
-    param_names: list
+    full_param_names: list
 
 
 @dataclass(frozen=True)

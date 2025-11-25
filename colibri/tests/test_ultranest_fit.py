@@ -73,9 +73,9 @@ def test_ultranest_fit(pos_penalty):
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
         ultranest_settings["n_posterior_samples"],
-        len(MOCK_PDF_MODEL.param_names),
+        len(MOCK_PDF_MODEL.full_param_names),
     )
-    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.full_param_names == ["param1", "param2"]
     assert fit_result.ultranest_specs == ultranest_settings
     assert isinstance(fit_result.ultranest_result, dict)
 
@@ -112,9 +112,9 @@ def test_ultranest_fit_vectorized(pos_penalty):
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
         ultranest_settings["n_posterior_samples"],
-        len(MOCK_PDF_MODEL.param_names),
+        len(MOCK_PDF_MODEL.full_param_names),
     )
-    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.full_param_names == ["param1", "param2"]
     assert fit_result.ultranest_specs == ultranest_settings
     assert isinstance(fit_result.ultranest_result, dict)
 
@@ -160,9 +160,9 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
         ultranest_settings["n_posterior_samples"],
-        len(MOCK_PDF_MODEL.param_names),
+        len(MOCK_PDF_MODEL.full_param_names),
     )
-    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.full_param_names == ["param1", "param2"]
     assert fit_result.ultranest_specs == ultranest_settings
     assert isinstance(fit_result.ultranest_result, dict)
 
@@ -208,9 +208,9 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
         ultranest_settings["n_posterior_samples"],
-        len(MOCK_PDF_MODEL.param_names),
+        len(MOCK_PDF_MODEL.full_param_names),
     )
-    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.full_param_names == ["param1", "param2"]
     assert fit_result.ultranest_specs == ultranest_settings
     assert isinstance(fit_result.ultranest_result, dict)
 
@@ -279,9 +279,9 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
     assert isinstance(fit_result, UltranestFit)
     assert fit_result.resampled_posterior.shape == (
         ultranest_settings_with_plot["n_posterior_samples"],
-        len(MOCK_PDF_MODEL.param_names),
+        len(MOCK_PDF_MODEL.full_param_names),
     )
-    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.full_param_names == ["param1", "param2"]
     assert fit_result.ultranest_specs == ultranest_settings_with_plot
     assert isinstance(fit_result.ultranest_result, dict)
 
@@ -294,7 +294,7 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
     mock_ultranest_fit.resampled_posterior = jax.random.normal(
         jax.random.PRNGKey(0), (10, 2)
     )
-    mock_ultranest_fit.param_names = ["param1", "param2"]
+    mock_ultranest_fit.full_param_names = ["param1", "param2"]
     mock_ultranest_fit.full_posterior_samples = jax.random.normal(
         jax.random.PRNGKey(0), (100, 2)
     )

@@ -20,9 +20,9 @@ model = TestPDFModel(n_parameters=2)
 
 def test_param_names():
     """
-    Tests that the param_names property returns the correct names.
+    Tests that the full_param_names property returns the correct names.
     """
-    assert model.param_names == ["w_1", "w_2"]
+    assert model.full_param_names == ["w_1", "w_2"]
 
 
 def test_grid_values_func():

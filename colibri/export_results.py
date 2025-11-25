@@ -51,14 +51,14 @@ def export_bayes_results(
 
     # Write full sample to csv
     full_samples_df = pd.DataFrame(
-        bayes_fit.full_posterior_samples, columns=bayes_fit.param_names
+        bayes_fit.full_posterior_samples, columns=bayes_fit.full_param_names
     )
     full_samples_df.to_csv(
         str(output_path) + "/full_posterior_sample.csv", float_format="%.5e"
     )
 
     # Save the resampled results
-    df = pd.DataFrame(bayes_fit.resampled_posterior, columns=bayes_fit.param_names)
+    df = pd.DataFrame(bayes_fit.resampled_posterior, columns=bayes_fit.full_param_names)
     df.to_csv(str(output_path) + f"/{results_name}.csv", float_format="%.5e")
 
     # Save bayesian metrics to csv file
@@ -88,7 +88,9 @@ def export_hessian_results(
     """
 
     # Save the resampled results
-    df = pd.DataFrame(hessian_fit.resampled_posterior, columns=hessian_fit.param_names)
+    df = pd.DataFrame(
+        hessian_fit.resampled_posterior, columns=hessian_fit.full_param_names
+    )
     df.to_csv(str(output_path) + f"/{results_name}.csv", float_format="%.5e")
 
     # Write the optimized parameters, the covmat and the min chi2, the training loss to a csv file

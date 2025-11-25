@@ -191,7 +191,7 @@ def hessian_fit(
         hessian=hessian,
         cov_params=cov_params,
         resampled_posterior=hessian_param_set,
-        param_names=pdf_model.param_names,
+        full_param_names=pdf_model.full_param_names,
     )
 
 

@@ -51,7 +51,7 @@ def check_pdf_model_is_linear(pdf_model, FIT_XGRID, data):
     pred_data = make_pred_data(data, FIT_XGRID)
     fk = fast_kernel_arrays(data, FIT_XGRID)
 
-    parameters = pdf_model.param_names
+    parameters = pdf_model.full_param_names
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)
     intercept = pred_and_pdf(jnp.zeros(len(parameters)), fk)[0]
 

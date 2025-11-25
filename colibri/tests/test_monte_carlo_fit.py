@@ -15,7 +15,7 @@ from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_ca
 from colibri.tests.conftest import MOCK_PDF_MODEL
 
 mock_pdf_model = MOCK_PDF_MODEL
-N_PARAMS = len(MOCK_PDF_MODEL.param_names)
+N_PARAMS = len(MOCK_PDF_MODEL.full_param_names)
 
 
 class MockOptimizerProvider:

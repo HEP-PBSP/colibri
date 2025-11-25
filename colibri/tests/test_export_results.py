@@ -29,7 +29,7 @@ bayes_fit.full_posterior_samples = jax.random.uniform(
     jax.random.PRNGKey(0), shape=(100, 2)
 )
 bayes_fit.bayesian_metrics = {"logz": 1}
-bayes_fit.param_names = ["param1", "param2"]
+bayes_fit.full_param_names = ["param1", "param2"]
 
 
 rank = 0
@@ -47,7 +47,7 @@ def test_export_bayes_results(tmp_path):
         str(output_path) + "/full_posterior_sample.csv", sep=",", index_col=0
     )
     assert full_posterior_samples.shape == (100, 2)
-    assert full_posterior_samples.columns.tolist() == bayes_fit.param_names
+    assert full_posterior_samples.columns.tolist() == bayes_fit.full_param_names
     assert (
         np.round(full_posterior_samples.values).tolist()
         == np.round(bayes_fit.full_posterior_samples).tolist()
@@ -58,7 +58,7 @@ def test_export_bayes_results(tmp_path):
         str(output_path) + f"/{results_name}.csv", sep=",", index_col=0
     )
     assert resampled_posterior.shape == (10, 2)
-    assert resampled_posterior.columns.tolist() == bayes_fit.param_names
+    assert resampled_posterior.columns.tolist() == bayes_fit.full_param_names
     assert (
         np.round(resampled_posterior.values).tolist()
         == np.round(bayes_fit.resampled_posterior).tolist()

@@ -14,7 +14,7 @@ from colibri.hessian_fit import HessianFit, hessian_fit, run_hessian_fit
 from colibri.tests.conftest import MOCK_PDF_MODEL
 
 
-N_PARAMS = len(MOCK_PDF_MODEL.param_names)
+N_PARAMS = len(MOCK_PDF_MODEL.full_param_names)
 
 
 class MockOptimizerProvider:
@@ -63,7 +63,7 @@ def test_hessian_fit_runs_and_shapes():
     )
 
     assert isinstance(result, HessianFit)
-    assert result.param_names == MOCK_PDF_MODEL.param_names
+    assert result.full_param_names == MOCK_PDF_MODEL.full_param_names
 
     # Hessian of ||p||^2 with the internal 0.5 factor should be identity
     assert_allclose(result.hessian, jnp.eye(N_PARAMS), rtol=1e-12, atol=1e-12)

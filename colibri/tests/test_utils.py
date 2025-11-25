@@ -465,7 +465,7 @@ def test_write_resampled_bayesian_fit(
 
     # Mock pdf_model and parameter names
     mock_pdf_model = MagicMock()
-    mock_pdf_model.param_names = ["param1", "param2"]
+    mock_pdf_model.full_param_names = ["param1", "param2"]
     mock_pdf_model.grid_values_func.return_value = lambda params: [
         params[0] + 1,
         params[1] + 1,
@@ -502,7 +502,7 @@ def test_write_resampled_bayesian_fit(
     mock_os_system.assert_any_call(f"rm -r {resampled_fit_path}/replicas/*")
 
     # Verify the correct data was written to CSV
-    df = pd.DataFrame(resampled_posterior, columns=mock_pdf_model.param_names)
+    df = pd.DataFrame(resampled_posterior, columns=mock_pdf_model.full_param_names)
     expected_csv_path = str(resampled_fit_path) + "/ns_result.csv"
     with patch("pandas.DataFrame.to_csv") as mock_to_csv:
         df.to_csv(expected_csv_path, float_format="%.5e")
@@ -519,7 +519,7 @@ def test_creates_replicas_dir_when_missing(tmp_path):
 
     # Create a fake pdf_model with minimal interface
     fake_model = mock.Mock()
-    fake_model.param_names = []  # no columns
+    fake_model.full_param_names = []  # no columns
     fake_model.grid_values_func.return_value = lambda params: []
 
     # Patch out everything except the mkdir check
@@ -559,9 +559,9 @@ def test_creates_each_replica_dir_when_missing(tmp_path):
     # dummy pdf_model.pkl so open() doesn't fail
     (fit_path / "pdf_model.pkl").write_bytes(b"")
 
-    # Fake pdf_model: only needs param_names + grid_values_func
+    # Fake pdf_model: only needs full_param_names + grid_values_func
     fake_model = mock.Mock()
-    fake_model.param_names = ["a", "b"]
+    fake_model.full_param_names = ["a", "b"]
     fake_model.grid_values_func.return_value = lambda params: []
 
     # Create a small posterior with 2 replicas

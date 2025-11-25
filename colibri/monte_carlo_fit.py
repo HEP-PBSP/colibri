@@ -141,7 +141,7 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, 
     """
     mc_fit = monte_carlo_fit
 
-    df = pd.DataFrame(mc_fit.optimized_parameters, index=pdf_model.param_names).T
+    df = pd.DataFrame(mc_fit.optimized_parameters, index=pdf_model.full_param_names).T
 
     # In a Monte Carlo fit, replicas are written to the fit_replicas
     # directory, and mc_postfit must then be applied to select valid ones

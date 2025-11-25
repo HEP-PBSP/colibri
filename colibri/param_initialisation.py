@@ -34,7 +34,7 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
         param_initialiser_settings["type"] = "zeros"
 
     if param_initialiser_settings["type"] == "zeros":
-        return jnp.array([0.0] * len(pdf_model.param_names))
+        return jnp.array([0.0] * len(pdf_model.full_param_names))
 
     if "random_seed" in param_initialiser_settings:
         random_seed = jax.random.PRNGKey(
@@ -43,7 +43,7 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
     else:
         random_seed = jax.random.PRNGKey(replica_index)
 
-    param_names = pdf_model.param_names
+    full_param_names = pdf_model.full_param_names
 
     if param_initialiser_settings["type"] == "normal":
         means_setting = param_initialiser_settings.get("means", 0.0)
@@ -79,22 +79,24 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
         def expand(setting, default, name):
             # If dict → check consistency
             if isinstance(setting, dict):
-                if len(setting) != len(param_names):
+                if len(setting) != len(full_param_names):
                     raise ValueError(
                         f"'{name}' dict must have one entry per parameter "
-                        f"(got {len(setting)} for {len(param_names)} parameters)."
+                        f"(got {len(setting)} for {len(full_param_names)} parameters)."
                     )
-                return jnp.array([setting.get(p, default) for p in param_names])
+                return jnp.array([setting.get(p, default) for p in full_param_names])
             # If scalar → broadcast
             elif isinstance(setting, (int, float)):
-                return jnp.full(len(param_names), setting)
+                return jnp.full(len(full_param_names), setting)
             else:
                 raise TypeError(f"'{name}' must be dict or scalar, got {type(setting)}")
 
         means = expand(means_setting, 0.0, "means")
         stds = expand(stds_setting, 1.0, "stds")
 
-        normal_samples = jax.random.normal(key=random_seed, shape=(len(param_names),))
+        normal_samples = jax.random.normal(
+            key=random_seed, shape=(len(full_param_names),)
+        )
         return means + stds * normal_samples
 
     if param_initialiser_settings["type"] == "uniform":
@@ -102,12 +104,12 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
             # Use param names from the model to order bounds correctly
             bounds_dict = param_initialiser_settings["bounds"]
 
-            missing = [p for p in param_names if p not in bounds_dict]
+            missing = [p for p in full_param_names if p not in bounds_dict]
             if missing:
                 raise ValueError(f"Missing bounds for parameters: {missing}")
 
             # Per-parameter bounds
-            bounds = jnp.array([bounds_dict[param] for param in param_names])
+            bounds = jnp.array([bounds_dict[param] for param in full_param_names])
             min_val = bounds[:, 0]
             max_val = bounds[:, 1]
 
@@ -127,7 +129,7 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
 
         initial_values = jax.random.uniform(
             key=random_seed,
-            shape=(len(pdf_model.param_names),),
+            shape=(len(pdf_model.full_param_names),),
             minval=min_val,
             maxval=max_val,
         )

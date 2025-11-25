@@ -20,14 +20,14 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Mock PDF model setup
 pdf_model = MagicMock()
-pdf_model.param_names = ["param1", "param2", "param3"]
+pdf_model.full_param_names = ["param1", "param2", "param3"]
 
 
 def test_zeros_initializer():
     settings = {"type": "zeros"}
     replica_index = 0
     result = pdf_initial_parameters(pdf_model, settings, replica_index)
-    expected_result = jnp.array([0.0] * len(pdf_model.param_names))
+    expected_result = jnp.array([0.0] * len(pdf_model.full_param_names))
     np.testing.assert_array_equal(result, expected_result)
 
 
@@ -45,7 +45,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     mock_PRNGKey.assert_called_once_with(42)
     mock_normal.assert_called_once_with(
-        key=jax.random.PRNGKey(42), shape=(len(pdf_model.param_names),)
+        key=jax.random.PRNGKey(42), shape=(len(pdf_model.full_param_names),)
     )
 
     assert "param_initialiser_settings: No 'means' or 'stds' provided." in caplog.text
@@ -273,7 +273,7 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     mock_PRNGKey.assert_called_once_with(43)
     mock_uniform.assert_called_once_with(
         key=jax.random.PRNGKey(43),
-        shape=(len(pdf_model.param_names),),
+        shape=(len(pdf_model.full_param_names),),
         minval=-1.0,
         maxval=1.0,
     )
@@ -308,7 +308,7 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     assert called_kwargs["key"] == jax.random.PRNGKey(43)
 
     # Check the 'shape' argument matches
-    assert called_kwargs["shape"] == (len(pdf_model.param_names),)
+    assert called_kwargs["shape"] == (len(pdf_model.full_param_names),)
 
     # Use numpy/jax testing utilities for arrays
     np.testing.assert_array_equal(called_kwargs["minval"], jnp.array([-1.0, 0.0, -0.5]))
@@ -350,5 +350,5 @@ def test_invalid_initializer_type():
         result = pdf_initial_parameters(pdf_model, settings, replica_index)
         # Asserting that at least one warning was logged
         assert log.output
-    expected_result = jnp.array([0.0] * len(pdf_model.param_names))
+    expected_result = jnp.array([0.0] * len(pdf_model.full_param_names))
     np.testing.assert_array_equal(result, expected_result)
