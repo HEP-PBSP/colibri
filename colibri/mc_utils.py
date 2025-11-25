@@ -10,26 +10,15 @@ import jax.numpy as jnp
 
 import os
 import numpy as np
-from dataclasses import dataclass, asdict
 
 from colibri.training_validation import training_validation_split
 from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from colibri.export_results import write_exportgrid
+from colibri.core import MCPseudodata
 
 import logging
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class MCPseudodata:
-    pseudodata: jnp.array
-    training_indices: jnp.array
-    validation_indices: jnp.array
-    trval_split: bool = False
-
-    def to_dict(self):
-        return asdict(self)
 
 
 def mc_pseudodata(

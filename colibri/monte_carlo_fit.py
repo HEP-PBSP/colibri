@@ -5,7 +5,6 @@ This module contains the main Monte Carlo fitting routine of colibri.
 
 """
 
-from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 from jax.extend import backend as jbackend
@@ -16,31 +15,9 @@ import time
 
 from colibri.mc_utils import write_exportgrid_mc
 from colibri.gradient_descent import run_gradient_descent
+from colibri.core import MonteCarloFit
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class MonteCarloFit:
-    """
-    Dataclass containing the results and specs of a Monte Carlo fit.
-
-    Attributes
-    ----------
-    monte_carlo_specs: dict
-        Dictionary containing the settings of the Monte Carlo fit.
-    training_loss: jnp.array
-        Array containing the training loss.
-    validation_loss: jnp.array
-        Array containing the validation loss.
-    optimized_parameters: jnp.array
-        Array containing the optimized parameters.
-    """
-
-    monte_carlo_specs: dict
-    training_loss: jnp.array
-    validation_loss: jnp.array
-    optimized_parameters: jnp.array
 
 
 def monte_carlo_fit(

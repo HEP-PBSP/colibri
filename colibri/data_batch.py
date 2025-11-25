@@ -10,6 +10,7 @@ import logging
 
 import jax
 import jax.numpy as jnp
+from colibri.core import DataBatches
 
 log = logging.getLogger(__name__)
 

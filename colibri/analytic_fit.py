@@ -6,7 +6,6 @@ model.
 
 """
 
-from dataclasses import dataclass
 import time
 
 import jax
@@ -15,29 +14,14 @@ import jax.numpy.linalg as jla
 import numpy as np
 import scipy.special as special
 
-from colibri.export_results import BayesianFit, write_replicas, export_bayes_results
+from colibri.core import AnalyticFit
+from colibri.export_results import write_replicas, export_bayes_results
 from colibri.checks import check_pdf_model_is_linear
 from colibri.utils import compute_determinants_of_principal_minors
 
 import logging
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class AnalyticFit(BayesianFit):
-    """
-    Dataclass containing the results and specs of an analytic fit.
-
-    Attributes
-    ----------
-    analytic_specs: dict
-        Dictionary containing the settings of the analytic fit.
-    resampled_posterior: jnp.array
-        Array containing the resampled posterior samples.
-    """
-
-    analytic_specs: dict
 
 
 def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec):
