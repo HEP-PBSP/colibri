@@ -61,9 +61,7 @@ class LogLikelihood(object):
         self.positivity_penalty_settings = positivity_penalty_settings
         self.integrability_penalty = integrability_penalty
 
-        self.pred_and_pdf = pdf_model.pred_and_pdf_func(
-            fit_xgrid, forward_map=forward_map
-        )
+        self.pred_and_pdf = pdf_model.predictions(fit_xgrid, forward_map=forward_map)
 
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
