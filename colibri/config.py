@@ -631,3 +631,11 @@ class colibriConfig(Config):
         replicas_folder = Path(str(output_path)) / "fit_replicas"
         replicas_folder.mkdir(parents=True, exist_ok=True)
         return replicas_folder
+
+    def produce_ntk_replicas_folder(self, output_path):
+        """
+        Produces the NTK replicas folder where the NTK fit replicas are stored.
+        """
+        ntk_replicas_folder = Path(str(output_path)) / "ntk_replicas"
+        ntk_replicas_folder.mkdir(parents=True, exist_ok=True)
+        return ntk_replicas_folder
