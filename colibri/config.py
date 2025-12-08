@@ -10,6 +10,7 @@ import hashlib
 import logging
 import os
 import shutil
+from pathlib import Path
 
 import jax
 import jax.numpy as jnp
@@ -622,3 +623,11 @@ class colibriConfig(Config):
         Returns None as the pdf_model is not used in the colibri module.
         """
         return None
+
+    def produce_replicas_folder(self, output_path):
+        """
+        Produces the replicas folder where the fit replicas are stored.
+        """
+        replicas_folder = Path(str(output_path)) / "fit_replicas"
+        replicas_folder.mkdir(parents=True, exist_ok=True)
+        return replicas_folder

@@ -28,8 +28,12 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
+    replicas_folder,
+    replica_index,
     batch_size=None,
     batch_seed=1,
+    record_parameters=False,
+    record_every=50,
 ):
     """
     This function performs a Monte Carlo fit.
@@ -55,11 +59,24 @@ def monte_carlo_fit(
     max_epochs: int
         Number of maximum epochs.
 
+    replicas_folder: pathlib.PosixPath
+        Path to the output folder for the replicas.
+
+    replica_index: int
+        Index of the replica being fitted.
+
     batch_size: int, default is None which sets it to the full size of data
         Size of batches during training.
 
     batch_seed: int, optional
         Seed used to construct the batches. Defaults to 1.
+
+    record_parameters: bool, default False
+        Whether to monitor the parameters during the Monte Carlo fit.
+
+    record_every: int, default 50
+        Frequency (in epochs) at which to record losses parameters of
+        model. If record_parameters is False, only losses are recorded.
 
     Returns
     -------
@@ -68,7 +85,6 @@ def monte_carlo_fit(
         training_loss: jnp.array
         validation_loss: jnp.array
     """
-
     len_tr_idx, len_val_idx = len_trval_data
 
     @jax.jit
@@ -100,7 +116,9 @@ def monte_carlo_fit(
         early_stopper=early_stopper,
         max_epochs=max_epochs,
         data_batch=data_batch,
-        record_every=50,
+        record_every=record_every,
+        record_parameters=record_parameters,
+        output_folder=replicas_folder / f"replica_{replica_index}/parameters",
     )
 
     t1 = time.time()
@@ -116,7 +134,6 @@ def monte_carlo_fit(
         validation_loss=gd_result.validation_loss,
         optimized_parameters=gd_result.optimized_parameters,
     )
-
 
 def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, Q0):
     """

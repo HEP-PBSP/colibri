@@ -35,6 +35,8 @@ def run_gradient_descent(
     max_epochs: int,
     data_batch: colibri.DataBatches = None,
     record_every: int = 50,
+    record_parameters: bool = False,
+    output_folder: str = "",
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 
@@ -64,8 +66,18 @@ def run_gradient_descent(
         Defaults to None, in which case the loss is assumed to not have been batched.
 
     record_every : int, default 50
-        Record losses every this many epochs.
+        Record losses every this many epochs. If `record_parameters` is True,
+        parameters of the model are also recorded.
+
+    record_parameters : bool, default False
+        Whether to record parameters every `record_every` epochs.
+
+    output_folder : str, default ""
+        Folder to store recorded parameters if `record_parameters` is True.
     """
+
+    if record_parameters:
+        output_folder.mkdir(parents=True, exist_ok=True)
 
     params = initial_parameters
     opt_state = optimizer.init(params)
@@ -102,6 +114,12 @@ def run_gradient_descent(
             batch_idx = next(batches_iter)
             params, opt_state, batch_loss = _step(params, opt_state, batch_idx)
             epoch_train_loss += batch_loss
+
+        if record_parameters:
+            if epoch % record_every == 0:
+                log.info(f"Recording parameters at epoch {epoch}")
+                jnp.savez(output_folder / f"params_{epoch}.npz", params=params)
+
         epoch_val_loss = validation_loss_fn(params)
 
         early_stopper = early_stopper.update(epoch_val_loss)
