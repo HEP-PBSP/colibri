@@ -36,7 +36,6 @@ def run_gradient_descent(
     data_batch: colibri.DataBatches = None,
     record_every: int = 50,
     record_parameters: bool = False,
-    output_folder: str = "",
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 
@@ -71,13 +70,7 @@ def run_gradient_descent(
 
     record_parameters : bool, default False
         Whether to record parameters every `record_every` epochs.
-
-    output_folder : str, default ""
-        Folder to store recorded parameters if `record_parameters` is True.
     """
-
-    if record_parameters:
-        output_folder.mkdir(parents=True, exist_ok=True)
 
     params = initial_parameters
     opt_state = optimizer.init(params)
@@ -91,6 +84,7 @@ def run_gradient_descent(
 
     train_losses = []
     val_losses = []
+    parameters_by_epoch = [] if record_parameters else None
 
     if data_batch is None:
         # we simulate a fake batch iterator that just yields a dummy batch index
@@ -115,11 +109,6 @@ def run_gradient_descent(
             params, opt_state, batch_loss = _step(params, opt_state, batch_idx)
             epoch_train_loss += batch_loss
 
-        if record_parameters:
-            if epoch % record_every == 0:
-                log.info(f"Recording parameters at epoch {epoch}")
-                jnp.savez(output_folder / f"params_{epoch}.npz", params=params)
-
         epoch_val_loss = validation_loss_fn(params)
 
         early_stopper = early_stopper.update(epoch_val_loss)
@@ -131,6 +120,11 @@ def run_gradient_descent(
             log.info(f"    Early_stopper: {early_stopper}")
             train_losses.append(epoch_train_loss)
             val_losses.append(epoch_val_loss)
+
+        if record_parameters:
+            if epoch % record_every == 0:
+                log.info(f"Recording parameters at epoch {epoch}")
+                parameters_by_epoch.append(params)
 
         if early_stopper.should_stop:
             log.info(f"Early stopping at epoch {epoch}")
@@ -145,4 +139,5 @@ def run_gradient_descent(
             "batch_size": batch_size,
             "record_every": record_every,
         },
+        parameters_by_epoch=jnp.array(parameters_by_epoch)
     )

@@ -28,8 +28,6 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
-    replicas_folder,
-    replica_index,
     batch_size=None,
     batch_seed=1,
     record_parameters=False,
@@ -58,12 +56,6 @@ def monte_carlo_fit(
 
     max_epochs: int
         Number of maximum epochs.
-
-    replicas_folder: pathlib.PosixPath
-        Path to the output folder for the replicas.
-
-    replica_index: int
-        Index of the replica being fitted.
 
     batch_size: int, default is None which sets it to the full size of data
         Size of batches during training.
@@ -118,7 +110,6 @@ def monte_carlo_fit(
         data_batch=data_batch,
         record_every=record_every,
         record_parameters=record_parameters,
-        output_folder=replicas_folder / f"replica_{replica_index}/parameters",
     )
 
     t1 = time.time()
@@ -129,13 +120,15 @@ def monte_carlo_fit(
             "max_epochs": max_epochs,
             "batch_size": data_batch.batch_size,
             "batch_seed": batch_seed,
+            "record_every": record_every,
         },
         training_loss=gd_result.training_loss,
         validation_loss=gd_result.validation_loss,
         optimized_parameters=gd_result.optimized_parameters,
+        parameters_by_epoch=gd_result.parameters_by_epoch,
     )
 
-def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, Q0):
+def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, Q0, record_parameters=False):
     """
     Runs the Monte Carlo fit and writes the output to the output directory.
 
@@ -195,3 +188,19 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, 
         index=False,
         float_format="%.5e",
     )
+
+    if record_parameters:
+        # Save the parameters by epoch if recorded
+        record_every = mc_fit.monte_carlo_specs["record_every"]
+        parameters_by_epoch = mc_fit.parameters_by_epoch
+        params_path = str(output_path) + f"/fit_replicas/replica_{replica_index}/parameters/"
+        if not os.path.exists(params_path):
+            os.makedirs(params_path, exist_ok=True)
+
+        for epoch_idx in range(parameters_by_epoch.shape[0]):
+            epoch = epoch_idx * record_every
+            jnp.savez(
+                params_path + f"params_{epoch}.npz",
+                params=parameters_by_epoch[epoch_idx],
+            )
+            
