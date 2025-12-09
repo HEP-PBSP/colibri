@@ -128,7 +128,10 @@ def monte_carlo_fit(
         parameters_by_epoch=gd_result.parameters_by_epoch,
     )
 
-def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, Q0, record_parameters=False):
+
+def run_monte_carlo_fit(
+    monte_carlo_fit, pdf_model, output_path, replica_index, Q0, record_parameters=False
+):
     """
     Runs the Monte Carlo fit and writes the output to the output directory.
 
@@ -193,7 +196,9 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, 
         # Save the parameters by epoch if recorded
         record_every = mc_fit.monte_carlo_specs["record_every"]
         parameters_by_epoch = mc_fit.parameters_by_epoch
-        params_path = str(output_path) + f"/fit_replicas/replica_{replica_index}/parameters/"
+        params_path = (
+            str(output_path) + f"/fit_replicas/replica_{replica_index}/parameters/"
+        )
         if not os.path.exists(params_path):
             os.makedirs(params_path, exist_ok=True)
 
@@ -203,4 +208,3 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, 
                 params_path + f"params_{epoch}.npz",
                 params=parameters_by_epoch[epoch_idx],
             )
-            

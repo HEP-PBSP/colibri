@@ -139,5 +139,5 @@ def run_gradient_descent(
             "batch_size": batch_size,
             "record_every": record_every,
         },
-        parameters_by_epoch=jnp.array(parameters_by_epoch)
+        parameters_by_epoch=jnp.array(parameters_by_epoch),
     )
