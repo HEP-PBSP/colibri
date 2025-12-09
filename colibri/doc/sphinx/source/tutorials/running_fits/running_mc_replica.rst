@@ -103,7 +103,6 @@ executable.
     use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
     max_epochs: 300                        # The max number of epochs in Monte Carlo training.
     mc_validation_fraction: 0.2            # The fraction of the data used for validation in Monte Carlo training.
-    record_every: 100                      # Frequency of epochs at which the loss will be recorded in the fit output. Default 50.
 
     param_initialiser_settings:               # The initialiser for Monte Carlo training.
         type: uniform
