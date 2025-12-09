@@ -19,7 +19,7 @@ from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
 from mpi4py import MPI
-from reportengine.configparser import ConfigError, explicit_node
+from reportengine.configparser import ConfigError, explicit_node, element_of
 from validphys import covmats
 from validphys.config import Config, Environment
 from validphys.fkparser import load_fktable
@@ -624,11 +624,12 @@ class colibriConfig(Config):
         """
         return None
 
-    def produce_replicas_path(self, output_path):
+    def produce_replicas_path(self, pdf):
         """
         Produces the replicas folder where the fit replicas are stored.
         """
-        replicas_path = Path(str(output_path)) / "fit_replicas"
+        pdf_path = Path(pdf.name)
+        replicas_path = pdf_path / "fit_replicas"
         replicas_path.mkdir(parents=True, exist_ok=True)
         return replicas_path
 
@@ -639,3 +640,11 @@ class colibriConfig(Config):
         ntk_replicas_path = Path(str(output_path)) / "ntk_replicas"
         ntk_replicas_path.mkdir(parents=True, exist_ok=True)
         return ntk_replicas_path
+
+    @element_of("fits")
+    def parse_fit(self, fit: str):
+        """A fit in the results folder, containing at least a valid filter result."""
+        try:
+            return self.loader.check_fit(fit)
+        except LoadFailedError as e:
+            raise ConfigError(str(e), fit, self.loader.available_fits)
