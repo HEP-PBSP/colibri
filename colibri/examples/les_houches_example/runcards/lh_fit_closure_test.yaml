@@ -98,4 +98,4 @@ ultranest_settings:
 
 
 actions_:
-- run_monte_carlo_fit                      # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- run_ultranest_fit                      # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
