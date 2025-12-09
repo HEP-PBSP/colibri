@@ -75,8 +75,8 @@ executable.
     posdatasets:
     - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
 
-    # positivity_penalty_settings:
-    #   positivity_penalty: false
+    positivity_penalty_settings:
+      positivity_penalty: false
     #   alpha: 1e-7                           
     #   lambda_positivity: 0                 
 
@@ -93,8 +93,8 @@ executable.
       integrability: False
     
     optimizer_settings:
-        optimizer: adam # Any of the optax optimizers can be used.
-        clipnorm: 1.0 # Gradient clipping norm value. Set to null to disable or omit.
+        optimizer: adam # Any of the optax optimizers can be used with 'adam'.
+        clipnorm: 1.0 # Gradient clipping norm value. Set to 'none' to disable or omit.
         optimizer_hyperparams:
             learning_rate: 0.001
             # any hyperparameters specific to the chosen optimizer can be set here
@@ -103,6 +103,7 @@ executable.
     use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
     max_epochs: 300                        # The max number of epochs in Monte Carlo training.
     mc_validation_fraction: 0.2            # The fraction of the data used for validation in Monte Carlo training.
+    record_every: 100                      # Frequency of epochs at which the loss will be recorded in the fit output. Default 50.
 
     param_initialiser_settings:               # The initialiser for Monte Carlo training.
         type: uniform
@@ -123,6 +124,15 @@ executable.
 
     actions_:
     - run_monte_carlo_fit
+
+``optimizer_settings``
+^^^^^^^^^^^^^^^^^^^^^^
+These settings control the method of gradient descent. You can use any
+of the Optax optimizers and settings, which you can read more about
+`here <https://optax.readthedocs.io/en/latest/api/optimizers.html#>`_.
+
+``param_initialiser_settings``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If it is appropriate for a given model, you may choose to have single, 
 global minimum and maximum values for all parameters, instead of specific
