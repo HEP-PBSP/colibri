@@ -23,6 +23,7 @@ from reportengine.configparser import ConfigError, explicit_node, element_of
 from validphys import covmats
 from validphys.config import Config, Environment
 from validphys.fkparser import load_fktable
+from validphys.loader import LoadFailedError
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -648,3 +649,40 @@ class colibriConfig(Config):
             return self.loader.check_fit(fit)
         except LoadFailedError as e:
             raise ConfigError(str(e), fit, self.loader.available_fits)
+
+    def parse_ntk_plots_settings(self, settings):
+        """
+        For NTK computation, parses the ntk_settings namespace from the runcard.
+        """
+
+        # Check that the user-supplied keys are known, raise a warning otherwise.
+
+        known_keys = {"ntk_plots", "x_scale", "y_scale"}
+
+        kdiff = settings.keys() - known_keys
+
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in ntk_settings not known.", k, known_keys)
+            )
+
+        # Now construct the ntk_settings dictionary, checking the parameter combinations are
+        # valid
+        ntk_plots_settings = {}
+
+        ntk_plots_settings["ntk_plots"] = settings.get("ntk_plots", False)
+
+        ntk_plots_settings["n_top_eigenvalues"] = settings.get("n_top_eigenvalues", 1)
+
+        ntk_plots_settings["x_scale"] = settings.get("x_scale", None)
+        ntk_plots_settings["y_scale"] = settings.get("y_scale", None)
+
+        return ntk_plots_settings
+
+    def produce_ntk_plots_path(self, output_path):
+        # Set the directory where the ntk plots will be stored
+
+        ntk_plots_path = Path(str(output_path)) / "ntk_plots"
+        ntk_plots_path.mkdir(parents=True, exist_ok=True)
+
+        return ntk_plots_path
