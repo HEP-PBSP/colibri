@@ -178,6 +178,23 @@ can do so:
     means or standard deviations, default values of **0.0** and **1.0**
     will be used respectively.
 
+Using data batching
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In Monte Carlo replica fits, it is possible to use data batching during training.
+This can be done by adding the following settings to the runcard:
+
+.. code-block:: bash
+
+    batch_size: 128
+    batch_seed: 3
+    shuffle_each_epoch: False
+    
+* ``batch_size``: The size of the data batches. If the dataset is smaller
+  than this size or the batch_size not specified, the full dataset will be used.
+* ``batch_seed``: The random seed used to generate the data batches.
+* ``shuffle_each_epoch``: Whether to reshuffle the data at the start of each epoch. If
+  set to ``False``, the data will be shuffled only once at the start of training and the batches will be fixed.
+
 Running the fit
 ---------------
 
