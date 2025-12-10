@@ -40,11 +40,25 @@ def mc_pseudodata(
     # Generate pseudodata according to a multivariate Gaussian centred on
     # central_values and with covariance matrix covmat.
     key = jax.random.PRNGKey(replica_index)
-    pseudodata = jax.random.multivariate_normal(
-        key,
-        central_values,
-        covmat,
-    )
+
+    keep_sampling = True
+    counter = 0
+
+    while keep_sampling:
+        key, subkey = jax.random.split(key)
+        pseudodata = jax.random.multivariate_normal(
+            subkey,
+            central_values,
+            covmat,
+        )
+        if jnp.all(pseudodata >= 0):
+            keep_sampling = False
+        else:
+            counter += 1
+            if counter > 1000:
+                raise RuntimeError(
+                    "Too many resampling attempts: cannot generate non-negative pseudodata."
+                )
 
     # Now select a subset of 1 - mc_validation_fraction indices to be the
     # training indices.

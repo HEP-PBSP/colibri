@@ -163,5 +163,5 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
             else:  # Weight
                 init_val = weight_init_fn(subkey, shape)
             initialized_params.append(init_val.flatten())
-        print(initialized_params)
+            
         return jnp.concatenate(initialized_params)
