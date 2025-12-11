@@ -93,8 +93,8 @@ executable.
       integrability: False
     
     optimizer_settings:
-        optimizer: adam # Any of the optax optimizers can be used with 'adam'.
-        clipnorm: 1.0 # Gradient clipping norm value. Set to 'none' to disable or omit.
+        optimizer: adam # Any of the optax optimizers can be used.
+        #clipnorm: 1.0 # Gradient clipping norm value. Set to 'null' to disable or omit.
         optimizer_hyperparams:
             learning_rate: 0.001
             # any hyperparameters specific to the chosen optimizer can be set here

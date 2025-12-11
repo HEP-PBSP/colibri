@@ -37,7 +37,7 @@ closure_test_level: 0                  # The closure test level: False for exper
 
 closure_test_pdf: LH_PARAM_20250519  # The closure test PDF used if closure_test_level is not False
 
-flavour_mapping: ["\\Sigma", "g", "V", "V3"]
+#flavour_mapping: ["\\Sigma", "g", "V", "V3"]  # Masks other flavours, such that closure tests can be run on desired flavours only. 
 
 #####################
 # Loss function specs
