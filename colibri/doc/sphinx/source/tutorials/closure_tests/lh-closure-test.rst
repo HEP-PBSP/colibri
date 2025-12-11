@@ -25,7 +25,7 @@ an example runcard called ``lh_fit_closure_test.yaml``, which looks like this:
 
 * **Closure test level:** To run a Level 1 closure test with this runcard, you can simply change ``closure_test_level: 0`` to ``1``. To run a model-specific closure, test, see :ref:`this section <model_cl_test>`.
 
-* **Flavour mapping:** This should only be used in closre tests. It masks other flavours, such that closure tests can be run on desired flavours only. 
+* **Flavour mapping:** This should only be used in closure tests. It masks other flavours, such that closure tests can be run on desired flavours only. 
 
 Step 2: producing the fit
 -------------------------
