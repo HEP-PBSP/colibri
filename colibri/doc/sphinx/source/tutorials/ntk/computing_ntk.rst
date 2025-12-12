@@ -40,16 +40,16 @@ action. An example runcard to compute the NTK is shown below.
     - compute_ntk
      
 This runcard can be run with the command
-``colibri_model_exe compute_ntk.yaml -r <replica_num>``, where the ``colibri_model_exe``
-is the Colibri executable, and ``<replica_num>`` is the replica number for which the NTK
-should be computed. This will produce a folder where the NTKs are stored in npz file
-format.
+``colibri_model_exe compute_ntk.yaml -r replica_n``, where the ``colibri_model_exe``
+is the Colibri executable, and ``n`` is the replica number for which the NTK
+should be computed. This will produce a folder called ``compute_ntk``.  The NTK values
+are stored in npz file format in ``compute_ntk/ntk_replicas/replica_n``.
 
 ``ntk_plots_settings``
 ^^^^^^^^^^^^^^^^^^^^^^
 * ``ntk_plots``: 
     Whether analytic plots are produced with the ``compute_ntk`` command. For details on
-    the plots produced, see the :re:`analytic NTK plots section below <analytic_ntk_plots>`.
+    the plots produced, see the :ref:`analytic NTK plots section below <analytic_ntk_plots>`.
 * ``n_top_eigenvalues``:
     This is the number of top eigenvalues that will be plotted when ``ntk_plots`` is
     ``True``. If a number is not specified, a default of 5 eigenvalues will be plotted.
@@ -62,4 +62,10 @@ format.
 
 Analytic NTK plots
 ==================
+If the flag ``ntk_plots`` is set to ``True``, the following analytic plots will be
+produced and stored in .pdf format in ``compute_ntk/ntk_plots/``.
+
+* **NTK eigenvalue evolution:** Value of the NTK for increasing number of recorded epochs.
+
+
 

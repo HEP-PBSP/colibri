@@ -172,7 +172,7 @@ def compute_ntk(
     ntk_plots_folder.mkdir(parents=True, exist_ok=True)
 
     if ntk_plots_settings.get("ntk_plots", False):
-        plot_path = ntk_plots_folder / f"eigenvalue_evolution.png"
+        plot_path = ntk_plots_folder / f"eigenvalue_evolution.pdf"
         plt.savefig(plot_path, dpi=300, bbox_inches="tight")
         plt.close()
 
