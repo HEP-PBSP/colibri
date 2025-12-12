@@ -657,7 +657,14 @@ class colibriConfig(Config):
 
         # Check that the user-supplied keys are known, raise a warning otherwise.
 
-        known_keys = {"ntk_plots", "x_scale", "y_scale"}
+        known_keys = {
+            "ntk_plots",
+            "n_top_eigenvalues",
+            "plot_n_epochs",
+            "plot_n_eigenvectors",
+            "x_scale",
+            "y_scale",
+        }
 
         kdiff = settings.keys() - known_keys
 
@@ -673,6 +680,10 @@ class colibriConfig(Config):
         ntk_plots_settings["ntk_plots"] = settings.get("ntk_plots", False)
 
         ntk_plots_settings["n_top_eigenvalues"] = settings.get("n_top_eigenvalues", 1)
+        ntk_plots_settings["plot_n_epochs"] = settings.get("plot_n_epochs", 6)
+        ntk_plots_settings["plot_n_eigenvectors"] = settings.get(
+            "plot_n_eigenvectors", [1]
+        )
 
         ntk_plots_settings["x_scale"] = settings.get("x_scale", None)
         ntk_plots_settings["y_scale"] = settings.get("y_scale", None)

@@ -33,8 +33,11 @@ action. An example runcard to compute the NTK is shown below.
 
     ntk_plots_settings:
         ntk_plots: True
-        n_top_eigenvalues: 10  # Number of top eigenvalues for which evolution is plotted
-        y_scale: log
+        n_top_eigenvalues: 10           # Number of top eigenvalues for which evolution is plotted
+        y_scale: log                    # Sets the scale for eigenvalue evolution plot.
+        plot_n_epochs: 5                # The number of epochs for which the eigenvector plots will be plotted.
+                                        # These will be equally spaced among all epochs. Default 6.
+        plot_n_eigenvectors: [1, 2]     # Eigenvector plots will be produced for these. Default 1.
 
     actions_:
     - compute_ntk
@@ -52,11 +55,15 @@ are stored in npz file format in ``compute_ntk/ntk_replicas/replica_n``.
     the plots produced, see the :ref:`analytic NTK plots section below <analytic_ntk_plots>`.
 * ``n_top_eigenvalues``:
     This is the number of top eigenvalues that will be plotted when ``ntk_plots`` is
-    ``True``. If a number is not specified, a default of 5 eigenvalues will be plotted.
+    ``True``. If a number is not specified, a default of 1 eigenvalue will be plotted.
 * ``x_scale`` / ``y_scale``:
-    If set to ``log``, the plots will be produced with a logarithmic scale on the
-    respective axis. Otherwise a linear scale will be used.
-
+    If set to ``log``, the eigenvalue evolution plot will be produced with a logarithmic
+    scale on the respective axis. Otherwise a linear scale will be used.
+* ``plot_n_epochs``:
+    The number of epochs for which eigenvector plots will be produced.
+    These will be equally spaced among all epochs. Default 6.
+* ``plot_n_eigenvectors``:
+    The eigenvectors for which eigenvector plots will be produced. Default 1.
 
 .. _analytic_ntk_plots:
 
@@ -65,7 +72,8 @@ Analytic NTK plots
 If the flag ``ntk_plots`` is set to ``True``, the following analytic plots will be
 produced and stored in .pdf format in ``compute_ntk/ntk_plots/``.
 
-* **NTK eigenvalue evolution:** Value of the NTK for increasing number of recorded epochs.
+* **NTK eigenvalue evolution:** Value of the NTK eigenvalues for increasing number of recorded epochs.
 
+* **NTK eigenvector evolution:** Eigenvector evolution for a given number of recorded epochs, for all flavours. 
 
-
+* **Eigenvector heatmaps:** Density of NTK eigenvectors across PDF flavours and x-regions.
