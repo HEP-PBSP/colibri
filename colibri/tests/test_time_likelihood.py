@@ -209,6 +209,26 @@ def test_time_log_likelihood_csv_format(
         assert relative_time_2 > 0  # Second should be positive
 
 
+def test_time_log_likelihood_none_uses_defaults(
+    mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path, caplog
+):
+    """Test that passing None for batch_sample_sizes uses default sizes."""
+    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+        with caplog.at_level(logging.INFO):
+            sizes, _ = time_log_likelihood(
+                mock_log_likelihood,
+                mock_param_initialiser_settings,
+                MOCK_PDF_MODEL,
+                tmp_output_path,
+                batch_sample_sizes=None,
+            )
+            # Check that default sizes were used
+            default_sizes = [1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]
+            assert sizes == default_sizes
+            assert "Using default batch sample sizes" in caplog.text
+
+
 def test_time_log_likelihood_handles_exception_during_warmup(
     mock_param_initialiser_settings, tmp_output_path, caplog
 ):
