@@ -181,8 +181,7 @@ can do so:
 Using data batching
 ^^^^^^^^^^^^^^^^^^^
 In Monte Carlo replica fits, it is possible to use data batching during training.
-This can be done by adding the following settings to the Monte Carlo settings in
-the runcard:
+This can be done by adding the following settings to the runcard:
 
 .. code-block:: bash
 
