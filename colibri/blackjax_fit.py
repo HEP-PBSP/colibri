@@ -87,6 +87,7 @@ def blackjax_fit(
 
     # set the BlackJAX seed
     rng_key = jax.random.PRNGKey(blackjax_settings["seed"])
+    log.info(f"BlackJAX initialisation seed: {rng_key}")
     n_dims = pdf_model.n_parameters
     n_live = blackjax_settings["n_live"]
     n_delete = int(blackjax_settings["delete_fraction"] * n_live)
