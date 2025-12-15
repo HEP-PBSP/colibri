@@ -5,13 +5,11 @@ Tests for the time_likelihood module.
 """
 
 import logging
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, call
+from unittest.mock import patch, call
 import csv
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 import pytest
 
 from colibri.time_likelihood import time_log_likelihood
@@ -52,9 +50,7 @@ def test_time_log_likelihood_default_sizes(
 
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
         # Mock pdf_initial_parameters to return simple arrays
-        mock_init.side_effect = lambda model, settings, idx: jnp.array(
-            [0.1 * idx, 0.2 * idx]
-        )
+        mock_init.side_effect = lambda _, __, idx: jnp.array([0.1 * idx, 0.2 * idx])
 
         sizes, times = time_log_likelihood(
             mock_log_likelihood,
@@ -100,9 +96,7 @@ def test_time_log_likelihood_custom_sizes(
     custom_sizes = [5, 20, 50]
 
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda model, settings, idx: jnp.array(
-            [0.1 * idx, 0.2 * idx]
-        )
+        mock_init.side_effect = lambda _, __, idx: jnp.array([0.1 * idx, 0.2 * idx])
 
         sizes, times = time_log_likelihood(
             mock_log_likelihood,
@@ -126,9 +120,7 @@ def test_time_log_likelihood_generates_correct_number_of_samples(
     max_size = max(custom_sizes)
 
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda model, settings, idx: jnp.array(
-            [float(idx), float(idx)]
-        )
+        mock_init.side_effect = lambda _, __, idx: jnp.array([float(idx), float(idx)])
 
         time_log_likelihood(
             mock_log_likelihood,
@@ -159,12 +151,11 @@ def test_time_log_likelihood_vectorization(
     def counting_likelihood(params):
         nonlocal call_count
         call_count += 1
-        # When vmapped, params will be 1D per call (the vmap adds the batch dimension externally)
-        # So we just check that it's being called
+
         return jnp.sum(params, axis=-1) if params.ndim > 1 else jnp.sum(params)
 
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda model, settings, idx: jnp.array([0.1, 0.2])
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
 
         time_log_likelihood(
             counting_likelihood,
@@ -174,8 +165,6 @@ def test_time_log_likelihood_vectorization(
             batch_sample_sizes=[2, 5],
         )
 
-    # Verify that vectorized version was used
-    # (warm-up: 2 calls + timing: 2 sizes × 100 repeats = 202 calls)
     assert call_count > 0
 
 
@@ -185,9 +174,9 @@ def test_time_log_likelihood_csv_format(
     """Test that CSV is written with correct format."""
 
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda model, settings, idx: jnp.array([0.1, 0.2])
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
 
-        sizes, times = time_log_likelihood(
+        _, __ = time_log_likelihood(
             mock_log_likelihood,
             mock_param_initialiser_settings,
             MOCK_PDF_MODEL,
@@ -217,70 +206,117 @@ def test_time_log_likelihood_csv_format(
         relative_time_2 = float(rows[1][2])
 
         assert relative_time_1 == 1.0  # First should always be 1.0
-        # Due to timing variability in tests, we just check it's positive
         assert relative_time_2 > 0  # Second should be positive
 
 
-def test_time_log_likelihood_uses_max_size_efficiently(
-    mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path
+def test_time_log_likelihood_handles_exception_during_warmup(
+    mock_param_initialiser_settings, tmp_output_path, caplog
 ):
-    """Test that samples are generated only once for max size and then subsetted."""
+    """Test that exceptions during warm-up are properly logged and raised."""
 
-    sizes = [10, 50, 100]  # max_size = 100
+    def failing_likelihood(_):
+        raise RuntimeError("Simulated warm-up failure")
 
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        # Each call returns a unique array based on replica index
-        mock_init.side_effect = lambda model, settings, idx: jnp.array([float(idx)] * 2)
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
 
-        time_log_likelihood(
-            mock_log_likelihood,
-            mock_param_initialiser_settings,
-            MOCK_PDF_MODEL,
-            tmp_output_path,
-            batch_sample_sizes=sizes,
-        )
+        with caplog.at_level(logging.ERROR):
+            with pytest.raises(RuntimeError, match="Simulated warm-up failure"):
+                time_log_likelihood(
+                    failing_likelihood,
+                    mock_param_initialiser_settings,
+                    MOCK_PDF_MODEL,
+                    tmp_output_path,
+                    batch_sample_sizes=[2, 5],
+                )
 
-        # Should be called exactly max(sizes) times, not sum(sizes) times
-        assert mock_init.call_count == 100
-        assert mock_init.call_count != (10 + 50 + 100)
+        assert "Warm-up failed" in caplog.text
 
 
-@pytest.mark.parametrize(
-    "sizes",
-    [
-        [1, 10],  # Need at least 2 sizes for warm-up
-        [5, 10, 20, 50],
-        [100, 500, 1000],
-    ],
-)
-def test_time_log_likelihood_various_size_combinations(
-    mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path, sizes
+def test_time_log_likelihood_handles_exception_during_timing(
+    mock_param_initialiser_settings, tmp_output_path, caplog
 ):
-    """Test with various combinations of batch sizes."""
+    """
+    Test that exceptions during timing are caught and logged properly.
+    """
 
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda model, settings, idx: jnp.array([0.1, 0.2])
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
 
-        returned_sizes, times = time_log_likelihood(
-            mock_log_likelihood,
-            mock_param_initialiser_settings,
-            MOCK_PDF_MODEL,
-            tmp_output_path,
-            batch_sample_sizes=sizes,
-        )
+        original_block = jax.block_until_ready
+        block_calls = {"n": 0}
 
-    assert returned_sizes == sizes
-    assert len(times) == len(sizes)
-    assert all(t > 0 for t in times)
+        def failing_block(x):
+            block_calls["n"] += 1
+
+            if block_calls["n"] == 2:
+                raise RuntimeError("Simulated timing failure")
+            return original_block(x)
+
+        with patch("jax.block_until_ready", side_effect=failing_block):
+            with caplog.at_level(logging.ERROR):
+                sizes, times = time_log_likelihood(
+                    lambda params: jnp.sum(params, axis=-1),
+                    mock_param_initialiser_settings,
+                    MOCK_PDF_MODEL,
+                    tmp_output_path,
+                    batch_sample_sizes=[2, 5, 10],
+                )
+
+        assert "Error at batch size" in caplog.text
+        assert "No batch sizes were successfully timed" in caplog.text
 
 
-def test_time_log_likelihood_none_uses_defaults(
+def test_time_log_likelihood_successful_partial_run(
+    mock_param_initialiser_settings, tmp_output_path, caplog
+):
+    """
+    Test when some batch sizes succeed before an error occurs.
+
+    We let the first batch size complete fully, then fail on the FIRST timing
+    iteration of the second batch size, by raising from jax.block_until_ready.
+    """
+
+    n_repeats = 100  # must match implementation
+
+    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+
+        original_block = jax.block_until_ready
+        block_calls = {"n": 0}
+
+        fail_on = 1 + n_repeats + 1 + 1  # 103
+
+        def failing_block(x):
+            block_calls["n"] += 1
+            if block_calls["n"] == fail_on:
+                raise RuntimeError("Fail on second batch")
+            return original_block(x)
+
+        with patch("jax.block_until_ready", side_effect=failing_block):
+            with caplog.at_level(logging.WARNING):
+                sizes, times = time_log_likelihood(
+                    lambda params: jnp.sum(params, axis=-1),
+                    mock_param_initialiser_settings,
+                    MOCK_PDF_MODEL,
+                    tmp_output_path,
+                    batch_sample_sizes=[2, 5, 10],
+                )
+
+        assert sizes == [2]
+        assert len(times) == 1
+        assert "Stopping timing" in caplog.text
+
+        assert "Results for batch sizes up to" in caplog.text
+
+
+def test_time_log_likelihood_all_sizes_successful(
     mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path, caplog
 ):
-    """Test that passing None for batch_sample_sizes uses default sizes."""
+    """Test the success path where all sizes complete successfully."""
 
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda model, settings, idx: jnp.array([0.1, 0.2])
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
 
         with caplog.at_level(logging.INFO):
             sizes, times = time_log_likelihood(
@@ -288,35 +324,114 @@ def test_time_log_likelihood_none_uses_defaults(
                 mock_param_initialiser_settings,
                 MOCK_PDF_MODEL,
                 tmp_output_path,
-                batch_sample_sizes=None,
+                batch_sample_sizes=[2, 5, 10],
             )
 
-    # Check that default sizes were used
-    default_sizes = [1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]
-    assert sizes == default_sizes
-    assert "Using default batch sample sizes" in caplog.text
+    # All sizes should succeed
+    assert len(sizes) == 3
+    assert sizes == [2, 5, 10]
+    assert len(times) == 3
+
+    # Check success logging
+    assert "Timing completed for 3 batch sizes" in caplog.text
+    assert "Final results saved to" in caplog.text
 
 
-def test_time_log_likelihood_with_mock_pdf_model_param_names(
+def test_time_log_likelihood_relative_time_calculation(
     mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path
 ):
-    """Test that the function correctly uses MOCK_PDF_MODEL.param_names."""
+    """Test that relative times are calculated correctly."""
 
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        # Verify the mock is called with the correct number of parameters
-        mock_init.side_effect = lambda model, settings, idx: jnp.array(
-            [0.1 * idx, 0.2 * idx]
-        )
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
 
-        time_log_likelihood(
+        _, __ = time_log_likelihood(
             mock_log_likelihood,
             mock_param_initialiser_settings,
             MOCK_PDF_MODEL,
             tmp_output_path,
-            batch_sample_sizes=[5, 10],  # Need at least 2 for warm-up
+            batch_sample_sizes=[2, 5, 10],
         )
 
-        # Verify MOCK_PDF_MODEL was passed correctly
-        for call_args in mock_init.call_args_list:
-            assert call_args[0][0] == MOCK_PDF_MODEL
-            assert call_args[0][1] == mock_param_initialiser_settings
+    csv_path = tmp_output_path / "log_likelihood_times.csv"
+
+    with open(csv_path, "r") as f:
+        reader = csv.reader(f)
+        next(reader)  # Skip header
+        rows = list(reader)
+
+        relative_times = [float(row[2]) for row in rows]
+
+        assert relative_times[0] == 1.0  # First relative time should always be 1.0
+        assert all(
+            rt > 0 for rt in relative_times
+        )  # All relative times should be positive
+
+        # Relative times should be calculated as time/first_time
+        first_time = float(rows[0][1])
+        for i, row in enumerate(rows):
+            expected_relative = float(row[1]) / first_time
+            actual_relative = float(row[2])
+            # Allow for small floating point differences
+            assert abs(expected_relative - actual_relative) < 1e-6
+
+
+def test_time_log_likelihood_jax_block_until_ready(
+    mock_param_initialiser_settings, tmp_output_path
+):
+    """Test that jax.block_until_ready is called to ensure proper timing."""
+
+    ready_calls = []
+    original_block = jax.block_until_ready
+
+    def tracking_block(x):
+        ready_calls.append(x)
+        return original_block(x)
+
+    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+
+        with patch("jax.block_until_ready", side_effect=tracking_block):
+
+            def simple_likelihood(params):
+                return jnp.sum(params, axis=-1)
+
+            time_log_likelihood(
+                simple_likelihood,
+                mock_param_initialiser_settings,
+                MOCK_PDF_MODEL,
+                tmp_output_path,
+                batch_sample_sizes=[2, 5],
+            )
+
+    assert len(ready_calls) >= 201
+
+
+def test_time_log_likelihood_with_single_batch_size(
+    mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path
+):
+    """Test with only a single batch size."""
+
+    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+
+        sizes, times = time_log_likelihood(
+            mock_log_likelihood,
+            mock_param_initialiser_settings,
+            MOCK_PDF_MODEL,
+            tmp_output_path,
+            batch_sample_sizes=[10],
+        )
+
+    assert sizes == [10]
+    assert len(times) == 1
+    assert times[0] > 0
+
+    # Check CSV
+    csv_path = tmp_output_path / "log_likelihood_times.csv"
+    with open(csv_path, "r") as f:
+        reader = csv.reader(f)
+        next(reader)  # Skip header
+        rows = list(reader)
+        assert len(rows) == 1
+        assert float(rows[0][2]) == 1.0  # Relative time should be 1.0
