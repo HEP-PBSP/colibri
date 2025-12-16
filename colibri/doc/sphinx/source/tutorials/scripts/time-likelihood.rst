@@ -7,7 +7,7 @@ Timing the log-Likelihood
 In this tutorial, we show how to time the log-likelihood for different
 batch sizes of the vectorised likelihood. This can help you understand
 what the computational cost is for the computation of the log-likelihood
-for your machine.
+for your machine and for a given model.
 
 The following runcard can be used to time the log-likelihood for the
 :ref:`Les Houches parametrisation model <lh_theory>`.
@@ -15,7 +15,7 @@ The following runcard can be used to time the log-likelihood for the
 
 .. code-block:: bash
 
-    meta: 'An example fit using Colibri, reduced DIS dataset.'
+    meta: 'An example script to time the log-likelihood using Colibri.'
 
     #######################
     # Data and theory specs
@@ -88,6 +88,19 @@ The following runcard can be used to time the log-likelihood for the
 The ``batch_sample_sizes`` is optional. If it is not specified, default values of
 ``[1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]`` will be used. These are
 the batch sizes for which the likelihood will be timed.
+
+You can run the script with:
+
+.. code-block:: bash
+
+    les_houches_exe time_likelihood.yaml
+
+where ``time_likelihood.yaml`` is the name of your runcard. Note that we are using 
+a model-specific executable (``les_houches_exe``). You should therefore adapt
+``param_initialiser_settings`` in the runcard above to your specific model. 
+In general, the time it takes to compute the likelihood is dependent on the model
+that the likelihood is computed for. For example, it would take loner for a model
+with more parameters, ect. 
 
 This script will produce a file called ``log_likelihood_times.csv``, that looks as
 follows:
