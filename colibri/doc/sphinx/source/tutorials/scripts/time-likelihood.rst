@@ -9,7 +9,8 @@ batch sizes of the vectorised likelihood. This can help you understand
 what the computational cost is for the computation of the log-likelihood
 for your machine.
 
-The following runcard can be used to time the log-likelihood for the 
+The following runcard can be used to time the log-likelihood for the
+:ref:`Les Houches parametrisation model <lh_theory>`.
 
 
 .. code-block:: bash

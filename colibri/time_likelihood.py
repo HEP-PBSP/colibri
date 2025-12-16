@@ -34,6 +34,8 @@ def time_log_likelihood(
         Settings for parameter initialization
     pdf_model : pdf_model.PDFModel
         The PDF model to fit
+    batch_sample_sizes : sequence of int, optional
+        Batch sizes (number of parameter vectors per batch) to time
     output_path : pathlib.PosixPath
         Path to the output folder where log_likelihood_times.csv will be saved
     """
