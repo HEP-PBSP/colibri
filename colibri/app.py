@@ -12,6 +12,7 @@ import pathlib
 colibri_providers = [
     "colibri.theory_predictions",
     "colibri.theory_penalties",
+    "colibri.time_likelihood",
     "colibri.loss_functions",
     "colibri.optax_optimizer",
     "colibri.data_batch",
