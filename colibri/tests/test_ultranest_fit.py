@@ -25,15 +25,6 @@ from colibri.likelihood import LogLikelihood
 jax.config.update("jax_enable_x64", True)
 
 
-@pytest.fixture(autouse=True)
-def _mock_loglikelihood_call(monkeypatch):
-    monkeypatch.setattr(
-        LogLikelihood,
-        "__call__",
-        lambda self, params: jnp.array(-1.0),
-    )
-
-
 def mock_prior_transform(x):
     return x
 
