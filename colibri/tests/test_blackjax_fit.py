@@ -1,11 +1,12 @@
 """
 colibri.tests.test_blackjax_fit.py
-
 Tests for the BlackJAX fitting module.
 """
 
 import copy
 from unittest.mock import Mock, patch
+import os
+import tempfile
 
 import jax
 import jax.numpy as jnp
@@ -13,7 +14,7 @@ import pytest
 
 from colibri.loss_functions import chi2
 from colibri.tests.conftest import (
-    MOCK_CENTRAL_INV_COVMAT_INDEX,
+    MOCK_CENTRAL_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
@@ -27,11 +28,24 @@ from colibri.likelihood import LogLikelihood
 
 jax.config.update("jax_enable_x64", True)
 
+
+def mock_prior_transform(x):
+    return x
+
+
+def mock_log_prob(x):
+    return -0.5 * jnp.sum(x**2, axis=-1)
+
+
+def mock_sample(rng_key, n_samples):
+    n_params = len(MOCK_PDF_MODEL.param_names)
+    return jax.random.normal(rng_key, shape=(n_samples, n_params))
+
+
 bayesian_prior = {
-    "sample": lambda key, n: jax.random.normal(
-        key, (n, len(MOCK_PDF_MODEL.param_names))
-    ),
-    "log_prob": lambda params: -0.5 * jnp.sum(params**2),
+    "prior_transform": mock_prior_transform,
+    "log_prob": mock_log_prob,
+    "sample": mock_sample,
 }
 
 integrability_penalty = lambda pdf: jnp.array([0.0])
@@ -49,13 +63,25 @@ blackjax_settings = {
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
-@patch("colibri.blackjax_fit.jax.jit", side_effect=lambda f: f)
-def test_blackjax_fit_basic(mock_jit, pos_penalty):
+def test_blackjax_fit(pos_penalty):
+    _pred_data = lambda *args: jnp.array([0.0])
+    mock_log_likelihood = LogLikelihood(
+        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_PDF_MODEL,
+        TEST_XGRID,
+        _pred_data,
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
+        MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings={
+            "positivity_penalty": pos_penalty,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
+        integrability_penalty=integrability_penalty,
+    )
 
     MOCK_PDF_MODEL.n_parameters = len(MOCK_PDF_MODEL.param_names)
-
-    mock_log_likelihood = Mock(spec=LogLikelihood)
-    mock_log_likelihood.return_value = jnp.array(-1.0)
 
     fit_result = blackjax_fit(
         MOCK_PDF_MODEL,
@@ -65,35 +91,85 @@ def test_blackjax_fit_basic(mock_jit, pos_penalty):
     )
 
     assert isinstance(fit_result, BlackJAXFit)
-    assert fit_result.resampled_posterior.shape == (
-        blackjax_settings["n_posterior_samples"],
-        len(MOCK_PDF_MODEL.param_names),
-    )
-    assert fit_result.param_names == MOCK_PDF_MODEL.param_names
-    assert fit_result.blackjax_specs == blackjax_settings
-    assert isinstance(fit_result.blackjax_result, dict)
 
 
-@patch("colibri.blackjax_fit.jax.jit", side_effect=lambda f: f)
-def test_blackjax_fit_posterior_sample_limit(mock_jit):
+from unittest.mock import patch
+import types
+import jax.numpy as jnp
+import pytest
 
+from colibri.blackjax_fit import blackjax_fit
+from colibri.core import BlackJAXFit
+
+
+def test_blackjax_fit_truncates_posterior_and_warns(caplog):
+    # --- ensure pdf_model is consistent ---
     MOCK_PDF_MODEL.n_parameters = len(MOCK_PDF_MODEL.param_names)
 
-    limited_settings = copy.deepcopy(blackjax_settings)
-    limited_settings["n_posterior_samples"] = 1000
+    bayesian_prior = {
+        "log_prob": lambda x: -jnp.sum(x**2, axis=-1),
+        "sample": lambda rng, n: jnp.zeros((n, MOCK_PDF_MODEL.n_parameters)),
+    }
 
-    mock_log_likelihood = Mock(spec=LogLikelihood)
-    mock_log_likelihood.return_value = jnp.array(-1.0)
+    blackjax_settings = {
+        "seed": 0,
+        "n_live": 4,
+        "delete_fraction": 0.5,
+        "repeats": 1,
+        "log_precision": 1.0,  # skip while-loop
+        "n_posterior_samples": 10,  # deliberately too large
+        "posterior_resampling_seed": 123,
+        "log_dir": "test_logs",
+    }
 
-    fit_result = blackjax_fit(
-        MOCK_PDF_MODEL,
-        bayesian_prior,
-        limited_settings,
-        mock_log_likelihood,
+    log_likelihood = lambda x: -jnp.sum(x**2)
+
+    # --- minimal blackjax.nss mock ---
+    fake_algo = types.SimpleNamespace(
+        init=lambda particles: types.SimpleNamespace(
+            logZ=0.0,
+            logZ_live=0.0,
+        )
     )
 
-    assert fit_result.resampled_posterior.shape[1] == len(MOCK_PDF_MODEL.param_names)
+    with (
+        patch("colibri.blackjax_fit.blackjax.nss", return_value=fake_algo),
+        patch("colibri.blackjax_fit.finalise") as mock_finalise,
+        patch("colibri.blackjax_fit.ess", return_value=2),
+        patch("colibri.blackjax_fit.log_weights", return_value=jnp.zeros(5)),
+        patch(
+            "colibri.blackjax_fit.sample", return_value=jnp.ones((2, 2))
+        ),  # only 2 samples
+        patch("colibri.blackjax_fit.resample_from_ns_posterior") as mock_resample,
+        patch("colibri.blackjax_fit.anesthetic.NestedSamples"),
+    ):
+        mock_finalise.return_value = types.SimpleNamespace(
+            particles=jnp.ones((5, 2)),
+            loglikelihood=jnp.arange(5.0),
+            loglikelihood_birth=jnp.zeros(5),
+        )
+
+        caplog.set_level("WARNING")
+
+        fit_result = blackjax_fit(
+            MOCK_PDF_MODEL,
+            bayesian_prior,
+            blackjax_settings,
+            log_likelihood,
+        )
+
+    # --- assertions ---
     assert isinstance(fit_result, BlackJAXFit)
+
+    # Warning was emitted
+    assert any(
+        "exceeds the number of posterior samples computed by BlackJAX" in record.message
+        for record in caplog.records
+    )
+
+    # Truncated value (2) was used
+    args, _ = mock_resample.call_args
+    assert args[1] == 2
 
 
 @patch("colibri.blackjax_fit.write_replicas")

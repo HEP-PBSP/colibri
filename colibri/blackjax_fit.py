@@ -66,7 +66,7 @@ def blackjax_fit(
         Dataclass containing the results and specs of a BlackJAX fit.
     """
 
-    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+    log.info(f"Running fit with backend: {jax.default_backend()}")
 
     # set the BlackJAX seed
     rng_key = jax.random.PRNGKey(blackjax_settings["seed"])
