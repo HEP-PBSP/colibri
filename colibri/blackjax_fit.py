@@ -8,7 +8,6 @@ This module contains the BlackJAX Bayesian fitting routine of Colibri.
 import logging
 import sys
 import time
-from dataclasses import dataclass
 import os
 
 import jax
@@ -19,7 +18,8 @@ from jax.scipy.special import logsumexp
 import tqdm
 import anesthetic
 
-from colibri.export_results import BayesianFit, export_bayes_results, write_replicas
+from colibri.core import BlackJAXFit
+from colibri.export_results import export_bayes_results, write_replicas
 from colibri.utils import resample_from_ns_posterior
 
 
@@ -35,23 +35,6 @@ blackjax_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
 # Configure the handler and formatter
 handler = logging.StreamHandler(sys.stdout)
 blackjax_logger.addHandler(handler)
-
-
-@dataclass(frozen=True)
-class BlackJAXFit(BayesianFit):
-    """
-    Dataclass containing the results and specs of a BlackJAX fit.
-
-    Attributes
-    ----------
-    blackjax_specs: dict
-        Dictionary containing the settings of the BlackJAX fit.
-    blackjax_result: dict
-        result from BlackJAX, can be used eg for corner plots
-    """
-
-    blackjax_specs: dict
-    blackjax_result: dict
 
 
 def blackjax_fit(

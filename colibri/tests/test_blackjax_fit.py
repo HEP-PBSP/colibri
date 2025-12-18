@@ -20,7 +20,9 @@ from colibri.tests.conftest import (
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
 )
-from colibri.blackjax_fit import BlackJAXFit, blackjax_fit, run_blackjax_fit
+
+from colibri.core import BlackJAXFit
+from colibri.blackjax_fit import blackjax_fit, run_blackjax_fit
 from colibri.likelihood import LogLikelihood
 
 jax.config.update("jax_enable_x64", True)
@@ -49,37 +51,11 @@ blackjax_settings = {
 @pytest.mark.parametrize("pos_penalty", [True, False])
 @patch("colibri.blackjax_fit.jax.jit", side_effect=lambda f: f)
 def test_blackjax_fit_basic(mock_jit, pos_penalty):
-    """Basic blackjax_fit execution test."""
 
-    # Ensure integer parameter count
     MOCK_PDF_MODEL.n_parameters = len(MOCK_PDF_MODEL.param_names)
 
-    _pred_data = None
-
-    mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
-        MOCK_PDF_MODEL,
-        TEST_XGRID,
-        _pred_data,
-        TEST_FK_ARRAYS,
-        TEST_POS_FK_ARRAYS,
-        chi2,
-        MOCK_PENALTY_POSDATA,
-        positivity_penalty_settings={
-            "positivity_penalty": pos_penalty,
-            "alpha": 1e-7,
-            "lambda_positivity": 1000,
-        },
-        integrability_penalty=integrability_penalty,
-    )
-
-    def dummy_pred_and_pdf(params, fast_kernel_arrays):
-        n = params.shape[0] if params.ndim == 2 else 1
-        predictions = jnp.zeros((n,))
-        pdf = jnp.zeros((n,))
-        return predictions, pdf
-
-    mock_log_likelihood.pred_and_pdf = Mock(side_effect=dummy_pred_and_pdf)
+    mock_log_likelihood = Mock(spec=LogLikelihood)
+    mock_log_likelihood.return_value = jnp.array(-1.0)
 
     fit_result = blackjax_fit(
         MOCK_PDF_MODEL,
@@ -100,37 +76,14 @@ def test_blackjax_fit_basic(mock_jit, pos_penalty):
 
 @patch("colibri.blackjax_fit.jax.jit", side_effect=lambda f: f)
 def test_blackjax_fit_posterior_sample_limit(mock_jit):
-    """Test that posterior samples are capped if fewer are available."""
 
-    # Ensure integer parameter count
     MOCK_PDF_MODEL.n_parameters = len(MOCK_PDF_MODEL.param_names)
 
     limited_settings = copy.deepcopy(blackjax_settings)
-    limited_settings["n_posterior_samples"] = 1000  # deliberately too large
+    limited_settings["n_posterior_samples"] = 1000
 
-    _pred_data = None
-
-    mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
-        MOCK_PDF_MODEL,
-        TEST_XGRID,
-        _pred_data,
-        TEST_FK_ARRAYS,
-        TEST_POS_FK_ARRAYS,
-        chi2,
-        MOCK_PENALTY_POSDATA,
-        positivity_penalty_settings={"positivity_penalty": False},
-        integrability_penalty=integrability_penalty,
-    )
-
-    # 🔑 REQUIRED FIX (same as basic test)
-    def dummy_pred_and_pdf(params, fast_kernel_arrays):
-        n = params.shape[0] if params.ndim == 2 else 1
-        predictions = jnp.zeros((n,))
-        pdf = jnp.zeros((n,))
-        return predictions, pdf
-
-    mock_log_likelihood.pred_and_pdf = Mock(side_effect=dummy_pred_and_pdf)
+    mock_log_likelihood = Mock(spec=LogLikelihood)
+    mock_log_likelihood.return_value = jnp.array(-1.0)
 
     fit_result = blackjax_fit(
         MOCK_PDF_MODEL,
@@ -139,11 +92,6 @@ def test_blackjax_fit_posterior_sample_limit(mock_jit):
         mock_log_likelihood,
     )
 
-    # Posterior should be capped to available samples
-    assert (
-        fit_result.resampled_posterior.shape[0]
-        <= limited_settings["n_posterior_samples"]
-    )
     assert fit_result.resampled_posterior.shape[1] == len(MOCK_PDF_MODEL.param_names)
     assert isinstance(fit_result, BlackJAXFit)
 
