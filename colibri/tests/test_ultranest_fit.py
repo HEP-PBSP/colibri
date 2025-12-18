@@ -53,8 +53,8 @@ bayesian_prior = {
     "sample": mock_sample,
 }
 
-integrability_penalty = lambda pdf: jnp.array([0.0])
 
+integrability_penalty = lambda pdf: jnp.array([0.0])
 
 ultranest_settings = {
     "ultranest_seed": 42,
@@ -66,6 +66,9 @@ ultranest_settings = {
     "sampler_plot": False,
 }
 
+vect_ultranest_settings = copy.deepcopy(ultranest_settings)
+vect_ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
+
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit(pos_penalty):
@@ -75,7 +78,7 @@ def test_ultranest_fit(pos_penalty):
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
-        None,
+        _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -114,7 +117,7 @@ def test_ultranest_fit_vectorized(pos_penalty):
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
-        None,
+        _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -129,18 +132,23 @@ def test_ultranest_fit_vectorized(pos_penalty):
     fit_result = ultranest_fit(
         MOCK_PDF_MODEL,
         bayesian_prior,
-        settings,
+        ultranest_settings,
         mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
-    assert fit_result.ultranest_specs == settings
+    assert fit_result.resampled_posterior.shape == (
+        ultranest_settings["n_posterior_samples"],
+        len(MOCK_PDF_MODEL.param_names),
+    )
+    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.ultranest_specs == ultranest_settings
+    assert isinstance(fit_result.ultranest_result, dict)
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit_with_SliceSampler(pos_penalty):
-
-    settings = {
+    ultranest_settings = {
         "ultranest_seed": 42,
         "ReactiveNS_settings": {"vectorized": False},
         "SliceSampler_settings": {"nsteps": 10},
@@ -157,7 +165,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
-        None,
+        _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -172,18 +180,23 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     fit_result = ultranest_fit(
         MOCK_PDF_MODEL,
         bayesian_prior,
-        settings,
+        ultranest_settings,
         mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
-    assert fit_result.ultranest_specs == settings
+    assert fit_result.resampled_posterior.shape == (
+        ultranest_settings["n_posterior_samples"],
+        len(MOCK_PDF_MODEL.param_names),
+    )
+    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.ultranest_specs == ultranest_settings
+    assert isinstance(fit_result.ultranest_result, dict)
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit_with_popSliceSampler(pos_penalty):
-
-    settings = {
+    ultranest_settings = {
         "ultranest_seed": 42,
         "ReactiveNS_settings": {"vectorized": False},
         "SliceSampler_settings": {"nsteps": 10, "popsize": 10},
@@ -200,7 +213,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
-        None,
+        _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -215,26 +228,34 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     fit_result = ultranest_fit(
         MOCK_PDF_MODEL,
         bayesian_prior,
-        settings,
+        ultranest_settings,
         mock_log_likelihood,
     )
 
     assert isinstance(fit_result, UltranestFit)
-    assert fit_result.ultranest_specs == settings
+    assert fit_result.resampled_posterior.shape == (
+        ultranest_settings["n_posterior_samples"],
+        len(MOCK_PDF_MODEL.param_names),
+    )
+    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.ultranest_specs == ultranest_settings
+    assert isinstance(fit_result.ultranest_result, dict)
 
 
 @patch("ultranest.ReactiveNestedSampler")
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
+    """Test the ultranest_fit function with sampler_plot=True to cover the plotting lines."""
 
-    settings = {
+    # Create settings with sampler_plot enabled
+    ultranest_settings_with_plot = {
         "ultranest_seed": 42,
         "ReactiveNS_settings": {"vectorized": False},
         "SliceSampler_settings": None,
         "Run_settings": {"frac_remain": 0.5, "min_num_live_points": 5},
         "n_posterior_samples": 10,
         "posterior_resampling_seed": 123,
-        "sampler_plot": True,
+        "sampler_plot": True,  # Enable plotting
         "popstepsampler": False,
     }
 
@@ -244,7 +265,7 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
-        None,
+        _pred_data,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -256,31 +277,46 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
         integrability_penalty=integrability_penalty,
     )
 
+    # Mock the sampler instance
     mock_sampler_instance = Mock()
     mock_sampler_class.return_value = mock_sampler_instance
 
-    mock_sampler_instance.run.return_value = {
-        "samples": jnp.ones((20, 2)),
-        "maximum_likelihood": {"logl": -0.05},
-        "logz": 7.0,
+    # Mock the run method to return the expected ultranest result
+    mock_ultranest_result = {
+        "samples": jnp.ones((20, 2)),  # Mock samples
+        "maximum_likelihood": {"logl": -0.05},  # Mock maximum likelihood
+        "logz": 7.0,  # Mock log evidence
     }
+    mock_sampler_instance.run.return_value = mock_ultranest_result
 
+    # Mock the plot method
     mock_sampler_instance.plot = Mock()
 
     fit_result = ultranest_fit(
         MOCK_PDF_MODEL,
         bayesian_prior,
-        settings,
+        ultranest_settings_with_plot,
         mock_log_likelihood,
     )
 
+    # Verify that the sampler.plot() method was called
     mock_sampler_instance.plot.assert_called_once()
+
+    # Verify the rest of the functionality
     assert isinstance(fit_result, UltranestFit)
+    assert fit_result.resampled_posterior.shape == (
+        ultranest_settings_with_plot["n_posterior_samples"],
+        len(MOCK_PDF_MODEL.param_names),
+    )
+    assert fit_result.param_names == ["param1", "param2"]
+    assert fit_result.ultranest_specs == ultranest_settings_with_plot
+    assert isinstance(fit_result.ultranest_result, dict)
 
 
 @patch("colibri.export_results.write_exportgrid")
 def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
 
+    # Define mock ultranest fit
     mock_ultranest_fit = Mock()
     mock_ultranest_fit.resampled_posterior = jax.random.normal(
         jax.random.PRNGKey(0), (10, 2)
@@ -298,7 +334,13 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
     output_path = str(tmp_path)
     run_ultranest_fit(mock_ultranest_fit, output_path, MOCK_PDF_MODEL, Q0=1.65)
 
-    assert mock_write_exportgrid.call_count == 10
+    # Check if the write_exportgrid function was called for each sample
+    assert (
+        mock_write_exportgrid.call_count
+        == mock_ultranest_fit.resampled_posterior.shape[0]
+    )
+
+    # Assertions - check if files are created in the output path
     assert (tmp_path / "ns_result.csv").exists()
     assert (tmp_path / "bayes_metrics.csv").exists()
     assert (tmp_path / "full_posterior_sample.csv").exists()
