@@ -47,36 +47,3 @@ def _penalty_posdata(make_penalty_posdata):
     Internal alias function for make_penalty_posdata.
     """
     return make_penalty_posdata
-
-
-##########################################
-# Aliases of colibri.loss_functions.py #
-##########################################
-
-
-def _chi2_training_data(make_chi2_training_data):
-    """
-    Internal alias function for make_chi2_training_data.
-    """
-    return make_chi2_training_data
-
-
-def _chi2_training_data_with_positivity(make_chi2_training_data_with_positivity):
-    """
-    Internal alias function for make_chi2_training_data_with_positivity.
-    """
-    return make_chi2_training_data_with_positivity
-
-
-def _chi2_validation_data(make_chi2_validation_data):
-    """
-    Internal alias function for make_chi2_validation_data.
-    """
-    return make_chi2_validation_data
-
-
-def _chi2_validation_data_with_positivity(make_chi2_validation_data_with_positivity):
-    """
-    Internal alias function for make_chi2_validation_data_with_positivity.
-    """
-    return make_chi2_validation_data_with_positivity

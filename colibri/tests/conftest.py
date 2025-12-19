@@ -345,6 +345,11 @@ MOCK_CENTRAL_INV_COVMAT_INDEX = Mock()
 MOCK_CENTRAL_INV_COVMAT_INDEX.central_values = jnp.ones(TEST_N_DATA)
 MOCK_CENTRAL_INV_COVMAT_INDEX.inv_covmat = jnp.eye(TEST_N_DATA)
 MOCK_CENTRAL_INV_COVMAT_INDEX.central_values_idx = jnp.arange(TEST_N_DATA)
+
+MOCK_CENTRAL_COVMAT_INDEX = Mock()
+MOCK_CENTRAL_COVMAT_INDEX.central_values = jnp.ones(TEST_N_DATA)
+MOCK_CENTRAL_COVMAT_INDEX.covmat = jnp.eye(TEST_N_DATA)
+MOCK_CENTRAL_COVMAT_INDEX.central_values_idx = jnp.arange(TEST_N_DATA)
 """
 Mock instance of Central Inverse covmat index object.
 """

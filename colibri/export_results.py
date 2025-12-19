@@ -5,7 +5,6 @@ This module contains the functions to export the results of the fit.
 
 """
 
-from dataclasses import dataclass
 import yaml
 import numpy as np
 import pathlib
@@ -30,35 +29,6 @@ size = comm.Get_size()
 import logging
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class BayesianFit:
-    """
-    Dataclass containing the results and specs of a Bayesian fit.
-
-    Attributes
-    ----------
-    param_names: list
-        List of the names of the parameters.
-    resampled_posterior: jnp.array
-        Array containing the resampled posterior samples.
-    full_posterior_samples: jnp.array
-        Array containing the full posterior samples.
-    bayes_complexity: float
-        The Bayesian complexity of the model.
-    avg_chi2: float
-        The average chi2 of the model.
-    min_chi2: float
-        The minimum chi2 of the model.
-    logz: float
-        The log evidence of the model.
-    """
-
-    param_names: list
-    resampled_posterior: jnp.array
-    full_posterior_samples: jnp.array
-    bayesian_metrics: dict
 
 
 def export_bayes_results(
@@ -137,7 +107,7 @@ def write_exportgrid(
     grid_for_writing,
     grid_name,
     replica_index,
-    Q=1.65,
+    Q0=1.65,
     xgrid=LHAPDF_XGRID,
     export_labels=EXPORT_LABELS,
 ):
@@ -165,7 +135,7 @@ def write_exportgrid(
 
     # Prepare a dictionary for the exportgrid
     export_grid = {
-        "q20": Q**2,
+        "q20": Q0**2,
         "xgrid": xgrid,
         "replica": int(replica_index),
         "labels": export_labels,
@@ -243,7 +213,7 @@ def write_replicas(
     bayes_fit,
     output_path,
     pdf_model,
-    Q=1.65,
+    Q0=1.65,
     xgrid=LHAPDF_XGRID,
     export_labels=EXPORT_LABELS,
 ):
@@ -292,7 +262,7 @@ def write_replicas(
             grid_for_writing=grid_for_writing,
             grid_name=str(grid_name),
             replica_index=replica_index,
-            Q=Q,
+            Q0=Q0,
             xgrid=xgrid,
             export_labels=export_labels,
         )

@@ -13,38 +13,17 @@ Design goals:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+
 import logging
-from typing import Callable, Any, Dict
+from typing import Callable, Any
 
 import jax
 import jax.numpy as jnp
 import optax
 import colibri
+from colibri.core import GradientDescentResult
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class GradientDescentResult:
-    """Result of a generic gradient descent run.
-
-    Attributes
-    ----------
-    optimized_parameters: jnp.ndarray
-        Final optimized parameters.
-    training_loss: jnp.array
-        Recorded (epoch) training losses (sampled according to record_every).
-    validation_loss: jnp.array
-        Recorded (epoch) validation losses (sampled according to record_every).
-    specs: dict
-        Dictionary of settings used for the run (epochs, batch size, etc.).
-    """
-
-    optimized_parameters: Any
-    training_loss: jnp.array
-    validation_loss: jnp.array
-    specs: Dict[str, Any]
 
 
 def run_gradient_descent(

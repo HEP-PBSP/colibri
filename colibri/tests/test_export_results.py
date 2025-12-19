@@ -76,7 +76,7 @@ def test_write_exportgrid():
     grid_for_writing = np.random.rand(14, 2)  # Mock a random 14x2 array
     grid_name = "test_grid"
     replica_index = 1
-    Q = 1.65
+    Q0 = 1.65
     xgrid = [0.001, 0.01, 0.1, 1.0]  # Mock xgrid values
     export_labels = ["a", "b", "c"]  # Mock labels
 
@@ -88,7 +88,7 @@ def test_write_exportgrid():
                 grid_for_writing=grid_for_writing,
                 grid_name=grid_name,
                 replica_index=replica_index,
-                Q=Q,
+                Q0=Q0,
                 xgrid=xgrid,
                 export_labels=export_labels,
             )
@@ -106,7 +106,7 @@ def test_write_exportgrid():
             assert "pdfgrid" in written_data
 
             # Check specific values
-            assert written_data["q20"] == Q**2
+            assert written_data["q20"] == Q0**2
             assert written_data["xgrid"] == xgrid
             assert written_data["replica"] == replica_index
             assert written_data["labels"] == export_labels

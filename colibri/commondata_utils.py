@@ -5,14 +5,13 @@ Module containing commondata and central covmat index functions.
 """
 
 import pandas as pd
-from dataclasses import dataclass, asdict
 
 import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
-from validphys.fkparser import load_fktable
 
 from colibri.theory_predictions import make_pred_dataset
+from colibri.core import CentralCovmatIndex, CentralInvCovmatIndex
 
 
 def experimental_commondata_tuple(data):
@@ -152,16 +151,6 @@ def level_1_commondata_tuple(
     return tuple(sample_list)
 
 
-@dataclass(frozen=True)
-class CentralCovmatIndex:
-    central_values: jnp.array
-    covmat: jnp.array
-    central_values_idx: jnp.array
-
-    def to_dict(self):
-        return asdict(self)
-
-
 def central_covmat_index(commondata_tuple, fit_covariance_matrix):
     """
     Given a commondata_tuple and a covariance_matrix, generated
@@ -206,16 +195,6 @@ def pseudodata_central_covmat_index(
     covariance matrix for a Monte Carlo fit.
     """
     return central_covmat_index(commondata_tuple, data_generation_covariance_matrix)
-
-
-@dataclass(frozen=True)
-class CentralInvCovmatIndex:
-    central_values: jnp.array
-    inv_covmat: jnp.array
-    central_values_idx: jnp.array
-
-    def to_dict(self):
-        return asdict(self)
 
 
 def central_inv_covmat_index(central_covmat_index):

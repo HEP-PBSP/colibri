@@ -1,52 +1,17 @@
 from colibri.export_results import write_replicas
 
 import jax.numpy as jnp
-from dataclasses import dataclass
+from jax.extend import backend as jbackend
 import logging
 import time
 import jax
 from colibri.gradient_descent import run_gradient_descent
 from colibri.param_initialisation import pdf_initial_parameters
 from colibri.export_results import export_hessian_results
+from colibri.core import HessianFit
 from flax.training.early_stopping import EarlyStopping
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class HessianFit:
-    """
-    Dataclass containing the results and specs of a Hessian fit.
-
-    Attributes
-    ----------
-    hessian_specs: dict
-        Dictionary containing the settings of the Hessian fit.
-    min_chi2: jnp.ndarray
-        Array containing the minimum chi-squared value.
-    training_loss: jnp.ndarray
-        Array containing the training loss values during the fit.
-    optimized_parameters: jnp.ndarray
-        Array containing the optimized parameters in the minimum of the chi2.
-    hessian: jnp.ndarray
-        Array containing the Hessian matrix at the minimum of the chi2.
-    cov_params: jnp.ndarray
-        Array containing the covariance matrix of the parameters.
-        Computed as the inverse of the Hessian matrix.
-    resampled_posterior: jnp.ndarray
-        Array containing the samples of the parameters drawn from a multivariate
-        normal distribution with mean at the optimized parameters and covariance
-        given by cov_params.
-    """
-
-    hessian_specs: dict
-    min_chi2: jnp.ndarray
-    training_loss: jnp.ndarray
-    optimized_parameters: jnp.ndarray
-    hessian: jnp.ndarray
-    cov_params: jnp.ndarray
-    resampled_posterior: jnp.ndarray
-    param_names: list
 
 
 def hessian_fit(
@@ -78,7 +43,7 @@ def hessian_fit(
         Frequency of recording the training loss during the gradient descent.
     """
 
-    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+    log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
     log.info("Starting Hessian fit...")
 
     # run_gradient_descent expects a data batch object, but we don't use it here
@@ -230,7 +195,7 @@ def hessian_fit(
     )
 
 
-def run_hessian_fit(hessian_fit, output_path, pdf_model):
+def run_hessian_fit(hessian_fit, output_path, pdf_model, Q0):
     """
     Export the results of a Hessian fit.
 
@@ -242,8 +207,10 @@ def run_hessian_fit(hessian_fit, output_path, pdf_model):
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
+    Q0: float
+        The scale at which to export the PDFs.
     """
 
     export_hessian_results(hessian_fit, output_path, "hessian_result")
 
-    write_replicas(hessian_fit, output_path, pdf_model)
+    write_replicas(hessian_fit, output_path, pdf_model, Q0)
