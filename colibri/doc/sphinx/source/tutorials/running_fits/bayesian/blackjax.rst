@@ -103,11 +103,11 @@ Runcard
     # Nested Sampling settings
     blackjax_settings:
         n_posterior_samples: 100
-        vectorized: True
         n_live: 500
         repeats: 3
         delete_fraction: 0.5
         log_precision: -3
+        posterior_resampling_seed: 52
         seed: 0
 
 
@@ -122,12 +122,12 @@ and so all the settings described there can be used (e.g. global bounds).
 ^^^^^^^^^^^^^^^^^^^^^
 
 * ``n_posterior_samples``: Number of posterior samples ('replicas') drawn (*resampled*) from the posterior distribution. The default is 1000. See :ref:`this tutorial <resampling_script>` for details on resampling.
-* ``vectorized``: Determines whether the likelihood function supports vectorised evaluation (i.e., evaluating multiple points at once).
 * ``n_live``: Number of live points at any given time. More live points results in a better estimate of the error.
 * ``repeats``: Number of successful Monte Carlo steps required. Should be a multiple of the dimentionality of parameter space. 
 * ``delete_fraction``: Fraction of live points allowed to be deleted. The more deleted points, the higher the risk of getting stuck at a local minimum, but the lower the memory usage. This setting is analogous to ``min_live_points`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``delete_fraction`` of 0.5 is equivalent to 250 ``min_live_points``.
-* ``log_precision``: Termination ratio. This setting is analogous to ``frac_remain`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``log_precision`` of -3 would be equivalent to a ``frac_remain`` of 0.01.
-* ``seed``: 
+* ``log_precision``: Termination ratio. This setting is analogous to ``frac_remain`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``log_precision`` of -3 would be equivalent to a ``frac_remain`` of 0.001.
+* ``posterior_resampling_seed``: Random seed used when resampling posterior samples. Fixing this seed ensures reproducible posterior replicas for a given nested sampling run.
+* ``seed``: Global random seed for the BlackJAX nested sampler. Setting this seed makes the nested sampling reproducible.
 
 Running the fit
 ---------------
