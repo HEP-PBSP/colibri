@@ -10,7 +10,7 @@ Colibri runcards that are relevant to any type of fit.
 .. _running_positivity:
 
 Imposing Positivity Constraints on a Fit
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------
 
 This section describes how to impose positivity constraints on a
 Colibri PDF fit.
@@ -32,3 +32,9 @@ in the previous tutorials:
 To impose positivity constraints on a PDF fit, you can simply set
 ``positivity_penalty`` to ``true``. You can also add more detasets
 under ``posdatasets``.
+
+``positivity_penalty_settings``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``alpha``: Defaults to ``1e-07``.
+* ``lambda_positivity``: Defaults to ``3000``.

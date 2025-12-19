@@ -8,17 +8,18 @@ This module contains the main Bayesian fitting routine of colibri.
 import logging
 import sys
 import time
-from dataclasses import dataclass
 
 import jax
 import jax.numpy as jnp
+from jax.extend import backend as jbackend
 import numpy as np
 import ultranest
 import ultranest.popstepsampler as popstepsampler
 import ultranest.stepsampler as ustepsampler
 from mpi4py import MPI
 
-from colibri.export_results import BayesianFit, export_bayes_results, write_replicas
+from colibri.core import UltranestFit
+from colibri.export_results import export_bayes_results, write_replicas
 from colibri.utils import resample_from_ns_posterior
 
 comm = MPI.COMM_WORLD
@@ -37,23 +38,6 @@ ultranest_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
 # Configure the handler and formatter
 handler = logging.StreamHandler(sys.stdout)
 ultranest_logger.addHandler(handler)
-
-
-@dataclass(frozen=True)
-class UltranestFit(BayesianFit):
-    """
-    Dataclass containing the results and specs of an Ultranest fit.
-
-    Attributes
-    ----------
-    ultranest_specs: dict
-        Dictionary containing the settings of the Ultranest fit.
-    ultranest_result: dict
-        result from ultranest, can be used eg for corner plots
-    """
-
-    ultranest_specs: dict
-    ultranest_result: dict
 
 
 def ultranest_fit(
@@ -85,7 +69,7 @@ def ultranest_fit(
         Dataclass containing the results and specs of an Ultranest fit.
     """
 
-    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+    log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
 
     # set the ultranest seed
     np.random.seed(ultranest_settings["ultranest_seed"])
@@ -191,7 +175,7 @@ def ultranest_fit(
     return fit_result
 
 
-def run_ultranest_fit(ultranest_fit, output_path, pdf_model):
+def run_ultranest_fit(ultranest_fit, output_path, pdf_model, Q0):
     """
     Export the results of an Ultranest fit.
 
@@ -203,9 +187,11 @@ def run_ultranest_fit(ultranest_fit, output_path, pdf_model):
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
+    Q0: float
+        The scale at which to export the PDFs.
     """
 
     if rank == 0:
         export_bayes_results(ultranest_fit, output_path, "ns_result")
 
-    write_replicas(ultranest_fit, output_path, pdf_model)
+    write_replicas(ultranest_fit, output_path, pdf_model, Q0)

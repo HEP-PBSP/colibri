@@ -10,26 +10,15 @@ import jax.numpy as jnp
 
 import os
 import numpy as np
-from dataclasses import dataclass, asdict
 
 from colibri.training_validation import training_validation_split
 from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from colibri.export_results import write_exportgrid
+from colibri.core import MCPseudodata
 
 import logging
 
 log = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class MCPseudodata:
-    pseudodata: jnp.array
-    training_indices: jnp.array
-    validation_indices: jnp.array
-    trval_split: bool = False
-
-    def to_dict(self):
-        return asdict(self)
 
 
 def mc_pseudodata(
@@ -95,7 +84,7 @@ def write_exportgrid_mc(
     pdf_model,
     replica_index,
     output_path,
-    Q=1.65,
+    Q0=1.65,
     xgrid=LHAPDF_XGRID,
     export_labels=EXPORT_LABELS,
 ):
@@ -123,7 +112,7 @@ def write_exportgrid_mc(
         grid_for_writing=grid_for_writing,
         grid_name=rep_path + "/" + fit_name,
         replica_index=replica_index,
-        Q=Q,
+        Q0=Q0,
         xgrid=xgrid,
         export_labels=export_labels,
     )

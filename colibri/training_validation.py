@@ -8,22 +8,7 @@ Date: 11.11.2023
 
 import jax
 import jax.numpy as jnp
-from dataclasses import dataclass, asdict
-
-
-@dataclass(frozen=True)
-class TrainValidationSplit:
-    training: jnp.array
-    validation: jnp.array
-
-    def to_dict(self):
-        return asdict(self)
-
-
-@dataclass(frozen=True)
-class PosdataTrainValidationSplit(TrainValidationSplit):
-    n_training: int
-    n_validation: int
+from colibri.core import TrainValidationSplit, PosdataTrainValidationSplit
 
 
 def trval_seed(trval_index):

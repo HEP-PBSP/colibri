@@ -5,62 +5,31 @@ This module contains the main Monte Carlo fitting routine of colibri.
 
 """
 
-from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
+from jax.extend import backend as jbackend
 import logging
 import pandas as pd
 import os
 import time
-from functools import partial
 
 from colibri.data_batch import data_batches
 from colibri.mc_utils import write_exportgrid_mc
 from colibri.gradient_descent import run_gradient_descent
+from colibri.core import MonteCarloFit
 
 log = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
-class MonteCarloFit:
-    """
-    Dataclass containing the results and specs of a Monte Carlo fit.
-
-    Attributes
-    ----------
-    monte_carlo_specs: dict
-        Dictionary containing the settings of the Monte Carlo fit.
-    training_loss: jnp.array
-        Array containing the training loss.
-    validation_loss: jnp.array
-        Array containing the validation loss.
-    optimized_parameters: jnp.array
-        Array containing the optimized parameters.
-    """
-
-    monte_carlo_specs: dict
-    training_loss: jnp.array
-    validation_loss: jnp.array
-    optimized_parameters: jnp.array
-
-
 def monte_carlo_fit(
-    _chi2_training_data_with_positivity,
-    _chi2_validation_data_with_positivity,
-    _pred_data,
-    fast_kernel_arrays,
-    positivity_fast_kernel_arrays,
+    mc_log_likelihood,
     len_trval_data,
-    pdf_model,
     pdf_initial_parameters,
     optimizer_provider,
     early_stopper,
     max_epochs,
-    FIT_XGRID,
     batch_size=None,
     batch_seed=1,
-    alpha=1e-7,
-    lambda_positivity=1000,
 ):
     """
     This function performs a Monte Carlo fit.
@@ -68,27 +37,11 @@ def monte_carlo_fit(
 
     Parameters
     ----------
-    _chi2_training_data_with_positivity: Function
-        Function that computes the chi2 of the training data.
-
-    _chi2_validation_data_with_positivity: Function
-        Function that computes the chi2 of the validation data.
-
-    _pred_data: theory_predictions.make_pred_data
-        The function to compute the theory predictions.
-
-    fast_kernel_arrays: jnp.array
-        Fast kernel arrays for convolutions.
-
-    positivity_fast_kernel_arrays: jnp.array
-        Fast kernel arrays for positivity constraints.
+    mc_log_likelihood: tuple
+        Tuple containing the training and validation likelihoods.
 
     len_trval_data: tuple
         Tuple containing the length of the training and validation data.
-
-    pdf_model: pdf_model.PDFModel
-        A PDFModel specifying the way in which the PDF is constructed from
-        the parameters.
 
     pdf_initial_parameters: jnp.array
         Initial parameters for the Monte Carlo fit.
@@ -102,21 +55,11 @@ def monte_carlo_fit(
     max_epochs: int
         Number of maximum epochs.
 
-    FIT_XGRID: np.ndarray
-        xgrid of the theory, computed by a production rule by taking
-        the sorted union of the xgrids of the datasets entering the fit.
-
     batch_size: int, default is None which sets it to the full size of data
         Size of batches during training.
 
     batch_seed: int, optional
         Seed used to construct the batches. Defaults to 1.
-
-    alpha: float, optional
-        Alpha parameter of the ELU positivity penalty term. Defaults to 1e-7.
-
-    lambda_positivity: int, optional
-        Lagrange multiplier of the positivity penalty. Defaults to 1000.
 
     Returns
     -------
@@ -126,76 +69,33 @@ def monte_carlo_fit(
         validation_loss: jnp.array
     """
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
     len_tr_idx, len_val_idx = len_trval_data
 
     @jax.jit
     def loss_training(
         parameters,
         batch_idx,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
-        alpha,
-        lambda_positivity,
     ):
-        predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
-        return (
-            _chi2_training_data_with_positivity(
-                predictions,
-                pdf,
-                batch_idx,
-                alpha,
-                lambda_positivity,
-                positivity_fast_kernel_arrays,
-            )
-            / len_tr_idx
-        )
+        return -2 * mc_log_likelihood[0](parameters, batch_idx) / len_tr_idx
 
     @jax.jit
-    def loss_validation(
-        parameters,
-        fast_kernel_arrays,
-        positivity_fast_kernel_arrays,
-        alpha,
-        lambda_positivity,
-    ):
-        predictions, pdf = pred_and_pdf(parameters, fast_kernel_arrays)
-        val = _chi2_validation_data_with_positivity(
-            predictions,
-            pdf,
-            alpha,
-            lambda_positivity,
-            positivity_fast_kernel_arrays,
-        )
+    def loss_validation(parameters):
+
+        val = -2 * mc_log_likelihood[1](parameters)
 
         return val / len_val_idx if len_val_idx > 0 else val
 
-    log.info(f"Running fit with backend: {jax.lib.xla_bridge.get_backend().platform}")
+    log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
     data_batch = data_batches(len_tr_idx, batch_size, batch_seed)
 
-    # Pre-bind constant arguments to pass to run_gradient_descent
-    bound_training_loss = partial(
-        loss_training,
-        fast_kernel_arrays=fast_kernel_arrays,
-        positivity_fast_kernel_arrays=positivity_fast_kernel_arrays,
-        alpha=alpha,
-        lambda_positivity=lambda_positivity,
-    )
-    bound_validation_loss = partial(
-        loss_validation,
-        fast_kernel_arrays=fast_kernel_arrays,
-        positivity_fast_kernel_arrays=positivity_fast_kernel_arrays,
-        alpha=alpha,
-        lambda_positivity=lambda_positivity,
-    )
     # Delegate to generic gradient descent
     gd_result = run_gradient_descent(
         initial_parameters=pdf_initial_parameters.copy(),
-        training_loss_fn=bound_training_loss,
-        validation_loss_fn=bound_validation_loss,
+        training_loss_fn=loss_training,
+        validation_loss_fn=loss_validation,
         optimizer=optimizer_provider,
         early_stopper=early_stopper,
         max_epochs=max_epochs,
@@ -211,8 +111,6 @@ def monte_carlo_fit(
             "max_epochs": max_epochs,
             "batch_size": data_batch.batch_size,
             "batch_seed": batch_seed,
-            "alpha": alpha,
-            "lambda_positivity": lambda_positivity,
         },
         training_loss=gd_result.training_loss,
         validation_loss=gd_result.validation_loss,
@@ -220,7 +118,7 @@ def monte_carlo_fit(
     )
 
 
-def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
+def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, Q0):
     """
     Runs the Monte Carlo fit and writes the output to the output directory.
 
@@ -236,6 +134,10 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
         Path to the output folder.
 
     replica_index: int
+        The index of the replica being written.
+
+    Q0: float
+        The scale at which to export the PDFs.
     """
     mc_fit = monte_carlo_fit
 
@@ -255,6 +157,7 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index):
         pdf_model,
         replica_index,
         output_path,
+        Q0,
     )
 
     df.to_csv(

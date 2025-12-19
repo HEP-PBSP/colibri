@@ -110,6 +110,21 @@ class colibriConfig(Config):
     Config class
     """
 
+    def produce_Q0(self, data):
+        """
+        Produces the scale Q0 at which the PDFs are evaluated in the fit
+        by taking the Q0 from the theory that is used in the fit.
+
+        Returns
+        -------
+        Q0: float
+            Scale at which the PDFs are evaluated in the fit.
+        """
+        # NOTE: all fkspecs have the same theory and thus the same Q0.
+        Q0 = load_fktable(data.datasets[0].fkspecs[0]).Q0
+        log.info(f"Using Q0 = {Q0} GeV as the parametrisation scale.")
+        return float(Q0)
+
     def produce_FIT_XGRID(self, data=None, posdatasets=None):
         """
         Produces the xgrid for the fit from the union of all xgrids
@@ -552,7 +567,7 @@ class colibriConfig(Config):
         Produces the covariance matrix used in the fit.
         This covariance matrix is used in:
         - commondata_utils.central_covmat_index
-        - loss functions in mc_loss_functions.py
+        - mc_log_likelihood for the monte carlo fit
         """
         if use_fit_t0:
             return colibri_covmats.dataset_inputs_t0_covmat_from_systematics
