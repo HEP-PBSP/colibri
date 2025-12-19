@@ -21,6 +21,15 @@ Bayes Prior
    :show-inheritance:
    :noindex:
 
+BlackJAX Fit
+------------
+
+.. automodule:: colibri.blackjax_fit
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
 Checks
 ------
 
