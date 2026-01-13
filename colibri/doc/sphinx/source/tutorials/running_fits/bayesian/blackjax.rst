@@ -9,6 +9,9 @@ BlackJAX nested sampler :cite:`cabezas2024blackjax, yallup2025nested`. We will d
 so for the Les Houches parametrisation model (see :ref:`this tutorial <in_les_houches>`
 for details on the Les Houches model and how to implement it).
 
+An advantage of using BlackJAX is that it can run entirely on GPU (as well as on CPU),
+so we will discuss the optimal settings to do so.
+
 We will then loot at the command to execute the runcard.
 
 .. _blackjax_runcard:
@@ -128,6 +131,20 @@ and so all the settings described there can be used (e.g. global bounds).
 * ``log_precision``: Termination ratio. This setting is analogous to ``frac_remain`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``log_precision`` of -3 would be equivalent to a ``frac_remain`` of 0.001.
 * ``posterior_resampling_seed``: Random seed used when resampling posterior samples. Fixing this seed ensures reproducible posterior replicas for a given nested sampling run.
 * ``seed``: Global random seed for the BlackJAX nested sampler. Setting this seed makes the nested sampling reproducible.
+
+Running on GPU
+^^^^^^^^^^^^^^
+
+BlackJAX nested sampling is designed to run entirely in memory on a GPU, which
+avoids slow CPU↔GPU transfers, allowing accelerated fits. In order to run on a GPU,
+you may want to adjust the settings to take into account the following points:
+
+*  ``n_live`` can be made much larger than in a CPU run, namely of the order of ~2000-10000, affording more accurate calculations of model evidences.
+* The number ``n_live`` x ``delete_fraction`` is effectively the number of Markov Chains running in parallel. For example, a ``delete_fraction`` of 0.5 and a ``n_live`` 0f 5000 does 2500 updates in parallel. A larger number of parallel updates is advantageous provided the throughput of the GPU isn't saturated.
+* The algorithm natively supports single precision numerics, which can help if engineering for fast GPU throughput.
+
+You can check the point at which the GPU becomes saturated by timing the
+computation of the likelihood, which is shown in :ref:`this tutorial <time_likelihood>`.
 
 Running the fit
 ---------------
