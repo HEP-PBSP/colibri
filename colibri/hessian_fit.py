@@ -47,7 +47,7 @@ def hessian_fit(
     log.info("Starting Hessian fit...")
 
     # run_gradient_descent expects a data batch object, but we don't use it here
-    def train_chi2(params, idx):
+    def train_chi2(params, batch):
         return -2 * log_likelihood(params)
 
     def valid_chi2(params):

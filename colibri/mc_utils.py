@@ -79,6 +79,11 @@ def len_trval_data(mc_pseudodata):
     return len(mc_pseudodata.training_indices), len(mc_pseudodata.validation_indices)
 
 
+def training_indices(mc_pseudodata):
+    """Returns the training indices."""
+    return mc_pseudodata.training_indices
+
+
 def write_exportgrid_mc(
     parameters,
     pdf_model,

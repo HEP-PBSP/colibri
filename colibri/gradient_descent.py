@@ -15,12 +15,13 @@ from __future__ import annotations
 
 
 import logging
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 
 import jax
 import jax.numpy as jnp
 import optax
 import colibri
+from colibri.data_batch import BatchSpec
 from colibri.core import GradientDescentResult
 
 log = logging.getLogger(__name__)
@@ -28,12 +29,12 @@ log = logging.getLogger(__name__)
 
 def run_gradient_descent(
     initial_parameters: jnp.ndarray,
-    training_loss_fn: Callable[[jnp.ndarray, list], jnp.ndarray],
+    training_loss_fn: Callable[[jnp.ndarray, BatchSpec], jnp.ndarray],
     validation_loss_fn: Callable[[jnp.ndarray], jnp.ndarray],
     optimizer: optax.GradientTransformation,
     early_stopper: Any,
     max_epochs: int,
-    data_batch: colibri.DataBatches = None,
+    data_batch: Optional[colibri.DataBatches] = None,
     record_every: int = 50,
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
@@ -44,11 +45,14 @@ def run_gradient_descent(
         Starting parameters.
 
     training_loss_fn : callable -> scalar
-        Per-batch loss function (already jit'ed by caller if desired).
-        Takes parameters and a list of batch indices.
+        Per-batch loss (jit-able). Signature::
+
+            training_loss_fn(params, batch: BatchSpec) -> scalar
+
+        Convention: if batch.idx.size == 0, interpret as "full dataset" (no subselect).
 
     validation_loss_fn : callable -> scalar
-        Validation loss function (already jit'ed by caller if desired).
+        Validation loss (jit-able). Signature: validation_loss_fn(params) -> scalar
 
     optimizer : optax.GradientTransformation
         Optax optimizer.
@@ -59,9 +63,9 @@ def run_gradient_descent(
     max_epochs : int
         Maximum epochs to run.
 
-    data_batch : colibri.DataBatches
-        DataBatches object providing batching information.
-        Defaults to None, in which case the loss is assumed to not have been batched.
+    data_batch : colibri.DataBatches or None
+        If provided, use its .data_batch_stream() yielding BatchSpec.
+        If None, we pass a sentinel EMPTY_BATCH to training_loss_fn.
 
     record_every : int, default 50
         Record losses every this many epochs.
@@ -69,10 +73,16 @@ def run_gradient_descent(
 
     params = initial_parameters
     opt_state = optimizer.init(params)
+    loss_and_grad = jax.value_and_grad(training_loss_fn)
+    # JIT the validation loss in case it isn't already
+    validation_loss_fn = jax.jit(validation_loss_fn)
+
+    # Sentinel for "use full dataset" inside the loss
+    EMPTY_BATCH = BatchSpec(idx=jnp.array([], dtype=jnp.int32), inv_cov=None)
 
     @jax.jit
-    def _step(p, ostate, batch_idx):
-        (loss_value, grads) = jax.value_and_grad(training_loss_fn)(p, batch_idx)
+    def _step(p, ostate, batch: BatchSpec):
+        loss_value, grads = loss_and_grad(p, batch)
         updates, ostate = optimizer.update(grads, ostate, p)
         p = optax.apply_updates(p, updates)
         return p, ostate, loss_value
@@ -81,34 +91,33 @@ def run_gradient_descent(
     val_losses = []
 
     if data_batch is None:
-        # we simulate a fake batch iterator that just yields a dummy batch index
-        # since the training loss fn is assumed to not be batched in this case
-        # (i.e. it ignores the batch indices argument)
-        def batch_gen():
+        # single fake iterator repeatedly yielding EMPTY_BATCH
+        def _gen():
             while True:
-                yield [0]
+                yield EMPTY_BATCH
 
-        batches_iter = batch_gen()
+        batches_iter = _gen()
         num_batches = 1
         batch_size = None
     else:
-        batches_iter = data_batch.data_batch_stream_index()
+        batches_iter = data_batch.data_batch_stream()
         num_batches = data_batch.num_batches
         batch_size = data_batch.batch_size
 
     for epoch in range(max_epochs):
-        epoch_train_loss = 0.0
+        epoch_train_loss = jnp.array(0.0)
         for _ in range(num_batches):
-            batch_idx = next(batches_iter)
-            params, opt_state, batch_loss = _step(params, opt_state, batch_idx)
+            batch = next(batches_iter)
+            params, opt_state, batch_loss = _step(params, opt_state, batch)
             epoch_train_loss += batch_loss
-        epoch_val_loss = validation_loss_fn(params)
 
+        epoch_val_loss = validation_loss_fn(params)
         early_stopper = early_stopper.update(epoch_val_loss)
 
         if record_every and (epoch % record_every == 0):
             log.info(
-                f"Epoch {epoch}, loss: {epoch_train_loss:.3f}, validation_loss: {epoch_val_loss:.3f}"
+                f"Epoch {epoch}, loss: {epoch_train_loss:.3f}, "
+                f"validation_loss: {epoch_val_loss:.3f}"
             )
             log.info(f"    Early_stopper: {early_stopper}")
             train_losses.append(epoch_train_loss)
