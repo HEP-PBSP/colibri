@@ -33,6 +33,7 @@ colibri_providers = [
     "colibri.export_results",
     "colibri.closure_test",
     "colibri.ntk",
+    "colibri.plotntk",
     "reportengine.report",
 ]
 

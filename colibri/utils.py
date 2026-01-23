@@ -172,10 +172,10 @@ def resample_from_ns_posterior(
 
 
 def get_fit_path(fit):
-    fit_path = pathlib.Path(sys.prefix) / "share/colibri/results" / fit
+    fit_path = pathlib.Path(sys.prefix) / "share/NNPDF/results" / fit
     if not os.path.exists(fit_path):
         raise FileNotFoundError(
-            "Could not find a fit " + fit + " in the colibri/results directory."
+            "Could not find a fit " + fit + " in the NNPDF/results directory."
         )
     return pathlib.Path(fit_path)
 
