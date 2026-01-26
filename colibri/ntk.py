@@ -7,220 +7,36 @@ for a given PDF model and provides statistical analysis tools for NTK ensembles.
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
+from tqdm import tqdm
 
 from typing import List, Dict, Union
 from reportengine import collect
 
-from colibri.utils import get_pdf_model
-from colibri.ntkutils import compute_ntk, compute_eigendecomposition, get_replica_idx_list
+from colibri.ntkutils import (
+    compute_eigenvalues_for_replica,
+    get_replica_idx_list,
+    load_eigenvalues_ensemble,
+    get_completed_replicas,
+)
 from validphys.core import MCStats
 
 log = logging.getLogger(__name__)
 
-
-def ntk_ensemble(fit, replicas_path):
+class NTKStats(MCStats):
     """
-    Compute NTK for all replicas.
-
-    This is a provider function that computes the NTK ensemble across all replicas.
-    It returns a dictionary mapping epochs to lists of NTK matrices.
-
-    Parameters
-    ----------
-    loaded_model : PDFModel
-        The PDF model instance
-    replicas_path : Path
-        Path to the replicas directory
-
-    Returns
-    -------
-    dict
-        Dictionary with keys:
-        - 'ntk_by_epoch': dict mapping epoch -> list of NTK matrices (one per replica)
-        - 'epochs': list of common epochs across all replicas
-        - `ntk_shape`: shape of the NTK matrix before flattening
+    Container for NTK statistics across replicas at a single epoch.
     """
-    # Storage for NTKs organized by epoch
-    ntk_by_epoch = {}
-    common_epochs = None
-    pdf_model = get_pdf_model(fit.name)
-    ntk_shape = None
+    def central_value(self):
+        return self.data.mean(axis=0)
 
-    replica_index_list = get_replica_idx_list(replicas_path)
-    for replica_idx in replica_index_list:
-        try: 
-            ntk_list, epochs, ntk_shape = compute_ntk(pdf_model, replicas_path, replica_idx)
-
-            if ntk_shape is None:
-                ntk_shape = ntk_shape
-
-            # First replica: initialize the structure
-            if common_epochs is None:
-                common_epochs = epochs
-                for epoch in epochs:
-                    ntk_by_epoch[epoch] = []
-
-            # Check that all replicas have the same epochs
-            if epochs != common_epochs:
-                log.warning(
-                    f"Replica {replica_idx} has different epochs {epochs} "
-                    f"vs common {common_epochs}. Using intersection."
-                )
-                common_epochs = sorted(set(epochs) & set(common_epochs))
-
-            # Add NTKs to the appropriate epoch
-            for epoch, ntk in zip(epochs, ntk_list):
-                if epoch in common_epochs:
-                    ntk_by_epoch[epoch].append(ntk)
-
-        except FileNotFoundError as e:
-            log.warning(f"Skipping replica {replica_idx}: {e}")
-            continue
-
-    # Clean up ntk_by_epoch to only include common epochs
-    ntk_by_epoch = {epoch: ntk_by_epoch[epoch] for epoch in common_epochs}
-
-    log.info(f"NTK ensemble computed for epochs: {common_epochs}")
-
-    return {
-        "ntk_by_epoch": ntk_by_epoch,
-        "epochs": common_epochs,
-        "ntk_shape": ntk_shape,
-    }
-
-
-def ntk_eigendecomposition_ensemble(ntk_ensemble):
-    """
-    Compute eigendecomposition for the entire NTK ensemble.
-
-    This is a provider function that takes the output of `ntk_ensemble`
-    and computes eigenvalues and eigenvectors for each NTK matrix.
-
-    Parameters
-    ----------
-    ntk_ensemble : dict
-        Dictionary from ntk_ensemble() containing NTK matrices
-
-    Returns
-    -------
-    dict
-        Dictionary with keys:
-        - 'eigenvalues_by_epoch': dict mapping epoch -> ndarray of shape (nreplicas, n_eigenvalues)
-        - 'eigenvectors_by_epoch': dict mapping epoch -> list of ndarray (one per replica)
-        - 'epochs': list of epochs
-        - `ntk_shape`: shape of the NTK matrix before flattening
-    """
-    ntk_by_epoch = ntk_ensemble["ntk_by_epoch"]
-    epochs = ntk_ensemble["epochs"]
-
-    log.info(f"Computing eigendecomposition for {len(epochs)} epochs")
-
-    eigenvalues_by_epoch = {}
-    eigenvectors_by_epoch = {}
-
-    for epoch in epochs:
-        ntk_list = ntk_by_epoch[epoch]
-        n_replicas_at_epoch = len(ntk_list)
-
-        eigenvalues_list = []
-        eigenvectors_list = []
-
-        for replica_idx, ntk in enumerate(ntk_list):
-            log.debug(f"Eigendecomposition for epoch {epoch}, replica {replica_idx}")
-            eigvals, eigvecs = compute_eigendecomposition(ntk, hermitian=True)
-            eigenvalues_list.append(eigvals)
-            eigenvectors_list.append(eigvecs)
-
-        # Stack eigenvalues into (nreplicas, n_eigenvalues) array
-        eigenvalues_by_epoch[epoch] = np.stack(eigenvalues_list, axis=0)
-        eigenvectors_by_epoch[epoch] = eigenvectors_list
-
-    log.info("Eigendecomposition complete")
-
-    return {
-        "eigenvalues_by_epoch": eigenvalues_by_epoch,
-        "eigenvectors_by_epoch": eigenvectors_by_epoch,
-        "epochs": epochs,
-        "ntk_shape": ntk_ensemble["ntk_shape"],
-    }
-
-
-def ntk_eigenvalues(ntk_eigendecomposition_ensemble, epoch=None):
-    """
-    Extract eigenvalues for a specific epoch or all epochs.
-
-    Parameters
-    ----------
-    ntk_eigendecomposition_ensemble : dict
-        Output from ntk_eigendecomposition_ensemble()
-    epoch : int, optional
-        Specific epoch to extract. If None, returns dict of all epochs.
-
-    Returns
-    -------
-    ndarray or dict
-        If epoch is specified: array of shape (nreplicas, n_eigenvalues)
-        If epoch is None: dict mapping epoch -> array
-    """
-    eigenvalues_by_epoch = ntk_eigendecomposition_ensemble["eigenvalues_by_epoch"]
-
-    if epoch is not None:
-        if epoch not in eigenvalues_by_epoch:
-            raise ValueError(
-                f"Epoch {epoch} not found. Available: {list(eigenvalues_by_epoch.keys())}"
-            )
-        return eigenvalues_by_epoch[epoch]
-
-    return eigenvalues_by_epoch
-
-
-def ntk_eigenvectors(ntk_eigendecomposition_ensemble, epoch=None):
-    """
-    Extract eigenvectors for a specific epoch or all epochs.
-
-    Parameters
-    ----------
-    ntk_eigendecomposition_ensemble : dict
-        Output from ntk_eigendecomposition_ensemble()
-    epoch : int, optional
-        Specific epoch to extract. If None, returns dict of all epochs.
-
-    Returns
-    -------
-    list or dict
-        If epoch is specified: list of eigenvector arrays (one per replica)
-        If epoch is None: dict mapping epoch -> list of arrays
-    """
-    eigenvectors_by_epoch = ntk_eigendecomposition_ensemble["eigenvectors_by_epoch"]
-
-    if epoch is not None:
-        if epoch not in eigenvectors_by_epoch:
-            raise ValueError(
-                f"Epoch {epoch} not found. Available: {list(eigenvectors_by_epoch.keys())}"
-            )
-        return eigenvectors_by_epoch[epoch]
-
-    return eigenvectors_by_epoch
-
-
-def ntk_eigenvalues_stats_all_epochs(ntk_eigenvalues):
-    """
-    Create MCStats objects for eigenvalues at all epochs.
-
-    Parameters
-    ----------
-    ntk_eigenvalues : dict
-        Dictionary mapping epoch -> eigenvalues array
-
-    Returns
-    -------
-    dict
-        Dictionary mapping epoch -> MCStats object
-    """
-    return {epoch: MCStats(eigvals) for epoch, eigvals in ntk_eigenvalues.items()}
-
+    def error_members(self):
+        return self.data[0:]
+    
+    def median(self):
+        return np.median(self.data, axis=0)
 
 class EigenvalueGrid:
     """
@@ -236,8 +52,8 @@ class EigenvalueGrid:
     epochs : list of int
         List of epoch numbers
     eigenvalues_stats : dict
-        Dictionary mapping epoch -> MCStats object containing eigenvalues.
-        Each MCStats has shape (nreplicas, n_eigenvalues).
+        Dictionary mapping epoch -> NTKStats object containing eigenvalues.
+        Each NTKStats has shape (nreplicas, n_eigenvalues).
 
     Attributes
     ----------
@@ -249,23 +65,19 @@ class EigenvalueGrid:
         Number of eigenvalues per replica
     nreplicas : int
         Number of replicas in the ensemble
-
-    Examples
-    --------
-    >>> eigval_grid = EigenvalueGrid(
-    ...     label="My Fit",
-    ...     epochs=[0, 100, 200],
-    ...     eigenvalues_stats=eigvals_stats_dict
-    ... )
-    >>> traj = eigval_grid.get_eigenvalue_trajectory(rank_index=0)
     """
 
     def __init__(
         self,
         label: str,
         epochs: List[int],
-        eigenvalues_stats: Dict[int, MCStats],
+        eigenvalues_stats: Dict[int, NTKStats],
     ):
+        if not epochs:
+            raise ValueError("epochs cannot be empty")
+        if not eigenvalues_stats:
+            raise ValueError("eigenvalues_stats cannot be empty")
+
         self.label = label
         self.epochs = sorted(epochs)
         self._eigenvalues_stats = eigenvalues_stats
@@ -276,9 +88,9 @@ class EigenvalueGrid:
         self.nreplicas = first_stats.data.shape[0]
         self.n_eigenvalues = first_stats.data.shape[1]
 
-    def get_eigenvalue_at_epoch(self, epoch: int) -> MCStats:
+    def get_eigenvalue_at_epoch(self, epoch: int) -> NTKStats:
         """
-        Get MCStats for all eigenvalues at a specific epoch.
+        Get NTKStats for all eigenvalues at a specific epoch.
 
         Parameters
         ----------
@@ -287,19 +99,16 @@ class EigenvalueGrid:
 
         Returns
         -------
-        MCStats
+        NTKStats
             Statistics for all eigenvalues at this epoch, shape (nreplicas, n_eigenvalues)
         """
         if epoch not in self._eigenvalues_stats:
             raise ValueError(f"Epoch {epoch} not found. Available: {self.epochs}")
         return self._eigenvalues_stats[epoch]
 
-    def get_eigenvalue_trajectory(self, rank_index: int) -> MCStats:
+    def get_eigenvalue_trajectory(self, rank_index: int) -> NTKStats:
         """
-        Get MCStats for a single eigenvalue across all epochs.
-
-        This is similar to `combine_distributions(ctx.eigvals_time).slice((slice(None), idx))`
-        from yadlt.
+        Get NTKStats for a single eigenvalue across all epochs.
 
         Parameters
         ----------
@@ -308,27 +117,25 @@ class EigenvalueGrid:
 
         Returns
         -------
-        MCStats
+        NTKStats
             Statistics for the eigenvalue trajectory, shape (nreplicas, n_epochs)
         """
         if rank_index < 0 or rank_index >= self.n_eigenvalues:
             raise ValueError(
                 f"rank_index {rank_index} out of range [0, {self.n_eigenvalues})"
             )
-
-        data_by_epoch = []
-        for epoch in self.epochs:
-            stats = self._eigenvalues_stats[epoch]
-            eigenval_at_epoch = stats.data[:, rank_index]
-            data_by_epoch.append(eigenval_at_epoch)
+        data_by_epoch = [
+            self._eigenvalues_stats[epoch].data[:, rank_index]
+            for epoch in self.epochs
+        ]
 
         # Stack into (nreplicas, n_epochs) array
         combined_data = np.stack(data_by_epoch, axis=1)
-        return MCStats(combined_data)
+        return NTKStats(combined_data)
 
     def slice_eigenvalues_at_epoch(
         self, epoch: int, indices: Union[int, list, slice]
-    ) -> MCStats:
+    ) -> NTKStats:
         """
         Select specific eigenvalues at an epoch.
 
@@ -341,7 +148,7 @@ class EigenvalueGrid:
 
         Returns
         -------
-        MCStats
+        NTKStats
             Statistics for selected eigenvalues
         """
         stats = self.get_eigenvalue_at_epoch(epoch)
@@ -349,67 +156,140 @@ class EigenvalueGrid:
 
         if isinstance(indices, int):
             sliced_data = data[:, indices : indices + 1]
-        elif isinstance(indices, (list, tuple)):
-            sliced_data = data[:, indices]
-        elif isinstance(indices, slice):
+        elif isinstance(indices, (list, tuple, slice)):
             sliced_data = data[:, indices]
         else:
             raise TypeError(f"Unsupported index type: {type(indices)}")
 
-        return MCStats(sliced_data)
+        return NTKStats(sliced_data)
 
-
-def eigenvalue_grid_from_stats(
-    label: str,
-    ntk_eigenvalues_stats_all_epochs: Dict[int, MCStats],
-) -> EigenvalueGrid:
+def ntk_eigenvalues_ensemble(
+    fit,
+    replicas_path,
+    max_workers=None,
+    force_recompute: bool = False,
+    replica_index_list=None,
+    common_epochs_rule: str = "longest",
+    max_epoch: int = None,
+):
     """
-    Create an EigenvalueGrid from an ntk_eigenvalues_stats_all_epochs dictionary.
+    Compute NTK eigenvalues for all replicas using streaming approach.
 
-    This is a convenience function to create an EigenvalueGrid from the output
-    of the `ntk_eigenvalues_stats_all_epochs` provider.
+    This function computes eigenvalues immediately after each NTK and discards
+    the NTK matrix, minimizing memory usage. Each replica is saved to disk
+    as soon as it completes, allowing resumption if computation is interrupted.
 
     Parameters
     ----------
-    label : str
-        Label for this fit
-    ntk_eigenvalues_stats_all_epochs : dict
-        Dictionary mapping epoch -> MCStats
+    fit : Fit
+        The fit object containing model information
+    replicas_path : Path
+        Path to the replicas directory
+    max_workers : int, optional
+        Maximum number of parallel workers. If None, defaults to min(32, n_replicas).
+    force_recompute : bool, optional
+        If True, recompute all replicas even if cached. Default is False.
+    replica_index_list : list, optional
+        Specific replica indices to compute. If None, computes all.
+    common_epochs_rule : str, optional
+        Rule for selecting common epochs across replicas.
+    max_epoch : int, optional
+        Maximum number of epochs to consider per replica.
 
     Returns
     -------
-    EigenvalueGrid
+    dict
+        Dictionary with keys:
+        - 'eigenvalues_by_epoch': dict mapping epoch -> ndarray (n_replicas, n_eigenvalues)
+        - 'epochs': list of epochs
+        - 'ntk_shape': shape of NTK matrix
+        - 'replica_indices': list of replica indices included
     """
-    epochs = sorted(ntk_eigenvalues_stats_all_epochs.keys())
+
+    # Determine which replicas to compute
+    if replica_index_list is None:
+        replica_index_list = get_replica_idx_list(replicas_path)
+
+    # Check for already completed replicas
+    if force_recompute:
+        completed = []
+        log.info("Force recompute enabled: ignoring cached replicas")
+    else:
+        completed = get_completed_replicas(replicas_path)
+
+    pending = sorted([r for r in replica_index_list if r not in completed])
+
+    if not pending:
+        log.info(f"All {len(completed)} replicas already computed. Loading from cache.")
+        return load_eigenvalues_ensemble(replicas_path, common_epochs_rule, max_epoch)
+
+    log.info(
+        f"Computing eigenvalues: {len(pending)} pending, "
+        f"{len(completed)} already done"
+    )
+
+    n_pending = len(pending)
+    if max_workers is None:
+        max_workers = min(10, n_pending)
+    log.info(f"Using max_workers={max_workers} for parallel computation")
+
+    # Compute pending replicas in parallel
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_replica = {
+            executor.submit(
+                compute_eigenvalues_for_replica,
+                fit.name,
+                replicas_path,
+                replica_idx,
+                max_epoch
+            ): replica_idx
+            for replica_idx in pending
+        }
+
+        # Track progress
+        futures_iter = as_completed(future_to_replica)
+        for future in tqdm(futures_iter, total=n_pending, desc="Computing eigenvalues"):
+            replica_idx = future_to_replica[future]
+            try:
+                result = future.result()
+                if result is None:
+                    log.warning(f"Replica {replica_idx} failed")
+            except Exception as e:
+                log.warning(f"Error computing replica {replica_idx}: {e}")
+
+    # Load all results (completed + newly computed)
+    return load_eigenvalues_ensemble(replicas_path, common_epochs_rule, max_epoch)
+
+def eigenvalue_grid(fit, ntk_eigenvalues_ensemble) -> EigenvalueGrid:
+    """
+    Create an EigenvalueGrid from NTK eigenvalues ensemble data.
+
+    Parameters
+    ----------
+    fit : Fit
+        The fit object containing model information
+    ntk_eigenvalues_ensemble : dict
+        Output from ntk_eigenvalues_ensemble function
+    
+    Returns
+    -------
+    EigenvalueGrid
+        The constructed EigenvalueGrid object
+    """
+    epochs = ntk_eigenvalues_ensemble['epochs']
+    eigvals_by_epoch = ntk_eigenvalues_ensemble['eigenvalues_by_epoch']
+    label = fit.label
+
+    # Wrap numpy arrays in NTKStats objects
+    eigenvalues_stats = {
+        epoch: NTKStats(data) for epoch, data in eigvals_by_epoch.items()
+    }
+
     return EigenvalueGrid(
         label=label,
         epochs=epochs,
-        eigenvalues_stats=ntk_eigenvalues_stats_all_epochs,
+        eigenvalues_stats=eigenvalues_stats,
     )
-
-
-def eigenvalue_grid(
-    fit,
-    ntk_eigenvalues_stats_all_epochs,
-):
-    """
-    Create an EigenvalueGrid from NTK eigenvalue statistics.
-
-    This is a provider function for reportengine integration.
-
-    Parameters
-    ----------
-    fit_label : str
-        Label for this fit
-    ntk_eigenvalues_stats_all_epochs : dict
-        Dictionary mapping epoch -> MCStats (from ntk_eigenvalues_stats_all_epochs)
-
-    Returns
-    -------
-    EigenvalueGrid
-    """
-    label = fit.label
-    return eigenvalue_grid_from_stats(label, ntk_eigenvalues_stats_all_epochs)
 
 # Collect eigenvalue grids across fits
 eigval_grids_by_fit = collect("eigenvalue_grid", ("fits",))

@@ -26,7 +26,7 @@ from colibri.ntk import EigenvalueGrid
 from validphys import plotutils
 
 
-HandlerSpec = namedtuple("HandlerSpec", ["color", "alpha", "hatch", "outer"])
+HandlerSpec = namedtuple("HandlerSpec", ["color", "alpha"])
 
 
 class ComposedHandler:
@@ -39,37 +39,35 @@ class ComposedHandler:
         width, height = handlebox.width, handlebox.height
 
         patches = []
-
-        if orig_handle.outer:
-            wpad = width * 0.1
-            hpad = height * 0.1
-            outer = mpatches.Rectangle(
-                [x0, y0],
-                width,
-                height,
-                facecolor="none",
-                linestyle="dashed",
-                edgecolor=orig_handle.color,
-                transform=handlebox.get_transform(),
-            )
-            handlebox.add_artist(outer)
-            patches.append(outer)
-        else:
-            wpad = hpad = 0
-
         patch = mpatches.Rectangle(
-            [x0 + wpad, y0 + hpad],
-            width - 2 * wpad,
-            height - 2 * hpad,
+            [x0, y0],
+            width,
+            height,
             facecolor=orig_handle.color,
             alpha=orig_handle.alpha,
-            hatch=orig_handle.hatch,
+            hatch="none",
             edgecolor="none",
             transform=handlebox.get_transform(),
         )
+        patches.append(patch)
+
+        # Add line in the middle of the rectangle
+        line_y = y0 + height / 2  # Middle of the rectangle
+        line_thickness = height * 0.1  # 5% of rectangle height
+        line = mpatches.Rectangle(
+            [x0, line_y - line_thickness / 2],
+            width=width,
+            height=line_thickness,
+            facecolor=orig_handle.color,
+            edgecolor="none",
+            alpha=1,
+            transform=handlebox.get_transform(),
+        )
+        patches.append(line)
 
         handlebox.add_artist(patch)
-        patches.append(patch)
+        handlebox.add_artist(line)
+
         return patches
 
 
@@ -79,7 +77,8 @@ class PlotState(SimpleNamespace):
 
     This class encapsulates the iteration strategy, allowing the same plotter
     to handle both "by-rank" (one figure per rank, multiple fits) and "by-fit"
-    (one figure per fit, multiple ranks) modes.
+    (one figure per fit, multiple ranks) modes. Effectively, it is a wrapper
+    around a generator.
 
     The state holds:
     - fig, ax: matplotlib figure and axes
@@ -87,7 +86,6 @@ class PlotState(SimpleNamespace):
     - title: plot title
     - ylabel: y-axis label
     - handles, labels: accumulated legend entries
-    - hatchit: iterator for hatch patterns
 
     Use the class methods `by_rank()` and `by_fit()` to create appropriately
     configured states.
@@ -130,7 +128,6 @@ class PlotState(SimpleNamespace):
             ylabel=rf"$\lambda^{{({rank_index + 1})}}$",
             handles=[],
             labels=[],
-            hatchit=plotutils.hatch_iter(),
         )
 
     @classmethod
@@ -167,7 +164,6 @@ class PlotState(SimpleNamespace):
             ylabel=r"Eigenvalue",
             handles=[],
             labels=[],
-            hatchit=plotutils.hatch_iter(),
         )
 
     def iter_items(self):
@@ -180,7 +176,7 @@ class PlotState(SimpleNamespace):
         Yields
         ------
         tuple
-            (MCStats trajectory, str label, ndarray epochs)
+            (NTKStats trajectory, str label, ndarray epochs)
         """
         if self.mode == "by_rank":
             for grid in self._grids:
@@ -292,7 +288,7 @@ class EigvalPlotter(abc.ABC):
         PlotState
             Configured state for each figure
         """
-        pass
+        raise NotImplementedError("Subclasses must implement iter_states()")
 
     @abc.abstractmethod
     def draw(self, trajectory, label, epochs, state: PlotState) -> Optional[np.ndarray]:
@@ -301,7 +297,7 @@ class EigvalPlotter(abc.ABC):
 
         Parameters
         ----------
-        trajectory : MCStats
+        trajectory : NTKStats
             Eigenvalue trajectory data
         label : str
             Legend label for this trajectory
@@ -359,6 +355,7 @@ class EigvalPlotter(abc.ABC):
             if self._yscale and self._yscale != "linear":
                 ax.set_yscale(self._yscale)
 
+            plotutils.frame_center(ax, epochs, np.concatenate(all_vals))
             if self.ymin is not None:
                 ax.set_ylim(bottom=self.ymin)
             if self.ymax is not None:
@@ -374,22 +371,19 @@ class EigvalPlotter(abc.ABC):
             self.legend(state)
             yield state.fig, state
 
-
 class BandEigvalPlotter(EigvalPlotter):
     """
     Plot eigenvalues with uncertainty bands.
 
     Shows central value as a line with 68% confidence interval as a shaded band.
-    Different items are distinguished by color and hatch patterns.
+    Different items are distinguished by color.
 
     Parameters
     ----------
     eigval_grids : list of EigenvalueGrid
         List of eigenvalue data containers
-    show_mc_errors : bool, optional
-        If True, show additional 1-sigma dashed lines for MC stats. Default True.
-    legend_stat_labels : bool, optional
-        If True, include statistical info in legend labels. Default True.
+    error_type : str, optional
+        Type of error band to plot ("median" or "mean"). Default: "median".
     **kwargs
         Additional arguments passed to EigvalPlotter
 
@@ -398,7 +392,6 @@ class BandEigvalPlotter(EigvalPlotter):
     >>> plotter = BandEigvalPlotter(
     ...     [grid_L0, grid_L1, grid_L2],
     ...     rank_indices=[0, 1, 2, 3, 4],
-    ...     show_mc_errors=True,
     ... )
     >>> for fig, state in plotter:
     ...     fig.savefig(f"ntk_eigvals_{state.name}.pdf")
@@ -407,12 +400,10 @@ class BandEigvalPlotter(EigvalPlotter):
     def __init__(
         self,
         eigval_grids: List[EigenvalueGrid],
-        show_mc_errors: bool = True,
-        legend_stat_labels: bool = True,
+        error_type: str = "median",
         **kwargs,
     ):
-        self.show_mc_errors = show_mc_errors
-        self.legend_stat_labels = legend_stat_labels
+        self.error_type = error_type
         super().__init__(eigval_grids, **kwargs)
 
     def legend(self, state: PlotState):
@@ -427,7 +418,7 @@ class BandEigvalPlotter(EigvalPlotter):
 
         Parameters
         ----------
-        trajectory : MCStats
+        trajectory : NTKStats
             Eigenvalue trajectory data
         label : str
             Legend label
@@ -442,40 +433,44 @@ class BandEigvalPlotter(EigvalPlotter):
             Array of [lower_bound, upper_bound] for autoscaling
         """
         ax = state.ax
-        hatchit = state.hatchit
         handles = state.handles
         labels = state.labels
 
-        # Compute statistics
-        cv = trajectory.central_value()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            err68down, err68up = trajectory.errorbar68()
-
         # Plot styling
-        hatch = next(hatchit)
         color = ax._get_lines.get_next_color()
+        alpha = 0.3
 
-        # Plot central value line
-        ax.plot(epochs, cv, color=color, linewidth=1.5)
-
-        # Plot uncertainty band
-        alpha = 0.5
-        ax.fill_between(epochs, err68up, err68down, color=color, alpha=alpha, zorder=1)
-
-        outer = False
-        if self.show_mc_errors:
-            errorstdup, errorstddown = trajectory.errorbarstd()
-            ax.plot(epochs, errorstdup, linestyle="--", color=color, alpha=0.7)
-            ax.plot(epochs, errorstddown, linestyle="--", color=color, alpha=0.7)
-            outer = True
+        if self.error_type == "median":
+            ax.plot(epochs, trajectory.median(), color=color, linewidth=1.5)
+            # Compute statistics
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                err68down, err68up = trajectory.errorbar68()
+            lower_bound = err68up
+            upper_bound = err68down
+            ax.fill_between(epochs, lower_bound, upper_bound, color=color, alpha=alpha, zorder=1)
+        elif self.error_type == "mean":
+            ax.plot(epochs, trajectory.central_value(), color=color, linewidth=1.5)
+            lower_bound, upper_bound = trajectory.errorbarstd()
+            ax.fill_between(epochs, lower_bound, upper_bound, color=color, alpha=alpha, zorder=1)
 
         # Create legend entry
-        handle = HandlerSpec(color=color, alpha=alpha, hatch=hatch, outer=outer)
+        handle = HandlerSpec(color=color, alpha=alpha)
         handles.append(handle)
         labels.append(label)
 
-        return np.array([err68down, err68up])
+        return np.array([lower_bound, upper_bound])
+    
+class ReplicaEigvalPlotter(EigvalPlotter):
+    def draw(self, trajectory, label, epochs, state: PlotState) -> Optional[np.ndarray]:
+        ax = state.ax
+        color = ax._get_lines.get_next_color()
+
+        cv = trajectory.central_value()
+        gv = trajectory.data
+        ax.plot(epochs, gv.T, alpha=0.2, linewidth=0.5, color=color, zorder=1)
+        ax.plot(epochs, cv, color=color, linewidth=2, label=label)
+        return gv
 
 
 class ByRankBandPlotter(BandEigvalPlotter):
@@ -510,7 +505,6 @@ class ByRankBandPlotter(BandEigvalPlotter):
         for rank_index in self._rank_indices:
             yield PlotState.by_rank(rank_index, self.eigval_grids, self.epochs)
 
-
 class ByFitBandPlotter(BandEigvalPlotter):
     """
     Plot eigenvalues with bands, one figure per fit showing multiple ranks.
@@ -543,11 +537,11 @@ class ByFitBandPlotter(BandEigvalPlotter):
         for grid in self.eigval_grids:
             yield PlotState.by_fit(grid, self._rank_indices)
 
-
-# =============================================================================
-# Provider Functions for Reportengine Integration
-# =============================================================================
-
+class ByRankReplicaEigvalPlotter(ReplicaEigvalPlotter):
+    def iter_states(self):
+        """Yield PlotState for each rank."""
+        for rank_index in self._rank_indices:
+            yield PlotState.by_rank(rank_index, self.eigval_grids, self.epochs)
 
 def plot_eigvals_by_rank(
     eigval_grids_by_fit,
@@ -556,8 +550,7 @@ def plot_eigvals_by_rank(
     yscale="log",
     ymin=None,
     ymax=None,
-    show_mc_errors: bool = True,
-    legend_stat_labels: bool = True,
+    error_type: str = "mean",
 ):
     """
     Plot eigenvalue evolution across epochs, one figure per rank.
@@ -582,10 +575,8 @@ def plot_eigvals_by_rank(
         Minimum y-axis value
     ymax : float, optional
         Maximum y-axis value
-    show_mc_errors : bool, optional
-        Show 1-sigma error bounds. Default: True
-    legend_stat_labels : bool, optional
-        Include statistical info in legend. Default: True
+    error_type : str, optional
+        Type of error band to plot ("median" or "mean"). Default: "mean".
 
     Yields
     ------
@@ -599,8 +590,7 @@ def plot_eigvals_by_rank(
         yscale=yscale,
         ymin=ymin,
         ymax=ymax,
-        show_mc_errors=show_mc_errors,
-        legend_stat_labels=legend_stat_labels,
+        error_type=error_type,
     )
 
 
@@ -611,8 +601,7 @@ def plot_eigvals_by_fit(
     yscale="log",
     ymin=None,
     ymax=None,
-    show_mc_errors: bool = True,
-    legend_stat_labels: bool = True,
+    error_type: str = "mean",
 ):
     """
     Plot eigenvalue evolution across epochs, one figure per fit.
@@ -636,10 +625,8 @@ def plot_eigvals_by_fit(
         Minimum y-axis value
     ymax : float, optional
         Maximum y-axis value
-    show_mc_errors : bool, optional
-        Show 1-sigma error bounds. Default: True
-    legend_stat_labels : bool, optional
-        Include statistical info in legend. Default: True
+    error_type : str, optional
+        Type of error band to plot ("median" or "mean"). Default: "mean".
 
     Yields
     ------
@@ -653,6 +640,51 @@ def plot_eigvals_by_fit(
         yscale=yscale,
         ymin=ymin,
         ymax=ymax,
-        show_mc_errors=show_mc_errors,
-        legend_stat_labels=legend_stat_labels,
+        error_type=error_type,
+    )
+
+def plot_eigvals_replicas_by_rank(
+    eigval_grids_by_fit,
+    rank_indices=None,
+    xscale=None,
+    yscale="log",
+    ymin=None,
+    ymax=None,
+):
+    """
+    Plot eigenvalue evolution across epochs, one figure per rank.
+
+    Each figure shows how a specific eigenvalue (e.g., λ¹, λ², etc.) evolves
+    across epochs for all provided fits.
+
+    Use case: Comparing the same eigenvalue rank across different fits
+    (e.g., L0, L1, L2 architectures).
+
+    Parameters
+    ----------
+    eigval_grids_by_fit : list of EigenvalueGrid
+        List of eigenvalue data containers, one per fit
+    rank_indices : list of int, optional
+        Which eigenvalue ranks to plot. Default: first 5
+    xscale : str, optional
+        X-axis scale ("linear", "log"). Default: "linear"
+    yscale : str, optional
+        Y-axis scale ("linear", "log"). Default: "log"
+    ymin : float, optional
+        Minimum y-axis value
+    ymax : float, optional
+        Maximum y-axis value
+
+    Yields
+    ------
+    tuple
+        (matplotlib.figure.Figure, PlotState) pairs for each rank
+    """
+    yield from ByRankReplicaEigvalPlotter(
+        eigval_grids_by_fit,
+        rank_indices=rank_indices,
+        xscale=xscale,
+        yscale=yscale,
+        ymin=ymin,
+        ymax=ymax,
     )
