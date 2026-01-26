@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
 from tqdm import tqdm
 
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from reportengine import collect
 
 from colibri.ntkutils import (
@@ -170,7 +170,7 @@ def ntk_eigenvalues_ensemble(
     force_recompute: bool = False,
     replica_index_list=None,
     common_epochs_rule: str = "longest",
-    max_epoch: int = None,
+    max_epoch: Optional[int] = None,
 ):
     """
     Compute NTK eigenvalues for all replicas using streaming approach.
