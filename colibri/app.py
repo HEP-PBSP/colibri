@@ -32,8 +32,9 @@ colibri_providers = [
     "colibri.param_initialisation",
     "colibri.export_results",
     "colibri.closure_test",
-    "colibri.ntk",
-    "colibri.plotntk",
+    "colibri.ntk.eigenvalues",
+    "colibri.ntk.eigenvector",
+    "colibri.ntk.plotntk",
     "reportengine.report",
 ]
 

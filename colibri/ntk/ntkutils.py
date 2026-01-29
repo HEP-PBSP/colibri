@@ -7,14 +7,16 @@ Module containing several utils for the analysis of the NTK.
 
 from __future__ import annotations
 
-from pathlib import Path
+import abc
 import logging
 from functools import lru_cache
-
-import numpy as np
+from pathlib import Path
 
 import jax
 import jax.numpy as jnp
+import numpy as np
+
+from validphys.core import MCStats
 
 from colibri.constants import XGRID
 from colibri.utils import get_pdf_model
@@ -22,6 +24,97 @@ from colibri.utils import get_pdf_model
 log = logging.getLogger(__name__)
 
 NTK_EIGVAL_TOKEN = "ntk_eigenvalues"
+
+
+class NTKStats(MCStats):
+    """
+    Container for NTK statistics across replicas at a single epoch.
+    """
+
+    def central_value(self):
+        return self.data.mean(axis=0)
+
+    def error_members(self):
+        return self.data[0:]
+
+    def median(self):
+        return np.median(self.data, axis=0)
+
+
+class NTKGrid(abc.ABC):
+    """
+    Abstract base class for NTK data containers that can be plotted.
+
+    This interface allows plotting utilities to work uniformly with both
+    eigenvalue and eigenvector data. Each implementation must provide:
+    - A label identifying the data source (e.g., fit name)
+    - The x-axis grid for plotting (e.g., epochs or XGRID)
+    - Methods to extract plotting data for specific ranks
+    """
+
+    @property
+    @abc.abstractmethod
+    def label(self) -> str:
+        """Human-readable label for this grid (e.g., fit name)."""
+        pass
+
+    @property
+    @abc.abstractmethod
+    def n_ranks(self) -> int:
+        """Number of eigenvalue/eigenvector ranks available."""
+        pass
+
+    @property
+    @abc.abstractmethod
+    def xgrid(self) -> np.ndarray:
+        """X-axis grid for plotting."""
+        pass
+
+    @property
+    @abc.abstractmethod
+    def xlabel(self) -> str:
+        """Label for x-axis."""
+        pass
+
+    @abc.abstractmethod
+    def get_plotting_data(self, rank_index: int, **kwargs) -> NTKStats:
+        """
+        Get plotting data (y-values) for a specific rank.
+
+        Parameters
+        ----------
+        rank_index : int
+            Index of the eigenvalue/eigenvector rank (0 = largest)
+        **kwargs
+            Additional selection parameters as needed by different
+            implementations (e.g., flavour_index for eigenvectors)
+
+        Returns
+        -------
+        NTKStats
+            Statistics object containing data of shape (nreplicas, n_xgrid)
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_plotting_label(self, rank_index: int, **kwargs) -> str:
+        """
+        Get legend label for a specific rank.
+
+        Parameters
+        ----------
+        rank_index : int
+            Index of the eigenvalue/eigenvector rank
+        **kwargs
+            Additional selection parameters
+
+        Returns
+        -------
+        str
+            LaTeX-formatted label for the legend
+        """
+        pass
+
 
 @lru_cache
 def get_parameters_all_epochs(replicas_path, replica_index):
@@ -52,6 +145,7 @@ def get_parameters_all_epochs(replicas_path, replica_index):
 
     return param_epochs_dict
 
+
 def get_replica_idx_list(replicas_path):
     """
     Determine the available replica indices by counting
@@ -75,6 +169,7 @@ def get_replica_idx_list(replicas_path):
     replica_dirs = sorted(replicas_path.glob("replica_*"))
     rep_list = [int(d.name.split("_")[1]) for d in replica_dirs]
     return rep_list
+
 
 def compute_ntk(pdf_model, params):
     """
@@ -105,7 +200,8 @@ def compute_ntk(pdf_model, params):
     d1, d2, d3, d4 = ntk.shape
     ntk = ntk.reshape(d1 * d2, d3 * d4)
 
-    return ntk, ntk.shape
+    return ntk, (d1, d2, d3, d4)
+
 
 def compute_eigendecomposition(ntk_matrix, hermitian=True):
     """
@@ -138,12 +234,10 @@ def compute_eigendecomposition(ntk_matrix, hermitian=True):
 
     return eigenvalues, eigenvectors
 
+
 def compute_eigenvalues_for_replica(
-        fit_name: str, 
-        replicas_path: Path,
-        replica_idx: int,
-        max_epoch = None
-    ):
+    fit_name: str, replicas_path: Path, replica_idx: int, max_epoch=None
+):
     """
     Compute the NTK eigenvalues for a given replica across all epochs.
 
@@ -203,9 +297,10 @@ def compute_eigenvalues_for_replica(
         log.warning(f"Skipping replica {replica_idx}: {e}")
         return None
 
-def get_completed_replicas(replicas_path: Path) -> list:
+
+def get_completed_replicas(replicas_path: Path, token: str = NTK_EIGVAL_TOKEN) -> list:
     """
-    Utility function to get list of replica indices for which 
+    Utility function to get list of replica indices for which
     the NTK eigenvalues have already been computed.
 
     Parameters
@@ -224,7 +319,7 @@ def get_completed_replicas(replicas_path: Path) -> list:
     for replica_folder in replicas_path.glob("replica_*"):
         try:
             idx = int(replica_folder.stem.split("_")[1])
-            replica_file = replica_folder / f"{NTK_EIGVAL_TOKEN}_{idx}.npz"
+            replica_file = replica_folder / f"{token}_{idx}.npz"
             if replica_file.exists():
                 completed.append(idx)
         except (ValueError, IndexError) as e:
@@ -232,6 +327,7 @@ def get_completed_replicas(replicas_path: Path) -> list:
             continue
 
     return sorted(completed)
+
 
 def save_replica_eigenvalues(
     eigenvalues: np.ndarray,
@@ -256,18 +352,19 @@ def save_replica_eigenvalues(
     ntk_shape : tuple, optional
         Shape of the NTK matrix (saved in metadata)
     """
-    replica_file = replicas_path / f"replica_{replica_idx}/{NTK_EIGVAL_TOKEN}_{replica_idx}.npz"
+    replica_file = (
+        replicas_path / f"replica_{replica_idx}/{NTK_EIGVAL_TOKEN}_{replica_idx}.npz"
+    )
     np.savez_compressed(
         replica_file,
         eigenvalues=eigenvalues,
         epochs=np.array(epochs),
-        ntk_shape=ntk_shape
+        ntk_shape=ntk_shape,
     )
     log.debug(f"Saved eigenvalues for replica {replica_idx} to {replica_file}")
 
-def load_replica_eigenvalues(
-        replica_idx: int, 
-        cache_dir: Path) -> dict:
+
+def load_replica_eigenvalues(replica_idx: int, cache_dir: Path) -> dict:
     """
     Load eigenvalues for a single replica from disk.
 
@@ -283,7 +380,9 @@ def load_replica_eigenvalues(
     dict
         Dictionary with 'eigenvalues' (n_epochs, n_eigenvalues) and 'epochs'
     """
-    replica_file = cache_dir / f"replica_{replica_idx}/{NTK_EIGVAL_TOKEN}_{replica_idx}.npz"
+    replica_file = (
+        cache_dir / f"replica_{replica_idx}/{NTK_EIGVAL_TOKEN}_{replica_idx}.npz"
+    )
 
     if not replica_file.exists():
         raise FileNotFoundError(f"Replica {replica_idx} not found at {replica_file}")
@@ -295,10 +394,10 @@ def load_replica_eigenvalues(
         "ntk_shape": data["ntk_shape"],
     }
 
+
 def load_eigenvalues_ensemble(
-        replicas_path: Path, 
-        common_epochs_rule: str = "longest",
-        max_epoch = None) -> dict:
+    replicas_path: Path, max_epoch=None
+) -> dict:
     """
     Load all replica eigenvalues into an ensemble format.
 
@@ -306,11 +405,10 @@ def load_eigenvalues_ensemble(
     ----------
     replicas_path : Path
         Path to replica folders.
-    common_epochs_rule : str, optional
-        Rule to determine common epochs across replicas. Options are 'longest' (default) or 'intersection'.
     max_epoch : int, optional
-        Maximum epoch number to consider.
-    
+        Maximum epoch to consider. It filters out replicas that do not have
+        data up to this epoch.
+
     Returns
     -------
     dict
@@ -327,55 +425,53 @@ def load_eigenvalues_ensemble(
 
     # Load all replicas
     all_eigenvalues = []
-    common_epochs = None
+    included_replicas = []
     ntk_shape = None
-
     for replica_idx in completed_replicas:
         data = load_replica_eigenvalues(replica_idx, replicas_path)
-        epochs = data["epochs"]
+        epochs = np.array(data["epochs"])
         eigenvalues = data["eigenvalues"]  # (n_epochs, n_eigenvalues)
+
         if ntk_shape is None:
             ntk_shape = data["ntk_shape"]
-
-        # Apply max_epoch filter
+        
+        # If max_epoch is set, filter epochs and eigenvalues
         if max_epoch is not None:
-            filtered_indices = [i for i, e in enumerate(epochs) if e <= max_epoch]
-            epochs = [epochs[i] for i in filtered_indices]
-            eigenvalues = eigenvalues[filtered_indices, :]
-
-        if common_epochs is None:
-            common_epochs = epochs
-        elif epochs != common_epochs:
-            log.warning(
-                f"Replica {replica_idx} has different epochs. Using {common_epochs_rule}."
-            )
-            if common_epochs_rule == "longest":
-                if len(epochs) > len(common_epochs):
-                    common_epochs = epochs
-            elif common_epochs_rule == "intersection":
-                common_epochs = sorted(set(epochs) & set(common_epochs))
-                if not common_epochs:
-                    raise ValueError(
-                        f"No common epochs found after intersecting with replica {replica_idx}"
-                    )
+            if max_epoch not in epochs:
+                log.warning(
+                    f"Replica {replica_idx} does not contain epoch {max_epoch}. "
+                    f"Last epoch is {epochs[-1]}. Excluded from ensemble."
+                )
+                continue
+            mask = [e <= max_epoch for e in epochs]
+            epochs = epochs[mask]
+            eigenvalues = eigenvalues[mask]
 
         all_eigenvalues.append((replica_idx, epochs, eigenvalues))
+        included_replicas.append(replica_idx)
 
-    # Organize by epoch
+    if not all_eigenvalues:
+        raise ValueError("No replicas have epochs up to the specified max_epoch.")
+    
+    # Determine common epochs across included replicas
+    all_epoch_sets = [set(epochs) for _, epochs, _ in all_eigenvalues]
+    common_epochs = sorted(set.intersection(*all_epoch_sets))
+    if not common_epochs:
+        raise ValueError("No common epochs found across replicas.")
+    
     eigenvalues_by_epoch = {epoch: [] for epoch in common_epochs}
-
     for replica_idx, epochs, eigenvalues in all_eigenvalues:
         epoch_to_idx = {e: i for i, e in enumerate(epochs)}
         for epoch in common_epochs:
-            if epoch in epoch_to_idx:
-                eigenvalues_by_epoch[epoch].append(eigenvalues[epoch_to_idx[epoch]])
+            idx = epoch_to_idx[epoch]
+            eigenvalues_by_epoch[epoch].append(eigenvalues[idx])
 
     # Stack into arrays
     for epoch in common_epochs:
         eigenvalues_by_epoch[epoch] = np.stack(eigenvalues_by_epoch[epoch], axis=0)
 
     log.info(
-        f"Loaded eigenvalues ensemble: {len(completed_replicas)} replicas, "
+        f"Loaded eigenvalues ensemble: {len(included_replicas)} replicas, "
         f"{len(common_epochs)} epochs"
     )
 
@@ -383,5 +479,45 @@ def load_eigenvalues_ensemble(
         "eigenvalues_by_epoch": eigenvalues_by_epoch,
         "epochs": common_epochs,
         "ntk_shape": ntk_shape,
-        "replica_indices": completed_replicas,
+        "replica_indices": included_replicas,
     }
+
+
+def compute_eigenvectors_at_apoch_for_replica(
+    fit_name: str,
+    replicas_path: Path,
+    replica_idx: int,
+    epoch: int,
+):
+    """
+    Compute the eigenvectors of the NTK at a given epoch for a specific replica.
+
+    Parameters
+    ----------
+    fit_name : str
+        Name of the fit (used to load pdf_model)
+    replicas_path : Path
+        Path to the replicas directory
+    replica_idx : int
+        Replica index to compute
+    epoch : int
+        Epoch number at which to compute eigenvectors
+    """
+    try:
+        pdf_model = get_pdf_model(fit_name)
+        param_files = get_parameters_all_epochs(replicas_path, replica_idx)
+
+        params_at_epoch = param_files.get(epoch, None)
+        if params_at_epoch is None:
+            raise ValueError(
+                f"Epoch {epoch} not found for replica {replica_idx} in fit {fit_name}"
+            )
+
+        params = jnp.load(params_at_epoch)["params"]
+        ntk, shape = compute_ntk(pdf_model, params)
+        _, eigvecs = compute_eigendecomposition(ntk, hermitian=True)
+
+        return (replica_idx, epoch, eigvecs, shape)
+    except Exception as e:
+        log.warning(f"Skipping replica {replica_idx}: {e}")
+        return None
