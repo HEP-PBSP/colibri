@@ -35,16 +35,16 @@ def optimizer_provider(
     optimizer = optimizer_settings["optimizer"]
     log.info(f"Using {optimizer} optimizer.")
     opt = getattr(optax, optimizer)
-    optimizer_hyperparams = optimizer_settings["optimizer_hyperparams"]
+    optimizer_hyperparams = optimizer_settings.get("optimizer_hyperparams", {})
     log.info(f"Optimizer hyperparameters: {optimizer_hyperparams}.")
+    scheduler_cfg = optimizer_settings.get("scheduler")
 
-    scheduler_cfg = optimizer_hyperparams.get("scheduler")
     if scheduler_cfg is not None:
-        scheduler = optimizer_hyperparams["scheduler"]["name"]
-        sched_params = optimizer_hyperparams["scheduler"]["params"]
+        scheduler = scheduler_cfg["name"]
+        sched_params = scheduler_cfg["params"]
+        log.info(f"Using {scheduler} scheduler with params {sched_params}.")
         scheduler_fn = getattr(optax, scheduler)(**sched_params)
         optimizer_hyperparams["learning_rate"] = scheduler_fn
-        del optimizer_hyperparams["scheduler"]
 
     clipnorm_cfg = optimizer_settings.get("clipnorm")
     if clipnorm_cfg is not None:
