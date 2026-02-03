@@ -12,7 +12,6 @@ import numpy as np
 from colibri.pdf_model import PDFModel
 from colibri.core import PriorSettings
 
-
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
 TEST_THEORYID = 40_000_000
