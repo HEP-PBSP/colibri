@@ -98,6 +98,14 @@ executable.
         optimizer_hyperparams:
             learning_rate: 0.001
             # any hyperparameters specific to the chosen optimizer can be set here
+        # Optional learning rate scheduler
+        # scheduler:
+        #     name: linear_schedule
+        #     params:
+        #         end_value:  1e-6
+        #         init_value: 1e-3
+        #         transition_begin: 3000
+        #         transition_steps: 10000
 
     # Monte Carlo settings
     use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
@@ -129,6 +137,8 @@ executable.
 These settings control the method of gradient descent. You can use any
 of the Optax optimizers and settings, which you can read more about
 `here <https://optax.readthedocs.io/en/latest/api/optimizers.html#>`_.
+Learning schedulers are also supported, and you can find the available options
+`here <https://optax.readthedocs.io/en/latest/api/optimizer_schedules.html#>`_.
 
 ``param_initialiser_settings``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

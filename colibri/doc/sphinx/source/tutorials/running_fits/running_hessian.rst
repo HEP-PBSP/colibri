@@ -99,6 +99,14 @@ The following runcard can be used to run a Hessian fit with Colibri.
         optimizer_hyperparams:
             learning_rate: 0.001
             # any hyperparameters specific to the chosen optimizer can be set here
+        # Optional learning rate scheduler
+        # scheduler:
+        #     name: linear_schedule
+        #     params:
+        #         end_value:  1e-6
+        #         init_value: 1e-3
+        #         transition_begin: 3000
+        #         transition_steps: 10000
 
     # Training settings
     use_gen_t0: True             # Whether the t0 covariance is used to generated pseudodata.

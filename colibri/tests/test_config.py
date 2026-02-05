@@ -143,6 +143,10 @@ def test_parse_optimizer_settings(mock_warning):
         "clipnorm": 6.3e-6,
         "optimizer": "adam",
         "optimizer_hyperparams": {"learning_rate": 0.001},
+        "scheduler": {
+            "name": "linear_schedule",
+            "params": {"end_value": 1e-6, "init_value": 1e-3},
+        },
         "unknown_key": "some_value",  # This should trigger the warning
         "another_unknown": "value",  # This should also trigger a warning
     }
@@ -155,6 +159,10 @@ def test_parse_optimizer_settings(mock_warning):
         "clipnorm": 6.3e-6,
         "optimizer": "adam",
         "optimizer_hyperparams": {"learning_rate": 0.001},
+        "scheduler": {
+            "name": "linear_schedule",
+            "params": {"end_value": 1e-6, "init_value": 1e-3},
+        },
     }
 
     print("Testing optimizer settings parsing...")
