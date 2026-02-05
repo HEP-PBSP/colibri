@@ -6,7 +6,7 @@ Core module of colibri, containing the main (data) classes for the framework.
 
 from dataclasses import dataclass, asdict
 import jax.numpy as jnp
-from typing import Callable, Any, Dict
+from typing import Callable, Any, Dict, Optional, List, Iterator, NamedTuple
 
 
 @dataclass(frozen=True)
@@ -208,11 +208,19 @@ class MCPseudodata:
         return asdict(self)
 
 
+class BatchSpec(NamedTuple):
+    idx: jnp.ndarray
+    inv_cov: Optional[jnp.ndarray] = None
+
+
 @dataclass(frozen=True)
 class DataBatches:
-    data_batch_stream_index: Callable
+    data_batch_stream: Callable[[], Iterator[BatchSpec]]
     num_batches: int
     batch_size: int
+    batch_seed: int
+    # Optional cache for visibility / reuse
+    fixed_batches: Optional[List[BatchSpec]] = None
 
 
 @dataclass(frozen=True)

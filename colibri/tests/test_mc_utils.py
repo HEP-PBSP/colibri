@@ -8,6 +8,9 @@ from unittest.mock import mock_open, patch
 
 import pandas as pd
 from numpy.testing import assert_allclose
+import jax
+import jax.numpy as jnp
+from colibri.mc_utils import MCPseudodata, training_indices
 
 from colibri.api import API as colibriAPI
 from colibri.constants import EXPORT_LABELS, LHAPDF_XGRID
@@ -113,3 +116,42 @@ def test_write_exportgrid_no_directory_creation_if_exists(
     write_exportgrid_mc(parameters, MOCK_PDF_MODEL, replica_index, tmp_path)
 
     mock_mkdir.assert_not_called()
+
+
+def test_training_indices_returns_expected():
+    """training_indices should return the training indices stored in MCPseudodata."""
+    pseudo = jnp.array([1.0, 2.0, 3.0])
+    tr_idx = jnp.array([0, 2])
+    val_idx = jnp.array([1])
+
+    mc = MCPseudodata(
+        pseudodata=pseudo,
+        training_indices=tr_idx,
+        validation_indices=val_idx,
+        trval_split=True,
+    )
+
+    out = training_indices(mc)
+
+    assert isinstance(out, jax.Array)
+    # same contents
+    assert jnp.array_equal(out, tr_idx)
+
+
+def test_training_indices_with_empty_training():
+    """If training_indices is empty, the function should return an empty array."""
+    pseudo = jnp.array([1.0, 2.0])
+    tr_idx = jnp.array([])
+    val_idx = jnp.array([0, 1])
+
+    mc = MCPseudodata(
+        pseudodata=pseudo,
+        training_indices=tr_idx,
+        validation_indices=val_idx,
+        trval_split=True,
+    )
+
+    out = training_indices(mc)
+
+    assert isinstance(out, jax.Array)
+    assert out.size == 0

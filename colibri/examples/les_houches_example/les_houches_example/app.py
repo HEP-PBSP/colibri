@@ -6,7 +6,6 @@ les_houches_example.app.py
 from colibri.app import colibriApp
 from les_houches_example.config import LesHouchesConfig
 
-
 lh_pdf_providers = [
     "les_houches_example.model",
 ]

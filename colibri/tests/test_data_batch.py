@@ -6,7 +6,9 @@ Module for testing the data_batch module.
 
 from typing import Callable, Generator
 
+import pytest
 import jax
+import jax.numpy as jnp
 
 from colibri.data_batch import DataBatches, data_batches
 
@@ -18,19 +20,84 @@ def test_data_batches():
     n_training_points = 100
     batch_size = 10
     batch_seed = 1
-    data_batch = data_batches(n_training_points, batch_size, batch_seed)
+
+    training_indices = jnp.arange(n_training_points)
+    data_batch = data_batches(training_indices, batch_size, batch_seed)
 
     assert isinstance(data_batch, DataBatches)
-    assert isinstance(data_batch.data_batch_stream_index, Callable)
-    assert isinstance(data_batch.data_batch_stream_index(), Generator)
+    assert isinstance(data_batch.data_batch_stream, Callable)
+    assert isinstance(data_batch.data_batch_stream(), Generator)
     assert isinstance(data_batch.num_batches, int)
     assert isinstance(data_batch.batch_size, int)
 
     assert data_batch.num_batches == divmod(n_training_points, batch_size)[0]
     assert data_batch.batch_size == batch_size
 
-    batches = data_batch.data_batch_stream_index()
+    # The stream yields BatchSpec objects with `idx` and optional `inv_cov`
+    batches = data_batch.data_batch_stream()
     next_batch = next(batches)
 
-    assert isinstance(next_batch, jax.Array)
-    assert len(next_batch) == batch_size
+    assert hasattr(next_batch, "idx")
+    assert isinstance(next_batch.idx, jax.Array)
+    assert len(next_batch.idx) == batch_size
+    # inv_cov is optional and for this call (no fit_covariance_matrix) should be None
+    assert getattr(next_batch, "inv_cov", None) is None
+
+    # When shuffle_each_epoch=False (default) fixed_batches should be available
+    assert isinstance(data_batch.fixed_batches, list)
+    assert len(data_batch.fixed_batches) == data_batch.num_batches
+
+
+def test_data_batches_value_error():
+    """Batch size larger than number of training points should raise."""
+    n_training_points = 10
+    training_indices = jnp.arange(n_training_points)
+    # batch size too large
+    with pytest.raises(ValueError):
+        data_batches(training_indices, batch_size=n_training_points + 1)
+
+
+def test_data_batches_with_covmat():
+    """When a covariance matrix is provided, BatchSpec.inv_cov should be set."""
+    n_training_points = 20
+    batch_size = 5
+    training_indices = jnp.arange(n_training_points)
+
+    # simple positive-definite covariance (scaled identity)
+    cov = jnp.eye(n_training_points) * 2.0
+
+    db = data_batches(
+        training_indices,
+        batch_size=batch_size,
+        fit_covariance_matrix=cov,
+        batch_seed=42,
+    )
+
+    # fixed_batches_specs should be populated and include inv_cov
+    assert isinstance(db.fixed_batches, list)
+    assert len(db.fixed_batches) == db.num_batches
+
+    spec = next(db.data_batch_stream())
+    assert hasattr(spec, "inv_cov")
+    assert isinstance(spec.inv_cov, jax.Array)
+    assert spec.inv_cov.shape == (batch_size, batch_size)
+
+
+def test_data_batches_shuffle_each_epoch():
+    """When shuffle_each_epoch=True, fixed_batches is None and inv_cov is not cached."""
+    n_training_points = 30
+    batch_size = 6
+    training_indices = jnp.arange(n_training_points)
+
+    db = data_batches(
+        training_indices, batch_size=batch_size, shuffle_each_epoch=True, batch_seed=7
+    )
+
+    assert db.fixed_batches is None
+
+    spec = next(db.data_batch_stream())
+    assert hasattr(spec, "idx")
+    assert isinstance(spec.idx, jax.Array)
+    assert len(spec.idx) == batch_size
+    # no cached inverse when shuffling each epoch
+    assert getattr(spec, "inv_cov", None) is None
