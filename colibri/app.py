@@ -31,6 +31,7 @@ colibri_providers = [
     "colibri.param_initialisation",
     "colibri.export_results",
     "colibri.closure_test",
+    "colibri.forward_map",
     "reportengine.report",
 ]
 

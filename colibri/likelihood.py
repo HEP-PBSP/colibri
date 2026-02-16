@@ -62,9 +62,8 @@ class LogLikelihood(object):
         self.positivity_penalty_settings = positivity_penalty_settings
         self.integrability_penalty = integrability_penalty
 
-        self.pred_and_pdf = pdf_model.pred_and_pdf_func(
-            fit_xgrid, forward_map=forward_map
-        )
+        self.pdf_grid = pdf_model.grid_values_func(fit_xgrid)
+        self.forward_map = forward_map
 
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
@@ -126,7 +125,8 @@ class LogLikelihood(object):
         jnp.ndarray
             jax array with the value of the log-likelihood.
         """
-        predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
+        pdf = self.pdf_grid(params)
+        predictions = self.forward_map(pdf, fast_kernel_arrays)
         # Select only the data relevant for this likelihood
         # Especially important when using a training/validation split
         predictions = predictions[self.central_values_idx]
@@ -169,7 +169,7 @@ def log_likelihood(
     central_covmat_index,
     pdf_model,
     FIT_XGRID,
-    _pred_data,
+    forward_map,
     fast_kernel_arrays,
     positivity_fast_kernel_arrays,
     _penalty_posdata,
@@ -186,7 +186,7 @@ def log_likelihood(
         central_covmat_index,
         pdf_model,
         FIT_XGRID,
-        _pred_data,
+        forward_map,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
         _penalty_posdata,
@@ -200,7 +200,7 @@ def mc_log_likelihood(
     fit_covariance_matrix,
     pdf_model,
     FIT_XGRID,
-    _pred_data,
+    forward_map,
     fast_kernel_arrays,
     positivity_fast_kernel_arrays,
     _penalty_posdata,
@@ -228,7 +228,7 @@ def mc_log_likelihood(
         central_covmat_index_train,
         pdf_model,
         FIT_XGRID,
-        _pred_data,
+        forward_map,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
         _penalty_posdata,
@@ -254,7 +254,7 @@ def mc_log_likelihood(
             central_covmat_index_val,
             pdf_model,
             FIT_XGRID,
-            _pred_data,
+            forward_map,
             fast_kernel_arrays,
             positivity_fast_kernel_arrays,
             _penalty_posdata,
