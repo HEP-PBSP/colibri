@@ -55,12 +55,15 @@ def test_analytic_fit_flat_direction():
         )
 
 
-def test_analytic_fit(caplog):
+def test_analytic_fit(caplog, monkeypatch):
     """
     Tests basic functionality of the analytic fit function.
     """
 
-    MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: params
+    # Mock the grid_values_func of the PDF model within the test to return the input parameters as the PDF grid values
+    monkeypatch.setattr(
+        MOCK_PDF_MODEL, "grid_values_func", lambda xgrid: lambda params: params
+    )
 
     forward_map = FKTableForwardMap(
         lambda pdf, fkarrs: pdf, n_pdf_params=len(MOCK_PDF_MODEL.param_names)
@@ -111,7 +114,7 @@ def test_analytic_fit(caplog):
     assert len(result_2.param_names) == len(MOCK_PDF_MODEL.param_names)
 
 
-def test_analytic_fit_different_priors(caplog):
+def test_analytic_fit_different_priors(caplog, monkeypatch):
 
     PRIOR_SETTINGS1 = PriorSettings(
         **{
@@ -120,7 +123,10 @@ def test_analytic_fit_different_priors(caplog):
         }
     )
 
-    MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: params
+    # Mock the grid_values_func of the PDF model within the test to return the input parameters as the PDF grid values
+    monkeypatch.setattr(
+        MOCK_PDF_MODEL, "grid_values_func", lambda xgrid: lambda params: params
+    )
 
     forward_map = FKTableForwardMap(
         lambda pdf, fkarrs: pdf, n_pdf_params=len(MOCK_PDF_MODEL.param_names)
