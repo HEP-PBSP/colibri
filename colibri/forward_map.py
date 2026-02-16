@@ -5,13 +5,15 @@ Forward maps: parameters → theory predictions.
 
 A ``ForwardMap`` implements the final stage of the fit pipeline, turning the
 fit parameter vector into theory predictions that can be compared with
-data in the likelihood.
+data in the likelihood. It will also also return the PDF values on the fit x-grid,
+which is sometimes needed for computing penalties.
+
 
 Design choice: fixed call signature
 -----------------------------------
 The log-likelihood calls every forward map with the same fixed signature::
 
-    (pdf_grid_func, fk_tables, params) -> predictions
+    (pdf_grid_func, fk_tables, params) -> predictions, pdf
 
 Parameter convention
 --------------------
@@ -37,7 +39,7 @@ Example - fitting a normalisation factor on top of the PDF
         def __call__(self, pdf_grid_func, fk_tables, params):
             pdf = pdf_grid_func(params[: self.n_pdf_params])
             norm = params[self.n_pdf_params]            # first extra parameter
-            return norm * self._pred_func(pdf, fk_tables)
+            return norm * self._pred_func(pdf, fk_tables), pdf
 
 Example - fixed PDF, fitting only extra parameters
 ---------------------------------------------------
@@ -47,11 +49,12 @@ Example - fixed PDF, fitting only extra parameters
         def __init__(self, pred_func, fixed_pdf, fk_tables, n_pdf_params: int = 0):
             super().__init__(n_pdf_params)
             self._pred_func = pred_func
+            self.fixed_pdf = fixed_pdf
             self._fixed_pred = self._pred_func(fixed_pdf, fk_tables)
 
         def __call__(self, pdf_grid_func, fk_tables, params):
             scale = params[0]
-            return scale * self._fixed_pred
+            return scale * self._fixed_pred, self.fixed_pdf
 """
 
 from __future__ import annotations
@@ -114,6 +117,9 @@ class ForwardMap(ABC):
         -------
         jnp.ndarray
             Theory predictions (1-D array with one entry per data point).
+        jnp.ndarray
+            The PDF values (2-D array with shape (N_fl, N_x)).
+
         """
         raise NotImplementedError
 
@@ -133,7 +139,7 @@ class FKTableForwardMap(ForwardMap):
     def __call__(self, pdf_grid_func, fk_tables, params):
         pdf_params = params[: self.n_pdf_params]
         pdf = pdf_grid_func(pdf_params)
-        return self._pred_func(pdf, fk_tables)
+        return self._pred_func(pdf, fk_tables), pdf
 
 
 def forward_map(_pred_data, pdf_model):

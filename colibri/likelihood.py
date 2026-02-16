@@ -125,8 +125,7 @@ class LogLikelihood(object):
         jnp.ndarray
             jax array with the value of the log-likelihood.
         """
-        pdf = self.pdf_grid(params)
-        predictions = self.forward_map(pdf, fast_kernel_arrays)
+        predictions, pdf = self.forward_map(self.pdf_grid, fast_kernel_arrays, params)
         # Select only the data relevant for this likelihood
         # Especially important when using a training/validation split
         predictions = predictions[self.central_values_idx]

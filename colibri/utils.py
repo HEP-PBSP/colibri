@@ -311,8 +311,7 @@ def likelihood_float_type(
     pdf_grid = pdf_model.grid_values_func(FIT_XGRID)
 
     def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
-        pdf = pdf_grid(params)
-        predictions, _ = forward_map(pdf, fast_kernel_arrays)
+        predictions, pdf = forward_map(pdf_grid, fast_kernel_arrays, params)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     params = bayesian_prior(

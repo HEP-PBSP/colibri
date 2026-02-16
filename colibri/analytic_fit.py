@@ -136,9 +136,9 @@ def analytic_fit(
     bases = jnp.identity(len(parameters))
     pdf_grid = pdf_model.grid_values_func(FIT_XGRID)
     predictions = jnp.array(
-        [forward_map(pdf_grid(basis), fast_kernel_arrays) for basis in bases]
+        [forward_map(pdf_grid, fast_kernel_arrays, basis)[0] for basis in bases]
     )
-    intercept = forward_map(pdf_grid(jnp.zeros(len(parameters))), fast_kernel_arrays)
+    intercept = forward_map(pdf_grid, fast_kernel_arrays, jnp.zeros(len(parameters)))[0]
 
     # Construct the analytic solution
     central_values = central_inv_covmat_index.central_values
