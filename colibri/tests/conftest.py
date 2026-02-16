@@ -11,6 +11,7 @@ import numpy as np
 
 from colibri.pdf_model import PDFModel
 from colibri.core import PriorSettings
+from colibri.forward_map import FKTableForwardMap
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
@@ -324,7 +325,10 @@ This mocks a POS fast kernel mapping the PDF grid to 2 datapoints.
 """
 
 
-TEST_FORWARD_MAP_DIS = lambda pdf, fk_arrays: jnp.einsum("ijk,jk->i", fk_arrays[0], pdf)
+TEST_FORWARD_MAP_DIS = FKTableForwardMap(
+    lambda pdf, fk_arrays: jnp.einsum("ijk,jk->i", fk_arrays[0], pdf),
+    n_pdf_params=2,
+)
 """
 Mock DIS forward map function for testing purposes.
 Function expects a tuple of DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_N_XGRID) and a PDF of shape (TEST_N_FL, TEST_N_XGRID).
