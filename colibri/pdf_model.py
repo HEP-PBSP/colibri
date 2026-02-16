@@ -6,7 +6,7 @@ This module implements an abstract class PDFModel which is filled by the various
 """
 
 from abc import ABC, abstractmethod
-from typing import Callable, Tuple
+from typing import Callable
 
 import jax.numpy as jnp
 from jax.typing import ArrayLike
