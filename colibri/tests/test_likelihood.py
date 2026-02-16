@@ -66,9 +66,8 @@ def test_LogLikelihood_class(pos_penalty):
         ]
     )
     # Compute expected value using actual prediction and covariance
-    pdf = log_likelihood_class.pdf_grid(params)
-    predictions = log_likelihood_class.forward_map(
-        pdf, log_likelihood_class.fast_kernel_arrays
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
@@ -166,9 +165,8 @@ def test_log_likelihood_with_and_without_pos_penalty():
     )
 
     # Compute expectation directly: -0.5 * (chi2 + pos_pen + integ_pen)
-    pdf = log_likelihood_class.pdf_grid(params)
-    predictions = log_likelihood_class.forward_map(
-        pdf, log_likelihood_class.fast_kernel_arrays
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
@@ -215,9 +213,8 @@ def test_log_likelihood_with_and_without_pos_penalty():
     )
 
     # Expectation: Only chi2 value (penalties zeroed)
-    pdf = log_likelihood_class.pdf_grid(params)
-    predictions = log_likelihood_class.forward_map(
-        pdf, log_likelihood_class.fast_kernel_arrays
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
@@ -278,8 +275,9 @@ def test_mc_log_likelihood_with_split(pos_penalty):
 
     # Compute expected for train and validation independently
     def compute_expected(ll_obj):
-        pdf = ll_obj.pdf_grid(params)
-        preds = ll_obj.forward_map(pdf, ll_obj.fast_kernel_arrays)
+        preds, pdf = ll_obj.forward_map(
+            ll_obj.pdf_grid, ll_obj.fast_kernel_arrays, params
+        )
         preds = preds[ll_obj.central_values_idx]
         diff = preds - ll_obj.central_values
         inv = ll_obj.inv_covmat
@@ -352,8 +350,9 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
     params = jnp.array([0.3, 0.4])
     train_val = train_loglike(params)
     # Compute expected train value
-    pdf = train_loglike.pdf_grid(params)
-    predictions = train_loglike.forward_map(pdf, train_loglike.fast_kernel_arrays)
+    predictions, pdf = train_loglike.forward_map(
+        train_loglike.pdf_grid, train_loglike.fast_kernel_arrays, params
+    )
     predictions = predictions[train_loglike.central_values_idx]
     diff = predictions - train_loglike.central_values
     chi2_val = jnp.einsum("i,ij,j", diff, train_loglike.inv_covmat, diff)
@@ -412,9 +411,8 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     ll_value_batched = log_likelihood_class(params, batch=batch)
 
     # Compute expected on the batch index: recompute inv_covmat on the sub-covmat
-    pdf = log_likelihood_class.pdf_grid(params)
-    predictions = log_likelihood_class.forward_map(
-        pdf, log_likelihood_class.fast_kernel_arrays
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     predictions_b = predictions[batch.idx]
@@ -480,9 +478,8 @@ def test_LogLikelihood_call_with_batch_with_inv_cov(pos_penalty):
     ll_value_batched = log_likelihood_class(params, batch=batch)
 
     # Compute expected value using the provided inv_b (should be identical)
-    pdf = log_likelihood_class.pdf_grid(params)
-    predictions = log_likelihood_class.forward_map(
-        pdf, log_likelihood_class.fast_kernel_arrays
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     predictions_b = predictions[batch.idx]

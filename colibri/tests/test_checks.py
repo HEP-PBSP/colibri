@@ -9,6 +9,8 @@ from unittest.mock import MagicMock, mock_open, patch
 import jax.numpy as jnp
 import pytest
 
+from colibri.forward_map import FKTableForwardMap
+
 from colibri.checks import check_pdf_model_is_linear, check_pdf_models_equal
 from colibri.core import PriorSettings
 
@@ -129,9 +131,11 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     def pdf_linear_model(params):
         return params
 
-    def forward_map_lin(pdf, fk):
+    forward_map_lin = FKTableForwardMap(
         # Simulating a simple linear model: f(x) = a*x + b*y + c*z + 3.0, where pdf = [a, b, c]
-        return (jnp.dot(pdf, fk) + 3.0, pdf)
+        lambda pdf, fk: jnp.dot(pdf, fk) + 3.0,
+        n_pdf_params=3,
+    )
 
     # Set the mock's grid_values_func to return the linear_model function
     mock_pdf_model.grid_values_func.return_value = pdf_linear_model
@@ -142,9 +146,11 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     )
 
     # Now mock a non-linear model to ensure the ValueError is raised
-    def non_linear_model(pdf, fk):
+    non_linear_model = FKTableForwardMap(
         # Introduce some non-linearity
-        return (jnp.dot(pdf**2, FIT_XGRID) + fk, pdf)
+        lambda pdf, fk: jnp.dot(pdf**2, FIT_XGRID) + fk,
+        n_pdf_params=3,
+    )
 
     # Ensure ValueError is raised for non-linear model
     with pytest.raises(ValueError):

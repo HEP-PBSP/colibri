@@ -31,6 +31,7 @@ from colibri.tests.conftest import (
     TEST_DATASET,
     TEST_DATASET_HAD,
 )
+from colibri.forward_map import FKTableForwardMap
 from colibri.utils import (
     cast_to_numpy,
     closest_indices,
@@ -338,6 +339,9 @@ def test_likelihood_float_type(
     _pred_data = lambda x, fks: jnp.ones(
         len(MOCK_CENTRAL_INV_COVMAT_INDEX.central_values)
     )  # Mock _pred_data
+    forward_map = FKTableForwardMap(
+        _pred_data, n_pdf_params=len(MOCK_PDF_MODEL.param_names)
+    )  # Mock forward_map
     FIT_XGRID = jnp.linspace(0, 1, 10)  # Mock FIT_XGRID
     output_path = tmp_path
 
@@ -347,7 +351,7 @@ def test_likelihood_float_type(
 
     # Call the function under test
     likelihood_float_type(
-        _pred_data=_pred_data,
+        forward_map=forward_map,
         pdf_model=MOCK_PDF_MODEL,
         FIT_XGRID=FIT_XGRID,
         bayesian_prior=mock_bayesian_prior,

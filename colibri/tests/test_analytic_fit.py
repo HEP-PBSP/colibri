@@ -13,6 +13,7 @@ import pytest
 
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 from colibri.core import PriorSettings
+from colibri.forward_map import FKTableForwardMap
 from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     MOCK_PDF_MODEL,
@@ -37,7 +38,9 @@ def test_analytic_fit_flat_direction():
     """
     n_params = len(MOCK_PDF_MODEL.param_names)
 
-    forward_map = lambda pdf, fkarrs: jnp.ones(n_params)
+    forward_map = FKTableForwardMap(
+        lambda pdf, fkarrs: jnp.ones(n_params), n_pdf_params=n_params
+    )
 
     with pytest.raises(ValueError):
         # Run the analytic fit and make sure that the Value Error is raised
@@ -59,7 +62,9 @@ def test_analytic_fit(caplog):
 
     MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: params
 
-    forward_map = lambda pdf, fkarrs: pdf
+    forward_map = FKTableForwardMap(
+        lambda pdf, fkarrs: pdf, n_pdf_params=len(MOCK_PDF_MODEL.param_names)
+    )
 
     # Run the analytic fit
     result = analytic_fit(
@@ -117,7 +122,9 @@ def test_analytic_fit_different_priors(caplog):
 
     MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: params
 
-    forward_map = lambda pdf, fkarrs: pdf
+    forward_map = FKTableForwardMap(
+        lambda pdf, fkarrs: pdf, n_pdf_params=len(MOCK_PDF_MODEL.param_names)
+    )
 
     # Run the analytic fit
     result = analytic_fit(
