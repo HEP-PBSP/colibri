@@ -292,16 +292,7 @@ MOCK_PDF_MODEL.param_names = ["param1", "param2"]
 MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: jnp.sum(
     jnp.array([param * TEST_PDF_GRID for param in params]), axis=0
 )
-"""
-Mock PDF model with 2 parameters and grid_values_func simple mult add operation on np.ones grid.
-"""
 
-MOCK_PDF_MODEL.pred_and_pdf_func = (
-    lambda xgrid, forward_map: lambda params, fast_kernel_arrays: (
-        forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params), fast_kernel_arrays),
-        MOCK_PDF_MODEL.grid_values_func(xgrid)(params),
-    )
-)
 """
 Mock prediction function of PDF model.
 """

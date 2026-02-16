@@ -125,24 +125,29 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     mock_pdf_model = MagicMock()
     mock_pdf_model.param_names = ["a", "b", "c"]
 
-    # Mock the behavior of pred_and_pdf_func to return a linear model
-    def linear_model(params, fk):
-        # Simulating a simple linear model: f(x) = a*x + b*y + c*z + 3.0, where params = [a, b, c]
-        return (jnp.dot(params, fk) + 3.0, params)
+    # Mock the behavior of pdf_grid to return a linear model
+    def pdf_linear_model(params):
+        return params
 
-    # Set the mock's pred_and_pdf_func to return the linear_model function
-    mock_pdf_model.pred_and_pdf_func.return_value = linear_model
+    def forward_map_lin(pdf, fk):
+        # Simulating a simple linear model: f(x) = a*x + b*y + c*z + 3.0, where pdf = [a, b, c]
+        return (jnp.dot(pdf, fk) + 3.0, pdf)
+
+    # Set the mock's grid_values_func to return the linear_model function
+    mock_pdf_model.grid_values_func.return_value = pdf_linear_model
 
     # Test for linear model (should not raise an exception)
-    check_pdf_model_is_linear.__wrapped__(mock_pdf_model, FIT_XGRID, data)
+    check_pdf_model_is_linear.__wrapped__(
+        mock_pdf_model, forward_map_lin, FIT_XGRID, data
+    )
 
     # Now mock a non-linear model to ensure the ValueError is raised
-    def non_linear_model(params, fk):
+    def non_linear_model(pdf, fk):
         # Introduce some non-linearity
-        return (jnp.dot(params**2, FIT_XGRID) + fk, params)
-
-    mock_pdf_model.pred_and_pdf_func.return_value = non_linear_model
+        return (jnp.dot(pdf**2, FIT_XGRID) + fk, pdf)
 
     # Ensure ValueError is raised for non-linear model
     with pytest.raises(ValueError):
-        check_pdf_model_is_linear.__wrapped__(mock_pdf_model, FIT_XGRID, data)
+        check_pdf_model_is_linear.__wrapped__(
+            mock_pdf_model, non_linear_model, FIT_XGRID, data
+        )

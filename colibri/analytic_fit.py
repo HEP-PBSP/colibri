@@ -84,7 +84,7 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 @check_pdf_model_is_linear
 def analytic_fit(
     central_inv_covmat_index,
-    _pred_data,
+    forward_map,
     pdf_model,
     analytic_settings,
     prior_settings,
@@ -105,8 +105,8 @@ def analytic_fit(
     central_inv_covmat_index: commondata_utils.CentralInvCovmatIndex
         dataclass containing central values and inverse covmat.
 
-    _pred_data: @jax.jit CompiledFunction
-        Prediction function for the fit.
+    forward_map: @jax.jit CompiledFunction
+        Forward map function for the fit.
 
     pdf_model: pdf_model.PDFModel
         PDF model to fit.
@@ -131,14 +131,14 @@ def analytic_fit(
     )
 
     parameters = pdf_model.param_names
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
+    pdf_grid = pdf_model.grid_values_func(FIT_XGRID)
     predictions = jnp.array(
-        [pred_and_pdf(basis, fast_kernel_arrays)[0] for basis in bases]
+        [forward_map(pdf_grid(basis), fast_kernel_arrays) for basis in bases]
     )
-    intercept = pred_and_pdf(jnp.zeros(len(parameters)), fast_kernel_arrays)[0]
+    intercept = forward_map(pdf_grid(jnp.zeros(len(parameters))), fast_kernel_arrays)
 
     # Construct the analytic solution
     central_values = central_inv_covmat_index.central_values

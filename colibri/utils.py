@@ -291,7 +291,7 @@ def cast_to_numpy(func):
 
 
 def likelihood_float_type(
-    _pred_data,
+    forward_map,
     pdf_model,
     FIT_XGRID,
     bayesian_prior,
@@ -308,11 +308,11 @@ def likelihood_float_type(
 
     central_values = central_inv_covmat_index.central_values
     inv_covmat = central_inv_covmat_index.inv_covmat
-
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
+    pdf_grid = pdf_model.grid_values_func(FIT_XGRID)
 
     def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
-        predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
+        pdf = pdf_grid(params)
+        predictions, _ = forward_map(pdf, fast_kernel_arrays)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     params = bayesian_prior(
