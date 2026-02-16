@@ -453,6 +453,7 @@ def write_resampled_bayesian_fit(
 
     # overwrite old ns_result.csv with resampled posterior
     parameters = pdf_model.param_names
+    n_pdf_params = len(pdf_model.param_names)
     df = pd.DataFrame(resampled_posterior, columns=parameters)
     df.to_csv(str(resampled_fit_path) + f"/{csv_results_name}.csv", float_format="%.5e")
 
@@ -465,7 +466,7 @@ def write_resampled_bayesian_fit(
     for i, parameters in enumerate(resampled_posterior):
         # Get the PDF grid in the evolution basis
         lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
-        grid_for_writing = np.array(lhapdf_interpolator(parameters))
+        grid_for_writing = np.array(lhapdf_interpolator(parameters[:n_pdf_params]))
 
         replica_index = i + 1
 
