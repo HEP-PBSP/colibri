@@ -16,6 +16,9 @@ from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from colibri.export_results import write_exportgrid
 from colibri.core import MCPseudodata
 
+from validphys.pseudodata import make_replica
+from validphys.n3fit_data import replica_mcseed
+
 import logging
 
 log = logging.getLogger(__name__)
@@ -33,32 +36,21 @@ def mc_pseudodata(
     a fraction mc_validation_fraction of the data.
     """
 
-    central_values = pseudodata_central_covmat_index.central_values
+    central_values = [pseudodata_central_covmat_index.central_values]
     covmat = pseudodata_central_covmat_index.covmat
     all_indices = pseudodata_central_covmat_index.central_values_idx
-
-    # Generate pseudodata according to a multivariate Gaussian centred on
-    # central_values and with covariance matrix covmat.
-    key = jax.random.PRNGKey(replica_index)
-
-    keep_sampling = True
-    counter = 0
-
-    while keep_sampling:
-        key, subkey = jax.random.split(key)
-        pseudodata = jax.random.multivariate_normal(
-            subkey,
+    seed = replica_mcseed(replica_index, mcseed, genrep=True)
+    pseudodata = jnp.array(
+        make_replica(
             central_values,
+            seed,
             covmat,
+            sep_mult=False,
+            genrep=True,
+            max_tries=int(1e6),
+            resample_negative_pseudodata=True,
         )
-        if jnp.all(pseudodata >= 0):
-            keep_sampling = False
-        else:
-            counter += 1
-            if counter > 1000:
-                raise RuntimeError(
-                    "Too many resampling attempts: cannot generate non-negative pseudodata."
-                )
+    )
 
     # Now select a subset of 1 - mc_validation_fraction indices to be the
     # training indices.
