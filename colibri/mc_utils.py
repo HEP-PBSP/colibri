@@ -28,6 +28,7 @@ def mc_pseudodata(
     pseudodata_central_covmat_index,
     replica_index,
     trval_seed,
+    mc_seed,
     shuffle_indices=True,
     mc_validation_fraction=0.2,
 ):
