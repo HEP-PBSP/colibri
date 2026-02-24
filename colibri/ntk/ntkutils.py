@@ -189,7 +189,14 @@ def compute_ntk(pdf_model, params):
     ntk_shape : tuple
         Shape of the NTK matrix
     """
-    pdf_func = pdf_model.grid_values_func(XGRID)
+    # TODO: Temporary workaround to load model from n3fit using nnpdf code
+    try:
+      pdf_func = pdf_model.grid_values_func(XGRID)
+    except AttributeError:
+      from colibri_n3fit.model import N3FitPDFModel
+      pdf_model = N3FitPDFModel(**pdf_model['_init_args'])
+      pdf_func = pdf_model.grid_values_func(XGRID)
+    
     jacobian_func = jax.jacfwd(pdf_func)
     jacobian = jacobian_func(params)
 
@@ -483,7 +490,7 @@ def load_eigenvalues_ensemble(
     }
 
 
-def compute_eigenvectors_at_apoch_for_replica(
+def compute_eigenvectors_at_epoch_for_replica(
     fit_name: str,
     replicas_path: Path,
     replica_idx: int,

@@ -20,7 +20,7 @@ from colibri.constants import XGRID
 from colibri.ntk.ntkutils import (
     NTKGrid,
     NTKStats,
-    compute_eigenvectors_at_apoch_for_replica,
+    compute_eigenvectors_at_epoch_for_replica,
     get_replica_idx_list,
 )
 
@@ -229,7 +229,7 @@ def eigenvectors_ensemble_at_epoch(
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_replica = {
             executor.submit(
-                compute_eigenvectors_at_apoch_for_replica,
+                compute_eigenvectors_at_epoch_for_replica,
                 fit.name,
                 replicas_path,
                 replica_idx,
