@@ -46,10 +46,7 @@ def mc_pseudodata(
             central_values,
             seed,
             covmat,
-            sep_mult=False,
-            genrep=True,
-            max_tries=int(1e6),
-            resample_negative_pseudodata=True,
+            group_positivity_mask=np.ones_like(central_values, dtype=bool),
         ).squeeze()
     )
 
