@@ -50,7 +50,7 @@ def mc_pseudodata(
             genrep=True,
             max_tries=int(1e6),
             resample_negative_pseudodata=True,
-        )
+        ).squeeze()
     )
 
     # Now select a subset of 1 - mc_validation_fraction indices to be the
