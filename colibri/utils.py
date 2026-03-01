@@ -237,6 +237,10 @@ def get_pdf_model(colibri_fit):
     with open(pdf_model_path, "rb") as file:
         pdf_model = dill.load(file)
 
+    if isinstance(pdf_model, dict) and "_init_args" in pdf_model:
+        from colibri_n3fit.model import N3FitPDFModel
+        pdf_model = N3FitPDFModel(**pdf_model['_init_args'])
+
     return pdf_model
 
 

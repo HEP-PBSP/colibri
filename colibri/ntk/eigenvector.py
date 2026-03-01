@@ -183,6 +183,7 @@ def eigenvectors_ensemble_at_epoch(
     epoch: int,
     replica_index_list: Optional[tuple] = None,
     max_workers: Optional[int] = None,
+    kwargs: frozenset = frozenset({}),
 ):
     """
     Compute NTK eigenvalues for all replicas for a specified epoch.
@@ -201,6 +202,8 @@ def eigenvectors_ensemble_at_epoch(
     max_workers : int, optional
         Maximum number of parallel workers. If None, defaults to min(10,
         n_replicas).
+    kwargs : dict, optional
+        Additional kwargs to pass to compute_eigenvectors_at_epoch_for_replica
 
     Returns
     -------
@@ -234,6 +237,7 @@ def eigenvectors_ensemble_at_epoch(
                 replicas_path,
                 replica_idx,
                 epoch,
+                **dict(kwargs),
             ): replica_idx
             for replica_idx in replica_index_list
         }

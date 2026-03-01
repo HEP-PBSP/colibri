@@ -114,6 +114,27 @@ class NTKGrid(abc.ABC):
             LaTeX-formatted label for the legend
         """
         pass
+    
+def generate_filename(replica_idx: int, name: str = None) -> str:
+    """
+    Generate a filename for saving NTK eigenvalues based on replica index and an optional name.
+
+    Parameters
+    ----------
+    replica_idx : int
+        Index of the replica
+    name : str, optional
+        Optional name to include in the filename for clarity
+
+    Returns
+    -------
+    str
+        Generated filename string
+    """
+    if name is None:
+        return f"{NTK_EIGVAL_TOKEN}_{replica_idx}.npz"
+    else:
+        return f"{NTK_EIGVAL_TOKEN}_{name}_{replica_idx}.npz"
 
 
 @lru_cache
@@ -171,7 +192,7 @@ def get_replica_idx_list(replicas_path):
     return rep_list
 
 
-def compute_ntk(pdf_model, params):
+def compute_ntk(pdf_model, params, **kwargs):
     """
     Compute the NTK matrix given model parameters.
 
@@ -181,6 +202,9 @@ def compute_ntk(pdf_model, params):
         The PDF model instance
     params : dict
         Model parameters
+    **kwargs
+        Additional arguments for the pdf_model.grid_values_func (e.g., exclude_layers
+        for the n3fit model)
 
     Returns
     -------
@@ -189,14 +213,7 @@ def compute_ntk(pdf_model, params):
     ntk_shape : tuple
         Shape of the NTK matrix
     """
-    # TODO: Temporary workaround to load model from n3fit using nnpdf code
-    try:
-      pdf_func = pdf_model.grid_values_func(XGRID)
-    except AttributeError:
-      from colibri_n3fit.model import N3FitPDFModel
-      pdf_model = N3FitPDFModel(**pdf_model['_init_args'])
-      pdf_func = pdf_model.grid_values_func(XGRID)
-    
+    pdf_func = pdf_model.grid_values_func(XGRID, **kwargs)
     jacobian_func = jax.jacfwd(pdf_func)
     jacobian = jacobian_func(params)
 
@@ -243,7 +260,7 @@ def compute_eigendecomposition(ntk_matrix, hermitian=True):
 
 
 def compute_eigenvalues_for_replica(
-    fit_name: str, replicas_path: Path, replica_idx: int, max_epoch=None
+    fit_name: str, replicas_path: Path, replica_idx: int, max_epoch=None, name: str = None, **kwargs
 ):
     """
     Compute the NTK eigenvalues for a given replica across all epochs.
@@ -258,6 +275,8 @@ def compute_eigenvalues_for_replica(
         Replica index to compute
     max_epoch : int, optional
         Maximum epoch number to consider.
+    name : str, optional
+        Optional name to include in the filename for clarity when saving results.
 
     Returns
     -------
@@ -278,7 +297,7 @@ def compute_eigenvalues_for_replica(
                 continue
             params = jnp.load(param_file)["params"]
 
-            ntk, shape = compute_ntk(pdf_model, params)
+            ntk, shape = compute_ntk(pdf_model, params, **kwargs)
             if ntk_shape is None:
                 ntk_shape = shape
 
@@ -296,6 +315,7 @@ def compute_eigenvalues_for_replica(
             replica_idx=replica_idx,
             replicas_path=replicas_path,
             ntk_shape=ntk_shape,
+            name=name
         )
 
         return (replica_idx, epochs, ntk_shape)
@@ -305,7 +325,7 @@ def compute_eigenvalues_for_replica(
         return None
 
 
-def get_completed_replicas(replicas_path: Path, token: str = NTK_EIGVAL_TOKEN) -> list:
+def get_completed_replicas(replicas_path: Path, name: str = None) -> list:
     """
     Utility function to get list of replica indices for which
     the NTK eigenvalues have already been computed.
@@ -326,7 +346,8 @@ def get_completed_replicas(replicas_path: Path, token: str = NTK_EIGVAL_TOKEN) -
     for replica_folder in replicas_path.glob("replica_*"):
         try:
             idx = int(replica_folder.stem.split("_")[1])
-            replica_file = replica_folder / f"{token}_{idx}.npz"
+            filename = generate_filename(idx, name)
+            replica_file = replica_folder / f"{filename}"
             if replica_file.exists():
                 completed.append(idx)
         except (ValueError, IndexError) as e:
@@ -342,6 +363,7 @@ def save_replica_eigenvalues(
     replica_idx: int,
     replicas_path: Path,
     ntk_shape: tuple = None,
+    name: str = None
 ) -> None:
     """
     Save eigenvalues for a single replica to disk.
@@ -358,9 +380,12 @@ def save_replica_eigenvalues(
         Directory to save results
     ntk_shape : tuple, optional
         Shape of the NTK matrix (saved in metadata)
+    name: str, optional
+        Optional name to include in the filename for clarity
     """
+    filename = generate_filename(replica_idx, name)
     replica_file = (
-        replicas_path / f"replica_{replica_idx}/{NTK_EIGVAL_TOKEN}_{replica_idx}.npz"
+        replicas_path / f"replica_{replica_idx}/{filename}"
     )
     np.savez_compressed(
         replica_file,
@@ -371,7 +396,7 @@ def save_replica_eigenvalues(
     log.debug(f"Saved eigenvalues for replica {replica_idx} to {replica_file}")
 
 
-def load_replica_eigenvalues(replica_idx: int, cache_dir: Path) -> dict:
+def load_replica_eigenvalues(replica_idx: int, cache_dir: Path, name: str = None) -> dict:
     """
     Load eigenvalues for a single replica from disk.
 
@@ -381,14 +406,17 @@ def load_replica_eigenvalues(replica_idx: int, cache_dir: Path) -> dict:
         Replica index
     cache_dir : Path
         Directory containing saved results
+    name: str, optional
+        Optional name to include in the filename to specify the set of eigenvalues.
 
     Returns
     -------
     dict
         Dictionary with 'eigenvalues' (n_epochs, n_eigenvalues) and 'epochs'
     """
+    filename = generate_filename(replica_idx, name)
     replica_file = (
-        cache_dir / f"replica_{replica_idx}/{NTK_EIGVAL_TOKEN}_{replica_idx}.npz"
+        cache_dir / f"replica_{replica_idx}/{filename}"
     )
 
     if not replica_file.exists():
@@ -403,7 +431,7 @@ def load_replica_eigenvalues(replica_idx: int, cache_dir: Path) -> dict:
 
 
 def load_eigenvalues_ensemble(
-    replicas_path: Path, max_epoch=None
+    replicas_path: Path, max_epoch=None, name: str = None
 ) -> dict:
     """
     Load all replica eigenvalues into an ensemble format.
@@ -415,6 +443,8 @@ def load_eigenvalues_ensemble(
     max_epoch : int, optional
         Maximum epoch to consider. It filters out replicas that do not have
         data up to this epoch.
+    name: str, optional
+        Optional name to include in the filename to specify the set of eigenvalues.
 
     Returns
     -------
@@ -425,7 +455,7 @@ def load_eigenvalues_ensemble(
         - 'ntk_shape': shape of NTK matrix
         - 'replica_indices': list of replica indices included
     """
-    completed_replicas = get_completed_replicas(replicas_path)
+    completed_replicas = get_completed_replicas(replicas_path, name)
 
     if not completed_replicas:
         raise ValueError(f"No completed replicas found in {replicas_path}")
@@ -435,7 +465,7 @@ def load_eigenvalues_ensemble(
     included_replicas = []
     ntk_shape = None
     for replica_idx in completed_replicas:
-        data = load_replica_eigenvalues(replica_idx, replicas_path)
+        data = load_replica_eigenvalues(replica_idx, replicas_path, name)
         epochs = np.array(data["epochs"])
         eigenvalues = data["eigenvalues"]  # (n_epochs, n_eigenvalues)
 
@@ -495,6 +525,7 @@ def compute_eigenvectors_at_epoch_for_replica(
     replicas_path: Path,
     replica_idx: int,
     epoch: int,
+    **kwargs
 ):
     """
     Compute the eigenvectors of the NTK at a given epoch for a specific replica.
@@ -509,6 +540,9 @@ def compute_eigenvectors_at_epoch_for_replica(
         Replica index to compute
     epoch : int
         Epoch number at which to compute eigenvectors
+    **kwargs
+        Additional arguments for the pdf_model.grid_values_func (e.g., exclude_layers
+        for the n3fit model)
     """
     try:
         pdf_model = get_pdf_model(fit_name)
@@ -521,7 +555,7 @@ def compute_eigenvectors_at_epoch_for_replica(
             )
 
         params = jnp.load(params_at_epoch)["params"]
-        ntk, shape = compute_ntk(pdf_model, params)
+        ntk, shape = compute_ntk(pdf_model, params, **kwargs)
         _, eigvecs = compute_eigendecomposition(ntk, hermitian=True)
 
         return (replica_idx, epoch, eigvecs, shape)

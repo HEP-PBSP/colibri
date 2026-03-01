@@ -153,6 +153,8 @@ def eigenvalues_ensemble(
     max_epoch: Optional[int] = None,
     force_recompute: bool = False,
     max_workers: Optional[int] = None,
+    name: Optional[str] = None,
+    kwargs: dict = {},
 ):
     """
     Compute NTK eigenvalues for all replicas across all specified epochs.
@@ -177,6 +179,8 @@ def eigenvalues_ensemble(
     max_workers : int, optional
         Maximum number of parallel workers. If None, defaults to min(10,
         n_replicas).
+    name: str, optional
+        Optional name to include in the filename for clarity when saving results.
 
     Returns
     -------
@@ -197,13 +201,13 @@ def eigenvalues_ensemble(
         completed = []
         log.info("Force recompute enabled: ignoring cached replicas")
     else:
-        completed = get_completed_replicas(replicas_path)
+        completed = get_completed_replicas(replicas_path, name)
 
     pending = sorted([r for r in replica_index_list if r not in completed])
 
     if not pending:
         log.info(f"All {len(completed)} replicas already computed. Loading from cache.")
-        return load_eigenvalues_ensemble(replicas_path, max_epoch)
+        return load_eigenvalues_ensemble(replicas_path, max_epoch, name)
 
     log.info(
         f"Computing eigenvalues: {len(pending)} pending, "
@@ -224,6 +228,8 @@ def eigenvalues_ensemble(
                 replicas_path,
                 replica_idx,
                 max_epoch,
+                name,
+                **(kwargs),
             ): replica_idx
             for replica_idx in pending
         }
@@ -241,7 +247,7 @@ def eigenvalues_ensemble(
                 log.warning(f"Error computing replica {replica_idx}: {e}")
 
     # Load all results (completed + newly computed)
-    return load_eigenvalues_ensemble(replicas_path, max_epoch)
+    return load_eigenvalues_ensemble(replicas_path, max_epoch, name)
 
 
 def eigenvalue_grid(fit: FitSpec, eigenvalues_ensemble) -> EigenvalueGrid:
