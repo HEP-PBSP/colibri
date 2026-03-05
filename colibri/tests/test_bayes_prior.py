@@ -28,7 +28,7 @@ def test_uniform_prior():
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10,))
 
-    transformed = prior_transform["prior_transform"](cube)
+    transformed = prior_transform.prior_transform(cube)
     expected = (
         cube
         * (
@@ -64,7 +64,7 @@ def test_uniform_prior():
         ]
     )
 
-    transformed_bounds = prior_transform_bounds["prior_transform"](cube_bounds)
+    transformed_bounds = prior_transform_bounds.prior_transform(cube_bounds)
 
     assert jnp.allclose(
         transformed_bounds, expected_bounds
@@ -126,7 +126,7 @@ def test_gaussian_prior(mock_get_full_posterior):
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10, 2))
 
-    transformed = prior_transform["prior_transform"](cube)
+    transformed = prior_transform.prior_transform(cube)
     independent_gaussian = jax.scipy.stats.norm.ppf(cube)
     expected = mean + jnp.dot(independent_gaussian, jnp.linalg.cholesky(cov).T)
 
