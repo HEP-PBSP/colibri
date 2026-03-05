@@ -21,6 +21,7 @@ from colibri.tests.conftest import (
 )
 from colibri.ultranest_fit import UltranestFit, run_ultranest_fit, ultranest_fit
 from colibri.likelihood import LogLikelihood
+from colibri.core import BayesianPrior
 
 jax.config.update("jax_enable_x64", True)
 
@@ -38,11 +39,11 @@ def mock_sample(rng_key, n_samples):
     return jax.random.uniform(rng_key, shape=(n_samples, n_params))
 
 
-bayesian_prior = {
-    "prior_transform": mock_prior_transform,
-    "log_prob": mock_log_prob,
-    "sample": mock_sample,
-}
+bayesian_prior = BayesianPrior(
+    prior_transform=lambda x: x,
+    log_prob=lambda x: -jnp.sum(x**2, axis=-1),
+    sample=lambda rng, n: jnp.zeros((n, MOCK_PDF_MODEL.n_parameters)),
+)
 
 
 integrability_penalty = lambda pdf: jnp.array([0.0])
