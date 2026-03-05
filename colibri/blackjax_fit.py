@@ -51,7 +51,7 @@ def blackjax_fit(
     pdf_model: pdf_model.PDFModel
         The PDF model to fit.
 
-    bayesian_prior: @jax.jit CompiledFunction
+    bayesian_prior: BayesianPrior, @jax.jit CompiledFunction
         The prior function for the model.
 
     blackjax_settings: dict
@@ -75,10 +75,10 @@ def blackjax_fit(
     n_live = blackjax_settings["n_live"]
     n_delete = int(blackjax_settings["delete_fraction"] * n_live)
 
-    inital_particles = bayesian_prior["sample"](rng_key, n_live)
+    inital_particles = bayesian_prior.sample(rng_key, n_live)
 
     algo = blackjax.nss(
-        logprior_fn=bayesian_prior["log_prob"],
+        logprior_fn=bayesian_prior.log_prob,
         loglikelihood_fn=log_likelihood,
         num_delete=n_delete,
         num_inner_steps=int(blackjax_settings["repeats"] * n_dims),

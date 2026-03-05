@@ -265,3 +265,10 @@ class CentralInvCovmatIndex:
 
     def to_dict(self):
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class BayesianPrior:
+    prior_transform: Callable
+    log_prob: Callable
+    sample: Callable

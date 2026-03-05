@@ -6,6 +6,7 @@ from colibri.utils import (
     get_full_posterior,
 )
 from colibri.checks import check_pdf_models_equal
+from colibri.core import BayesianPrior
 import tensorflow_probability.substrates.jax as tfp
 
 tfd = tfp.distributions
@@ -96,8 +97,8 @@ def bayesian_prior(prior_settings, pdf_model):
     else:
         raise ValueError("Invalid prior type.")
 
-    return {
-        "prior_transform": prior_transform,
-        "log_prob": log_prob,
-        "sample": sample,
-    }
+    return BayesianPrior(
+        prior_transform=prior_transform,
+        log_prob=log_prob,
+        sample=sample,
+    )
