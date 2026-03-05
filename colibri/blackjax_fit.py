@@ -22,7 +22,6 @@ from colibri.core import BlackJAXFit
 from colibri.export_results import export_bayes_results, write_replicas
 from colibri.utils import resample_from_ns_posterior
 
-
 log = logging.getLogger(__name__)
 
 # Check if --debug flag is present

@@ -26,7 +26,6 @@ from validphys import convolution
 import importlib
 import inspect
 
-
 log = logging.getLogger(__name__)
 
 
