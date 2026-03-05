@@ -308,7 +308,7 @@ class colibriConfig(Config):
         blackjax_settings["posterior_resampling_seed"] = settings.get(
             "posterior_resampling_seed", 123456
         )
-        # Set directoty where blackjax_logs will be saved
+        # Set directory where blackjax_logs will be saved
         blackjax_settings["log_dir"] = settings.get(
             "log_dir", str(output_path / "blackjax_logs")
         )
