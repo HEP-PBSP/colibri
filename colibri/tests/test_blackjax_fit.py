@@ -3,16 +3,13 @@ colibri.tests.test_blackjax_fit.py
 Tests for the BlackJAX fitting module.
 """
 
-import copy
 from unittest.mock import Mock, patch
-import os
-import tempfile
 
 import jax
 import jax.numpy as jnp
 import pytest
+import types
 
-from colibri.loss_functions import chi2
 from colibri.tests.conftest import (
     MOCK_CENTRAL_COVMAT_INDEX,
     MOCK_PDF_MODEL,
@@ -22,7 +19,7 @@ from colibri.tests.conftest import (
     TEST_XGRID,
 )
 
-from colibri.core import BlackJAXFit
+from colibri.core import BlackJAXFit, BayesianPrior
 from colibri.blackjax_fit import blackjax_fit, run_blackjax_fit
 from colibri.likelihood import LogLikelihood
 
@@ -42,11 +39,11 @@ def mock_sample(rng_key, n_samples):
     return jax.random.normal(rng_key, shape=(n_samples, n_params))
 
 
-bayesian_prior = {
-    "prior_transform": mock_prior_transform,
-    "log_prob": mock_log_prob,
-    "sample": mock_sample,
-}
+bayesian_prior = BayesianPrior(
+    prior_transform=lambda x: x,
+    log_prob=lambda x: -jnp.sum(x**2, axis=-1),
+    sample=lambda rng, n: jnp.zeros((n, MOCK_PDF_MODEL.n_parameters)),
+)
 
 integrability_penalty = lambda pdf: jnp.array([0.0])
 
@@ -83,33 +80,27 @@ def test_blackjax_fit(pos_penalty):
 
     MOCK_PDF_MODEL.n_parameters = len(MOCK_PDF_MODEL.param_names)
 
-    fit_result = blackjax_fit(
-        MOCK_PDF_MODEL,
-        bayesian_prior,
-        blackjax_settings,
-        mock_log_likelihood,
-    )
+    with patch("colibri.blackjax_fit.anesthetic.NestedSamples"):
+
+        fit_result = blackjax_fit(
+            MOCK_PDF_MODEL,
+            bayesian_prior,
+            blackjax_settings,
+            mock_log_likelihood,
+        )
 
     assert isinstance(fit_result, BlackJAXFit)
-
-
-from unittest.mock import patch
-import types
-import jax.numpy as jnp
-import pytest
-
-from colibri.blackjax_fit import blackjax_fit
-from colibri.core import BlackJAXFit
 
 
 def test_blackjax_fit_truncates_posterior_and_warns(caplog):
     # --- ensure pdf_model is consistent ---
     MOCK_PDF_MODEL.n_parameters = len(MOCK_PDF_MODEL.param_names)
 
-    bayesian_prior = {
-        "log_prob": lambda x: -jnp.sum(x**2, axis=-1),
-        "sample": lambda rng, n: jnp.zeros((n, MOCK_PDF_MODEL.n_parameters)),
-    }
+    bayesian_prior = BayesianPrior(
+        prior_transform=lambda x: x,
+        log_prob=lambda x: -jnp.sum(x**2, axis=-1),
+        sample=lambda rng, n: jnp.zeros((n, MOCK_PDF_MODEL.n_parameters)),
+    )
 
     blackjax_settings = {
         "seed": 0,
