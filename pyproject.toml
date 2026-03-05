@@ -21,6 +21,7 @@ jax = "*"
 optax = "*"
 flax = "*"
 dill = "*"
+tqdm = "*"
 
 # Mark Sphinx and its extensions optional:
 sphinx = {version="*", optional=true}
