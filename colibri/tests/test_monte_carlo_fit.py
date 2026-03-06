@@ -13,6 +13,7 @@ from numpy.testing import assert_allclose
 
 from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_carlo_fit
 from colibri.tests.conftest import MOCK_PDF_MODEL
+from colibri.data_batch import data_batches
 
 mock_pdf_model = MOCK_PDF_MODEL
 N_PARAMS = len(MOCK_PDF_MODEL.param_names)
@@ -40,6 +41,8 @@ class MockEarlyStopper:
 
 def test_monte_carlo_fit_runs_without_errors():
     # Provide necessary inputs for the function
+    training_indices = jnp.arange(100)
+    data_batch = data_batches(training_indices, 100)
 
     result = monte_carlo_fit(
         mc_log_likelihood=(lambda *args: 0.0, lambda *args: 0.0),
@@ -48,6 +51,7 @@ def test_monte_carlo_fit_runs_without_errors():
         optimizer_provider=MockOptimizerProvider(),
         early_stopper=MockEarlyStopper(),
         max_epochs=100,
+        data_batches=data_batch,
     )
 
     # Assert that the function returns an instance of MonteCarloFit

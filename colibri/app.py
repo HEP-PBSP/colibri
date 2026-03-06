@@ -8,7 +8,6 @@ from validphys.app import App
 from colibri.config import colibriConfig, Environment
 import pathlib
 
-
 colibri_providers = [
     "colibri.theory_predictions",
     "colibri.theory_penalties",

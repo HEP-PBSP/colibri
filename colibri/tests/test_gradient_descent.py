@@ -56,15 +56,16 @@ def test_run_gradient_descent_with_batches_converges():
 
     # Create synthetic dataset y_i all equal to 2.0 so optimum is p=2.0
     n_points = 20
+    training_indices = jnp.arange(n_points)
     y = jnp.full((n_points,), 2.0)
     batch_size = 5
     batches = data_batches(
-        n_training_points=n_points, batch_size=batch_size, batch_seed=0
+        training_indices=training_indices, batch_size=batch_size, batch_seed=0
     )
 
-    def training_loss_fn(params, batch_idx):
+    def training_loss_fn(params, batch):
         # Mean squared error on the batch
-        batch_vals = y[batch_idx]
+        batch_vals = y[batch.idx]
         return jnp.mean((params - batch_vals) ** 2)
 
     def validation_loss_fn(params):
@@ -99,7 +100,7 @@ def test_run_gradient_descent_record_every_behavior():
 
     target = -1.0
 
-    def training_loss_fn(params, _batch_idx):
+    def training_loss_fn(params, _batch):
         return (params - target) ** 2
 
     def validation_loss_fn(params):

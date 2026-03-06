@@ -13,7 +13,6 @@ from numpy.testing import assert_allclose
 from colibri.hessian_fit import HessianFit, hessian_fit, run_hessian_fit
 from colibri.tests.conftest import MOCK_PDF_MODEL
 
-
 N_PARAMS = len(MOCK_PDF_MODEL.param_names)
 
 

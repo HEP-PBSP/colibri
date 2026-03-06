@@ -9,7 +9,6 @@ from les_houches_example.model import LesHouchesPDF
 
 from colibri.config import Environment, colibriConfig
 
-
 log = logging.getLogger(__name__)
 
 

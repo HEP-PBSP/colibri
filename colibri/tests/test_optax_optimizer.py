@@ -53,6 +53,38 @@ def test_optimizer_provider_with_clipnorm():
     assert all(k in new_params for k in params)
 
 
+def test_optimizer_provider_with_scheduler():
+    """Check that optimizer_provider correctly applies a learning rate scheduler."""
+    optimizer_settings = {
+        "optimizer": "adam",
+        "optimizer_hyperparams": {},
+        "scheduler": {
+            "name": "linear_schedule",
+            "params": {
+                "init_value": 0.001,
+                "end_value": 0.0,
+                "transition_begin": 0,
+                "transition_steps": 10,
+            },
+        },
+        "clipnorm": None,
+    }
+
+    opt = optimizer_provider(optimizer_settings=optimizer_settings)
+
+    assert isinstance(opt, optax.GradientTransformation)
+
+    # Test init and update with dummy params
+    params = {"w": jnp.array([1.0, 2.0])}
+    state = opt.init(params)
+    grads = {"w": jnp.array([0.1, -0.1])}
+    updates, new_state = opt.update(grads, state, params)
+    new_params = optax.apply_updates(params, updates)
+
+    assert new_state is not None
+    assert all(k in new_params for k in params)
+
+
 def test_optimizer_provider_invalid_optimizer_raises():
     """Invalid optimizer name should raise an AttributeError."""
     optimizer_settings = {

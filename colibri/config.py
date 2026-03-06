@@ -568,7 +568,7 @@ class colibriConfig(Config):
         For a gradient descent based fit. Parses the optimizer_settings namespace from the runcard.
         """
         # Begin by checking that the user-supplied keys are known; warn the user otherwise.
-        known_keys = {"clipnorm", "optimizer", "optimizer_hyperparams"}
+        known_keys = {"clipnorm", "optimizer", "optimizer_hyperparams", "scheduler"}
 
         kdiff = settings.keys() - known_keys
         for k in kdiff:
@@ -585,6 +585,7 @@ class colibriConfig(Config):
         )
         optimizer_settings["optimizer"] = settings.get("optimizer", "adam")
         optimizer_settings["clipnorm"] = settings.get("clipnorm", None)
+        optimizer_settings["scheduler"] = settings.get("scheduler", None)
 
         return optimizer_settings
 

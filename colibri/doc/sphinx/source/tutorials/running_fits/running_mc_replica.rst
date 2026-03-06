@@ -98,6 +98,14 @@ executable.
         optimizer_hyperparams:
             learning_rate: 0.001
             # any hyperparameters specific to the chosen optimizer can be set here
+        # Optional learning rate scheduler
+        # scheduler:
+        #     name: linear_schedule
+        #     params:
+        #         end_value:  1e-6
+        #         init_value: 1e-3
+        #         transition_begin: 3000
+        #         transition_steps: 10000
 
     # Monte Carlo settings
     use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
@@ -129,6 +137,8 @@ executable.
 These settings control the method of gradient descent. You can use any
 of the Optax optimizers and settings, which you can read more about
 `here <https://optax.readthedocs.io/en/latest/api/optimizers.html#>`_.
+Learning schedulers are also supported, and you can find the available options
+`here <https://optax.readthedocs.io/en/latest/api/optimizer_schedules.html#>`_.
 
 ``param_initialiser_settings``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -186,6 +196,23 @@ can do so:
     If you use initialise with a normal distribution and don't specify
     means or standard deviations, default values of **0.0** and **1.0**
     will be used respectively.
+
+Using data batching
+^^^^^^^^^^^^^^^^^^^
+In Monte Carlo replica fits, it is possible to use data batching during training.
+This can be done by adding the following settings to the runcard:
+
+.. code-block:: bash
+
+    batch_size: 128
+    batch_seed: 3
+    shuffle_each_epoch: False
+    
+* ``batch_size``: The size of the data batches. If the dataset is smaller
+  than this size or the ``batch_size`` is not specified, the full dataset will be used.
+* ``batch_seed``: The random seed used to generate the data batches.
+* ``shuffle_each_epoch``: Whether to reshuffle the data at the start of each epoch. If
+  set to ``False``, the data will be shuffled only once at the start of training and the batches will be fixed.
 
 Running the fit
 ---------------
