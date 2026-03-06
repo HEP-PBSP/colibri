@@ -160,7 +160,6 @@ def blackjax_fit(
 
     Cb = avg_chi2 - min_chi2
 
-    # todo: interface properly to expected output
     fit_result = BlackJAXFit(
         blackjax_specs=blackjax_settings,
         blackjax_result={
