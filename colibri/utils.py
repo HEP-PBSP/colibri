@@ -315,7 +315,7 @@ def likelihood_float_type(
         predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
-    params = bayesian_prior(
+    params = bayesian_prior.prior_transform(
         jax.random.uniform(jax.random.PRNGKey(0), shape=(len(pdf_model.param_names),))
     )
 

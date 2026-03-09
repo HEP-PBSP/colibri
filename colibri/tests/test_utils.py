@@ -48,6 +48,7 @@ from colibri.utils import (
     t0_pdf_grid,
     write_resampled_bayesian_fit,
 )
+from colibri.core import BayesianPrior
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
@@ -252,9 +253,11 @@ def test_get_full_posterior():
     shutil.rmtree(dest_path)
 
 
-def mock_bayesian_prior(array):
-    # Mocked version of bayesian_prior
-    return array
+mock_bayesian_prior = BayesianPrior(
+    prior_transform=lambda x: x,
+    log_prob=lambda x: -jnp.sum(x**2, axis=-1),
+    sample=lambda rng, n: jnp.zeros((n, len(MOCK_PDF_MODEL.param_names))),
+)
 
 
 @pytest.mark.parametrize("dataset_input", [TEST_DATASET_HAD, TEST_DATASET])
