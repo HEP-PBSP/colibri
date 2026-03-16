@@ -30,23 +30,32 @@ def mc_pseudodata(
     trval_seed,
     mcseed,
     shuffle_indices=True,
+    positive_pseudodata=False,
     mc_validation_fraction=0.2,
 ):
     """Produces Monte Carlo pseudodata for the replica with index replica_index.
     The pseudodata is returned with a set of training indices, which account for
     a fraction mc_validation_fraction of the data.
-    """
+
+    If positive_pseudodata is True, the pseudodata will be resampled until all values
+    are positive"""
 
     central_values = [pseudodata_central_covmat_index.central_values]
     covmat = pseudodata_central_covmat_index.covmat
     all_indices = pseudodata_central_covmat_index.central_values_idx
     seed = replica_mcseed(replica_index, mcseed, genrep=True)
+
+    if positive_pseudodata:
+        group_positivity_mask = np.ones_like(central_values, dtype=bool)
+    else:
+        group_positivity_mask = None
+
     pseudodata = jnp.array(
         make_replica(
             central_values,
             seed,
             covmat,
-            group_positivity_mask=np.ones_like(central_values, dtype=bool),
+            group_positivity_mask=group_positivity_mask,
         ).squeeze()
     )
 
