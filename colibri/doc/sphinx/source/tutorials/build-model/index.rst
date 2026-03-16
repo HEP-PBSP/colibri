@@ -36,4 +36,4 @@ This model can then be used to perform fits and run closure tests (see the
 
    If you want to run Colibri fits with a model that has already been implemented,
    or want to have a look at the implementation of a more complex model, you can
-   head to `this section <in_available_models>`.
+   head to :ref:`this section <in_available_models>`.
