@@ -11,13 +11,13 @@ import jax.numpy as jnp
 import os
 import numpy as np
 
-from colibri.training_validation import training_validation_split
+from colibri.training_validation import training_validation_split, trval_seed
 from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from colibri.export_results import write_exportgrid
 from colibri.core import MCPseudodata
 
 from validphys.pseudodata import make_replica
-from validphys.n3fit_data import replica_mcseed
+from validphys.n3fit_data import replica_mcseed, replica_trvlseed
 
 import logging
 
@@ -27,7 +27,8 @@ log = logging.getLogger(__name__)
 def mc_pseudodata(
     pseudodata_central_covmat_index,
     replica_index,
-    trval_seed,
+    # trval_seed,
+    trvlseed,
     mcseed,
     shuffle_indices=True,
     positive_pseudodata=False,
@@ -69,10 +70,15 @@ def mc_pseudodata(
             trval_split=False,
         )
 
+    trval_key_seed = replica_trvlseed(
+        replica_index, trvlseed, same_trvl_per_replica=False
+    )  # This is the seed that NNPDF uses
+    trval_key = trval_seed(trval_key_seed)
+    # This method is different from the one used by NNPDF, which selects a fraction of points per dataset
     trval_obj = training_validation_split(
         all_indices,
         mc_validation_fraction,
-        trval_seed,
+        trval_key,
         shuffle_indices,
     )
 
