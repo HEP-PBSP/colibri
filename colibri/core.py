@@ -260,6 +260,7 @@ class CentralCovmatIndex:
     central_values: jnp.array
     covmat: jnp.array
     central_values_idx: jnp.array
+    basis_transform: Optional[jnp.array] = None
 
     def to_dict(self):
         return asdict(self)
@@ -270,6 +271,7 @@ class CentralInvCovmatIndex:
     central_values: jnp.array
     inv_covmat: jnp.array
     central_values_idx: jnp.array
+    basis_transform: Optional[jnp.array] = None
 
     def to_dict(self):
         return asdict(self)

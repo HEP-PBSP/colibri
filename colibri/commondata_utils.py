@@ -164,11 +164,11 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
         (see config.produce_commondata_tuple) and accordingly to the
         specified options.
 
-    fit_covariance_matrix: jnp.ndarray
+    fit_covariance_matrix: jnp.ndarray or Tuple of (U, D) (for diagonalized covariance matrix)
         covariance matrix, is generated as explicit node
         (see config.fit_covariance_matrix) can be either experimental
         or t0 covariance matrix depending on whether `use_fit_t0` is
-        True or False
+        True or False, and can be diagonalized or not depending on the value of `diagonalize_covmat`.
 
     Returns
     -------
@@ -180,6 +180,18 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
         pd.concat([cd.central_values for cd in commondata_tuple], axis=0)
     )
     central_values_idx = jnp.arange(central_values.shape[0])
+
+    # If the covariance matrix is diagonalised we also need to store the basis transformation matrix U.
+    if isinstance(fit_covariance_matrix, tuple):
+        # Diagonalized covariance matrix case
+        U, D = fit_covariance_matrix
+
+        return CentralCovmatIndex(
+            central_values=central_values,
+            central_values_idx=central_values_idx,
+            covmat=D,  # TODO: check if it is fine to simply pass an array with eigevalues.
+            basis_transform=U,
+        )
 
     return CentralCovmatIndex(
         central_values=central_values,
@@ -203,6 +215,16 @@ def central_inv_covmat_index(central_covmat_index):
     of the covariance matrix and store the relevant data into
     CentralInvCovmatIndex dataclass.
     """
+    if central_covmat_index.basis_transform is not None:
+        # If the covariance matrix is diagonalised, we can simply invert the eigenvalues and keep the same basis transformation.
+        return CentralInvCovmatIndex(
+            central_values=central_covmat_index.central_values,
+            central_values_idx=central_covmat_index.central_values_idx,
+            inv_covmat=1.0
+            / central_covmat_index.covmat,  # covmat in this case is the array of eigenvalues
+            basis_transform=central_covmat_index.basis_transform,
+        )
+
     inv_covmat = jla.inv(central_covmat_index.covmat)
     return CentralInvCovmatIndex(
         central_values=central_covmat_index.central_values,

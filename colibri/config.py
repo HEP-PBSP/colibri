@@ -19,7 +19,6 @@ from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
-from validphys import covmats
 from validphys.config import Config, Environment
 from validphys.fkparser import load_fktable
 
@@ -607,14 +606,29 @@ class colibriConfig(Config):
             )
 
     @explicit_node
-    def produce_fit_covariance_matrix(self, use_fit_t0: bool = True):
+    def produce_fit_covariance_matrix(
+        self, use_fit_t0: bool = True, diagonalize_covmat: bool = False
+    ):
         """
         Produces the covariance matrix used in the fit.
         This covariance matrix is used in:
         - commondata_utils.central_covmat_index
         - mc_log_likelihood for the monte carlo fit
+
+        Parameters
+        ----------
+        use_fit_t0: bool, default is True
+            If True, the covariance matrix used in the fit is the t0 covariance matrix,
+            which is constructed from the experimental covariance matrix but with the central values replaced by the t0 predictions.
+        diagonalize_covmat: bool, default is False
+            If True, we use a covariance matrix function which returns a tuple of (U, D) where U is the unitary matrix of eigenvectors and D is the vector of eigenvalues,
+            which are used to diagonalize the covariance matrix.
         """
         if use_fit_t0:
+            if diagonalize_covmat:
+                return (
+                    colibri_covmats.dataset_inputs_t0_covmat_from_systematics_diagonalized
+                )
             return colibri_covmats.dataset_inputs_t0_covmat_from_systematics
         else:
             return colibri_covmats.dataset_inputs_covmat_from_systematics

@@ -29,6 +29,10 @@ def chi2(central_values, predictions, inv_covmat):
     """
     diff = predictions - central_values
 
-    loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
+    # TODO: if inv_covmat is diagonal (a 1-D array) then loss can be computed more efficiently
+    if inv_covmat.ndim == 1:
+        loss = jnp.sum(diff**2 * inv_covmat)
+    else:
+        loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
 
     return loss

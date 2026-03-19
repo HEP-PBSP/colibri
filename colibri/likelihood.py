@@ -57,6 +57,7 @@ class LogLikelihood(object):
         self.covmat = central_covmat_index.covmat
         self.inv_covmat = jnp.linalg.inv(self.covmat)
         self.central_values_idx = central_covmat_index.central_values_idx
+        self.basis_transform = central_covmat_index.basis_transform
         self.pdf_model = pdf_model
         self.penalty_posdata = penalty_posdata
         self.positivity_penalty_settings = positivity_penalty_settings
@@ -130,6 +131,17 @@ class LogLikelihood(object):
         # Select only the data relevant for this likelihood
         # Especially important when using a training/validation split
         predictions = predictions[self.central_values_idx]
+
+        if self.basis_transform is not None:
+            # If the covariance matrix is diagonalised, we need to transform the predictions and central values in the same basis.
+            # TODO: check if this is correct
+            # NOTE: how efficient is this? Can we optimise it further?
+            predictions = self.basis_transform.T @ predictions
+
+            # NOTE: central values here should already been transformed in the diagonal basis
+            # since they only need to be computed once and so we can avoid doing the basis
+            # transformation at each step of the fit.
+            # same for covmat.
 
         if batch is not None:
             predictions = predictions[batch.idx]
@@ -216,13 +228,35 @@ def mc_log_likelihood(
 
     tr_idx = mc_pseudodata.training_indices
     central_values_train = mc_pseudodata.pseudodata[tr_idx]
-    covmat_train = fit_covariance_matrix[tr_idx][:, tr_idx]
+    if isinstance(fit_covariance_matrix, tuple):
+        # Diagonalized covariance matrix case
+        U, D = fit_covariance_matrix
 
-    central_covmat_index_train = CentralCovmatIndex(
-        central_values=central_values_train,
-        covmat=covmat_train,
-        central_values_idx=tr_idx,
-    )
+        # NOTE: D is a 1-D array with eigenvalues
+        covmat_train = D[tr_idx]
+
+        # TODO: check if the split below is correct
+        # NOTE: the idea is that we only select the eigenvectors (columns of U) corresponding to the
+        # eigenvalues in the training set.
+        basis_transform_train = U[:, tr_idx]
+
+        # TODO
+        # the central values need to be transformed in the diagonalized basis as well.
+
+        central_covmat_index_train = CentralCovmatIndex(
+            central_values=central_values_train,  # TODO
+            covmat=covmat_train,
+            central_values_idx=tr_idx,
+            basis_transform=basis_transform_train,
+        )
+    else:
+        covmat_train = fit_covariance_matrix[tr_idx][:, tr_idx]
+
+        central_covmat_index_train = CentralCovmatIndex(
+            central_values=central_values_train,
+            covmat=covmat_train,
+            central_values_idx=tr_idx,
+        )
 
     train_loglike = LogLikelihood(
         central_covmat_index_train,
@@ -242,13 +276,32 @@ def mc_log_likelihood(
     else:
         val_idx = mc_pseudodata.validation_indices
         central_values_val = mc_pseudodata.pseudodata[val_idx]
-        covmat_val = fit_covariance_matrix[val_idx][:, val_idx]
 
-        central_covmat_index_val = CentralCovmatIndex(
-            central_values=central_values_val,
-            covmat=covmat_val,
-            central_values_idx=val_idx,
-        )
+        if isinstance(fit_covariance_matrix, tuple):
+            # Diagonalized covariance matrix case
+            U, D = fit_covariance_matrix
+
+            # NOTE: D is a 1-D array with eigenvalues, so we need to select only the eigenvalues corresponding to the validation set.
+            covmat_val = D[val_idx]
+
+            basis_transform_val = U[:, val_idx]
+
+            # TODO: need to still transform the central values in the diagonalized basis as well.
+
+            central_covmat_index_val = CentralCovmatIndex(
+                central_values=central_values_val,  # TODO
+                covmat=covmat_val,
+                central_values_idx=val_idx,
+                basis_transform=basis_transform_val,
+            )
+        else:
+            covmat_val = fit_covariance_matrix[val_idx][:, val_idx]
+
+            central_covmat_index_val = CentralCovmatIndex(
+                central_values=central_values_val,
+                covmat=covmat_val,
+                central_values_idx=val_idx,
+            )
 
         val_loglike = LogLikelihood(
             central_covmat_index_val,

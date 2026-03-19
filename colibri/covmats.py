@@ -124,3 +124,28 @@ def dataset_inputs_t0_covmat_from_systematics(
         )
     )
     return covmat
+
+
+def dataset_inputs_t0_covmat_from_systematics_diagonalized(
+    data,
+    experimental_commondata_tuple,
+    colibri_dataset_inputs_t0_predictions,
+):
+    """
+    Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
+    but returns a tuple of (U, D) where U is the unitary matrix of eigenvectors and D is the vector of eigenvalues,
+    which are used to diagonalize the covariance matrix.
+
+    The decomposition is such that C = U @ diag(D) @ U^T
+
+    Note: see production rule in `config.py` for commondata_tuple options.
+    """
+    covmat = covmats.dataset_inputs_t0_covmat_from_systematics(
+        experimental_commondata_tuple,
+        data_input=data.dsinputs,
+        use_weights_in_covmat=False,
+        norm_threshold=None,
+        dataset_inputs_t0_predictions=colibri_dataset_inputs_t0_predictions,
+    )
+    eigvals, eigvecs = np.linalg.eigh(covmat)
+    return jnp.array(eigvecs), jnp.array(eigvals)
