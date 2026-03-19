@@ -40,7 +40,7 @@ def test_data_batches():
     assert hasattr(next_batch, "idx")
     assert isinstance(next_batch.idx, jax.Array)
     assert len(next_batch.idx) == batch_size
-    # inv_cov is optional and for this call (no fit_covariance_matrix) should be None
+    # inv_cov is optional and for this call (no general_covariance_matrix) should be None
     assert getattr(next_batch, "inv_cov", None) is None
 
     # When shuffle_each_epoch=False (default) fixed_batches should be available
@@ -69,7 +69,7 @@ def test_data_batches_with_covmat():
     db = data_batches(
         training_indices,
         batch_size=batch_size,
-        fit_covariance_matrix=cov,
+        general_covariance_matrix=cov,
         batch_seed=42,
     )
 
