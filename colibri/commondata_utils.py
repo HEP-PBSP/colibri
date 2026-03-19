@@ -186,6 +186,9 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
         # Diagonalized covariance matrix case
         U, D = fit_covariance_matrix
 
+        # transform central values to the basis where the covariance matrix is diagonal
+        central_values = U.T @ central_values
+
         return CentralCovmatIndex(
             central_values=central_values,
             central_values_idx=central_values_idx,
