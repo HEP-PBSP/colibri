@@ -23,10 +23,12 @@ from colibri.tests.conftest import (
     TEST_COMMONDATA_FOLDER,
     TEST_DATASETS,
     TRVAL_INDEX,
+    T0_PDFSET,
 )
 
 MC_PSEUDODATA = {
     "level_1_seed": PSEUDODATA_SEED,
+    "t0pdfset": T0_PDFSET,
     **CLOSURE_TEST_PDFSET,
     **TRVAL_INDEX,
     **REPLICA_INDEX,
