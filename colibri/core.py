@@ -266,16 +266,6 @@ class CentralCovmatIndex:
 
 
 @dataclass(frozen=True)
-class CentralInvCovmatIndex:
-    central_values: jnp.array
-    inv_covmat: jnp.array
-    central_values_idx: jnp.array
-
-    def to_dict(self):
-        return asdict(self)
-
-
-@dataclass(frozen=True)
 class BayesianPrior:
     prior_transform: Callable
     log_prob: Callable
