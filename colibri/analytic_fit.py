@@ -11,6 +11,7 @@ import time
 import jax
 import jax.numpy as jnp
 import jax.numpy.linalg as jla
+import jax.lax.linalg as jlinalg
 import numpy as np
 import scipy.special as special
 
@@ -83,7 +84,7 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 
 @check_pdf_model_is_linear
 def analytic_fit(
-    central_inv_covmat_index,
+    central_covmat_index,
     _pred_data,
     pdf_model,
     analytic_settings,
@@ -102,8 +103,8 @@ def analytic_fit(
 
     Parameters
     ----------
-    central_inv_covmat_index: commondata_utils.CentralInvCovmatIndex
-        dataclass containing central values and inverse covmat.
+    central_covmat_index: commondata_utils.CentralCovmatIndex
+        dataclass containing central values and covariance matrix.
 
     _pred_data: @jax.jit CompiledFunction
         Prediction function for the fit.
@@ -141,23 +142,36 @@ def analytic_fit(
     intercept = pred_and_pdf(jnp.zeros(len(parameters)), fast_kernel_arrays)[0]
 
     # Construct the analytic solution
-    central_values = central_inv_covmat_index.central_values
-    inv_covmat = central_inv_covmat_index.inv_covmat
+    central_values = central_covmat_index.central_values
+    covmat = central_covmat_index.covmat
 
     # Solve chi2 analytically for the mean
     Y = central_values - intercept
-    Sigma = inv_covmat
     X = predictions.T - intercept[:, None]
 
+    # Cholesky factorization: S = L L^T
+    # upper False means that we want the lower triangular matrix L
+    L = jla.cholesky(covmat, upper=False)
+
+    # Whiten the problem: Y' = L^-1 Y, X' = L^-1 X
+    Y_tilde = jlinalg.triangular_solve(L, Y, left_side=True, lower=True)
+    X_tilde = jlinalg.triangular_solve(L, X, left_side=True, lower=True)
+
     # * Check that covmat is positive definite
-    if jnp.any(jla.eigh(X.T @ Sigma @ X)[0] <= 0.0):
+    if jnp.any(jla.eigh(X_tilde.T @ X_tilde)[0] <= 0.0):
         raise ValueError(
             "The obtained covariance matrix for the analytic solution is not positive definite."
         )
 
     t0 = time.time()
-    sol_mean = jla.inv(X.T @ Sigma @ X) @ X.T @ Sigma @ Y
-    sol_covmat = jla.inv(X.T @ Sigma @ X)
+    # Compute QR decomposition of X_tilde for numerical stability in the inversion
+    Q, R = jla.qr(X_tilde)
+    # NOTE: R is upper triangular in QR decomposition, so we need to set lower=False
+    sol_mean = jlinalg.triangular_solve(R, Q.T @ Y_tilde, left_side=True, lower=False)
+
+    I_R = jnp.eye(R.shape[0])
+    R_inv = jlinalg.triangular_solve(R, I_R, left_side=True, lower=False)
+    sol_covmat = R_inv @ R_inv.T
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
@@ -222,8 +236,8 @@ def analytic_fit(
 
     gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
     log_prior = jnp.log(1 / prior_width).sum()
-    # Compute maximum log likelihood
-    min_chi2 = (Y - X @ sol_mean) @ Sigma @ (Y - X @ sol_mean)
+    # Compute maximum log likelihood in the whitened basis
+    min_chi2 = (Y_tilde - X_tilde @ sol_mean).T @ (Y_tilde - X_tilde @ sol_mean)
     # Compute the log likelihood
     max_logl = -0.5 * min_chi2
 
@@ -244,12 +258,12 @@ def analytic_fit(
     min_chi2 = -2 * max_logl
     log.info(f"Minimum chi2 = {min_chi2}")
 
-    BIC = min_chi2 + sol_covmat.shape[0] * np.log(Sigma.shape[0])
+    BIC = min_chi2 + sol_covmat.shape[0] * np.log(covmat.shape[0])
     AIC = min_chi2 + 2 * sol_covmat.shape[0]
 
-    # Compute average chi2
-    diffs = Y[:, None] - X @ full_samples.T
-    avg_chi2 = jnp.einsum("ij,jk,ki->i", diffs.T, Sigma, diffs).mean()
+    # Compute average chi2 (in whitened basis)
+    diffs = Y_tilde[:, None] - X_tilde @ full_samples.T
+    avg_chi2 = jnp.mean(jnp.sum(diffs**2, axis=0))
 
     log.info(f"Average chi2 = {avg_chi2}")
 
