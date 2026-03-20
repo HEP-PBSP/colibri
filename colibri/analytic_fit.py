@@ -150,6 +150,7 @@ def analytic_fit(
     X = predictions.T - intercept[:, None]
 
     t0 = time.time()
+
     # Cholesky factorization: S = L L^T
     # upper False means that we want the lower triangular matrix L
     L = jla.cholesky(covmat, upper=False)
@@ -158,25 +159,13 @@ def analytic_fit(
     Y_tilde = jlinalg.triangular_solve(L, Y, left_side=True, lower=True)
     X_tilde = jlinalg.triangular_solve(L, X, left_side=True, lower=True)
 
+    if jnp.any(jla.eigh(X_tilde.T @ X_tilde)[0] <= 0.0):
+        raise ValueError(
+            "The obtained covariance matrix for the analytic solution is not positive definite."
+        )
+
     # Compute QR decomposition of X_tilde for numerical stability in the inversion
     Q, R = jla.qr(X_tilde)
-
-    # Check positive definiteness via R diagonal (O(P), not O(P^3))
-    # Mathematical justification: X_tilde.T @ X_tilde = R.T @ R is the Cholesky
-    # factorisation, so PD <=> all |R_ii| > 0. We use a relative tolerance to
-    # catch near-rank-deficient cases (ill-conditioned fits).
-    diag_R = jnp.abs(jnp.diag(R))
-    rcond_threshold = jnp.finfo(X_tilde.dtype).eps ** 0.5  # ~1e-8 for float64
-    tol = rcond_threshold * jnp.max(diag_R)
-
-    if jnp.any(diag_R < tol):
-        # Estimate condition number to give a more informative error
-        cond_est = jnp.max(diag_R) / jnp.min(diag_R)
-        raise ValueError(
-            f"X̃ᵀX̃ is not positive definite (rank-deficient or ill-conditioned design matrix). "
-            f"Estimated condition number of R: {cond_est:.2e}. "
-            f"This usually means parameters are collinear or N < P."
-        )
 
     # NOTE: R is upper triangular in QR decomposition, so we need to set lower=False
     sol_mean = jlinalg.triangular_solve(R, Q.T @ Y_tilde, left_side=True, lower=False)
