@@ -182,7 +182,7 @@ def analytic_fit(
         sol_covmat,
         shape=(analytic_settings["full_sample_size"],),
     )
-    
+
     # Compute the evidence
     # This is the log of the evidence, which is the log of the integral of the likelihood
     # over the prior. The prior is uniform with width prior_width.
@@ -232,13 +232,7 @@ def analytic_fit(
         & (full_samples < prior_upper).all(axis=1)
     ]
 
-    # NOTE / TODO: Log(det(cov)) without building cov:
-    # cov = (R^T R)^{-1} => log det(cov) = -2 * sum(log|diag(R)|)
-    # log_det_cov = -2.0 * jnp.sum(jnp.log(jnp.abs(jnp.diag(R))))
-    # gaussian_integral = 0.5 * (X_tilde.shape[0] * jnp.log(2.0 * jnp.pi) + log_det_cov)
-
-    gaussian_integral = jnp.log(jnp.sqrt(() * jla.det(sol_covmat)))
-    
+    gaussian_integral = jnp.log(jnp.sqrt(jla.det(2 * jnp.pi * sol_covmat)))
     log_prior = jnp.log(1 / prior_width).sum()
     # Compute maximum log likelihood in the whitened basis
     min_chi2 = (Y_tilde - X_tilde @ sol_mean).T @ (Y_tilde - X_tilde @ sol_mean)
