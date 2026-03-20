@@ -5,7 +5,6 @@ Module for testing commondata_utils functions in the colibri package.
 """
 
 import jax.numpy as jnp
-import jax.scipy.linalg as jla
 import pandas as pd
 from nnpdf_data.coredata import CommonData
 from numpy.testing import assert_allclose

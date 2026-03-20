@@ -8,10 +8,9 @@ import pandas as pd
 
 import jax
 import jax.numpy as jnp
-import jax.scipy.linalg as jla
 
 from colibri.theory_predictions import make_pred_dataset
-from colibri.core import CentralCovmatIndex, CentralInvCovmatIndex
+from colibri.core import CentralCovmatIndex
 
 
 def experimental_commondata_tuple(data):
