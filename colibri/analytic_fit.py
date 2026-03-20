@@ -163,13 +163,19 @@ def analytic_fit(
 
     # Check positive definiteness via R diagonal (O(P), not O(P^3))
     # Mathematical justification: X_tilde.T @ X_tilde = R.T @ R is the Cholesky
-    # factorisation, so PD <=> all |R_ii| > 0.
+    # factorisation, so PD <=> all |R_ii| > 0. We use a relative tolerance to
+    # catch near-rank-deficient cases (ill-conditioned fits).
     diag_R = jnp.abs(jnp.diag(R))
+    rcond_threshold = jnp.finfo(X_tilde.dtype).eps ** 0.5  # ~1e-8 for float64
+    tol = rcond_threshold * jnp.max(diag_R)
 
-    if jnp.any(diag_R < 0.0):
+    if jnp.any(diag_R < tol):
+        # Estimate condition number to give a more informative error
+        cond_est = jnp.max(diag_R) / jnp.min(diag_R)
         raise ValueError(
-            "X̃ᵀX̃ is not positive definite (rank-deficient or ill-conditioned design matrix). "
-            "This usually means parameters are collinear or N < P."
+            f"X̃ᵀX̃ is not positive definite (rank-deficient or ill-conditioned design matrix). "
+            f"Estimated condition number of R: {cond_est:.2e}. "
+            f"This usually means parameters are collinear or N < P."
         )
 
     # NOTE: R is upper triangular in QR decomposition, so we need to set lower=False
