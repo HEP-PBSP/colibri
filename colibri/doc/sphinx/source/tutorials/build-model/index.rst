@@ -34,6 +34,6 @@ This model can then be used to perform fits and run closure tests (see the
 
 .. note::
 
-   If you would like to have a look at the implementation of a more complex model, there is one
-   available in `this repository <https://github.com/HEP-PBSP/wmin-model>`_, which also
-   showcases the potential and flexibility of the platform.
+   If you want to run Colibri fits with a model that has already been implemented,
+   or want to have a look at the implementation of a more complex model, you can
+   head to :ref:`this section <in_available_models>`.
