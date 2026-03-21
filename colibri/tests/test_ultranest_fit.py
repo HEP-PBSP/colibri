@@ -12,7 +12,7 @@ import jax.numpy as jnp
 import pytest
 
 from colibri.tests.conftest import (
-    MOCK_CENTRAL_COVMAT_INDEX,
+    MOCK_CENTRAL_SQRT_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
@@ -67,7 +67,7 @@ def test_ultranest_fit(pos_penalty):
 
     _pred_data = lambda *args: jnp.array([0.0])
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
@@ -106,7 +106,7 @@ def test_ultranest_fit_vectorized(pos_penalty):
     ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
@@ -154,7 +154,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     _pred_data = lambda *args: jnp.array([0.0])
 
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
@@ -202,7 +202,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     _pred_data = lambda *args: jnp.array([0.0])
 
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,
@@ -254,7 +254,7 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
     _pred_data = lambda *args: jnp.array([0.0])
 
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,

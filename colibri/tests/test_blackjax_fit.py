@@ -11,7 +11,7 @@ import pytest
 import types
 
 from colibri.tests.conftest import (
-    MOCK_CENTRAL_COVMAT_INDEX,
+    MOCK_CENTRAL_SQRT_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
@@ -63,7 +63,7 @@ blackjax_settings = {
 def test_blackjax_fit(pos_penalty):
     _pred_data = lambda *args: jnp.array([0.0])
     mock_log_likelihood = LogLikelihood(
-        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         _pred_data,

@@ -10,7 +10,10 @@ from nnpdf_data.coredata import CommonData
 from numpy.testing import assert_allclose
 
 from colibri.api import API as colibriAPI
-from colibri.commondata_utils import CentralCovmatIndex, experimental_commondata_tuple
+from colibri.commondata_utils import (
+    CentralSqrtCovmatIndex,
+    experimental_commondata_tuple,
+)
 from colibri.tests.conftest import (
     CLOSURE_TEST_PDFSET,
     PSEUDODATA_SEED,
@@ -49,18 +52,18 @@ def test_experimental_commondata_tuple():
 
 def test_central_covmat_index():
     """
-    Test that CentralCovmatIndex object is produced correctly.
+    Test that CentralSqrtCovmatIndex object is produced correctly.
     """
 
-    result = colibriAPI.central_covmat_index(**{**TEST_DATASETS, **T0_PDFSET})
-    # Check that central_covmat_index produces a CentralCovmatIndex object
-    assert isinstance(result, CentralCovmatIndex)
+    result = colibriAPI.central_sqrt_covmat_index(**{**TEST_DATASETS, **T0_PDFSET})
+    # Check that central_covmat_index produces a CentralSqrtCovmatIndex object
+    assert isinstance(result, CentralSqrtCovmatIndex)
 
-    # Check that CentralCovmatIndex has the required attributes, of the correct types
+    # Check that CentralSqrtCovmatIndex has the required attributes, of the correct types
     assert hasattr(result, "central_values")
     assert isinstance(result.central_values, jnp.ndarray)
-    assert hasattr(result, "covmat")
-    assert isinstance(result.covmat, jnp.ndarray)
+    assert hasattr(result, "sqrt_covmat")
+    assert isinstance(result.sqrt_covmat, jnp.ndarray)
     assert hasattr(result, "central_values_idx")
     assert isinstance(result.central_values_idx, jnp.ndarray)
 
@@ -69,7 +72,7 @@ def test_central_covmat_index():
     assert isinstance(result_dict, dict)
 
     # Check that dimensions of attributes are correct
-    assert result.central_values.shape[0] == result.covmat.shape[0]
+    assert result.central_values.shape[0] == result.sqrt_covmat.shape[0]
     assert result.central_values_idx.shape[0] == result.central_values.shape[0]
 
 

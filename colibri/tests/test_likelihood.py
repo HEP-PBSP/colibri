@@ -12,7 +12,7 @@ from numpy.testing import assert_allclose
 from colibri.likelihood import LogLikelihood, log_likelihood, mc_log_likelihood
 from colibri.mc_utils import MCPseudodata
 from colibri.tests.conftest import (
-    MOCK_CENTRAL_COVMAT_INDEX,
+    MOCK_CENTRAL_SQRT_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
@@ -36,7 +36,7 @@ def test_LogLikelihood_class(pos_penalty):
     Tests the LogLikelihood class.
     """
     log_likelihood_class = LogLikelihood(
-        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
+        central_sqrt_covmat_index=MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
@@ -52,10 +52,12 @@ def test_LogLikelihood_class(pos_penalty):
     )
 
     assert_allclose(
-        MOCK_CENTRAL_COVMAT_INDEX.central_values,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX.central_values,
         log_likelihood_class.central_values,
     )
-    assert_allclose(MOCK_CENTRAL_COVMAT_INDEX.covmat, log_likelihood_class.covmat)
+    assert_allclose(
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX.sqrt_covmat, log_likelihood_class.sqrt_covmat
+    )
     assert MOCK_PDF_MODEL == log_likelihood_class.pdf_model
     assert MOCK_PENALTY_POSDATA == log_likelihood_class.penalty_posdata
 
@@ -71,7 +73,8 @@ def test_LogLikelihood_class(pos_penalty):
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
-    chi2_val = jnp.einsum("i,ij,j", diff, log_likelihood_class.inv_covmat, diff)
+    z = jnp.einsum("ij, j", log_likelihood_class.inv_sqrt_covmat, diff)
+    chi2_val = jnp.dot(z, z)
 
     pos_pen = (
         jnp.sum(
@@ -102,7 +105,7 @@ def test_log_likelihood(pos_penalty):
         {"positivity_penalty": pos_penalty, "alpha": 1e-7, "lambda_positivity": 1000},
     )
     log_likelihood_class = LogLikelihood(
-        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
+        central_sqrt_covmat_index=MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
@@ -113,7 +116,7 @@ def test_log_likelihood(pos_penalty):
         integrability_penalty=integrability_penalty,
     )
     log_like = log_likelihood(
-        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
@@ -141,7 +144,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
 
     # Instantiate the class
     log_likelihood_class = LogLikelihood(
-        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
@@ -159,7 +162,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
     ll_value_with_penalty = log_likelihood_class.log_likelihood(
         params,
         log_likelihood_class.central_values,
-        log_likelihood_class.inv_covmat,
+        log_likelihood_class.inv_sqrt_covmat,
         log_likelihood_class.fast_kernel_arrays,
         log_likelihood_class.positivity_fast_kernel_arrays,
     )
@@ -170,7 +173,9 @@ def test_log_likelihood_with_and_without_pos_penalty():
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
-    chi2_val = jnp.einsum("i,ij,j", diff, log_likelihood_class.inv_covmat, diff)
+    z = jnp.einsum("ij, j", log_likelihood_class.inv_sqrt_covmat, diff)
+
+    chi2_val = jnp.dot(z, z)
     pos_pen = jnp.sum(
         log_likelihood_class.penalty_posdata(
             pdf,
@@ -193,7 +198,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
 
     # Instantiate the class
     log_likelihood_class = LogLikelihood(
-        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
@@ -207,7 +212,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
     ll_value_without_penalty = log_likelihood_class.log_likelihood(
         params,
         log_likelihood_class.central_values,
-        log_likelihood_class.inv_covmat,
+        log_likelihood_class.inv_sqrt_covmat,
         log_likelihood_class.fast_kernel_arrays,
         log_likelihood_class.positivity_fast_kernel_arrays,
     )
@@ -218,7 +223,8 @@ def test_log_likelihood_with_and_without_pos_penalty():
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
-    chi2_val = jnp.einsum("i,ij,j", diff, log_likelihood_class.inv_covmat, diff)
+    z = jnp.einsum("ij, j", log_likelihood_class.inv_sqrt_covmat, diff)
+    chi2_val = jnp.dot(z, z)
     expected_without_penalty = -0.5 * chi2_val
     assert float(ll_value_without_penalty) == pytest.approx(
         float(expected_without_penalty)
@@ -278,7 +284,7 @@ def test_mc_log_likelihood_with_split(pos_penalty):
         preds, pdf = ll_obj.pred_and_pdf(params, ll_obj.fast_kernel_arrays)
         preds = preds[ll_obj.central_values_idx]
         diff = preds - ll_obj.central_values
-        inv = ll_obj.inv_covmat
+        inv = ll_obj.inv_sqrt_covmat.T @ ll_obj.inv_sqrt_covmat
         chi2_val = jnp.einsum("i,ij,j", diff, inv, diff)
         pos_pen = (
             jnp.sum(
@@ -353,7 +359,8 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
     )
     predictions = predictions[train_loglike.central_values_idx]
     diff = predictions - train_loglike.central_values
-    chi2_val = jnp.einsum("i,ij,j", diff, train_loglike.inv_covmat, diff)
+    z = jnp.einsum("ij, j", train_loglike.inv_sqrt_covmat, diff)
+    chi2_val = jnp.dot(z, z)
     pos_pen = (
         jnp.sum(
             train_loglike.penalty_posdata(
@@ -390,7 +397,7 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     }
 
     log_likelihood_class = LogLikelihood(
-        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
+        central_sqrt_covmat_index=MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
@@ -415,7 +422,7 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     predictions = predictions[log_likelihood_class.central_values_idx]
     predictions_b = predictions[batch.idx]
     central_b = log_likelihood_class.central_values[batch.idx]
-    cov_b = log_likelihood_class.covmat[batch.idx][:, batch.idx]
+    cov_b = log_likelihood_class.sqrt_covmat[batch.idx][:, batch.idx]
     inv_b = jnp.linalg.inv(cov_b)
     diff_b = predictions_b - central_b
     chi2_b = jnp.einsum("i,ij,j", diff_b, inv_b, diff_b)
@@ -452,7 +459,7 @@ def test_LogLikelihood_call_with_batch_with_inv_cov(pos_penalty):
     }
 
     log_likelihood_class = LogLikelihood(
-        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
+        central_sqrt_covmat_index=MOCK_CENTRAL_SQRT_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
         fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
@@ -467,7 +474,7 @@ def test_LogLikelihood_call_with_batch_with_inv_cov(pos_penalty):
 
     # Select first two data points and precompute their inverse covariance
     batch_idx = jnp.array([0, 1])
-    cov_b = log_likelihood_class.covmat[batch_idx][:, batch_idx]
+    cov_b = log_likelihood_class.sqrt_covmat[batch_idx][:, batch_idx]
     inv_b = jnp.linalg.inv(cov_b)
 
     # Provide the precomputed inverse covariance in the BatchSpec
