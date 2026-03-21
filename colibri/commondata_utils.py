@@ -10,7 +10,7 @@ import jax
 import jax.numpy as jnp
 
 from colibri.theory_predictions import make_pred_dataset
-from colibri.core import CentralCovmatIndex
+from colibri.core import CentralSqrtCovmatIndex
 
 
 def experimental_commondata_tuple(data):
@@ -150,11 +150,11 @@ def level_1_commondata_tuple(
     return tuple(sample_list)
 
 
-def central_covmat_index(commondata_tuple, general_covariance_matrix):
+def central_sqrt_covmat_index(commondata_tuple, general_sqrt_covariance_matrix):
     """
-    Given a commondata_tuple and a general_covariance_matrix, generated
+    Given a commondata_tuple and a general_sqrt_covariance_matrix, generated
     according to respective explicit node in config.py, store
-    relevant data into CentralCovmatIndex dataclass.
+    relevant data into CentralSqrtCovmatIndex dataclass.
 
     Parameters
     ----------
@@ -163,15 +163,14 @@ def central_covmat_index(commondata_tuple, general_covariance_matrix):
         (see config.produce_commondata_tuple) and accordingly to the
         specified options.
 
-    general_covariance_matrix: jnp.ndarray
-        covariance matrix, is generated as explicit node
-        (see config.general_covariance_matrix) can be either experimental
+    general_sqrt_covariance_matrix: jnp.ndarray
+        square root of the covariance matrix which can be either experimental
         or t0 covariance matrix depending on whether `use_fit_t0` is
-        True or False
+        True or False.
 
     Returns
     -------
-    CentralCovmatIndex
+    CentralSqrtCovmatIndex
         Dataclass containing central values, covariance matrix and
         index of central values.
     """
@@ -180,8 +179,8 @@ def central_covmat_index(commondata_tuple, general_covariance_matrix):
     )
     central_values_idx = jnp.arange(central_values.shape[0])
 
-    return CentralCovmatIndex(
+    return CentralSqrtCovmatIndex(
         central_values=central_values,
         central_values_idx=central_values_idx,
-        covmat=general_covariance_matrix,
+        sqrt_covmat=general_sqrt_covariance_matrix,
     )

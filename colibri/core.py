@@ -256,9 +256,9 @@ class PosdataTrainValidationSplit(TrainValidationSplit):
 
 
 @dataclass(frozen=True)
-class CentralCovmatIndex:
+class CentralSqrtCovmatIndex:
     central_values: jnp.array
-    covmat: jnp.array
+    sqrt_covmat: jnp.array
     central_values_idx: jnp.array
 
     def to_dict(self):

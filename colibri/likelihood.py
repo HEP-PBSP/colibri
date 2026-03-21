@@ -9,7 +9,7 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 from colibri.loss_functions import chi2
-from colibri.commondata_utils import CentralCovmatIndex
+from colibri.commondata_utils import CentralSqrtCovmatIndex
 from colibri.data_batch import BatchSpec
 
 
@@ -21,7 +21,7 @@ class LogLikelihood(object):
 
     def __init__(
         self,
-        central_covmat_index,
+        central_sqrt_covmat_index,
         pdf_model,
         fit_xgrid,
         forward_map,
@@ -34,7 +34,7 @@ class LogLikelihood(object):
         """
         Parameters
         ----------
-        central_covmat_index: commondata_utils.CentralCovmatIndex
+        central_sqrt_covmat_index: commondata_utils.CentralSqrtCovmatIndex
 
         pdf_model: pdf_model.PDFModel
 
@@ -53,10 +53,9 @@ class LogLikelihood(object):
         integrability_penalty: Callable
 
         """
-        self.central_values = central_covmat_index.central_values
-        self.covmat = central_covmat_index.covmat
-        self.inv_covmat = jnp.linalg.inv(self.covmat)
-        self.central_values_idx = central_covmat_index.central_values_idx
+        self.central_values = central_sqrt_covmat_index.central_values
+        self.sqrt_covmat = central_sqrt_covmat_index.sqrt_covmat
+        self.central_values_idx = central_sqrt_covmat_index.central_values_idx
         self.pdf_model = pdf_model
         self.penalty_posdata = penalty_posdata
         self.positivity_penalty_settings = positivity_penalty_settings
@@ -93,7 +92,7 @@ class LogLikelihood(object):
         return self.log_likelihood(
             params,
             self.central_values,
-            self.inv_covmat,
+            self.sqrt_covmat,
             self.fast_kernel_arrays,
             self.positivity_fast_kernel_arrays,
             batch=batch,
@@ -104,7 +103,7 @@ class LogLikelihood(object):
         self,
         params: jnp.ndarray,
         central_values: jnp.ndarray,
-        inv_covmat: jnp.ndarray,
+        sqrt_covmat: jnp.ndarray,
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
         batch: BatchSpec | None = None,
@@ -117,7 +116,7 @@ class LogLikelihood(object):
         ----------
         params: jnp.ndarray
         central_values: jnp.ndarray
-        inv_covmat: jnp.ndarray
+        sqrt_covmat: jnp.ndarray
         fast_kernel_arrays: tuple
         positivity_fast_kernel_arrays: tuple
 
@@ -131,6 +130,7 @@ class LogLikelihood(object):
         # Especially important when using a training/validation split
         predictions = predictions[self.central_values_idx]
 
+        # TODO: the code inside this if condition needs to be changed since we now have only sqrt_covmat.
         if batch is not None:
             predictions = predictions[batch.idx]
             central_values = central_values[batch.idx]
@@ -161,12 +161,12 @@ class LogLikelihood(object):
         )
 
         return -0.5 * (
-            chi2(central_values, predictions, inv_covmat) + pos_penalty + integ_penalty
+            chi2(central_values, predictions, sqrt_covmat) + pos_penalty + integ_penalty
         )
 
 
 def log_likelihood(
-    central_covmat_index,
+    central_sqrt_covmat_index,
     pdf_model,
     FIT_XGRID,
     _pred_data,
@@ -183,7 +183,7 @@ def log_likelihood(
     model specific applications by changing the log_likelihood method of the LogLikelihood class.
     """
     return LogLikelihood(
-        central_covmat_index,
+        central_sqrt_covmat_index,
         pdf_model,
         FIT_XGRID,
         _pred_data,
@@ -218,9 +218,9 @@ def mc_log_likelihood(
     central_values_train = mc_pseudodata.pseudodata[tr_idx]
     covmat_train = general_covariance_matrix[tr_idx][:, tr_idx]
 
-    central_covmat_index_train = CentralCovmatIndex(
+    central_covmat_index_train = CentralSqrtCovmatIndex(
         central_values=central_values_train,
-        covmat=covmat_train,
+        sqrt_covmat=covmat_train,
         central_values_idx=tr_idx,
     )
 
@@ -244,9 +244,9 @@ def mc_log_likelihood(
         central_values_val = mc_pseudodata.pseudodata[val_idx]
         covmat_val = general_covariance_matrix[val_idx][:, val_idx]
 
-        central_covmat_index_val = CentralCovmatIndex(
+        central_covmat_index_val = CentralSqrtCovmatIndex(
             central_values=central_values_val,
-            covmat=covmat_val,
+            sqrt_covmat=covmat_val,
             central_values_idx=val_idx,
         )
 

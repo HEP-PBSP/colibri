@@ -84,7 +84,7 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 
 @check_pdf_model_is_linear
 def analytic_fit(
-    central_covmat_index,
+    central_sqrt_covmat_index,
     _pred_data,
     pdf_model,
     analytic_settings,
@@ -103,8 +103,8 @@ def analytic_fit(
 
     Parameters
     ----------
-    central_covmat_index: commondata_utils.CentralCovmatIndex
-        dataclass containing central values and covariance matrix.
+    central_sqrt_covmat_index: commondata_utils.CentralSqrtCovmatIndex
+        dataclass containing central values and square root of the covariance matrix.
 
     _pred_data: @jax.jit CompiledFunction
         Prediction function for the fit.
@@ -142,8 +142,8 @@ def analytic_fit(
     intercept = pred_and_pdf(jnp.zeros(len(parameters)), fast_kernel_arrays)[0]
 
     # Construct the analytic solution
-    central_values = central_covmat_index.central_values
-    covmat = central_covmat_index.covmat
+    central_values = central_sqrt_covmat_index.central_values
+    sqrt_covmat = central_sqrt_covmat_index.sqrt_covmat
 
     # Solve chi2 analytically for the mean
     Y = central_values - intercept
@@ -151,13 +151,9 @@ def analytic_fit(
 
     t0 = time.time()
 
-    # Cholesky factorization: S = L L^T
-    # upper False means that we want the lower triangular matrix L
-    L = jla.cholesky(covmat, upper=False)
-
-    # Whiten the problem: Y' = L^-1 Y, X' = L^-1 X
-    Y_tilde = jlinalg.triangular_solve(L, Y, left_side=True, lower=True)
-    X_tilde = jlinalg.triangular_solve(L, X, left_side=True, lower=True)
+    # Whiten the problem: Y' = sqrt_covmat^-1 Y, X' = sqrt_covmat^-1 X
+    Y_tilde = jlinalg.triangular_solve(sqrt_covmat, Y, left_side=True, lower=True)
+    X_tilde = jlinalg.triangular_solve(sqrt_covmat, X, left_side=True, lower=True)
 
     if jnp.any(jla.eigh(X_tilde.T @ X_tilde)[0] <= 0.0):
         raise ValueError(
@@ -257,7 +253,7 @@ def analytic_fit(
     min_chi2 = -2 * max_logl
     log.info(f"Minimum chi2 = {min_chi2}")
 
-    BIC = min_chi2 + sol_covmat.shape[0] * np.log(covmat.shape[0])
+    BIC = min_chi2 + sol_covmat.shape[0] * np.log(sqrt_covmat.shape[0])
     AIC = min_chi2 + 2 * sol_covmat.shape[0]
 
     # Compute average chi2 (in whitened basis)

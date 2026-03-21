@@ -5,9 +5,10 @@ This module provides the functions necessary for the computation of the chi2.
 """
 
 import jax.numpy as jnp
+import jax.lax.linalg as jlinalg
 
 
-def chi2(central_values, predictions, inv_covmat):
+def chi2(central_values, predictions, sqrt_covmat):
     """
     Compute the chi2 loss.
 
@@ -29,6 +30,8 @@ def chi2(central_values, predictions, inv_covmat):
     """
     diff = predictions - central_values
 
-    loss = jnp.einsum("i,ij,j", diff, inv_covmat, diff)
+    # whiten the diff
+    z = jlinalg.triangular_solve(sqrt_covmat, diff, left_side=True, lower=True)
 
+    loss = jnp.dot(z, z)
     return loss
