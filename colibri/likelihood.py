@@ -55,6 +55,10 @@ class LogLikelihood(object):
         """
         self.central_values = central_sqrt_covmat_index.central_values
         self.sqrt_covmat = central_sqrt_covmat_index.sqrt_covmat
+        # NOTE: we zero the upper triangle so XLA sees only n²/2 nonzeros and can optimize accordingly.
+        self.inv_sqrt_covmat = jnp.tril(
+            jnp.linalg.inv(central_sqrt_covmat_index.sqrt_covmat)
+        )
         self.central_values_idx = central_sqrt_covmat_index.central_values_idx
         self.pdf_model = pdf_model
         self.penalty_posdata = penalty_posdata
@@ -92,7 +96,7 @@ class LogLikelihood(object):
         return self.log_likelihood(
             params,
             self.central_values,
-            self.sqrt_covmat,
+            self.inv_sqrt_covmat,
             self.fast_kernel_arrays,
             self.positivity_fast_kernel_arrays,
             batch=batch,
@@ -103,7 +107,7 @@ class LogLikelihood(object):
         self,
         params: jnp.ndarray,
         central_values: jnp.ndarray,
-        sqrt_covmat: jnp.ndarray,
+        inv_sqrt_covmat: jnp.ndarray,
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
         batch: BatchSpec | None = None,
@@ -116,7 +120,7 @@ class LogLikelihood(object):
         ----------
         params: jnp.ndarray
         central_values: jnp.ndarray
-        sqrt_covmat: jnp.ndarray
+        inv_sqrt_covmat: jnp.ndarray
         fast_kernel_arrays: tuple
         positivity_fast_kernel_arrays: tuple
 
@@ -161,7 +165,9 @@ class LogLikelihood(object):
         )
 
         return -0.5 * (
-            chi2(central_values, predictions, sqrt_covmat) + pos_penalty + integ_penalty
+            chi2(central_values, predictions, inv_sqrt_covmat)
+            + pos_penalty
+            + integ_penalty
         )
 
 

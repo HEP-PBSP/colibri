@@ -5,10 +5,9 @@ This module provides the functions necessary for the computation of the chi2.
 """
 
 import jax.numpy as jnp
-import jax.lax.linalg as jlinalg
 
 
-def chi2(central_values, predictions, sqrt_covmat):
+def chi2(central_values, predictions, inv_sqrt_covmat):
     """
     Compute the chi2 loss.
 
@@ -20,8 +19,8 @@ def chi2(central_values, predictions, sqrt_covmat):
     predictions: jnp.ndarray
         The predictions of the model.
 
-    inv_covmat: jnp.ndarray
-        The inverse of the covariance matrix.
+    inv_sqrt_covmat: jnp.ndarray
+        The inverse of the square root of the covariance matrix.
 
     Returns
     -------
@@ -31,7 +30,7 @@ def chi2(central_values, predictions, sqrt_covmat):
     diff = predictions - central_values
 
     # whiten the diff
-    z = jlinalg.triangular_solve(sqrt_covmat, diff, left_side=True, lower=True)
+    z = jnp.einsum("ij,j->i", inv_sqrt_covmat, diff)
 
     loss = jnp.dot(z, z)
     return loss
