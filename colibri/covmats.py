@@ -14,17 +14,19 @@ import numpy as np
 from validphys import covmats
 
 
-def sqrt_covmat_jax(covariance_matrix):
+def general_sqrt_covariance_matrix(general_covariance_matrix):
     """
     Same as `validphys.covmats.sqrt_covmat` but
     for jax.numpy arrays
 
     Parameters
     ----------
-    covariance_matrix : jnp.ndarray
+    general_covariance_matrix : jnp.ndarray
         A positive definite covariance matrix, which is N_dat x N_dat (where
         N_dat is the number of data points after cuts) containing uncertainty
         and correlation information.
+        NOTE: for more details on what covariance matrix is used, see the production rule in `config.py`
+        for the options of covariance matrix.
 
     Returns
     -------
@@ -35,9 +37,9 @@ def sqrt_covmat_jax(covariance_matrix):
         ``jnp.allclose(sqrt_covmat @ sqrt_covmat.T, covariance_matrix)``.
     """
 
-    dimensions = covariance_matrix.shape
+    dimensions = general_covariance_matrix.shape
 
-    if covariance_matrix.size == 0:
+    if general_covariance_matrix.size == 0:
         raise ValueError("Attempting the decomposition of an empty matrix.")
     elif dimensions[0] != dimensions[1]:
         raise ValueError(
@@ -46,8 +48,11 @@ def sqrt_covmat_jax(covariance_matrix):
             f"{dimensions[1]}"
         )
 
-    sqrt_diags = jnp.sqrt(jnp.diag(covariance_matrix))
-    correlation_matrix = covariance_matrix / sqrt_diags[:, jnp.newaxis] / sqrt_diags
+    sqrt_diags = jnp.sqrt(jnp.diag(general_covariance_matrix))
+    correlation_matrix = (
+        general_covariance_matrix / sqrt_diags[:, jnp.newaxis] / sqrt_diags
+    )
+    # NOTE: scipy.linalg.cholesky returns the upper triangular decomposition by default
     decomp = jla.cholesky(correlation_matrix)
     sqrt_matrix = (decomp * sqrt_diags).T
     return sqrt_matrix
