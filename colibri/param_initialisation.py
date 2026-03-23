@@ -1,7 +1,6 @@
 import jax
 import jax.numpy as jnp
 import logging
-from jax.nn.initializers import glorot_normal, glorot_uniform, zeros, constant
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
     initial_values: jnp.array
         The initial values for the parameters.
     """
-    if param_initialiser_settings["type"] not in ("zeros", "normal", "uniform", "glorot_norm"):
+    if param_initialiser_settings["type"] not in ("zeros", "normal", "uniform"):
         log.warning(
             f"MC initialiser type {param_initialiser_settings['type']} not recognised, using default: 'zeros' instead."
         )
@@ -134,34 +133,3 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
         )
 
         return initial_values
-    
-    if param_initialiser_settings["type"] == "glorot_norm":
-        # Get layer shapes
-        if "layer_shapes" not in param_initialiser_settings:
-            raise ValueError("'layer_shapes' must be specified for Glorot initialization")
-        
-        layer_shapes = param_initialiser_settings["layer_shapes"]
-        
-        # For biases: zeros or constant
-        bias_init_type = param_initialiser_settings.get("init_biases", "zeros")
-        if bias_init_type == "zeros":
-            bias_init_fn = zeros
-        else:  # constant
-            bias_value = param_initialiser_settings.get("bias_init_value", 0.01)
-            bias_init_fn = lambda: constant(bias_value)
-        
-        # For weights: glorot
-
-        weight_init_fn = glorot_normal()
-        
-        subkeys = jax.random.split(random_seed, len(param_names))
-        
-        initialized_params = []
-        for i, (shape, subkey) in enumerate(zip(layer_shapes, subkeys)):
-            if len(shape) == 1:  # Bias
-                init_val = bias_init_fn(subkey, shape) if callable(bias_init_fn) else bias_init_fn(subkey, shape)
-            else:  # Weight
-                init_val = weight_init_fn(subkey, shape)
-            initialized_params.append(init_val.flatten())
-            
-        return jnp.concatenate(initialized_params)
