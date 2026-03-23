@@ -210,7 +210,7 @@ def get_full_posterior(colibri_fit):
     return df
 
 
-def get_pdf_model(colibri_fit):
+def get_pdf_model(colibri_fit, replica_idx=None):
     """
     Given a colibri fit, returns the PDF model.
 
@@ -218,6 +218,10 @@ def get_pdf_model(colibri_fit):
     ----------
     colibri_fit : str
         The name of the fit to read.
+    replica_idx : int, optional
+        Temporary workaround to specify the preprocessing factors for the n3fit model.
+        If pdf_model is a dictionary, it is automatically converted to an N3FitPDFModel. If
+        this is not the case, the replica_idx is ignored.
 
 
     Returns
@@ -239,7 +243,28 @@ def get_pdf_model(colibri_fit):
 
     if isinstance(pdf_model, dict) and "_init_args" in pdf_model:
         from colibri_n3fit.model import N3FitPDFModel
-        pdf_model = N3FitPDFModel(**pdf_model['_init_args'])
+        if pdf_model.get("nnseed", None) is None:
+            # Fetch nnseed from the runcard
+            import yaml
+            with open(fit_path / "filter.yml", "r") as runcard_file:
+                runcard = yaml.safe_load(runcard_file)
+                pdf_model['_init_args'].update({"nnseed": runcard.get("nnseed", None)})
+
+        pdf_model = N3FitPDFModel(**(pdf_model['_init_args'] | {"replica_index": 1}))
+
+        if replica_idx is not None:
+          # Load preprocessing factors
+          import json
+          from n3fit.backends.keras_backend.MetaModel import PREPROCESSING_LAYER_ALL_REPLICAS
+          prepr_weights = []
+          path = fit_path / f"nnfit/replica_{replica_idx}"
+          with open(path / f"{colibri_fit}.json", "r", encoding="utf-8") as f:
+              jf = json.load(f)
+              prep = jf['preprocessing']
+              for fl in prep:
+                prepr_weights.append(np.array([[fl["smallx"]]]))
+                prepr_weights.append(np.array([[fl["largex"]]]))
+          pdf_model.n3fit_model.get_layer(PREPROCESSING_LAYER_ALL_REPLICAS).set_weights(prepr_weights)
 
     return pdf_model
 

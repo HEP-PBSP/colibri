@@ -217,7 +217,7 @@ def compute_ntk(pdf_model, params, **kwargs):
     jacobian_func = jax.jacfwd(pdf_func)
     jacobian = jacobian_func(params)
 
-    # Compute NTK (14,50,14,50) -> assumes shape from jacobian
+    # Compute NTK (nf,ng,nf,ng) -> assumes shape from jacobian
     ntk = jnp.einsum("ijk,lmk->ijlm", jacobian, jacobian)
 
     # Flatten to (N_grid*N_flavors)×(N_grid*N_flavors)
@@ -285,7 +285,7 @@ def compute_eigenvalues_for_replica(
     """
     try:
         # Create fresh pdf_model to avoid JAX tracer leaks
-        pdf_model = get_pdf_model(fit_name)
+        pdf_model = get_pdf_model(fit_name, replica_idx=replica_idx)
         param_files = get_parameters_all_epochs(replicas_path, replica_idx)
 
         eigenvalues_list = []
@@ -545,7 +545,7 @@ def compute_eigenvectors_at_epoch_for_replica(
         for the n3fit model)
     """
     try:
-        pdf_model = get_pdf_model(fit_name)
+        pdf_model = get_pdf_model(fit_name, replica_idx=replica_idx)
         param_files = get_parameters_all_epochs(replicas_path, replica_idx)
 
         params_at_epoch = param_files.get(epoch, None)
