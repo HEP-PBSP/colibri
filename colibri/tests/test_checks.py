@@ -141,9 +141,7 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     mock_pdf_model.grid_values_func.return_value = pdf_linear_model
 
     # Test for linear model (should not raise an exception)
-    check_pdf_model_is_linear.__wrapped__(
-        mock_pdf_model, forward_map_lin, FIT_XGRID, data
-    )
+    check_pdf_model_is_linear(mock_pdf_model, forward_map_lin, FIT_XGRID, data)
 
     # Now mock a non-linear model to ensure the ValueError is raised
     non_linear_model = FKTableForwardMap(
@@ -154,6 +152,4 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
 
     # Ensure ValueError is raised for non-linear model
     with pytest.raises(ValueError):
-        check_pdf_model_is_linear.__wrapped__(
-            mock_pdf_model, non_linear_model, FIT_XGRID, data
-        )
+        check_pdf_model_is_linear(mock_pdf_model, non_linear_model, FIT_XGRID, data)

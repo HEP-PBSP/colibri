@@ -81,7 +81,6 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
     return log_evidence, log_occam_factor
 
 
-@check_pdf_model_is_linear
 def analytic_fit(
     central_inv_covmat_index,
     forward_map,
@@ -90,6 +89,7 @@ def analytic_fit(
     prior_settings,
     FIT_XGRID,
     fast_kernel_arrays,
+    data,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -123,7 +123,13 @@ def analytic_fit(
 
     fast_kernel_arrays: tuple
         Tuple containing the fast kernel arrays.
+
+    data: validphys.core.DataGroupSpec
+        The data group specification for the fit.
     """
+    # Ensure that the PDF model is linear before running the fit.
+    log.info("Checking that the PDF model is linear...")
+    check_pdf_model_is_linear(pdf_model, forward_map, FIT_XGRID, data)
 
     log.warning("The prior is assumed to be flat in the parameters.")
     log.warning(

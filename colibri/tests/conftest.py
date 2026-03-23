@@ -149,7 +149,7 @@ TEST_FULL_HAD_DATASET = {
     "dataset_inputs": [
         # Hadronic
         {"dataset": "DYE866_Z0_800GEV_DW_RATIO_PDXSECRATIO", "variant": "legacy"},
-        {"dataset": "DYE866_Z0_800GEV_PXSEC", "variant": "legacy"},
+        {"dataset": "DYE866_Z0_800GEV_PXSEC", "varian   t": "legacy"},
         {"dataset": "DYE605_Z0_38P8GEV_DW_PXSEC", "variant": "legacy"},
         {
             "dataset": "DYE906_Z0_120GEV_DW_PDXSECRATIO",

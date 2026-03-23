@@ -41,7 +41,6 @@ def check_pdf_models_equal(prior_settings, pdf_model, theoryid):
             )
 
 
-@make_argcheck
 def check_pdf_model_is_linear(pdf_model, forward_map, FIT_XGRID, data):
     """
     Decorator that can be added to functions to check that the

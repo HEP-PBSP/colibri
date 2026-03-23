@@ -11,6 +11,7 @@ import jax.numpy as jnp
 import jax.random
 import pytest
 
+from colibri.api import API as colibriAPI
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 from colibri.core import PriorSettings
 from colibri.forward_map import FKTableForwardMap
@@ -18,10 +19,9 @@ from colibri.tests.conftest import (
     MOCK_CENTRAL_INV_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     TEST_FK_ARRAYS,
-    TEST_FORWARD_MAP_DIS,
-    TEST_PDF_GRID,
     TEST_PRIOR_SETTINGS_UNIFORM,
     TEST_XGRID,
+    TEST_DATASETS,
 )
 
 analytic_settings = {
@@ -29,6 +29,8 @@ analytic_settings = {
     "full_sample_size": 100,
     "n_posterior_samples": 10,
 }
+
+TEST_DATA = colibriAPI.data(**TEST_DATASETS)
 
 
 def test_analytic_fit_flat_direction():
@@ -52,6 +54,7 @@ def test_analytic_fit_flat_direction():
             TEST_PRIOR_SETTINGS_UNIFORM,
             TEST_XGRID,
             TEST_FK_ARRAYS,
+            TEST_DATA,
         )
 
 
@@ -78,6 +81,7 @@ def test_analytic_fit(caplog, monkeypatch):
         TEST_PRIOR_SETTINGS_UNIFORM,
         TEST_XGRID,
         TEST_FK_ARRAYS,
+        TEST_DATA,
     )
 
     assert isinstance(result, AnalyticFit)
@@ -100,6 +104,7 @@ def test_analytic_fit(caplog, monkeypatch):
             TEST_PRIOR_SETTINGS_UNIFORM,
             TEST_XGRID,
             TEST_FK_ARRAYS,
+            TEST_DATA,
         )
 
     # Check that an error message was logged, because the prior was not wide enough
@@ -141,6 +146,7 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
         PRIOR_SETTINGS1,
         TEST_XGRID,
         TEST_FK_ARRAYS,
+        TEST_DATA,
     )
 
     assert isinstance(result, AnalyticFit)
@@ -167,6 +173,7 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
         PRIOR_SETTINGS2,
         TEST_XGRID,
         TEST_FK_ARRAYS,
+        TEST_DATA,
     )
 
 
