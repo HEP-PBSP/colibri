@@ -68,14 +68,14 @@ def monte_carlo_fit(
 
     @jax.jit
     def loss_training(parameters, batch):
-        return -2 * mc_log_likelihood[0](parameters, batch) 
+        return -2 * mc_log_likelihood[0](parameters, batch)
 
     @jax.jit
     def loss_validation(parameters):
 
         val = -2 * mc_log_likelihood[1](parameters)
 
-        return val 
+        return val
 
     log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
     log.info("Starting Monte Carlo fit...")
