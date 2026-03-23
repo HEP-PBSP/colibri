@@ -155,4 +155,4 @@ def forward_map(_pred_data, pdf_model):
     """
 
     n_pdf_params = len(pdf_model.param_names)
-    return FKTableForwardMap(_pred_data, n_pdf_params=n_pdf_params)
+    return FKTableForwardMap(pred_func=_pred_data, n_pdf_params=n_pdf_params)
