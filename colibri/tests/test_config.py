@@ -13,7 +13,7 @@ import pytest
 import reportengine
 from reportengine.configparser import ConfigError
 
-from colibri.config import Environment, colibriConfig
+from colibri.config import Environment, colibriConfig, EnvironmentError_
 from colibri.tests.conftest import TEST_PRIOR_SETTINGS_UNIFORM
 
 BASE_CONFIG = colibriConfig({})
@@ -65,6 +65,16 @@ def test_init_output(mock_copy2, mock_open, mock_md5, tmp_path):
 
     # Check if md5 hash is generated and stored
     mock_open().write.assert_called_once_with("fake_md5_hash")
+
+
+def test_init_output_mkdir_failure(tmp_path):
+    env = Environment()
+    env.output_path = tmp_path / "new_dir"  # ensure it's not already created
+    env.config_yml = None  # avoid extra file ops
+
+    with patch("pathlib.Path.mkdir", side_effect=OSError("mkdir failed")):
+        with pytest.raises(EnvironmentError_):
+            env.init_output()
 
 
 @patch("colibri.config.log.warning")
