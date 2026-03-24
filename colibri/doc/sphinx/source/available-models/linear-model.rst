@@ -1,8 +1,8 @@
 .. _linear-model:
 
-============
+############
 Linear Model
-============
+############
 
 This model was presented in Ref. :cite:alp:`Costantini:2025wxp`.
 
@@ -14,8 +14,8 @@ What is this model for?
 This model is especially suitable for :ref:`running bayesian fits <in_running_bayesian>`.
 It can be used to:
 
-1. **Bayesian PDF Fits with POD Parametrisation** 
-2. **POD Basis Construction** Generate a Proper Orthogonal Decomposition (POD) basis (see Ref. :cite:alp:`Costantini:2025wxp` for details on what this is). 
+1. **POD Basis Construction** Generate a Proper Orthogonal Decomposition (POD) basis (see Ref. :cite:alp:`Costantini:2025wxp` for details on what this is). 
+2. **Bayesian PDF Fits with POD Parametrisation** 
 
 
 How to use this model
@@ -84,5 +84,28 @@ shifted by running:
 where the ``shift_lhapdf_members.py`` script can be found in the directory ``wmin-model/wmin/runcards``
 and ``evolved_directory`` is the fit or POD basis directory that should have previously been evolved.
 
-You can then follow Colibri's :ref:`analytic <running_analytic>` and :ref:`bayesian <in_running_bayesian>`
-workflows to run fits.
+
+Running fits
+^^^^^^^^^^^^
+
+You can follow Colibri's :ref:`analytic <running_analytic>` and :ref:`bayesian <in_running_bayesian>`
+workflows to run fits with this model. There are, however, a few points to note that are specific to
+this model.
+
+Analytic fits
+=============
+
+Analytic fits are only appropriate for linear models that also have a linear relationship with the
+data, so should be run with DIS data only.
+
+``wmin_settings``
+=================
+
+This model has specific settings that need to be specified in the runcard in order to run a fit:
+
+.. code-block::
+
+    wmin_settings:
+        wminpdfset: 250503_pod_basis_40k 
+        n_basis: 10     # number of parameters/weights to be fitted
+
