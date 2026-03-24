@@ -21,6 +21,7 @@ from colibri.tests.conftest import (
 
 from colibri.core import BlackJAXFit, BayesianPrior
 from colibri.blackjax_fit import blackjax_fit, run_blackjax_fit
+from colibri.forward_map import FKTableForwardMap
 from colibri.likelihood import LogLikelihood
 
 jax.config.update("jax_enable_x64", True)
@@ -61,12 +62,15 @@ blackjax_settings = {
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_blackjax_fit(pos_penalty):
-    _pred_data = lambda *args: jnp.array([0.0])
+    forward_map = FKTableForwardMap(
+        lambda pdf, fk: jnp.zeros(len(MOCK_PDF_MODEL.param_names)),
+        n_pdf_params=len(MOCK_PDF_MODEL.param_names),
+    )
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
         TEST_XGRID,
-        _pred_data,
+        forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
