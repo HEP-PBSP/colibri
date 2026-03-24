@@ -136,9 +136,9 @@ executable.
 ^^^^^^^^^^^^^^^^^^^^^^
 These settings control the method of gradient descent. You can use any
 of the Optax optimizers and settings, which you can read more about
-`here <https://optax.readthedocs.io/en/latest/api/optimizers.html#>`_.
+`here <https://optax.readthedocs.io/en/latest/api/optimizers.html#>`__.
 Learning schedulers are also supported, and you can find the available options
-`here <https://optax.readthedocs.io/en/latest/api/optimizer_schedules.html#>`_.
+`here <https://optax.readthedocs.io/en/latest/api/optimizer_schedules.html#>`__.
 
 ``param_initialiser_settings``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
