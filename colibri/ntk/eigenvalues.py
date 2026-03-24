@@ -231,7 +231,7 @@ def eigenvalues_ensemble(
                 replica_idx,
                 max_epoch,
                 name,
-                **(kwargs),
+                **dict(kwargs),
             ): replica_idx
             for replica_idx in pending
         }
