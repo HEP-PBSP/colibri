@@ -113,4 +113,4 @@ This model has specific settings that need to be specified in the runcard in ord
         n_basis: 10     # number of parameters/weights to be fitted
 
 * ``wminpdfset`` is the POD basis set you should have constructed before running a fit.
-* ``n_basis`` is the number of parameters or :textit:`weights` to be fitted (minimised). It should be less than or equal to the number of replicas in ``wminpdfset``.
+* ``n_basis`` is the number of parameters or *weights* to be fitted (minimised). It should be less than or equal to the number of replicas in ``wminpdfset``.
