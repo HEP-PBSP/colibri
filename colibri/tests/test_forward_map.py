@@ -57,6 +57,18 @@ def test_forward_map_subclass_without_call_cannot_be_instantiated():
         NoCallSubclass(n_pdf_params=2)
 
 
+def test_forward_map_abstract_call_raises_not_implemented():
+    """Calling super().__call__() must hit the raise NotImplementedError body."""
+
+    class SuperCallingForwardMap(ForwardMap):
+        def __call__(self, pdf_grid_func, fk_tables, params):
+            return super().__call__(pdf_grid_func, fk_tables, params)
+
+    fm = SuperCallingForwardMap(n_pdf_params=2)
+    with pytest.raises(NotImplementedError):
+        fm(_make_pdf_grid_func(TEST_PDF_GRID), TEST_FK_ARRAYS, jnp.array([1.0, 2.0]))
+
+
 def test_forward_map_subclass_stores_n_pdf_params():
     """n_pdf_params passed to super().__init__ must be stored on the instance."""
 
