@@ -14,14 +14,16 @@ What is this model for?
 This model is especially suitable for :ref:`running bayesian fits <in_running_bayesian>`.
 It can be used to:
 
-1. **POD Basis Construction** Generate a Proper Orthogonal Decomposition (POD) basis (see Ref. :cite:alp:`Costantini:2025wxp` for details on what this is). 
-2. **Bayesian PDF Fits with POD Parametrisation** 
+1. :ref:`Construct a Proper Orthogonal Decomposition (POD) basis <pod-basis>` (see Ref. :cite:alp:`Costantini:2025wxp` for details on what this is). 
+2. :ref:`Run Bayesian PDF Fits with the POD Parametrisation <pod-fits>`.
 
 
 How to use this model
 ---------------------
 
 You can find installation instructions in the `model repository <https://github.com/HEP-PBSP/wmin-model>`_. 
+
+.. _pod-basis:
 
 Constructing a POD basis
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -85,6 +87,8 @@ where the ``shift_lhapdf_members.py`` script can be found in the directory ``wmi
 and ``evolved_directory`` is the fit or POD basis directory that should have previously been evolved.
 
 
+.. _pod-fits:
+
 Running fits
 ^^^^^^^^^^^^
 
@@ -92,8 +96,7 @@ You can follow Colibri's :ref:`analytic <running_analytic>` and :ref:`bayesian <
 workflows to run fits with this model. There are, however, a few points to note that are specific to
 this model.
 
-Analytic fits
-=============
+:underline:`Analytic fits`
 
 Analytic fits are only appropriate for linear models that also have a linear relationship with the
 data, so should be run with DIS data only.
