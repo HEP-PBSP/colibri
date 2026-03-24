@@ -154,7 +154,7 @@ def eigenvalues_ensemble(
     force_recompute: bool = False,
     max_workers: Optional[int] = None,
     name: Optional[str] = None,
-    kwargs: dict = {},
+    kwargs: frozenset = frozenset({}),
 ):
     """
     Compute NTK eigenvalues for all replicas across all specified epochs.
@@ -181,6 +181,8 @@ def eigenvalues_ensemble(
         n_replicas).
     name: str, optional
         Optional name to include in the filename for clarity when saving results.
+    kwargs : dict, optional
+        Additional kwargs to pass to compute_eigenvalues_at_epoch_for_replica
 
     Returns
     -------
