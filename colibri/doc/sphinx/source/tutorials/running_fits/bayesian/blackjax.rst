@@ -12,7 +12,7 @@ for details on the Les Houches model and how to implement it).
 An advantage of using BlackJAX is that it can run entirely on GPU (as well as on CPU),
 so we will discuss the optimal settings to do so.
 
-We will then loot at the command to execute the runcard.
+We will then look at the command to execute the runcard.
 
 .. _blackjax_runcard:
 
