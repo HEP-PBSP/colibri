@@ -296,7 +296,7 @@ def likelihood_float_type(
     FIT_XGRID,
     bayesian_prior,
     output_path,
-    central_inv_covmat_index,
+    central_covmat_index,
     fast_kernel_arrays,
 ):
     """
@@ -306,19 +306,19 @@ def likelihood_float_type(
 
     loss_function = chi2
 
-    central_values = central_inv_covmat_index.central_values
-    inv_covmat = central_inv_covmat_index.inv_covmat
+    central_values = central_covmat_index.central_values
+    covmat = central_covmat_index.covmat
     pdf_grid = pdf_model.grid_values_func(FIT_XGRID)
 
     def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
         predictions, pdf = forward_map(pdf_grid, fast_kernel_arrays, params)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
-    params = bayesian_prior(
+    params = bayesian_prior.prior_transform(
         jax.random.uniform(jax.random.PRNGKey(0), shape=(len(pdf_model.param_names),))
     )
 
-    dtype = log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays).dtype
+    dtype = log_likelihood(params, central_values, covmat, fast_kernel_arrays).dtype
 
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:

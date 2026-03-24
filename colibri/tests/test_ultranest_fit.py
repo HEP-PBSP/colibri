@@ -21,12 +21,31 @@ from colibri.tests.conftest import (
 )
 from colibri.ultranest_fit import UltranestFit, run_ultranest_fit, ultranest_fit
 from colibri.likelihood import LogLikelihood
+from colibri.core import BayesianPrior
 from colibri.forward_map import FKTableForwardMap
 
 jax.config.update("jax_enable_x64", True)
 
-# Define mock input parameters
-bayesian_prior = lambda x: x
+
+def mock_prior_transform(x):
+    return x
+
+
+def mock_log_prob(x):
+    return jnp.array(0.0)
+
+
+def mock_sample(rng_key, n_samples):
+    n_params = len(MOCK_PDF_MODEL.param_names)
+    return jax.random.uniform(rng_key, shape=(n_samples, n_params))
+
+
+bayesian_prior = BayesianPrior(
+    prior_transform=lambda x: x,
+    log_prob=lambda x: -jnp.sum(x**2, axis=-1),
+    sample=lambda rng, n: jnp.zeros((n, MOCK_PDF_MODEL.n_parameters)),
+)
+
 
 integrability_penalty = lambda pdf: jnp.array([0.0])
 

@@ -26,7 +26,7 @@ from validphys.fkparser import load_fktable
 
 from colibri.api import API as cAPI
 from colibri.tests.conftest import (
-    MOCK_CENTRAL_INV_COVMAT_INDEX,
+    MOCK_CENTRAL_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     TEST_DATASET,
     TEST_DATASET_HAD,
@@ -49,6 +49,7 @@ from colibri.utils import (
     t0_pdf_grid,
     write_resampled_bayesian_fit,
 )
+from colibri.core import BayesianPrior
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
@@ -253,9 +254,11 @@ def test_get_full_posterior():
     shutil.rmtree(dest_path)
 
 
-def mock_bayesian_prior(array):
-    # Mocked version of bayesian_prior
-    return array
+mock_bayesian_prior = BayesianPrior(
+    prior_transform=lambda x: x,
+    log_prob=lambda x: -jnp.sum(x**2, axis=-1),
+    sample=lambda rng, n: jnp.zeros((n, len(MOCK_PDF_MODEL.param_names))),
+)
 
 
 @pytest.mark.parametrize("dataset_input", [TEST_DATASET_HAD, TEST_DATASET])
@@ -337,7 +340,7 @@ def test_likelihood_float_type(
 ):
 
     _pred_data = lambda x, fks: jnp.ones(
-        len(MOCK_CENTRAL_INV_COVMAT_INDEX.central_values)
+        len(MOCK_CENTRAL_COVMAT_INDEX.central_values)
     )  # Mock _pred_data
     forward_map = FKTableForwardMap(
         _pred_data, n_pdf_params=len(MOCK_PDF_MODEL.param_names)
@@ -356,7 +359,7 @@ def test_likelihood_float_type(
         FIT_XGRID=FIT_XGRID,
         bayesian_prior=mock_bayesian_prior,
         output_path=output_path,
-        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         fast_kernel_arrays=fast_kernel_arrays,
     )
 

@@ -16,7 +16,7 @@ from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 from colibri.core import PriorSettings
 from colibri.forward_map import FKTableForwardMap
 from colibri.tests.conftest import (
-    MOCK_CENTRAL_INV_COVMAT_INDEX,
+    MOCK_CENTRAL_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     TEST_FK_ARRAYS,
     TEST_PRIOR_SETTINGS_UNIFORM,
@@ -47,7 +47,7 @@ def test_analytic_fit_flat_direction():
     with pytest.raises(ValueError):
         # Run the analytic fit and make sure that the Value Error is raised
         analytic_fit(
-            MOCK_CENTRAL_INV_COVMAT_INDEX,
+            MOCK_CENTRAL_COVMAT_INDEX,
             forward_map,
             MOCK_PDF_MODEL,
             analytic_settings,
@@ -74,7 +74,7 @@ def test_analytic_fit(caplog, monkeypatch):
 
     # Run the analytic fit
     result = analytic_fit(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         forward_map,
         MOCK_PDF_MODEL,
         analytic_settings,
@@ -97,7 +97,7 @@ def test_analytic_fit(caplog, monkeypatch):
     # Run the analytic fit
     with caplog.at_level(logging.ERROR):  # Set the log level to ERROR
         result_2 = analytic_fit(
-            MOCK_CENTRAL_INV_COVMAT_INDEX,
+            MOCK_CENTRAL_COVMAT_INDEX,
             forward_map,
             MOCK_PDF_MODEL,
             analytic_settings,
@@ -139,7 +139,7 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
 
     # Run the analytic fit
     result = analytic_fit(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         forward_map,
         MOCK_PDF_MODEL,
         analytic_settings,
@@ -166,7 +166,7 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
 
     # Run the analytic fit with custom uniform prior
     result = analytic_fit(
-        MOCK_CENTRAL_INV_COVMAT_INDEX,
+        MOCK_CENTRAL_COVMAT_INDEX,
         forward_map,
         MOCK_PDF_MODEL,
         analytic_settings,

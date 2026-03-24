@@ -271,6 +271,50 @@ class colibriConfig(Config):
 
         return ultranest_settings
 
+    def parse_blackjax_settings(self, settings, output_path):
+        """For a BlackJAX fit, parses the blackjax_settings namespace from the runcard,
+        and ensures the choice of settings is valid.
+        """
+
+        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
+        known_keys = {
+            "n_posterior_samples",
+            "n_live",
+            "repeats",
+            "delete_fraction",
+            "log_precision",
+            "posterior_resampling_seed",
+            "seed",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in blackjax_settings not known.", k, known_keys)
+            )
+
+        # Now construct the blackjax_settings dictionary
+        blackjax_settings = {}
+
+        # Extract settings and set default values
+        blackjax_settings["n_posterior_samples"] = settings.get(
+            "n_posterior_samples", 1000
+        )
+        blackjax_settings["n_live"] = settings.get("n_live", 500)
+        blackjax_settings["repeats"] = settings.get("repeats", 3)
+        blackjax_settings["delete_fraction"] = settings.get("delete_fraction", 0.5)
+        blackjax_settings["log_precision"] = settings.get("log_precision", -3)
+        blackjax_settings["seed"] = settings.get("seed", 0)
+        blackjax_settings["posterior_resampling_seed"] = settings.get(
+            "posterior_resampling_seed", 123456
+        )
+        # Set directory where blackjax_logs will be saved
+        blackjax_settings["log_dir"] = settings.get(
+            "log_dir", str(output_path / "blackjax_logs")
+        )
+
+        return blackjax_settings
+
     def parse_positivity_penalty_settings(self, settings):
         """
         Parses the positivity_penalty_settings namespace from the runcard,
