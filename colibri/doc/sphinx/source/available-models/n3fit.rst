@@ -10,19 +10,17 @@ This model is based on the `n3fit` model used in the NNPDF framework, which is o
 
 This PDF model is parameterised by the following functional form:
 
-$f_{i}(x) =  NN(x)_{j} * x^{1-alpha_{j}} * (1-x)^{beta_{j}}$
+.. math::
+    f_{i}(x) =  NN(x)_{j} * x^{1-alpha_{j}} * (1-x)^{beta_{j}}
 
-where the PDFs are defined in the evolution basis as described in [:cite NNPDF4.0]. The preprocessing parameters \alpha and \beta
+where the PDFs are defined in the evolution basis as described in :cite:NNPDF:2021uiq. The preprocessing parameters :math:`\alpha` and :math:`\beta`
 are sampled for each replica from uniform distributions as defined by `FLAV_INFO_NNPDF40` in `utils.py`, these values are fixed during training.
 The neural network architecture can be defined in the runcard through the following parameters:
+
 - `nodes`: the number of nodes in each hidden layer. The last layer should have a number of nodes equal to the number of PDF flavours being fitted.
 - `activations`: the activation function to be used in each hidden layer, e.g. `tanh` or `linear`.
-- `layer_type` ...
 
-What is this model for?
 -----------------------
-
-
 How to use this model
 ---------------------
 
@@ -34,6 +32,8 @@ Clone the repository:
 Install the dependencies and executable:
 
 .. code-block:: bash
+    conda env create -f environment.yml
+    conda activate example-colibri-n3fit
     pip install -e .
 
 Run an example fit:
