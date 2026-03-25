@@ -307,7 +307,8 @@ def likelihood_float_type(
     loss_function = chi2
 
     central_values = central_covmat_index.central_values
-    covmat = central_covmat_index.covmat
+    sqrt_covmat = central_covmat_index.sqrt_covmat
+    covmat = sqrt_covmat @ sqrt_covmat.T
 
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 

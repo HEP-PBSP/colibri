@@ -143,17 +143,14 @@ def analytic_fit(
 
     # Construct the analytic solution
     central_values = central_covmat_index.central_values
-    covmat = central_covmat_index.covmat
+    # sqrt_covmat is the lower triangular Cholesky factor L, satisfying L @ L.T = covmat
+    L = central_covmat_index.sqrt_covmat
 
     # Solve chi2 analytically for the mean
     Y = central_values - intercept
     X = predictions.T - intercept[:, None]
 
     t0 = time.time()
-
-    # Cholesky factorization: S = L L^T
-    # upper False means that we want the lower triangular matrix L
-    L = jla.cholesky(covmat, upper=False)
 
     # Whiten the problem: Y' = L^-1 Y, X' = L^-1 X
     Y_tilde = jlinalg.triangular_solve(L, Y, left_side=True, lower=True)

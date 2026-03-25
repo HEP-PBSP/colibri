@@ -611,7 +611,7 @@ class colibriConfig(Config):
         """
         Produces the covariance matrix used in the fit.
         This covariance matrix is used in:
-        - commondata_utils.central_covmat_index
+        - covmats.general_sqrt_covariance_matrix (which feeds commondata_utils.central_covmat_index)
         - mc_log_likelihood for the monte carlo fit
         """
         if use_fit_t0:

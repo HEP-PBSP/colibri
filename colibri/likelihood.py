@@ -10,6 +10,7 @@ import jax
 import jax.numpy as jnp
 from colibri.loss_functions import chi2
 from colibri.commondata_utils import CentralCovmatIndex
+from colibri.covmats import general_sqrt_covariance_matrix as compute_sqrt_covmat
 from colibri.data_batch import BatchSpec
 
 
@@ -54,7 +55,8 @@ class LogLikelihood(object):
 
         """
         self.central_values = central_covmat_index.central_values
-        self.covmat = central_covmat_index.covmat
+        self.sqrt_covmat = central_covmat_index.sqrt_covmat
+        self.covmat = self.sqrt_covmat @ self.sqrt_covmat.T
         self.inv_covmat = jnp.linalg.inv(self.covmat)
         self.central_values_idx = central_covmat_index.central_values_idx
         self.pdf_model = pdf_model
@@ -216,11 +218,13 @@ def mc_log_likelihood(
 
     tr_idx = mc_pseudodata.training_indices
     central_values_train = mc_pseudodata.pseudodata[tr_idx]
-    covmat_train = general_covariance_matrix[tr_idx][:, tr_idx]
+    sqrt_covmat_train = compute_sqrt_covmat(
+        general_covariance_matrix[tr_idx][:, tr_idx]
+    )
 
     central_covmat_index_train = CentralCovmatIndex(
         central_values=central_values_train,
-        covmat=covmat_train,
+        sqrt_covmat=sqrt_covmat_train,
         central_values_idx=tr_idx,
     )
 
@@ -242,11 +246,13 @@ def mc_log_likelihood(
     else:
         val_idx = mc_pseudodata.validation_indices
         central_values_val = mc_pseudodata.pseudodata[val_idx]
-        covmat_val = general_covariance_matrix[val_idx][:, val_idx]
+        sqrt_covmat_val = compute_sqrt_covmat(
+            general_covariance_matrix[val_idx][:, val_idx]
+        )
 
         central_covmat_index_val = CentralCovmatIndex(
             central_values=central_values_val,
-            covmat=covmat_val,
+            sqrt_covmat=sqrt_covmat_val,
             central_values_idx=val_idx,
         )
 

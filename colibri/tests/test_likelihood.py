@@ -55,7 +55,9 @@ def test_LogLikelihood_class(pos_penalty):
         MOCK_CENTRAL_COVMAT_INDEX.central_values,
         log_likelihood_class.central_values,
     )
-    assert_allclose(MOCK_CENTRAL_COVMAT_INDEX.covmat, log_likelihood_class.covmat)
+    assert_allclose(
+        MOCK_CENTRAL_COVMAT_INDEX.sqrt_covmat, log_likelihood_class.sqrt_covmat
+    )
     assert MOCK_PDF_MODEL == log_likelihood_class.pdf_model
     assert MOCK_PENALTY_POSDATA == log_likelihood_class.penalty_posdata
 
