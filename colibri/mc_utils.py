@@ -37,14 +37,12 @@ def mc_pseudodata(
     sqrt_covmat = central_covmat_index.sqrt_covmat
     all_indices = central_covmat_index.central_values_idx
 
-    # Generate pseudodata according to a multivariate Gaussian centred on
-    # central_values and with covariance matrix covmat = sqrt_covmat @ sqrt_covmat.T.
+    # Generate pseudodata: central_values + sqrt_covmat @ z, where z ~ N(0, I).
+    # This is equivalent to sampling from N(central_values, sqrt_covmat @ sqrt_covmat.T)
+    # but avoids explicitly forming the covariance matrix.
     key = jax.random.PRNGKey(replica_index)
-    pseudodata = jax.random.multivariate_normal(
-        key,
-        central_values,
-        sqrt_covmat @ sqrt_covmat.T,
-    )
+    z = jax.random.normal(key, shape=(sqrt_covmat.shape[0],))
+    pseudodata = central_values + sqrt_covmat @ z
 
     # Now select a subset of 1 - mc_validation_fraction indices to be the
     # training indices.

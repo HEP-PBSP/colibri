@@ -417,7 +417,8 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     predictions = predictions[log_likelihood_class.central_values_idx]
     predictions_b = predictions[batch.idx]
     central_b = log_likelihood_class.central_values[batch.idx]
-    cov_b = log_likelihood_class.covmat[batch.idx][:, batch.idx]
+    sqrt_b = log_likelihood_class.sqrt_covmat[batch.idx]
+    cov_b = sqrt_b @ sqrt_b.T
     inv_b = jnp.linalg.inv(cov_b)
     diff_b = predictions_b - central_b
     chi2_b = jnp.einsum("i,ij,j", diff_b, inv_b, diff_b)
@@ -469,7 +470,8 @@ def test_LogLikelihood_call_with_batch_with_inv_cov(pos_penalty):
 
     # Select first two data points and precompute their inverse covariance
     batch_idx = jnp.array([0, 1])
-    cov_b = log_likelihood_class.covmat[batch_idx][:, batch_idx]
+    sqrt_b = log_likelihood_class.sqrt_covmat[batch_idx]
+    cov_b = sqrt_b @ sqrt_b.T
     inv_b = jnp.linalg.inv(cov_b)
 
     # Provide the precomputed inverse covariance in the BatchSpec

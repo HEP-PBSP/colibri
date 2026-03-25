@@ -8,6 +8,7 @@ from functools import partial
 
 import jax
 import jax.numpy as jnp
+import jax.lax.linalg as jlinalg
 from colibri.loss_functions import chi2
 from colibri.commondata_utils import CentralCovmatIndex
 from colibri.covmats import general_sqrt_covariance_matrix as compute_sqrt_covmat
@@ -56,8 +57,13 @@ class LogLikelihood(object):
         """
         self.central_values = central_covmat_index.central_values
         self.sqrt_covmat = central_covmat_index.sqrt_covmat
-        self.covmat = self.sqrt_covmat @ self.sqrt_covmat.T
-        self.inv_covmat = jnp.linalg.inv(self.covmat)
+        # Compute inv(L L^T) = inv(L)^T inv(L) via triangular solve, avoiding
+        # explicit formation of the covariance matrix.
+        n = self.sqrt_covmat.shape[0]
+        L_inv = jlinalg.triangular_solve(
+            self.sqrt_covmat, jnp.eye(n), left_side=True, lower=True
+        )
+        self.inv_covmat = L_inv.T @ L_inv
         self.central_values_idx = central_covmat_index.central_values_idx
         self.pdf_model = pdf_model
         self.penalty_posdata = penalty_posdata
@@ -137,8 +143,8 @@ class LogLikelihood(object):
             predictions = predictions[batch.idx]
             central_values = central_values[batch.idx]
             if batch.inv_cov is None:
-                batched_covmat = self.covmat[batch.idx][:, batch.idx]
-                inv_covmat = jnp.linalg.inv(batched_covmat)
+                batched_sqrt = self.sqrt_covmat[batch.idx]
+                inv_covmat = jnp.linalg.inv(batched_sqrt @ batched_sqrt.T)
             else:
                 inv_covmat = batch.inv_cov
 
