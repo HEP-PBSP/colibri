@@ -254,7 +254,7 @@ def analytic_fit(
     min_chi2 = -2 * max_logl
     log.info(f"Minimum chi2 = {min_chi2}")
 
-    BIC = min_chi2 + sol_covmat.shape[0] * np.log(covmat.shape[0])
+    BIC = min_chi2 + sol_covmat.shape[0] * np.log(L.shape[0])
     AIC = min_chi2 + 2 * sol_covmat.shape[0]
 
     # Compute average chi2 (in whitened basis)
