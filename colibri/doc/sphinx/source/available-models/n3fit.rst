@@ -11,7 +11,7 @@ This model is based on the `n3fit` model used in the NNPDF framework, which is o
 This PDF model is parameterised by the following functional form:
 
 .. math::
-    f_{i}(x) =  NN(x)_{j} * x^{1-alpha_{j}} * (1-x)^{beta_{j}}
+    f_{i}(x) =  A_i NN(x)_{j} * x^{1-alpha_{j}} * (1-x)^{beta_{j}}
 
 where the PDFs are defined in the evolution basis as described in :cite:NNPDF:2021uiq. The preprocessing parameters :math:`\alpha` and :math:`\beta`
 are sampled for each replica from uniform distributions as defined by `FLAV_INFO_NNPDF40` in `utils.py`, these values are fixed during training.
