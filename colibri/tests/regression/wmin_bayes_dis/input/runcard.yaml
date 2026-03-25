@@ -32,7 +32,7 @@ positivity:                            # Positivity datasets, used in the positi
 alpha: 1e-7                            # TODO
 lambda_positivity: 0                   # TODO
 
-use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+use_t0_covmat: True                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
 
 

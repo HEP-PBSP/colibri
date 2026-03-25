@@ -166,7 +166,7 @@ def central_covmat_index(commondata_tuple, general_covariance_matrix):
     general_covariance_matrix: jnp.ndarray
         covariance matrix, is generated as explicit node
         (see config.general_covariance_matrix) can be either experimental
-        or t0 covariance matrix depending on whether `use_fit_t0` is
+        or t0 covariance matrix depending on whether `use_t0_covmat` is
         True or False
 
     Returns
