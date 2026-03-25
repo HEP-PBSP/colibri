@@ -59,8 +59,8 @@ def test_central_covmat_index():
     # Check that CentralCovmatIndex has the required attributes, of the correct types
     assert hasattr(result, "central_values")
     assert isinstance(result.central_values, jnp.ndarray)
-    assert hasattr(result, "sqrt_covmat")
-    assert isinstance(result.sqrt_covmat, jnp.ndarray)
+    assert hasattr(result, "inv_sqrt_covmat")
+    assert isinstance(result.inv_sqrt_covmat, jnp.ndarray)
     assert hasattr(result, "central_values_idx")
     assert isinstance(result.central_values_idx, jnp.ndarray)
 
@@ -68,8 +68,8 @@ def test_central_covmat_index():
     result_dict = result.to_dict()
     assert isinstance(result_dict, dict)
 
-    # Check that dimensions of attributes are correct
-    assert result.central_values.shape[0] == result.sqrt_covmat.shape[0]
+    # Check that dimensions are correct (inv_sqrt_covmat is square: n_dat x n_dat)
+    assert result.central_values.shape[0] == result.inv_sqrt_covmat.shape[0]
     assert result.central_values_idx.shape[0] == result.central_values.shape[0]
 
 

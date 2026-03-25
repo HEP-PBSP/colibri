@@ -342,7 +342,7 @@ Function expects a tuple of DIS-like fast kernel array of shape (N_data, TEST_N_
 
 MOCK_CENTRAL_COVMAT_INDEX = Mock()
 MOCK_CENTRAL_COVMAT_INDEX.central_values = jnp.ones(TEST_N_DATA)
-MOCK_CENTRAL_COVMAT_INDEX.sqrt_covmat = jnp.eye(TEST_N_DATA)
+MOCK_CENTRAL_COVMAT_INDEX.inv_sqrt_covmat = jnp.eye(TEST_N_DATA)
 MOCK_CENTRAL_COVMAT_INDEX.central_values_idx = jnp.arange(TEST_N_DATA)
 """
 Mock instance of Central covmat index object.

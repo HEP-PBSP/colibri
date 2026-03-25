@@ -15,6 +15,7 @@ from colibri.tests.conftest import (
     MOCK_PDF_MODEL,
     MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
+    TEST_N_DATA,
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
 )
@@ -61,7 +62,7 @@ blackjax_settings = {
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_blackjax_fit(pos_penalty):
-    _pred_data = lambda *args: jnp.array([0.0])
+    _pred_data = lambda *args: jnp.zeros(TEST_N_DATA)
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,

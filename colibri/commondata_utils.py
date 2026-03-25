@@ -7,6 +7,7 @@ Module containing commondata and central covmat index functions.
 import pandas as pd
 
 import jax
+import jax.lax.linalg as jlinalg
 import jax.numpy as jnp
 
 from colibri.theory_predictions import make_pred_dataset
@@ -152,9 +153,12 @@ def level_1_commondata_tuple(
 
 def central_covmat_index(commondata_tuple, general_sqrt_covariance_matrix):
     """
-    Given a commondata_tuple and a general_sqrt_covariance_matrix, generated
-    according to respective explicit node in config.py, store
-    relevant data into CentralCovmatIndex dataclass.
+    Given a commondata_tuple and a general_sqrt_covariance_matrix, whiten the
+    central values and store the inverse Cholesky factor in CentralCovmatIndex.
+
+    The data are transformed to the whitened basis d_w = L^{-1} d (where L is
+    ``general_sqrt_covariance_matrix``), making them i.i.d. before any
+    training/validation split is applied.
 
     Parameters
     ----------
@@ -164,25 +168,28 @@ def central_covmat_index(commondata_tuple, general_sqrt_covariance_matrix):
         specified options.
 
     general_sqrt_covariance_matrix: jnp.ndarray
-        lower triangular Cholesky factor of the covariance matrix, is generated
-        as explicit node (see covmats.general_sqrt_covariance_matrix) can be
-        either experimental or t0 covariance matrix depending on whether
-        `use_fit_t0` is True or False. Satisfies:
+        lower triangular Cholesky factor L of the covariance matrix, generated
+        as explicit node (see covmats.general_sqrt_covariance_matrix). Satisfies:
         ``general_sqrt_covariance_matrix @ general_sqrt_covariance_matrix.T == covmat``
 
     Returns
     -------
     CentralCovmatIndex
-        Dataclass containing central values, sqrt covariance matrix and
-        index of central values.
+        Dataclass containing whitened central values, the inverse Cholesky
+        factor L^{-1} (``inv_sqrt_covmat``), and the index of central values.
     """
     central_values = jnp.array(
         pd.concat([cd.central_values for cd in commondata_tuple], axis=0)
     )
-    central_values_idx = jnp.arange(central_values.shape[0])
+    n = general_sqrt_covariance_matrix.shape[0]
+    L_inv = jlinalg.triangular_solve(
+        general_sqrt_covariance_matrix, jnp.eye(n), left_side=True, lower=True
+    )
+    whitened_central_values = L_inv @ central_values
+    central_values_idx = jnp.arange(n)
 
     return CentralCovmatIndex(
-        central_values=central_values,
+        central_values=whitened_central_values,
         central_values_idx=central_values_idx,
-        sqrt_covmat=general_sqrt_covariance_matrix,
+        inv_sqrt_covmat=L_inv,
     )

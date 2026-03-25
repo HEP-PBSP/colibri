@@ -58,29 +58,31 @@ def test_data_batches_value_error():
 
 
 def test_data_batches_with_covmat():
-    """When a covariance matrix is provided, BatchSpec.inv_cov should be set."""
+    """When a sqrt covariance matrix is provided, BatchSpec.inv_cov should be set
+    to the corresponding L_inv rows (shape: batch_size x n_data)."""
     n_training_points = 20
     batch_size = 5
     training_indices = jnp.arange(n_training_points)
 
-    # simple positive-definite covariance (scaled identity)
-    cov = jnp.eye(n_training_points) * 2.0
+    # sqrt of scaled identity: L = sqrt(2) * I
+    sqrt_cov = jnp.eye(n_training_points) * jnp.sqrt(2.0)
 
     db = data_batches(
         training_indices,
         batch_size=batch_size,
-        general_covariance_matrix=cov,
+        general_sqrt_covariance_matrix=sqrt_cov,
         batch_seed=42,
     )
 
-    # fixed_batches_specs should be populated and include inv_cov
+    # fixed_batches_specs should be populated and include inv_cov (L_inv rows)
     assert isinstance(db.fixed_batches, list)
     assert len(db.fixed_batches) == db.num_batches
 
     spec = next(db.data_batch_stream())
     assert hasattr(spec, "inv_cov")
     assert isinstance(spec.inv_cov, jax.Array)
-    assert spec.inv_cov.shape == (batch_size, batch_size)
+    # inv_cov is now L_inv rows: shape (batch_size, n_data)
+    assert spec.inv_cov.shape == (batch_size, n_training_points)
 
 
 def test_data_batches_shuffle_each_epoch():

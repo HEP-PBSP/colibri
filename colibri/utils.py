@@ -14,7 +14,6 @@ from typing import Union
 
 import dill
 import jax
-import jax.lax.linalg as jlinalg
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
@@ -307,25 +306,22 @@ def likelihood_float_type(
 
     loss_function = chi2
 
-    central_values = central_covmat_index.central_values
-    sqrt_covmat = central_covmat_index.sqrt_covmat
-    n = sqrt_covmat.shape[0]
-    L_inv = jlinalg.triangular_solve(
-        sqrt_covmat, jnp.eye(n), left_side=True, lower=True
-    )
-    inv_covmat = L_inv.T @ L_inv
+    central_values = central_covmat_index.central_values  # whitened
+    inv_sqrt_covmat = central_covmat_index.inv_sqrt_covmat
 
     pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
-    def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
+    def log_likelihood(params, central_values, inv_sqrt_covmat, fast_kernel_arrays):
         predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
-        return -0.5 * loss_function(central_values, predictions, inv_covmat)
+        return -0.5 * loss_function(central_values, predictions, inv_sqrt_covmat)
 
     params = bayesian_prior.prior_transform(
         jax.random.uniform(jax.random.PRNGKey(0), shape=(len(pdf_model.param_names),))
     )
 
-    dtype = log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays).dtype
+    dtype = log_likelihood(
+        params, central_values, inv_sqrt_covmat, fast_kernel_arrays
+    ).dtype
 
     # save the dtype to the output path
     with open(output_path / "dtype.txt", "w") as file:

@@ -142,19 +142,16 @@ def analytic_fit(
     intercept = pred_and_pdf(jnp.zeros(len(parameters)), fast_kernel_arrays)[0]
 
     # Construct the analytic solution
-    central_values = central_covmat_index.central_values
-    # sqrt_covmat is the lower triangular Cholesky factor L, satisfying L @ L.T = covmat
-    L = central_covmat_index.sqrt_covmat
+    # central_values is already whitened: L^{-1} d
+    L_inv = central_covmat_index.inv_sqrt_covmat
 
-    # Solve chi2 analytically for the mean
-    Y = central_values - intercept
+    # Whiten the problem: Y' = L^{-1}(d - T_0), X' = L^{-1}(T - T_0)
+    # Since central_values = L^{-1} d, Y_tilde = central_values - L^{-1} T_0
+    Y_tilde = central_covmat_index.central_values - L_inv @ intercept
     X = predictions.T - intercept[:, None]
+    X_tilde = L_inv @ X
 
     t0 = time.time()
-
-    # Whiten the problem: Y' = L^-1 Y, X' = L^-1 X
-    Y_tilde = jlinalg.triangular_solve(L, Y, left_side=True, lower=True)
-    X_tilde = jlinalg.triangular_solve(L, X, left_side=True, lower=True)
 
     if jnp.any(jla.eigh(X_tilde.T @ X_tilde)[0] <= 0.0):
         raise ValueError(
@@ -254,7 +251,7 @@ def analytic_fit(
     min_chi2 = -2 * max_logl
     log.info(f"Minimum chi2 = {min_chi2}")
 
-    BIC = min_chi2 + sol_covmat.shape[0] * np.log(L.shape[0])
+    BIC = min_chi2 + sol_covmat.shape[0] * np.log(L_inv.shape[0])
     AIC = min_chi2 + 2 * sol_covmat.shape[0]
 
     # Compute average chi2 (in whitened basis)

@@ -16,6 +16,7 @@ from colibri.tests.conftest import (
     MOCK_PDF_MODEL,
     MOCK_PENALTY_POSDATA,
     TEST_FK_ARRAYS,
+    TEST_N_DATA,
     TEST_POS_FK_ARRAYS,
     TEST_XGRID,
 )
@@ -65,7 +66,7 @@ vect_ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit(pos_penalty):
 
-    _pred_data = lambda *args: jnp.array([0.0])
+    _pred_data = lambda *args: jnp.zeros(TEST_N_DATA)
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
@@ -102,7 +103,7 @@ def test_ultranest_fit(pos_penalty):
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_ultranest_fit_vectorized(pos_penalty):
 
-    _pred_data = lambda *args: jnp.array([0.0])
+    _pred_data = lambda *args: jnp.zeros(TEST_N_DATA)
     ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 
     mock_log_likelihood = LogLikelihood(
@@ -151,7 +152,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
         "popstepsampler": False,
     }
 
-    _pred_data = lambda *args: jnp.array([0.0])
+    _pred_data = lambda *args: jnp.zeros(TEST_N_DATA)
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
@@ -199,7 +200,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
         "popstepsampler": True,
     }
 
-    _pred_data = lambda *args: jnp.array([0.0])
+    _pred_data = lambda *args: jnp.zeros(TEST_N_DATA)
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
@@ -251,7 +252,7 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
         "popstepsampler": False,
     }
 
-    _pred_data = lambda *args: jnp.array([0.0])
+    _pred_data = lambda *args: jnp.zeros(TEST_N_DATA)
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,

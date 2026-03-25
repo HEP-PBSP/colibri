@@ -33,16 +33,14 @@ def mc_pseudodata(
     a fraction mc_validation_fraction of the data.
     """
 
-    central_values = central_covmat_index.central_values
-    sqrt_covmat = central_covmat_index.sqrt_covmat
+    central_values = central_covmat_index.central_values  # whitened: L^{-1} d
     all_indices = central_covmat_index.central_values_idx
 
-    # Generate pseudodata: central_values + sqrt_covmat @ z, where z ~ N(0, I).
-    # This is equivalent to sampling from N(central_values, sqrt_covmat @ sqrt_covmat.T)
-    # but avoids explicitly forming the covariance matrix.
+    # In the whitened basis the covariance is identity, so pseudodata is simply
+    # the whitened central values plus a standard normal noise vector.
     key = jax.random.PRNGKey(replica_index)
-    z = jax.random.normal(key, shape=(sqrt_covmat.shape[0],))
-    pseudodata = central_values + sqrt_covmat @ z
+    z = jax.random.normal(key, shape=(central_values.shape[0],))
+    pseudodata = central_values + z
 
     # Now select a subset of 1 - mc_validation_fraction indices to be the
     # training indices.

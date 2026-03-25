@@ -11,7 +11,6 @@ import jax.numpy as jnp
 import jax.lax.linalg as jlinalg
 from colibri.loss_functions import chi2
 from colibri.commondata_utils import CentralCovmatIndex
-from colibri.covmats import general_sqrt_covariance_matrix as compute_sqrt_covmat
 from colibri.data_batch import BatchSpec
 
 
@@ -55,15 +54,8 @@ class LogLikelihood(object):
         integrability_penalty: Callable
 
         """
-        self.central_values = central_covmat_index.central_values
-        self.sqrt_covmat = central_covmat_index.sqrt_covmat
-        # Compute inv(L L^T) = inv(L)^T inv(L) via triangular solve, avoiding
-        # explicit formation of the covariance matrix.
-        n = self.sqrt_covmat.shape[0]
-        L_inv = jlinalg.triangular_solve(
-            self.sqrt_covmat, jnp.eye(n), left_side=True, lower=True
-        )
-        self.inv_covmat = L_inv.T @ L_inv
+        self.central_values = central_covmat_index.central_values  # whitened: L^{-1} d
+        self.inv_sqrt_covmat = central_covmat_index.inv_sqrt_covmat  # L^{-1} (or rows)
         self.central_values_idx = central_covmat_index.central_values_idx
         self.pdf_model = pdf_model
         self.penalty_posdata = penalty_posdata
@@ -101,7 +93,7 @@ class LogLikelihood(object):
         return self.log_likelihood(
             params,
             self.central_values,
-            self.inv_covmat,
+            self.inv_sqrt_covmat,
             self.fast_kernel_arrays,
             self.positivity_fast_kernel_arrays,
             batch=batch,
@@ -112,7 +104,7 @@ class LogLikelihood(object):
         self,
         params: jnp.ndarray,
         central_values: jnp.ndarray,
-        inv_covmat: jnp.ndarray,
+        inv_sqrt_covmat: jnp.ndarray,
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
         batch: BatchSpec | None = None,
@@ -121,11 +113,17 @@ class LogLikelihood(object):
         This function takes care of computing the log_likelihood that is defined in LogLikelihood.
         Function is jax.jit compiled for better performance.
 
+        Data are in the whitened basis (L^{-1} d). The predictions are whitened
+        on-the-fly inside chi2 via ``inv_sqrt_covmat``, which also selects the
+        relevant data subset (training or validation rows of L^{-1}).
+
         Parameters
         ----------
         params: jnp.ndarray
         central_values: jnp.ndarray
-        inv_covmat: jnp.ndarray
+            Pre-whitened data (L^{-1} d).
+        inv_sqrt_covmat: jnp.ndarray
+            Inverse Cholesky factor L^{-1}, shape (n_selected, n_data).
         fast_kernel_arrays: tuple
         positivity_fast_kernel_arrays: tuple
 
@@ -135,18 +133,15 @@ class LogLikelihood(object):
             jax array with the value of the log-likelihood.
         """
         predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
-        # Select only the data relevant for this likelihood
-        # Especially important when using a training/validation split
-        predictions = predictions[self.central_values_idx]
+        # No explicit selection: inv_sqrt_covmat rows handle both whitening
+        # and data-subset selection simultaneously inside chi2.
 
         if batch is not None:
-            predictions = predictions[batch.idx]
             central_values = central_values[batch.idx]
             if batch.inv_cov is None:
-                batched_sqrt = self.sqrt_covmat[batch.idx]
-                inv_covmat = jnp.linalg.inv(batched_sqrt @ batched_sqrt.T)
+                inv_sqrt_covmat = inv_sqrt_covmat[batch.idx]
             else:
-                inv_covmat = batch.inv_cov
+                inv_sqrt_covmat = batch.inv_cov
 
         if self.positivity_penalty_settings["positivity_penalty"]:
             pos_penalty = jnp.sum(
@@ -169,7 +164,9 @@ class LogLikelihood(object):
         )
 
         return -0.5 * (
-            chi2(central_values, predictions, inv_covmat) + pos_penalty + integ_penalty
+            chi2(central_values, predictions, inv_sqrt_covmat)
+            + pos_penalty
+            + integ_penalty
         )
 
 
@@ -205,7 +202,7 @@ def log_likelihood(
 
 def mc_log_likelihood(
     mc_pseudodata,
-    general_covariance_matrix,
+    general_sqrt_covariance_matrix,
     pdf_model,
     FIT_XGRID,
     _pred_data,
@@ -218,19 +215,24 @@ def mc_log_likelihood(
     """
     Instantiates the LogLikelihood class for training and validation datasets
     when using Monte Carlo pseudodata with a training/validation split.
+
+    The pseudodata are already in the whitened basis (L^{-1} d + z). The full
+    inverse Cholesky factor L^{-1} is computed once and its relevant rows are
+    stored in each CentralCovmatIndex so that chi2 can whiten predictions and
+    select the data subset simultaneously.
+
     The function, being a node of the reportengine graph, can be overriden by the user for
     model specific applications by changing the log_likelihood method of the LogLikelihood class.
     """
-
-    tr_idx = mc_pseudodata.training_indices
-    central_values_train = mc_pseudodata.pseudodata[tr_idx]
-    sqrt_covmat_train = compute_sqrt_covmat(
-        general_covariance_matrix[tr_idx][:, tr_idx]
+    n = general_sqrt_covariance_matrix.shape[0]
+    L_inv = jlinalg.triangular_solve(
+        general_sqrt_covariance_matrix, jnp.eye(n), left_side=True, lower=True
     )
 
+    tr_idx = mc_pseudodata.training_indices
     central_covmat_index_train = CentralCovmatIndex(
-        central_values=central_values_train,
-        sqrt_covmat=sqrt_covmat_train,
+        central_values=mc_pseudodata.pseudodata[tr_idx],
+        inv_sqrt_covmat=L_inv[tr_idx],
         central_values_idx=tr_idx,
     )
 
@@ -251,14 +253,9 @@ def mc_log_likelihood(
 
     else:
         val_idx = mc_pseudodata.validation_indices
-        central_values_val = mc_pseudodata.pseudodata[val_idx]
-        sqrt_covmat_val = compute_sqrt_covmat(
-            general_covariance_matrix[val_idx][:, val_idx]
-        )
-
         central_covmat_index_val = CentralCovmatIndex(
-            central_values=central_values_val,
-            sqrt_covmat=sqrt_covmat_val,
+            central_values=mc_pseudodata.pseudodata[val_idx],
+            inv_sqrt_covmat=L_inv[val_idx],
             central_values_idx=val_idx,
         )
 
