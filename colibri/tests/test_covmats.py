@@ -12,13 +12,13 @@ import pandas as pd
 from numpy.testing import assert_allclose
 
 from colibri.api import API as colibriAPI
-from colibri.covmats import sqrt_covmat_jax
+from colibri.covmats import general_sqrt_covariance_matrix
 from colibri.tests.conftest import T0_PDFSET, TEST_DATASETS
 
 TEST_COVMATS_FOLDER = pathlib.Path(__file__).with_name("test_covmats")
 
 
-def test_sqrt_covmat_jax():
+def test_general_sqrt_covariance_matrix():
     """
     Test that sqrt_covmat_jax actually computes the square root of a matrix.
     """
@@ -26,7 +26,7 @@ def test_sqrt_covmat_jax():
     test_matrix = jnp.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]])
 
     # This matrix has square root [[2, 0, 0], [6, 1, 0], [-8, 5, 3]]
-    sqrt_matrix = sqrt_covmat_jax(test_matrix)
+    sqrt_matrix = general_sqrt_covariance_matrix(test_matrix)
     actual_sqrt = jnp.array([[2, 0, 0], [6, 1, 0], [-8, 5, 3]])
     assert_allclose(sqrt_matrix, actual_sqrt, rtol=1e-5)
 
