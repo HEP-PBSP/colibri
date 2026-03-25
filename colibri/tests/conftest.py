@@ -38,6 +38,13 @@ TEST_DATASETS = {
     "theoryid": TEST_THEORYID,
     "use_cuts": TEST_USECUTS,
 }
+
+TEST_NEGATIVE_DATASETS = {
+    "dataset_inputs": [{"dataset": "HERA_CC_318GEV_EM-SIGMARED", "variant": "legacy"}],
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
+}
+
 """
 This should contain the exact same info as TEST_DATASET, but with the use of
 the "dataset_inputs" key instead of "dataset_input"
