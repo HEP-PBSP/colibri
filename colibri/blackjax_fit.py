@@ -68,15 +68,19 @@ def blackjax_fit(
     log.info(f"Running fit with backend: {jax.default_backend()}")
 
     # set the BlackJAX seed
-    rng_key = jax.random.PRNGKey(blackjax_settings["seed"])
+    rng_key = jax.random.PRNGKey(blackjax_settings["blackjax_seed"])
     log.info(f"BlackJAX initialisation seed: {rng_key}")
+
+    parameters = pdf_model.param_names
+    prior_transform = bayesian_prior.prior_transform
+
     n_dims = pdf_model.n_parameters
     n_live = blackjax_settings["n_live"]
     n_delete = int(blackjax_settings["delete_fraction"] * n_live)
 
-    inital_particles = bayesian_prior.sample(rng_key, n_live)
+    initial_live_points = bayesian_prior.sample(rng_key, n_live)
 
-    algo = blackjax.nss(
+    sampler = blackjax.nss(
         logprior_fn=bayesian_prior.log_prob,
         loglikelihood_fn=log_likelihood,
         num_delete=n_delete,
@@ -87,10 +91,10 @@ def blackjax_fit(
     def one_step(carry, xs):
         state, k = carry
         k, subk = jax.random.split(k, 2)
-        state, dead_point = algo.step(subk, state)
+        state, dead_point = sampler.step(subk, state)
         return (state, k), dead_point
 
-    state = algo.init(inital_particles)
+    state = sampler.init(initial_live_points)
 
     dead = []
 
@@ -128,12 +132,10 @@ def blackjax_fit(
         )
 
     # Resample the posterior
-    posterior_resampling_seed = blackjax_settings["posterior_resampling_seed"]
-    log.info(f"Resampling posterior with seed: {posterior_resampling_seed}")
     resampled_posterior = resample_from_ns_posterior(
         full_samples,
         n_posterior_samples,
-        posterior_resampling_seed,
+        blackjax_settings["posterior_resampling_seed"],
     )
 
     # write out an anesthetic dataframe
@@ -167,7 +169,7 @@ def blackjax_fit(
             "logZ_err": logzs.std(),
             "ess": ess_value,
         },
-        param_names=pdf_model.param_names,
+        param_names = parameters,
         resampled_posterior=resampled_posterior,
         full_posterior_samples=full_samples,
         bayesian_metrics={
