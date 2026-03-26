@@ -28,13 +28,8 @@ class PDFModel(ABC):
 
     @property
     def n_parameters(self):
-        """This should return the number of parameters of the model.
-         It should look something like this:
-
-          def n_parameters(self):
-              return len(self.param_names)
-
-        It will be used in various fitting routines.
+        """
+        Returns the number of parameters of the pdf model.
         """
         return len(self.param_names)
 
