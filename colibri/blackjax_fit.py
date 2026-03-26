@@ -169,7 +169,7 @@ def blackjax_fit(
             "logZ_err": logzs.std(),
             "ess": ess_value,
         },
-        param_names = parameters,
+        param_names=parameters,
         resampled_posterior=resampled_posterior,
         full_posterior_samples=full_samples,
         bayesian_metrics={
