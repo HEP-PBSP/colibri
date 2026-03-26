@@ -64,7 +64,7 @@ blackjax_settings = {
 def test_blackjax_fit(pos_penalty):
     forward_map = FKTableForwardMap(
         lambda pdf, fk: jnp.zeros(len(MOCK_PDF_MODEL.param_names)),
-        n_pdf_params=len(MOCK_PDF_MODEL.param_names),
+        pdf_param_names=MOCK_PDF_MODEL.param_names,
     )
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,

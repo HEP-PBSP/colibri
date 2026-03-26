@@ -32,8 +32,8 @@ Example - fitting a normalisation factor on top of the PDF
 ::
 
     class NormForwardMap(ForwardMap):
-        def __init__(self, pred_func, n_pdf_params: int):
-            super().__init__(n_pdf_params)
+        def __init__(self, pred_func, pdf_param_names: list[str]):
+            super().__init__(pdf_param_names)
             self._pred_func = pred_func
 
         def __call__(self, pdf_grid_func, fk_tables, params):
@@ -46,8 +46,8 @@ Example - fixed PDF, fitting only extra parameters
 ::
 
     class FixedPDFForwardMap(ForwardMap):
-        def __init__(self, pred_func, fixed_pdf, fk_tables, n_pdf_params: int = 0):
-            super().__init__(n_pdf_params)
+        def __init__(self, pred_func, fixed_pdf, fk_tables, pdf_param_names: list[str] | None = None):
+            super().__init__(pdf_param_names if pdf_param_names is not None else [])
             self._pred_func = pred_func
             self.fixed_pdf = fixed_pdf
             self._fixed_pred = self._pred_func(fixed_pdf, fk_tables)
@@ -81,9 +81,14 @@ class ForwardMap(ABC):
     by the forward map via ``self.n_pdf_params``.
     """
 
-    def __init__(self, n_pdf_params: int):
+    def __init__(self, pdf_param_names: list[str]):
 
-        self.n_pdf_params = n_pdf_params
+        self.pdf_param_names = pdf_param_names
+
+    @property
+    def n_pdf_params(self) -> int:
+        """Number of PDF parameters, derived from ``pdf_param_names``."""
+        return len(self.pdf_param_names)
 
     @abstractmethod
     def __call__(
@@ -131,9 +136,11 @@ class FKTableForwardMap(ForwardMap):
     """
 
     def __init__(
-        self, pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray], n_pdf_params: int
+        self,
+        pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
+        pdf_param_names: list[str],
     ):
-        super().__init__(n_pdf_params)
+        super().__init__(pdf_param_names)
         self._pred_func = pred_func
 
     def __call__(self, pdf_grid_func, fk_tables, params):
@@ -150,9 +157,10 @@ def forward_map(_pred_data, pdf_model):
     _pred_data : callable
         Prediction function of the form ``pred_func(pdf, fk_tables) -> predictions``.
     pdf_model : optional
-        Used to infer ``n_pdf_params`` from ``len(pdf_model.param_names)``.
+        Used to obtain ``pdf_param_names`` from ``pdf_model.param_names``.
 
     """
 
-    n_pdf_params = len(pdf_model.param_names)
-    return FKTableForwardMap(pred_func=_pred_data, n_pdf_params=n_pdf_params)
+    return FKTableForwardMap(
+        pred_func=_pred_data, pdf_param_names=pdf_model.param_names
+    )

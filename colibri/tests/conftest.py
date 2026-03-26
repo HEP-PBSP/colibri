@@ -327,7 +327,7 @@ This mocks a POS fast kernel mapping the PDF grid to 2 datapoints.
 
 TEST_FORWARD_MAP_DIS = FKTableForwardMap(
     lambda pdf, fk_arrays: jnp.einsum("ijk,jk->i", fk_arrays[0], pdf),
-    n_pdf_params=2,
+    pdf_param_names=["param1", "param2"],
 )
 """
 Mock DIS forward map function for testing purposes.

@@ -41,7 +41,8 @@ def test_analytic_fit_flat_direction():
     n_params = len(MOCK_PDF_MODEL.param_names)
 
     forward_map = FKTableForwardMap(
-        lambda pdf, fkarrs: jnp.ones(n_params), n_pdf_params=n_params
+        lambda pdf, fkarrs: jnp.ones(n_params),
+        pdf_param_names=MOCK_PDF_MODEL.param_names,
     )
 
     with pytest.raises(ValueError):
@@ -69,7 +70,7 @@ def test_analytic_fit(caplog, monkeypatch):
     )
 
     forward_map = FKTableForwardMap(
-        lambda pdf, fkarrs: pdf, n_pdf_params=len(MOCK_PDF_MODEL.param_names)
+        lambda pdf, fkarrs: pdf, pdf_param_names=MOCK_PDF_MODEL.param_names
     )
 
     # Run the analytic fit
@@ -134,7 +135,7 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
     )
 
     forward_map = FKTableForwardMap(
-        lambda pdf, fkarrs: pdf, n_pdf_params=len(MOCK_PDF_MODEL.param_names)
+        lambda pdf, fkarrs: pdf, pdf_param_names=MOCK_PDF_MODEL.param_names
     )
 
     # Run the analytic fit

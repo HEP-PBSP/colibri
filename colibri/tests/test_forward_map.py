@@ -44,7 +44,7 @@ def _make_pdf_grid_func(pdf_grid):
 def test_forward_map_cannot_be_instantiated():
     """ForwardMap is abstract; direct instantiation must raise TypeError."""
     with pytest.raises(TypeError):
-        ForwardMap(n_pdf_params=2)
+        ForwardMap(pdf_param_names=["a", "b"])
 
 
 def test_forward_map_subclass_without_call_cannot_be_instantiated():
@@ -54,7 +54,7 @@ def test_forward_map_subclass_without_call_cannot_be_instantiated():
         pass
 
     with pytest.raises(TypeError):
-        NoCallSubclass(n_pdf_params=2)
+        NoCallSubclass(pdf_param_names=["a", "b"])
 
 
 def test_forward_map_abstract_call_raises_not_implemented():
@@ -64,20 +64,21 @@ def test_forward_map_abstract_call_raises_not_implemented():
         def __call__(self, pdf_grid_func, fk_tables, params):
             return super().__call__(pdf_grid_func, fk_tables, params)
 
-    fm = SuperCallingForwardMap(n_pdf_params=2)
+    fm = SuperCallingForwardMap(pdf_param_names=["a", "b"])
     with pytest.raises(NotImplementedError):
         fm(_make_pdf_grid_func(TEST_PDF_GRID), TEST_FK_ARRAYS, jnp.array([1.0, 2.0]))
 
 
-def test_forward_map_subclass_stores_n_pdf_params():
-    """n_pdf_params passed to super().__init__ must be stored on the instance."""
+def test_forward_map_subclass_stores_pdf_param_names():
+    """pdf_param_names passed to super().__init__ must be stored on the instance."""
 
     class MinimalForwardMap(ForwardMap):
         def __call__(self, pdf_grid_func, fk_tables, params):
             pdf = pdf_grid_func(params[: self.n_pdf_params])
             return _simple_pred_func(pdf, fk_tables), pdf
 
-    fm = MinimalForwardMap(n_pdf_params=5)
+    fm = MinimalForwardMap(pdf_param_names=["p0", "p1", "p2", "p3", "p4"])
+    assert fm.pdf_param_names == ["p0", "p1", "p2", "p3", "p4"]
     assert fm.n_pdf_params == 5
 
 
@@ -86,15 +87,16 @@ def test_forward_map_subclass_stores_n_pdf_params():
 # ---------------------------------------------------------------------------
 
 
-def test_fktable_forward_map_stores_n_pdf_params():
-    """FKTableForwardMap.__init__ must store n_pdf_params via the base class."""
-    fm = FKTableForwardMap(pred_func=_simple_pred_func, n_pdf_params=3)
+def test_fktable_forward_map_stores_pdf_param_names():
+    """FKTableForwardMap.__init__ must store pdf_param_names via the base class."""
+    fm = FKTableForwardMap(pred_func=_simple_pred_func, pdf_param_names=["a", "b", "c"])
+    assert fm.pdf_param_names == ["a", "b", "c"]
     assert fm.n_pdf_params == 3
 
 
 def test_fktable_forward_map_stores_pred_func():
     """FKTableForwardMap.__init__ must store the pred_func."""
-    fm = FKTableForwardMap(pred_func=_simple_pred_func, n_pdf_params=3)
+    fm = FKTableForwardMap(pred_func=_simple_pred_func, pdf_param_names=["a", "b", "c"])
     assert fm._pred_func is _simple_pred_func
 
 
@@ -105,7 +107,7 @@ def test_fktable_forward_map_stores_pred_func():
 
 def test_fktable_forward_map_returns_tuple():
     """__call__ must return a 2-tuple (predictions, pdf)."""
-    fm = FKTableForwardMap(pred_func=_simple_pred_func, n_pdf_params=2)
+    fm = FKTableForwardMap(pred_func=_simple_pred_func, pdf_param_names=["a", "b"])
     pdf_grid_func = _make_pdf_grid_func(TEST_PDF_GRID)
     params = jnp.array([1.0, 2.0])
 
@@ -117,7 +119,7 @@ def test_fktable_forward_map_returns_tuple():
 
 def test_fktable_forward_map_predictions_shape():
     """Predictions returned by __call__ must have shape (N_data,)."""
-    fm = FKTableForwardMap(pred_func=_simple_pred_func, n_pdf_params=2)
+    fm = FKTableForwardMap(pred_func=_simple_pred_func, pdf_param_names=["a", "b"])
     pdf_grid_func = _make_pdf_grid_func(TEST_PDF_GRID)
     params = jnp.array([1.0, 2.0])
 
@@ -128,7 +130,7 @@ def test_fktable_forward_map_predictions_shape():
 
 def test_fktable_forward_map_pdf_shape():
     """PDF returned by __call__ must have shape (N_fl, N_x)."""
-    fm = FKTableForwardMap(pred_func=_simple_pred_func, n_pdf_params=2)
+    fm = FKTableForwardMap(pred_func=_simple_pred_func, pdf_param_names=["a", "b"])
     pdf_grid_func = _make_pdf_grid_func(TEST_PDF_GRID)
     params = jnp.array([1.0, 2.0])
 
@@ -143,7 +145,7 @@ def test_fktable_forward_map_slices_pdf_params():
     parameters appended to params must not affect the PDF or predictions.
     """
     n_pdf = 2
-    fm = FKTableForwardMap(pred_func=_simple_pred_func, n_pdf_params=n_pdf)
+    fm = FKTableForwardMap(pred_func=_simple_pred_func, pdf_param_names=["a", "b"])
     pdf_grid_func = _make_pdf_grid_func(TEST_PDF_GRID)
 
     pdf_params = jnp.array([1.0, 2.0])
@@ -168,7 +170,7 @@ def test_fktable_forward_map_uses_pdf_grid_func():
     """
     scale = 3.0
     n_pdf = 2
-    fm = FKTableForwardMap(pred_func=_simple_pred_func, n_pdf_params=n_pdf)
+    fm = FKTableForwardMap(pred_func=_simple_pred_func, pdf_param_names=["a", "b"])
 
     params = jnp.array([1.0, 2.0])
     base_pdf_grid_func = _make_pdf_grid_func(TEST_PDF_GRID)
@@ -185,7 +187,7 @@ def test_fktable_forward_map_correct_values():
     __call__ must produce predictions equal to pred_func(pdf_grid_func(params), fk).
     """
     n_pdf = 2
-    fm = FKTableForwardMap(pred_func=_simple_pred_func, n_pdf_params=n_pdf)
+    fm = FKTableForwardMap(pred_func=_simple_pred_func, pdf_param_names=["a", "b"])
 
     params = jnp.array([1.0, 2.0])
     pdf_grid_func = _make_pdf_grid_func(TEST_PDF_GRID)
@@ -210,11 +212,13 @@ def test_forward_map_provider_returns_fktable_forward_map():
     assert isinstance(result, FKTableForwardMap)
 
 
-def test_forward_map_provider_infers_n_pdf_params():
+def test_forward_map_provider_infers_pdf_param_names():
     """
-    forward_map() must set n_pdf_params equal to len(pdf_model.param_names).
+    forward_map() must set pdf_param_names equal to pdf_model.param_names,
+    and n_pdf_params must equal len(pdf_model.param_names).
     """
     result = forward_map(_pred_data=_simple_pred_func, pdf_model=MOCK_PDF_MODEL)
+    assert result.pdf_param_names == MOCK_PDF_MODEL.param_names
     assert result.n_pdf_params == len(MOCK_PDF_MODEL.param_names)
 
 
@@ -248,4 +252,5 @@ def test_forward_map_provider_with_different_param_counts():
         mock_model = Mock()
         mock_model.param_names = [f"p_{i}" for i in range(n)]
         fm = forward_map(_pred_data=_simple_pred_func, pdf_model=mock_model)
+        assert fm.pdf_param_names == mock_model.param_names
         assert fm.n_pdf_params == n
