@@ -82,6 +82,33 @@ def test_forward_map_subclass_stores_pdf_param_names():
     assert fm.n_pdf_params == 5
 
 
+def test_forward_map_extra_param_names_default():
+    """extra_param_names defaults to an empty tuple."""
+
+    class MinimalForwardMap(ForwardMap):
+        def __call__(self, pdf_grid_func, fk_tables, params):
+            return None
+
+    fm = MinimalForwardMap(pdf_param_names=["a", "b"])
+    assert list(fm.extra_param_names) == []
+    assert fm.param_names == ["a", "b"]
+
+
+def test_forward_map_extra_param_names():
+    """extra_param_names are stored and appear in param_names after pdf_param_names."""
+
+    class MinimalForwardMap(ForwardMap):
+        def __call__(self, pdf_grid_func, fk_tables, params):
+            return None
+
+    fm = MinimalForwardMap(
+        pdf_param_names=["a", "b"], extra_param_names=["norm", "scale"]
+    )
+    assert list(fm.extra_param_names) == ["norm", "scale"]
+    assert fm.param_names == ["a", "b", "norm", "scale"]
+    assert fm.n_pdf_params == 2
+
+
 # ---------------------------------------------------------------------------
 # FKTableForwardMap.__init__
 # ---------------------------------------------------------------------------
@@ -92,6 +119,18 @@ def test_fktable_forward_map_stores_pdf_param_names():
     fm = FKTableForwardMap(pred_func=_simple_pred_func, pdf_param_names=["a", "b", "c"])
     assert fm.pdf_param_names == ["a", "b", "c"]
     assert fm.n_pdf_params == 3
+
+
+def test_fktable_forward_map_extra_param_names():
+    """FKTableForwardMap must accept and store extra_param_names."""
+    fm = FKTableForwardMap(
+        pred_func=_simple_pred_func,
+        pdf_param_names=["a", "b"],
+        extra_param_names=["norm"],
+    )
+    assert fm.param_names == ["a", "b", "norm"]
+    assert fm.n_pdf_params == 2
+    assert list(fm.extra_param_names) == ["norm"]
 
 
 def test_fktable_forward_map_stores_pred_func():
@@ -254,3 +293,18 @@ def test_forward_map_provider_with_different_param_counts():
         fm = forward_map(_pred_data=_simple_pred_func, pdf_model=mock_model)
         assert fm.pdf_param_names == mock_model.param_names
         assert fm.n_pdf_params == n
+
+
+def test_forward_map_provider_with_extra_param_names():
+    """
+    forward_map() must forward extra_param_names to FKTableForwardMap
+    and expose them via param_names.
+    """
+    extra = ["norm", "scale"]
+    fm = forward_map(
+        _pred_data=_simple_pred_func,
+        pdf_model=MOCK_PDF_MODEL,
+        extra_param_names=extra,
+    )
+    assert fm.param_names == MOCK_PDF_MODEL.param_names + extra
+    assert list(fm.extra_param_names) == extra

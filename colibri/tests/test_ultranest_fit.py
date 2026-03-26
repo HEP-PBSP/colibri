@@ -87,7 +87,7 @@ def test_ultranest_fit(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings,
         mock_log_likelihood,
@@ -129,7 +129,7 @@ def test_ultranest_fit_vectorized(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings,
         mock_log_likelihood,
@@ -180,7 +180,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings,
         mock_log_likelihood,
@@ -231,7 +231,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings,
         mock_log_likelihood,
@@ -301,7 +301,7 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
     mock_sampler_instance.plot = Mock()
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings_with_plot,
         mock_log_likelihood,

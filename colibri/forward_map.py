@@ -33,7 +33,7 @@ Example - fitting a normalisation factor on top of the PDF
 
     class NormForwardMap(ForwardMap):
         def __init__(self, pred_func, pdf_param_names: list[str]):
-            super().__init__(pdf_param_names)
+            super().__init__(pdf_param_names, extra_param_names=["norm"])
             self._pred_func = pred_func
 
         def __call__(self, pdf_grid_func, fk_tables, params):
@@ -81,14 +81,20 @@ class ForwardMap(ABC):
     by the forward map via ``self.n_pdf_params``.
     """
 
-    def __init__(self, pdf_param_names: list[str]):
+    def __init__(self, pdf_param_names: list[str], extra_param_names: list[str] = ()):
 
         self.pdf_param_names = pdf_param_names
+        self.extra_param_names = extra_param_names
 
     @property
     def n_pdf_params(self) -> int:
         """Number of PDF parameters, derived from ``pdf_param_names``."""
         return len(self.pdf_param_names)
+
+    @property
+    def param_names(self) -> list[str]:
+        """All fit parameter names: PDF parameters followed by extra parameters."""
+        return list(self.pdf_param_names) + list(self.extra_param_names)
 
     @abstractmethod
     def __call__(
@@ -139,8 +145,9 @@ class FKTableForwardMap(ForwardMap):
         self,
         pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
         pdf_param_names: list[str],
+        extra_param_names: list[str] = (),
     ):
-        super().__init__(pdf_param_names)
+        super().__init__(pdf_param_names, extra_param_names=extra_param_names)
         self._pred_func = pred_func
 
     def __call__(self, pdf_grid_func, fk_tables, params):
@@ -149,18 +156,22 @@ class FKTableForwardMap(ForwardMap):
         return self._pred_func(pdf, fk_tables), pdf
 
 
-def forward_map(_pred_data, pdf_model):
+def forward_map(_pred_data, pdf_model, extra_param_names=()):
     """Reportengine provider that builds the default FK-table forward map.
 
     Parameters
     ----------
     _pred_data : callable
         Prediction function of the form ``pred_func(pdf, fk_tables) -> predictions``.
-    pdf_model : optional
+    pdf_model : object
         Used to obtain ``pdf_param_names`` from ``pdf_model.param_names``.
+    extra_param_names : list[str], optional
+        Names of any additional fit parameters beyond the PDF parameters.
 
     """
 
     return FKTableForwardMap(
-        pred_func=_pred_data, pdf_param_names=pdf_model.param_names
+        pred_func=_pred_data,
+        pdf_param_names=pdf_model.param_names,
+        extra_param_names=extra_param_names,
     )

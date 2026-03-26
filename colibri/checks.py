@@ -9,15 +9,15 @@ import jax.numpy as jnp
 import jax
 from colibri.theory_predictions import make_pred_data, fast_kernel_arrays
 
-from colibri.utils import get_fit_path, get_pdf_model, pdf_models_equal
+from colibri.utils import get_fit_path, get_pdf_model
 
 
 @make_argcheck
-def check_pdf_models_equal(prior_settings, pdf_model, theoryid):
+def check_pdf_models_equal(prior_settings, forward_map, theoryid):
     """
     Decorator that can be added to functions to check that the
     PDF model used as prior (eg when using prior_settings["type"] == "prior_from_gauss_posterior")
-    matches the PDF model used in the current fit (pdf_model).
+    matches the PDF model used in the current fit (via ``forward_map.pdf_param_names``).
     """
 
     if prior_settings.prior_distribution == "prior_from_gauss_posterior":
@@ -25,9 +25,10 @@ def check_pdf_models_equal(prior_settings, pdf_model, theoryid):
         prior_fit = prior_settings.prior_distribution_specs["prior_fit"]
         prior_pdf_model = get_pdf_model(prior_fit)
 
-        if not pdf_models_equal(prior_pdf_model, pdf_model):
+        if prior_pdf_model.param_names != list(forward_map.pdf_param_names):
             raise ValueError(
-                f"PDF model {pdf_model} does not match prior settings {prior_pdf_model}"
+                f"PDF param names from forward_map {list(forward_map.pdf_param_names)} "
+                f"do not match prior PDF model param names {prior_pdf_model.param_names}"
             )
 
         # load filter.yml runcard of the prior fit

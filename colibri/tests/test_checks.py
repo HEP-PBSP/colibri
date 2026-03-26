@@ -21,11 +21,8 @@ from colibri.core import PriorSettings
     read_data="theoryid: 123\nt0pdfset: t0pdfset1",
 )
 @patch("os.path.exists", return_value=True)
-@patch("colibri.checks.get_pdf_model", return_value="model1")
-@patch("colibri.checks.pdf_models_equal")
-def test_check_pdf_models_equal_true(
-    mock_pdf_models_equal, mock_get_pdf_model, mock_exists, mock_open
-):
+@patch("colibri.checks.get_pdf_model")
+def test_check_pdf_models_equal_true(mock_get_pdf_model, mock_exists, mock_open):
     # Setup
     prior_settings = PriorSettings(
         **{
@@ -33,16 +30,20 @@ def test_check_pdf_models_equal_true(
             "prior_distribution_specs": {"prior_fit": "fit1"},
         }
     )
-    pdf_model = "model1"
+
+    # The prior model returned by get_pdf_model must have matching param_names
+    mock_prior_model = MagicMock()
+    mock_prior_model.param_names = ["param1", "param2"]
+    mock_get_pdf_model.return_value = mock_prior_model
+
+    forward_map = MagicMock()
+    forward_map.pdf_param_names = ["param1", "param2"]
 
     theoryid = MagicMock()
     theoryid.id = 123
 
-    # Configure mock behavior
-    mock_pdf_models_equal.side_effect = lambda x, y: x == y
-
-    # Act
-    check_pdf_models_equal.__wrapped__(prior_settings, pdf_model, theoryid)
+    # Act — should not raise
+    check_pdf_models_equal.__wrapped__(prior_settings, forward_map, theoryid)
 
 
 @patch(
@@ -51,10 +52,9 @@ def test_check_pdf_models_equal_true(
     read_data="theoryid: 456\nt0pdfset: t0pdfset1",
 )
 @patch("os.path.exists", return_value=True)
-@patch("colibri.checks.get_pdf_model", return_value="model1")
-@patch("colibri.checks.pdf_models_equal")
+@patch("colibri.checks.get_pdf_model")
 def test_check_pdf_models_equal_false_theoryid(
-    mock_pdf_models_equal, mock_get_pdf_model, mock_exists, mock_open
+    mock_get_pdf_model, mock_exists, mock_open
 ):
     # Setup
     prior_settings = PriorSettings(
@@ -63,21 +63,20 @@ def test_check_pdf_models_equal_false_theoryid(
             "prior_distribution_specs": {"prior_fit": "fit1"},
         }
     )
-    pdf_model = "model1"
+
+    mock_prior_model = MagicMock()
+    mock_prior_model.param_names = ["param1", "param2"]
+    mock_get_pdf_model.return_value = mock_prior_model
+
+    forward_map = MagicMock()
+    forward_map.pdf_param_names = ["param1", "param2"]
 
     theoryid = MagicMock()
     theoryid.id = 123
 
-    t0pdfset = MagicMock()
-    t0pdfset.name = "t0pdfset1"
-
-    # Configure mock behavior
-    mock_pdf_models_equal.side_effect = lambda x, y: x == y
-
+    # Theory ID mismatch (file says 456, fit says 123)
     with pytest.raises(Exception):
-        check_pdf_models_equal.__wrapped__(
-            prior_settings, pdf_model, theoryid, t0pdfset
-        )
+        check_pdf_models_equal.__wrapped__(prior_settings, forward_map, theoryid)
 
 
 @patch(
@@ -86,31 +85,30 @@ def test_check_pdf_models_equal_false_theoryid(
     read_data="theoryid: 123\nt0pdfset: t0pdfset2",
 )
 @patch("os.path.exists", return_value=True)
-@patch("colibri.checks.get_pdf_model", return_value="model1")
-@patch("colibri.checks.pdf_models_equal")
-def test_check_pdf_models_equal_false_t0pdf(
-    mock_pdf_models_equal, mock_get_pdf_model, mock_exists, mock_open
+@patch("colibri.checks.get_pdf_model")
+def test_check_pdf_models_equal_false_param_names(
+    mock_get_pdf_model, mock_exists, mock_open
 ):
-    # Setup
-    prior_settings = {
-        "prior_distribution": "prior_from_gauss_posterior",
-        "prior_distribution_specs": {"prior_fit": "fit1"},
-    }
-    pdf_model = "model1"
+    # Setup — param names mismatch between prior model and forward_map
+    prior_settings = PriorSettings(
+        **{
+            "prior_distribution": "prior_from_gauss_posterior",
+            "prior_distribution_specs": {"prior_fit": "fit1"},
+        }
+    )
+
+    mock_prior_model = MagicMock()
+    mock_prior_model.param_names = ["param1", "param2", "param3"]  # different
+    mock_get_pdf_model.return_value = mock_prior_model
+
+    forward_map = MagicMock()
+    forward_map.pdf_param_names = ["param1", "param2"]
 
     theoryid = MagicMock()
     theoryid.id = 123
 
-    t0pdfset = MagicMock()
-    t0pdfset.name = "t0pdfset1"
-
-    # Configure mock behavior
-    mock_pdf_models_equal.side_effect = lambda x, y: x == y
-
-    with pytest.raises(Exception):
-        check_pdf_models_equal.__wrapped__(
-            prior_settings, pdf_model, theoryid, t0pdfset
-        )
+    with pytest.raises(ValueError):
+        check_pdf_models_equal.__wrapped__(prior_settings, forward_map, theoryid)
 
 
 @patch("colibri.checks.make_pred_data")
