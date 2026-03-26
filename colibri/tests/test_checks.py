@@ -132,7 +132,7 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     forward_map_lin = FKTableForwardMap(
         # Simulating a simple linear model: f(x) = a*x + b*y + c*z + 3.0, where pdf = [a, b, c]
         lambda pdf, fk: jnp.dot(pdf, fk) + 3.0,
-        pdf_param_names=["a", "b", "c"],
+        pdf_model=mock_pdf_model,
     )
 
     # Set the mock's grid_values_func to return the linear_model function
@@ -145,7 +145,7 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     non_linear_model = FKTableForwardMap(
         # Introduce some non-linearity
         lambda pdf, fk: jnp.dot(pdf**2, FIT_XGRID) + fk,
-        pdf_param_names=["a", "b", "c"],
+        pdf_model=mock_pdf_model,
     )
 
     # Ensure ValueError is raised for non-linear model

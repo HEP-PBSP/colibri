@@ -343,7 +343,7 @@ def test_likelihood_float_type(
         len(MOCK_CENTRAL_COVMAT_INDEX.central_values)
     )  # Mock _pred_data
     forward_map = FKTableForwardMap(
-        _pred_data, pdf_param_names=MOCK_PDF_MODEL.param_names
+        _pred_data, pdf_model=MOCK_PDF_MODEL
     )  # Mock forward_map
     FIT_XGRID = jnp.linspace(0, 1, 10)  # Mock FIT_XGRID
     output_path = tmp_path

@@ -67,9 +67,7 @@ vect_ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 def test_ultranest_fit(pos_penalty):
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(
-        _pred_data, pdf_param_names=MOCK_PDF_MODEL.param_names
-    )
+    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
@@ -107,9 +105,7 @@ def test_ultranest_fit(pos_penalty):
 def test_ultranest_fit_vectorized(pos_penalty):
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(
-        _pred_data, pdf_param_names=MOCK_PDF_MODEL.param_names
-    )
+    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
     ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 
     mock_log_likelihood = LogLikelihood(
@@ -159,9 +155,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     }
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(
-        _pred_data, pdf_param_names=MOCK_PDF_MODEL.param_names
-    )
+    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
@@ -210,9 +204,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     }
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(
-        _pred_data, pdf_param_names=MOCK_PDF_MODEL.param_names
-    )
+    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
@@ -265,9 +257,7 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
     }
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(
-        _pred_data, pdf_param_names=MOCK_PDF_MODEL.param_names
-    )
+    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,

@@ -32,8 +32,8 @@ Example - fitting a normalisation factor on top of the PDF
 ::
 
     class NormForwardMap(ForwardMap):
-        def __init__(self, pred_func, pdf_param_names: list[str]):
-            super().__init__(pdf_param_names, extra_param_names=["norm"])
+        def __init__(self, pred_func, pdf_model):
+            super().__init__(pdf_model, extra_param_names=["norm"])
             self._pred_func = pred_func
 
         def __call__(self, pdf_grid_func, fk_tables, params):
@@ -46,8 +46,8 @@ Example - fixed PDF, fitting only extra parameters
 ::
 
     class FixedPDFForwardMap(ForwardMap):
-        def __init__(self, pred_func, fixed_pdf, fk_tables, pdf_param_names: list[str] | None = None):
-            super().__init__(pdf_param_names if pdf_param_names is not None else [])
+        def __init__(self, pred_func, fixed_pdf, fk_tables, pdf_model=None):
+            super().__init__(pdf_model)
             self._pred_func = pred_func
             self.fixed_pdf = fixed_pdf
             self._fixed_pred = self._pred_func(fixed_pdf, fk_tables)
@@ -81,9 +81,13 @@ class ForwardMap(ABC):
     by the forward map via ``self.n_pdf_params``.
     """
 
-    def __init__(self, pdf_param_names: list[str], extra_param_names: list[str] = ()):
+    def __init__(self, pdf_model, extra_param_names: list[str] = ()):
 
-        self.pdf_param_names = pdf_param_names
+        self.pdf_model = pdf_model
+        if pdf_model is not None:
+            self.pdf_param_names = pdf_model.param_names
+        else:
+            self.pdf_param_names = []
         self.extra_param_names = extra_param_names
 
     @property
@@ -144,10 +148,10 @@ class FKTableForwardMap(ForwardMap):
     def __init__(
         self,
         pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
-        pdf_param_names: list[str],
+        pdf_model,
         extra_param_names: list[str] = (),
     ):
-        super().__init__(pdf_param_names, extra_param_names=extra_param_names)
+        super().__init__(pdf_model, extra_param_names=extra_param_names)
         self._pred_func = pred_func
 
     def __call__(self, pdf_grid_func, fk_tables, params):
@@ -164,7 +168,7 @@ def forward_map(_pred_data, pdf_model, extra_param_names=()):
     _pred_data : callable
         Prediction function of the form ``pred_func(pdf, fk_tables) -> predictions``.
     pdf_model : object
-        Used to obtain ``pdf_param_names`` from ``pdf_model.param_names``.
+        The PDF model object; must expose a ``param_names`` attribute.
     extra_param_names : list[str], optional
         Names of any additional fit parameters beyond the PDF parameters.
 
@@ -172,6 +176,6 @@ def forward_map(_pred_data, pdf_model, extra_param_names=()):
 
     return FKTableForwardMap(
         pred_func=_pred_data,
-        pdf_param_names=pdf_model.param_names,
+        pdf_model=pdf_model,
         extra_param_names=extra_param_names,
     )
