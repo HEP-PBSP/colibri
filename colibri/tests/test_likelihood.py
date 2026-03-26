@@ -234,7 +234,7 @@ def test_mc_log_likelihood_with_split(pos_penalty):
 
     # Create a tiny pseudodata setup consistent with TEST_N_DATA = 2
     pseudodata = jnp.array([1.0, 2.0])
-    fit_covariance_matrix = jnp.eye(2)
+    general_covariance_matrix = jnp.eye(2)
     training_indices = jnp.array([0])
     validation_indices = jnp.array([1])
 
@@ -253,7 +253,7 @@ def test_mc_log_likelihood_with_split(pos_penalty):
 
     train_loglike, val_loglike = mc_log_likelihood(
         mc_pd,
-        fit_covariance_matrix,
+        general_covariance_matrix,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
@@ -312,7 +312,7 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
 
     # Pseudodata across both points; training uses all when no split
     pseudodata = jnp.array([1.0, 2.0])
-    fit_covariance_matrix = jnp.eye(2)
+    general_covariance_matrix = jnp.eye(2)
     training_indices = jnp.array([0, 1])
     validation_indices = jnp.array([])
 
@@ -331,7 +331,7 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
 
     train_loglike, val_loglike = mc_log_likelihood(
         mc_pd,
-        fit_covariance_matrix,
+        general_covariance_matrix,
         MOCK_PDF_MODEL,
         TEST_XGRID,
         TEST_FORWARD_MAP_DIS,

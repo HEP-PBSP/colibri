@@ -8,10 +8,10 @@ from validphys.app import App
 from colibri.config import colibriConfig, Environment
 import pathlib
 
-
 colibri_providers = [
     "colibri.theory_predictions",
     "colibri.theory_penalties",
+    "colibri.time_likelihood",
     "colibri.loss_functions",
     "colibri.optax_optimizer",
     "colibri.data_batch",
@@ -23,6 +23,7 @@ colibri_providers = [
     "colibri.mc_utils",
     "colibri.likelihood",
     "colibri.ultranest_fit",
+    "colibri.blackjax_fit",
     "colibri.monte_carlo_fit",
     "colibri.analytic_fit",
     "colibri.hessian_fit",

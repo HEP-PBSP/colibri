@@ -51,7 +51,11 @@ jobs:
         source $(conda info --base)/etc/profile.d/conda.sh  # Initialize Conda
         conda activate colibri-dev
         pip install git+https://${{ secrets.COLIBRI_TOKEN }}@github.com/HEP-PBSP/grid_pdf-model.git
-    
+
+    - name: Install colibri
+      shell: bash -l {0}
+      run: pip install -e .
+
     - name: Run MC fit
       shell: bash -l {0}
       run: |
@@ -73,6 +77,10 @@ jobs:
         source $(conda info --base)/etc/profile.d/conda.sh  # Initialize Conda
         conda activate colibri-dev
         pip install git+https://${{ secrets.COLIBRI_TOKEN }}@github.com/HEP-PBSP/grid_pdf-model.git
+
+    - name: Install colibri
+      shell: bash -l {0}
+      run: pip install -e .
 
     - name: Run MC fit in main
       shell: bash -l {0}

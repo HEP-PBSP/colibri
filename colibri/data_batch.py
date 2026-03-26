@@ -18,7 +18,7 @@ def data_batches(
     training_indices,
     batch_size=None,
     batch_seed=1,
-    fit_covariance_matrix=None,
+    general_covariance_matrix=None,
     shuffle_each_epoch=False,
 ) -> DataBatches:
     """
@@ -31,7 +31,7 @@ def data_batches(
 
     batch_seed: int, default is 1
 
-    fit_covariance_matrix: jax.Array, optional
+    general_covariance_matrix: jax.Array, optional
         If provided together with shuffle_each_epoch=False, fixed batches are
         precomputed once and the corresponding inverse covariance submatrices
         are cached for reuse. This avoids inverting within the likelihood at
@@ -79,8 +79,10 @@ def data_batches(
         perm0 = _make_perm(key)
         fixed_batches = _slice_batches_from_perm(perm0)
 
-        if fit_covariance_matrix is not None:
-            train_covmat = fit_covariance_matrix[training_indices][:, training_indices]
+        if general_covariance_matrix is not None:
+            train_covmat = general_covariance_matrix[training_indices][
+                :, training_indices
+            ]
             fixed_batches_specs = [
                 BatchSpec(
                     idx=b,

@@ -37,6 +37,8 @@ closure_test_level: 0                  # The closure test level: False for exper
 
 closure_test_pdf: LH_PARAM_20250519  # The closure test PDF used if closure_test_level is not False
 
+#flavour_mapping: ["\\Sigma", "g", "V", "V3"]  # Masks other flavours, such that closure tests can be run on desired flavours only. 
+
 #####################
 # Loss function specs
 #####################
@@ -54,7 +56,7 @@ positivity_penalty_settings:
 integrability_settings:
   integrability: False            
 
-use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
+use_t0_covmat: True                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
   
 

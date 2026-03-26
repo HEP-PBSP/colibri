@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 
 
 def mc_pseudodata(
-    pseudodata_central_covmat_index,
+    central_covmat_index,
     replica_index,
     trval_seed,
     mcseed,
@@ -40,9 +40,9 @@ def mc_pseudodata(
     If positive_pseudodata is True, the pseudodata will be resampled until all values
     are positive"""
 
-    central_values = pseudodata_central_covmat_index.central_values
-    covmat = pseudodata_central_covmat_index.covmat
-    all_indices = pseudodata_central_covmat_index.central_values_idx
+    central_values = central_covmat_index.central_values
+    covmat = central_covmat_index.covmat
+    all_indices = central_covmat_index.central_values_idx
     # Produce the same seed as in NNPDF for the pseudodata generation
     seed = replica_mcseed(replica_index, mcseed, genrep=True)
 

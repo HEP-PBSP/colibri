@@ -8,10 +8,9 @@ import pandas as pd
 
 import jax
 import jax.numpy as jnp
-import jax.scipy.linalg as jla
 
 from colibri.theory_predictions import make_pred_dataset
-from colibri.core import CentralCovmatIndex, CentralInvCovmatIndex
+from colibri.core import CentralCovmatIndex
 
 
 def experimental_commondata_tuple(data):
@@ -102,21 +101,21 @@ def level_0_commondata_tuple(
 
 def level_1_commondata_tuple(
     level_0_commondata_tuple,
-    data_generation_covariance_matrix,
+    general_covariance_matrix,
     level_1_seed=123456,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
     of level 1 commondata instances.
     Noise is added to the level_0_commondata_tuple central values
-    according to a multivariate Gaussian with covariance data_generation_covariance_matrix
+    according to a multivariate Gaussian with covariance general_covariance_matrix
 
     Parameters
     ----------
     level_0_commondata_tuple: tuple of nnpdf_data.coredata.CommonData instances
         A tuple of level_0 closure test data.
 
-    data_generation_covariance_matrix: jnp.ndarray
+    general_covariance_matrix: jnp.ndarray
         The covariance matrix used for data generation.
 
     level_1_seed: int
@@ -134,11 +133,11 @@ def level_1_commondata_tuple(
     )
 
     # Now, sample from the multivariate Gaussian with central values central_values
-    # and covariance matrix data_generation_covariance_matrix. This produces the
+    # and general_covariance_matrix. This produces the
     # level_1 data.
     rng = jax.random.PRNGKey(level_1_seed)
     sample = jax.random.multivariate_normal(
-        rng, central_values, data_generation_covariance_matrix
+        rng, central_values, general_covariance_matrix
     )
 
     # Now, reconstruct the commondata tuple, by modifying the original commondata
@@ -151,9 +150,9 @@ def level_1_commondata_tuple(
     return tuple(sample_list)
 
 
-def central_covmat_index(commondata_tuple, fit_covariance_matrix):
+def central_covmat_index(commondata_tuple, general_covariance_matrix):
     """
-    Given a commondata_tuple and a covariance_matrix, generated
+    Given a commondata_tuple and a general_covariance_matrix, generated
     according to respective explicit node in config.py, store
     relevant data into CentralCovmatIndex dataclass.
 
@@ -164,10 +163,10 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
         (see config.produce_commondata_tuple) and accordingly to the
         specified options.
 
-    fit_covariance_matrix: jnp.ndarray
+    general_covariance_matrix: jnp.ndarray
         covariance matrix, is generated as explicit node
-        (see config.fit_covariance_matrix) can be either experimental
-        or t0 covariance matrix depending on whether `use_fit_t0` is
+        (see config.general_covariance_matrix) can be either experimental
+        or t0 covariance matrix depending on whether `use_t0_covmat` is
         True or False
 
     Returns
@@ -184,28 +183,5 @@ def central_covmat_index(commondata_tuple, fit_covariance_matrix):
     return CentralCovmatIndex(
         central_values=central_values,
         central_values_idx=central_values_idx,
-        covmat=fit_covariance_matrix,
-    )
-
-
-def pseudodata_central_covmat_index(
-    commondata_tuple, data_generation_covariance_matrix
-):
-    """Same as central_covmat_index, but with the pseudodata generation
-    covariance matrix for a Monte Carlo fit.
-    """
-    return central_covmat_index(commondata_tuple, data_generation_covariance_matrix)
-
-
-def central_inv_covmat_index(central_covmat_index):
-    """
-    Given a CentralCovmatIndex dataclass, compute the inverse
-    of the covariance matrix and store the relevant data into
-    CentralInvCovmatIndex dataclass.
-    """
-    inv_covmat = jla.inv(central_covmat_index.covmat)
-    return CentralInvCovmatIndex(
-        central_values=central_covmat_index.central_values,
-        central_values_idx=central_covmat_index.central_values_idx,
-        inv_covmat=inv_covmat,
+        covmat=general_covariance_matrix,
     )

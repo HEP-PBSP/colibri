@@ -54,8 +54,8 @@ def ultranest_fit(
     pdf_model: pdf_model.PDFModel
         The PDF model to fit.
 
-    bayesian_prior: @jax.jit CompiledFunction
-        The prior function for the model.
+    bayesian_prior: BayesianPrior
+        The prior object containing prior_transform, log_prob, and sample functions.
 
     ultranest_settings: dict
         Settings for the Nested Sampling fit.
@@ -80,10 +80,13 @@ def ultranest_fit(
         log.info("Vectorized likelihood for ultranest fit.")
         log_likelihood = jax.vmap(log_likelihood, in_axes=(0,), out_axes=0)
 
+    # Call bayesian_prior to get the prior_transform function
+    prior_transform = bayesian_prior.prior_transform
+
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
         log_likelihood,
-        bayesian_prior,
+        prior_transform,
         **ultranest_settings["ReactiveNS_settings"],
     )
 

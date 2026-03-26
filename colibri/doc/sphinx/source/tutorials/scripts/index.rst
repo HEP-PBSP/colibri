@@ -14,5 +14,6 @@ to run a postfit selection, how to evolve fits, or the resampling script.
    ./fit-folders.rst
    ./evolution.rst
    ./resampling.rst
+   ./time-likelihood.rst
 
 

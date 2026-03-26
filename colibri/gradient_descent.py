@@ -45,8 +45,10 @@ def run_gradient_descent(
         Starting parameters.
 
     training_loss_fn : callable -> scalar
-        Per-batch loss (jit-able). Signature:
+        Per-batch loss (jit-able). Signature::
+
             training_loss_fn(params, batch: BatchSpec) -> scalar
+
         Convention: if batch.idx.size == 0, interpret as "full dataset" (no subselect).
 
     validation_loss_fn : callable -> scalar

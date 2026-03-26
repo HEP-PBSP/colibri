@@ -51,6 +51,7 @@ Contents
    get-started/index
    tutorials/index
    theory/index
+   available-models/index
    api/index
 
 Bibliography

@@ -117,6 +117,23 @@ class UltranestFit(BayesianFit):
 
 
 @dataclass(frozen=True)
+class BlackJAXFit(BayesianFit):
+    """
+    Dataclass containing the results and specs of a BlackJAX fit.
+
+    Attributes
+    ----------
+    blackjax_specs: dict
+        Dictionary containing the settings of the BlackJAX fit.
+    blackjax_result: dict
+        result from BlackJAX, can be used eg for corner plots
+    """
+
+    blackjax_specs: dict
+    blackjax_result: dict
+
+
+@dataclass(frozen=True)
 class HessianFit:
     """
     Dataclass containing the results and specs of a Hessian fit.
@@ -249,10 +266,7 @@ class CentralCovmatIndex:
 
 
 @dataclass(frozen=True)
-class CentralInvCovmatIndex:
-    central_values: jnp.array
-    inv_covmat: jnp.array
-    central_values_idx: jnp.array
-
-    def to_dict(self):
-        return asdict(self)
+class BayesianPrior:
+    prior_transform: Callable
+    log_prob: Callable
+    sample: Callable
