@@ -284,7 +284,7 @@ class colibriConfig(Config):
             "delete_fraction",
             "log_precision",
             "posterior_resampling_seed",
-            "seed",
+            "blackjax_seed",
         }
 
         kdiff = settings.keys() - known_keys
@@ -304,7 +304,7 @@ class colibriConfig(Config):
         blackjax_settings["repeats"] = settings.get("repeats", 3)
         blackjax_settings["delete_fraction"] = settings.get("delete_fraction", 0.5)
         blackjax_settings["log_precision"] = settings.get("log_precision", -3)
-        blackjax_settings["seed"] = settings.get("seed", 0)
+        blackjax_settings["blackjax_seed"] = settings.get("blackjax_seed", 0)
         blackjax_settings["posterior_resampling_seed"] = settings.get(
             "posterior_resampling_seed", 123456
         )
