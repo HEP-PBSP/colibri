@@ -47,6 +47,9 @@ def mc_pseudodata(
     seed = replica_mcseed(replica_index, mcseed, genrep=True)
 
     if positive_pseudodata:
+        log.warning(
+            f"Sampling only positive pseudodata for all datasets - This does not provide the correct treatment of asymmetry observables"
+        )
         group_positivity_mask = np.ones_like(central_values, dtype=bool)
     else:
         group_positivity_mask = None
