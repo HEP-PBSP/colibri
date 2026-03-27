@@ -97,6 +97,47 @@ def test_n_parameters_derived_from_param_names():
     assert len(model_test.param_names) == 3
 
 
+def test_n_parameters_consistency():
+    """
+    Tests that n_parameters is consistent across multiple accesses.
+
+    Ensures that both paths (explicit or derived) give consistent results.
+    """
+    # Access n_parameters multiple times
+    n1 = model.n_parameters
+    n2 = model.n_parameters
+    n3 = model.n_parameters
+
+    # All accesses should return the same value
+    assert n1 == n2 == n3 == 2
+
+
+def test_n_parameters_matches_param_names_length():
+    """
+    Tests that n_parameters always matches len(param_names).
+
+    This is critical because param_names order matters for parameter feeding.
+    """
+    for n in [1, 2, 3, 5, 10]:
+        model_n = TestPDFModel(n_parameters=n)
+        assert model_n.n_parameters == len(
+            model_n.param_names
+        ), f"n_parameters ({model_n.n_parameters}) should match len(param_names) ({len(model_n.param_names)})"
+
+
+def test_param_names_type():
+    """
+    Tests that param_names returns a list.
+
+    Validates the return type specified in the docstring.
+    """
+    names = model.param_names
+    assert isinstance(names, list), "param_names must return a list"
+    assert all(
+        isinstance(name, str) for name in names
+    ), "All param names must be strings"
+
+
 def test_grid_values_func():
     """
     Tests that the grid_values_func returns the correct values.
