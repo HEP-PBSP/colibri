@@ -489,7 +489,6 @@ def test_parse_hessian_settings_defaults():
 
 
 def test_parse_hessian_settings_with_seed():
-    import jax
 
     settings = {"rng_seed": 123, "iter_init": 2}
     res = BASE_CONFIG.parse_hessian_settings(settings)
