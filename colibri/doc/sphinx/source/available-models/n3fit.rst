@@ -20,7 +20,7 @@ The neural network architecture can be defined in the runcard through the follow
 - `nodes`: the number of nodes in each hidden layer. The last layer should have a number of nodes equal to the number of PDF flavours being fitted.
 - `activations`: the activation function to be used in each hidden layer, e.g. `tanh` or `linear`.
 
----------------------
+
 How to use this model
 ---------------------
 
