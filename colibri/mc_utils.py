@@ -16,6 +16,9 @@ from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from colibri.export_results import write_exportgrid
 from colibri.core import MCPseudodata
 
+from validphys.pseudodata import make_replica
+from validphys.n3fit_data import replica_mcseed
+
 import logging
 
 log = logging.getLogger(__name__)
@@ -25,25 +28,39 @@ def mc_pseudodata(
     central_covmat_index,
     replica_index,
     trval_seed,
+    mcseed,
     shuffle_indices=True,
+    positive_pseudodata=False,
     mc_validation_fraction=0.2,
 ):
     """Produces Monte Carlo pseudodata for the replica with index replica_index.
     The pseudodata is returned with a set of training indices, which account for
     a fraction mc_validation_fraction of the data.
-    """
+
+    If positive_pseudodata is True, the pseudodata will be resampled until all values
+    are positive"""
 
     central_values = central_covmat_index.central_values
     covmat = central_covmat_index.covmat
     all_indices = central_covmat_index.central_values_idx
+    # Produce the same seed as in NNPDF for the pseudodata generation
+    seed = replica_mcseed(replica_index, mcseed, genrep=True)
 
-    # Generate pseudodata according to a multivariate Gaussian centred on
-    # central_values and with covariance matrix covmat.
-    key = jax.random.PRNGKey(replica_index)
-    pseudodata = jax.random.multivariate_normal(
-        key,
-        central_values,
-        covmat,
+    if positive_pseudodata:
+        log.warning(
+            f"Sampling only positive pseudodata for all datasets - This does not provide the correct treatment of asymmetry observables"
+        )
+        group_positivity_mask = np.ones_like(central_values, dtype=bool)
+    else:
+        group_positivity_mask = None
+
+    pseudodata = jnp.array(
+        make_replica(
+            central_values,
+            seed,
+            covmat,
+            group_positivity_mask=group_positivity_mask,
+        ).squeeze()
     )
 
     # Now select a subset of 1 - mc_validation_fraction indices to be the

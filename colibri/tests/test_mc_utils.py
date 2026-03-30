@@ -22,7 +22,9 @@ from colibri.tests.conftest import (
     REPLICA_INDEX,
     TEST_COMMONDATA_FOLDER,
     TEST_DATASETS,
+    TEST_NEGATIVE_DATASETS,
     TRVAL_INDEX,
+    MCSEED,
     T0_PDFSET,
 )
 
@@ -33,6 +35,7 @@ MC_PSEUDODATA = {
     **TRVAL_INDEX,
     **REPLICA_INDEX,
     **TEST_DATASETS,
+    **MCSEED,
 }
 
 
@@ -48,6 +51,18 @@ def test_mc_pseudodata():
     current_pseudodata = colibriAPI.mc_pseudodata(**MC_PSEUDODATA)
 
     assert_allclose(reference_pseudodata["cv"].values, current_pseudodata.pseudodata)
+
+    reference_non_negative_pseudodata = pd.read_csv(
+        TEST_COMMONDATA_FOLDER / "HERA_level2_non_negative_pseudodata.csv"
+    )
+    non_negative_pseudodata = colibriAPI.mc_pseudodata(
+        **{**MC_PSEUDODATA, "positive_pseudodata": True, **TEST_NEGATIVE_DATASETS}
+    )
+
+    assert_allclose(
+        reference_non_negative_pseudodata["cv"].values,
+        non_negative_pseudodata.pseudodata,
+    )
 
 
 # Define the test parameters
