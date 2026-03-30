@@ -20,7 +20,7 @@ The neural network architecture can be defined in the runcard through the follow
 - `nodes`: the number of nodes in each hidden layer. The last layer should have a number of nodes equal to the number of PDF flavours being fitted.
 - `activations`: the activation function to be used in each hidden layer, e.g. `tanh` or `linear`.
 
------------------------
+---------------------
 How to use this model
 ---------------------
 
@@ -41,7 +41,7 @@ Install the dependencies and executable:
 Run an example fit:
 
 .. code-block:: bash
-    
+
     colibri_n3fit colibri_n3fit/runcards/example_pdf_fit_monte_carlo.yaml -r 1
 
 To analyse the results of this fit, follow the instructions given in :ref:`this section <mc_fit_folders>`.
