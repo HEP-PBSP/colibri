@@ -27,11 +27,13 @@ How to use this model
 Clone the repository:
 
 .. code-block:: bash
+
     git clone https://github.com/HEP-PBSP/colibri-n3fit/tree/main/colibri_n3fit .
 
 Install the dependencies and executable:
 
 .. code-block:: bash
+
     conda env create -f environment.yml
     conda activate example-colibri-n3fit
     pip install -e .
@@ -39,6 +41,7 @@ Install the dependencies and executable:
 Run an example fit:
 
 .. code-block:: bash
+    
     colibri_n3fit colibri_n3fit/runcards/example_pdf_fit_monte_carlo.yaml -r 1
 
 To analyse the results of this fit, follow the instructions given in :ref:`this section <mc_fit_folders>`.
