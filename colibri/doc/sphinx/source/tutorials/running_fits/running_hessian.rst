@@ -135,7 +135,7 @@ The following runcard can be used to run a Hessian fit with Colibri.
 
 Note that the Hessian fit uses the same ``param_initialiser_settings`` as a
 Monte Carlo fit, and so any of the initialisation options discussed in the
-:ref:`Monte Carlo fit tutorial <running_mc_replica>` can be used for these
+:ref:`Monte Carlo fit tutorial <param-initialiser-settings>` can be used for these
 settings (i.e. gaussian initialisation, global bounds for all parameters ...).
 
 ``hessian_settings``
