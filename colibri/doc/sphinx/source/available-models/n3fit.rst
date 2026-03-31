@@ -80,8 +80,8 @@ The neural network architecture can be defined in the runcard through the follow
 
 - ``nodes``: the number of nodes in each hidden layer. The last layer should have a number of nodes equal to the number of PDF flavours being fitted. All flavours in the evolution basis are fitted by default in this model, but you can choose to fit a subset of these with ``flavour_mapping`` if and only if you are running a :ref:`closure test <lh-closure-test>`.
 - ``activations``: the activation function to be used in each hidden layer, e.g. ``tanh`` or ``linear``.
-- ``nnseed``: 
+- ``nnseed``: The random seed used to sample the preprocessing factors :math:`\alpha` and :math:`\beta` from uniform distributions for each replica. 
 
-You can read more about other relevant settings in the :ref:`section on how to run Monte Carlo fits <running_mc_replica>`.
+You can read more about other relevant settings, such as Monte Carlo or Training settings in the :ref:`section on how to run Monte Carlo fits <running_mc_replica>`.
 
 TODO: patience? positive_pseudodata?
