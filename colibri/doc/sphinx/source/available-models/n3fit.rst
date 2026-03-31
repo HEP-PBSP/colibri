@@ -83,5 +83,3 @@ The neural network architecture can be defined in the runcard through the follow
 - ``nnseed``: The random seed used to sample the preprocessing factors :math:`\alpha` and :math:`\beta` from uniform distributions for each replica. 
 
 You can read more about other relevant settings, such as Monte Carlo or Training settings in the :ref:`section on how to run Monte Carlo fits <running_mc_replica>`.
-
-TODO: patience? positive_pseudodata?
