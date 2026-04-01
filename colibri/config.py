@@ -18,7 +18,6 @@ from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
-from colibri.utils import get_pdf_model
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node, element_of
 from validphys import covmats
