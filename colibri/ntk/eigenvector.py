@@ -9,23 +9,23 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional
 
-import jax.numpy as jnp
+import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
 from reportengine import collect
 from validphys.core import FitSpec
 
-from colibri.constants import XGRID
+from colibri.constants import XGRID, FLAVOUR_TO_ID_MAPPING
 from colibri.ntk.ntkutils import (
     NTKGrid,
     NTKStats,
+    NTK_ORDERING,
     compute_eigenvectors_at_epoch_for_replica,
     get_replica_idx_list,
 )
 
 log = logging.getLogger(__name__)
-
 
 class EigenvectorGrid(NTKGrid):
     """
@@ -107,6 +107,10 @@ class EigenvectorGrid(NTKGrid):
     def xlabel(self) -> str:
         """Label for x-axis."""
         return r"$x$"
+    
+    def get_stat(self) -> NTKStats:
+        """Get the full eigenvector statistics object."""
+        return self._eigenvectors_stat
 
     def get_plotting_data(
         self, rank_index: int, flavour_index: int = 0, **kwargs
@@ -145,7 +149,7 @@ class EigenvectorGrid(NTKGrid):
         eigvec_data = self._eigenvectors_stat.data[:, :, rank_index]
 
         # Reshape to (nreplicas, nflavors, n_xgrid)
-        reshaped = eigvec_data.reshape(self.nreplicas, self.nflavors, self.n_xgrid)
+        reshaped = eigvec_data.reshape(self.nreplicas, self.nflavors, self.n_xgrid, order=NTK_ORDERING)
 
         # Select the specified flavour: (nreplicas, n_xgrid)
         flavour_data = reshaped[:, flavour_index, :]
@@ -209,7 +213,7 @@ def eigenvectors_ensemble_at_epoch(
     -------
     dict
         Dictionary with keys:
-        - `eigenvectors_data`: ndarray (n_replicas, n_eigenvectors, n_flav * n_xgrid)
+        - `eigenvectors_data`: ndarray (n_replicas, n_flav * n_xgrid, n_eigenvectors) (flavor-major)
         - `epoch`: the epoch number
         - `ntk_shape`: shape of the NTK matrix before flattening
         - `replica_indices`: list of replica indices included
@@ -268,7 +272,7 @@ def eigenvectors_ensemble_at_epoch(
                 eigenvectors_data[replica_idx]
                 for replica_idx in sorted(eigenvectors_data.keys())
             ]
-        )  # Shape: (nreplicas, n_eigenvectors, n_parameters)
+        )  # Shape: (nreplicas, n_eigenvectors, n_eigenvectors)
 
         return {
             "eigenvectors_data": eigenvectors_data,
@@ -305,5 +309,28 @@ def eigenvector_grid(fit: FitSpec, eigenvectors_ensemble_at_epoch) -> Eigenvecto
         eigenvectors_stat=eigenvectors_stat,
     )
 
+def eigenvectors_at_epoch(eigenvector_grid: EigenvectorGrid,
+                          flavours: list = list(FLAVOUR_TO_ID_MAPPING.keys())) -> NTKStats:
+    """Returns DataFrame with eigenvector components for specified flavours."""
+    eigvec_data = eigenvector_grid.get_stat().data # Shape (nreplicas, nflavors * n_xgrid, n_eigenvectors)
+
+    cl_index = pd.Index(range(eigenvector_grid.n_eigenvectors), name="rank")
+
+    # Index follows NTK_ORDERING: for each flavour, all x-points in sequence
+    index = pd.MultiIndex.from_tuples(
+        [(fl, i + 1) for fl in flavours for i in range(len(XGRID))],
+        names=["flavour", "x"],
+    )
+    if len(flavours) > eigenvector_grid.nflavors:
+            raise ValueError(
+                f"flavour_indices {flavours} out of range [0, {eigenvector_grid.nflavors})"
+            )
+
+    dfs = [pd.DataFrame(
+        data=eigvec_data[k], index=index, columns=cl_index) 
+        for k in range(eigenvector_grid.nreplicas)
+    ]
+
+    return NTKStats(dfs)
 
 eigvecs_grids_by_fit = collect("eigenvector_grid", ("fits",))

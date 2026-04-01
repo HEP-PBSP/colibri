@@ -8,6 +8,7 @@ Module containing several utils for the analysis of the NTK.
 from __future__ import annotations
 
 import abc
+import functools
 import logging
 from functools import lru_cache
 from pathlib import Path
@@ -15,6 +16,7 @@ from pathlib import Path
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pandas as pd
 
 from validphys.core import MCStats
 
@@ -24,21 +26,257 @@ from colibri.utils import get_pdf_model
 log = logging.getLogger(__name__)
 
 NTK_EIGVAL_TOKEN = "ntk_eigenvalues"
+NTK_ORDERING = "C" # flavour-major C-order: all x-points per flavour, then next flavour
 
+def _check_replicas(self, other):
+    if isinstance(other, NTKStats) and self.data.shape[0] != other.data.shape[0]:
+        raise ValueError(
+            f"NTKStats replica count mismatch: {self.data.shape[0]} vs {other.data.shape[0]}"
+        )
+
+
+def _check_indices(self, other, op_name):
+    other_index, other_columns = self._get_index(other)
+    if op_name == "__matmul__":
+        if self._df_columns is not None and other_index is not None and not self._df_columns.equals(other_index):
+            raise ValueError(
+                f"Index mismatch in matmul: left columns {self._df_columns.tolist()} "
+                f"do not match right index {other_index.tolist()}"
+            )
+    elif op_name == "__rmatmul__":
+        if other_columns is not None and self._df_index is not None and not other_columns.equals(self._df_index):
+            raise ValueError(
+                f"Index mismatch in matmul: left columns {other_columns.tolist()} "
+                f"do not match right index {self._df_index.tolist()}"
+            )
+    else:
+        if self._df_index is not None and other_index is not None and not self._df_index.equals(other_index):
+            raise ValueError(
+                f"Index mismatch in {op_name}: left index {self._df_index.tolist()} "
+                f"does not match right index {other_index.tolist()}"
+            )
+        if self._df_columns is not None and other_columns is not None and not self._df_columns.equals(other_columns):
+            raise ValueError(
+                f"Column index mismatch in {op_name}: left columns {self._df_columns.tolist()} "
+                f"do not match right columns {other_columns.tolist()}"
+            )
+
+
+def _checks_ntkstats_compat(method):
+    """Decorator that applies replica and index compatibility checks."""
+
+    @functools.wraps(method)
+    def wrapper(self, other):
+        _check_replicas(self, other)
+        _check_indices(self, other, method.__name__)
+        return method(self, other)
+
+    return wrapper
+                    
+            
 
 class NTKStats(MCStats):
     """
     Container for NTK statistics across replicas at a single epoch.
+
+    When constructed with a list of DataFrames, the index is preserved and
+    accessible via the ``frames`` property, while ``data`` remains a numpy
+    array for all statistical operations.
     """
 
+    def __init__(self, data):
+        if isinstance(data, list) and data and isinstance(data[0], pd.DataFrame):
+            self._df_index = data[0].index
+            self._df_columns = data[0].columns
+            super().__init__(np.stack([df.values for df in data]))
+        else:
+            self._df_index = None
+            self._df_columns = None
+            super().__init__(data)
+
+    @property
+    def frames(self):
+        """Return data as a list of DataFrames (preserving the original index), or None."""
+        if self._df_index is None:
+            return self.data
+        return [
+            pd.DataFrame(self.data[k], index=self._df_index, columns=self._df_columns)
+            for k in range(len(self.data))
+        ]
+
+    def _with_index(self, data: np.ndarray) -> NTKStats:
+        """Wrap a numpy array in NTKStats, preserving this instance's index metadata."""
+        result = NTKStats(data)
+        result._df_index = self._df_index
+        result._df_columns = self._df_columns
+        return result
+    
+    def _other_data(self, other):
+        return other.data if isinstance(other, NTKStats) else other
+    
     def central_value(self):
-        return self.data.mean(axis=0)
+        cv = self.data.mean(axis=0)
+        if self._df_index is not None and self._df_columns is not None:
+            return pd.DataFrame(cv, index=self._df_index, columns=self._df_columns)
+        return cv
 
     def error_members(self):
-        return self.data[0:]
+        return self.data
 
     def median(self):
-        return np.median(self.data, axis=0)
+        med = np.median(self.data, axis=0)
+        if self._df_index is not None and self._df_columns is not None:
+            return pd.DataFrame(med, index=self._df_index, columns=self._df_columns)
+        return med
+    
+    def std_error(self):
+        std = np.std(self.data, axis=0)
+        if self._df_index is not None and self._df_columns is not None:
+            return pd.DataFrame(std, index=self._df_index, columns=self._df_columns)
+        return std
+
+
+    @_checks_ntkstats_compat
+    def __add__(self, other):
+        return self._with_index(self.data + self._other_data(other))
+
+    @_checks_ntkstats_compat
+    def __radd__(self, other):
+        return self._with_index(self._other_data(other) + self.data)
+
+    @_checks_ntkstats_compat
+    def __sub__(self, other):
+        return self._with_index(self.data - self._other_data(other))
+
+    @_checks_ntkstats_compat
+    def __rsub__(self, other):
+        return self._with_index(self._other_data(other) - self.data)
+
+    @_checks_ntkstats_compat
+    def __mul__(self, other):
+        return self._with_index(self.data * self._other_data(other))
+
+    @_checks_ntkstats_compat
+    def __rmul__(self, other):
+        return self._with_index(self._other_data(other) * self.data)
+
+    @_checks_ntkstats_compat
+    def __truediv__(self, other):
+        return self._with_index(self.data / self._other_data(other))
+
+    @_checks_ntkstats_compat
+    def __rtruediv__(self, other):
+        return self._with_index(self._other_data(other) / self.data)
+
+    @property
+    def T(self) -> NTKStats:
+        """Transpose each replica's matrix; requires 3D data (Nrep, d1, d2)."""
+        if self.data.ndim != 3:
+            raise ValueError(
+                f"Transpose requires matrix observables (Nrep, d1, d2), got {self.data.shape}"
+            )
+        result = NTKStats(self.data.transpose(0, 2, 1))
+        result._df_index = self._df_columns
+        result._df_columns = self._df_index
+        return result
+
+    def _get_index(self, other):
+        """Return (row_index, col_index) for other, supporting DataFrame and NTKStats."""
+        if isinstance(other, pd.DataFrame):
+            return other.index, other.columns
+        if isinstance(other, NTKStats):
+            return other._df_index, other._df_columns
+        return None, None
+
+    def set_index(self, index, columns):
+        """Return a new NTKStats with the given index and columns."""
+        self._df_index = index
+        self._df_columns = columns
+
+    @_checks_ntkstats_compat
+    def __matmul__(self, other) -> NTKStats:
+        _, other_cols = self._get_index(other)
+
+        other_data = other.values if isinstance(other, pd.DataFrame) else self._other_data(other)
+
+        if isinstance(other, NTKStats) and other_data.ndim == 2:
+            # Vector per replica (Nrep, n): treat as (Nrep, n, 1), multiply, then squeeze.
+            result_data = (self.data @ other_data[:, :, None]).squeeze(-1)
+        else:
+            # Plain 2D matrix (no replica dim): add batch dim so numpy broadcasts over replicas.
+            if not isinstance(other, NTKStats) and isinstance(other_data, np.ndarray) and other_data.ndim == 2:
+                other_data = other_data[None]
+            result_data = self.data @ other_data
+        result = NTKStats(result_data)
+        result._df_index = self._df_index
+        result._df_columns = other_cols
+        return result
+
+    @_checks_ntkstats_compat
+    def __rmatmul__(self, other) -> NTKStats:
+        # treat `other` as the left operand: other @ self
+        other_index, other_cols = self._get_index(other)
+
+        other_data = other.values if isinstance(other, pd.DataFrame) else np.asarray(other)
+        if other_data.ndim == 2:
+            other_data = other_data[None]
+
+        result_data = other_data @ self.data
+        result = NTKStats(result_data)
+        result._df_index = other_index
+        result._df_columns = self._df_columns
+        return result
+
+    def _assert_eigenvalues(self):
+        if self.data.ndim != 2:
+            raise ValueError(
+                f"Operation requires 1D observables per replica (shape (Nrep, n)), "
+                f"got {self.data.shape}"
+            )
+
+    def _as_diag_matrices(self, vals: np.ndarray) -> NTKStats:
+        """Build (Nrep, n, n) diagonal matrices from (Nrep, n) values."""
+        n = vals.shape[1]
+        return NTKStats(vals[:, :, None] * np.eye(n))
+    
+    def as_diag(self) -> NTKStats:
+        """Convert (Nrep, n) eigenvalues to (Nrep, n, n) diagonal matrices."""
+        self._assert_eigenvalues()
+        return self._as_diag_matrices(self.data)
+
+    def exp_kernel(self, t: float) -> NTKStats:
+        """
+        Compute ``diag(1 - exp(-t * λ))`` for each replica.
+
+        Parameters
+        ----------
+        t : float
+            Time parameter controlling the decay rate.
+
+        Returns
+        -------
+        NTKStats
+            Shape ``(Nrep, n, n)`` — diagonal matrices per replica.
+        """
+        self._assert_eigenvalues()
+        return self._as_diag_matrices(1.0 - np.exp(-t * self.data))
+
+    def exp_kernel_decay(self, t: float) -> NTKStats:
+        """
+        Compute ``diag(exp(-t * λ))`` for each replica.
+
+        Parameters
+        ----------
+        t : float
+            Time parameter controlling the decay rate.
+
+        Returns
+        -------
+        NTKStats
+            Shape ``(Nrep, n, n)`` — diagonal matrices per replica.
+        """
+        self._assert_eigenvalues()
+        return self._as_diag_matrices(np.exp(-t * self.data))
 
 
 class NTKGrid(abc.ABC):
@@ -220,9 +458,9 @@ def compute_ntk(pdf_model, params, **kwargs):
     # Compute NTK (nf,ng,nf,ng) -> assumes shape from jacobian
     ntk = jnp.einsum("ijk,lmk->ijlm", jacobian, jacobian)
 
-    # Flatten to (N_grid*N_flavors)×(N_grid*N_flavors)
-    d1, d2, d3, d4 = ntk.shape
-    ntk = ntk.reshape(d1 * d2, d3 * d4)
+    # Flatten to (nflavors * n_xgrid) × (nflavors * n_xgrid)
+    d1, d2, d3, d4 = ntk.shape # d1=nf, d2=ng, d3=nf, d4=ng
+    ntk = ntk.reshape(d1 * d2, d3 * d4, order=NTK_ORDERING)
 
     return ntk, (d1, d2, d3, d4)
 

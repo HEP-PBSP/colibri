@@ -35,6 +35,7 @@ colibri_providers = [
     "colibri.ntk.eigenvalues",
     "colibri.ntk.eigenvector",
     "colibri.ntk.plotntk",
+    "colibri.ntk.ntk",
     "reportengine.report",
 ]
 

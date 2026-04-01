@@ -98,6 +98,12 @@ class EigenvalueGrid(NTKGrid):
     def xlabel(self) -> str:
         """Label for x-axis."""
         return r"$\rm Epochs$"
+    
+    def get_stat_by_epoch(self, epoch: int) -> NTKStats:
+        """Get NTKStats for a specific epoch."""
+        if epoch not in self._eigenvalues_stats:
+            raise ValueError(f"Epoch {epoch} not found in eigenvalues_stats")
+        return self._eigenvalues_stats[epoch]
 
     def get_plotting_data(self, rank_index: int, **kwargs) -> NTKStats:
         """
@@ -283,6 +289,8 @@ def eigenvalue_grid(fit: FitSpec, eigenvalues_ensemble) -> EigenvalueGrid:
         eigenvalues_stats=eigenvalues_stats,
     )
 
+def eigenvalues_at_epoch(eigenvalue_grid, epoch: int):
+    return eigenvalue_grid.get_stat_by_epoch(epoch)
 
 # Collect eigenvalue grids across fits
 eigval_grids_by_fit = collect("eigenvalue_grid", ("fits",))

@@ -230,14 +230,14 @@ def ntk_plot_provider(
     xlabel = grids[0].xlabel
 
     iterator = iterator_fn(grids, rank_indices)
-    for key, items in iterator:
+    for grid, items in iterator:
         fig, ax = plotutils.subplots(figsize=(8, 6))
         handles, labels_list = [], []
         all_vals = []
 
-        title = title_fn(key)
-        name = name_fn(key)
-        ylabel = ylabel_fn(key)
+        title = title_fn(grid)
+        name = name_fn(grid)
+        ylabel = ylabel_fn(grid)
         ax.set_title(title)
 
         # Draw each item
