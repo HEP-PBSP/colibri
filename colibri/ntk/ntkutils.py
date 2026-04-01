@@ -84,6 +84,11 @@ class NTKStats(MCStats):
     array for all statistical operations.
     """
 
+    # Tell numpy's ufunc dispatch (which backs the @ operator since numpy ≥ 1.16)
+    # to return NotImplemented rather than coercing this object, so that Python
+    # can fall through to NTKStats.__rmatmul__ when numpy arrays appear on the left.
+    __array_ufunc__ = None
+
     def __init__(self, data):
         if isinstance(data, list) and data and isinstance(data[0], pd.DataFrame):
             self._df_index = data[0].index
@@ -215,13 +220,21 @@ class NTKStats(MCStats):
     @_checks_ntkstats_compat
     def __rmatmul__(self, other) -> NTKStats:
         # treat `other` as the left operand: other @ self
-        other_index, other_cols = self._get_index(other)
+        other_index, _ = self._get_index(other)
 
-        other_data = other.values if isinstance(other, pd.DataFrame) else np.asarray(other)
-        if other_data.ndim == 2:
-            other_data = other_data[None]
+        other_data = other.values if isinstance(other, pd.DataFrame) else self._other_data(other)
 
-        result_data = other_data @ self.data
+        if self.data.ndim == 2:
+            # Vector per replica (Nrep, n): treat as (Nrep, n, 1), multiply, then squeeze.
+            if not isinstance(other, NTKStats) and isinstance(other_data, np.ndarray) and other_data.ndim == 2:
+                other_data = other_data[None]
+            result_data = (other_data @ self.data[:, :, None]).squeeze(-1)
+        else:
+            # Plain 2D matrix (no replica dim): add batch dim so numpy broadcasts over replicas.
+            if not isinstance(other, NTKStats) and isinstance(other_data, np.ndarray) and other_data.ndim == 2:
+                other_data = other_data[None]
+            result_data = other_data @ self.data
+
         result = NTKStats(result_data)
         result._df_index = other_index
         result._df_columns = self._df_columns
