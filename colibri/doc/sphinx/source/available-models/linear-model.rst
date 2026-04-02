@@ -30,10 +30,10 @@ This model parametrises PDFs as linear combinations of basis functions:
 where :math:`w = (w_1, ..., w_N)` are the parameters to be inferred,
 and :math:`\phi_k(x)` are carefully chosen basis functions, which in
 practice are constructed by applying Proper Orthogonal Decomposition
-(POD) to a basis set samples of the randomly initialised n3fit Neural
+(POD) to a basis set of samples of the randomly initialised n3fit Neural
 Network.
 
-For details on the motivation behind this choice of model see Ref. Ref. :cite:alp:`Costantini:2025wxp`
+For details on the motivation behind this choice of model see Ref. Ref. :cite:alp:`Costantini:2025wxp`.
 
 How to use this model
 ---------------------
