@@ -175,20 +175,21 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, 
         float_format="%.5e",
     )
 
-    best_epoch_specs = mc_fit.monte_carlo_specs["best_epoch_specs"]
-    # save the best epoch specs
-    df = pd.DataFrame(
-        {
-            "best_epoch": best_epoch_specs["epoch"],
-            "best_val_loss": best_epoch_specs["best_val_loss"],
-            "best_train_loss": best_epoch_specs["best_train_loss"],
-        },
-        index=[0],
-    )
+    best_epoch_specs = mc_fit.monte_carlo_specs.get("best_epoch_specs")
 
-    df.to_csv(
-        str(output_path)
-        + f"/fit_replicas/replica_{replica_index}"
-        + "/best_epoch_specs.csv",
-        index=False,
-    )
+    if best_epoch_specs is not None:
+        df = pd.DataFrame(
+            {
+                "best_epoch": best_epoch_specs["epoch"],
+                "best_val_loss": best_epoch_specs["best_val_loss"],
+                "best_train_loss": best_epoch_specs["best_train_loss"],
+            },
+            index=[0],
+        )
+
+        df.to_csv(
+            str(output_path)
+            + f"/fit_replicas/replica_{replica_index}"
+            + "/best_epoch_specs.csv",
+            index=False,
+        )
