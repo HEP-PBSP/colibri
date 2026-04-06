@@ -81,10 +81,7 @@ def monte_carlo_fit(
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
-    # Delegate to generic gradient descent
-    positivity_check_fn = None
-    if hasattr(mc_log_likelihood[0], "get_pos_pass"):
-        positivity_check_fn = mc_log_likelihood[0].get_pos_pass
+    positivity_check_fn = mc_log_likelihood[0].get_pos_pass
 
     gd_result = run_gradient_descent(
         initial_parameters=pdf_initial_parameters.copy(),

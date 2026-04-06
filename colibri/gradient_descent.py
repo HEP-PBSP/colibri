@@ -153,6 +153,24 @@ def run_gradient_descent(
             log.info(f"Early stopping at epoch {epoch}")
             break
 
+    if best_epoch_idx == 0:
+        log.warning(
+            "No epoch passed positivity check. Returning last epoch's parameters."
+        )
+        best_epoch_dict = {
+            "epoch": epoch,
+            "best_parameters": params,
+            "best_val_loss": epoch_val_loss,
+            "best_train_loss": epoch_train_loss,
+        }
+    else:
+        best_epoch_dict = {
+            "epoch": best_epoch_idx,
+            "best_parameters": best_params,
+            "best_val_loss": best_val_loss,
+            "best_train_loss": best_train_loss,
+        }
+
     return GradientDescentResult(
         optimized_parameters=params,
         training_loss=jnp.array(train_losses),
@@ -162,10 +180,5 @@ def run_gradient_descent(
             "batch_size": batch_size,
             "record_every": record_every,
         },
-        best_epoch={
-            "epoch": best_epoch_idx,
-            "best_parameters": best_params,
-            "best_val_loss": best_val_loss,
-            "best_train_loss": best_train_loss,
-        },
+        best_epoch=best_epoch_dict,
     )
