@@ -39,13 +39,21 @@ class MockEarlyStopper:
         return self
 
 
+class MockLikelihood:
+    def __call__(self, *args, **kwargs):
+        return 0.0
+
+    def get_pos_pass(self, params):
+        return True
+
+
 def test_monte_carlo_fit_runs_without_errors():
     # Provide necessary inputs for the function
     training_indices = jnp.arange(100)
     data_batch = data_batches(training_indices, 100)
 
     result = monte_carlo_fit(
-        mc_log_likelihood=(lambda *args: 0.0, lambda *args: 0.0),
+        mc_log_likelihood=(MockLikelihood(), MockLikelihood()),
         len_trval_data=(100, 50),
         pdf_initial_parameters=np.zeros((N_PARAMS,)),
         optimizer_provider=MockOptimizerProvider(),
