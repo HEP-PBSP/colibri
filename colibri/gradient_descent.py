@@ -36,6 +36,7 @@ def run_gradient_descent(
     max_epochs: int,
     data_batch: Optional[colibri.DataBatches] = None,
     record_every: int = 50,
+    positivity_check_fn: Optional[Callable[[jnp.ndarray], bool]] = None,
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 
@@ -90,6 +91,12 @@ def run_gradient_descent(
     train_losses = []
     val_losses = []
 
+    best_params = params
+    best_train_loss = jnp.inf
+    best_val_loss = jnp.inf
+    best_epoch_idx = 0
+    any_pos_pass = False
+
     if data_batch is None:
         # single fake iterator repeatedly yielding EMPTY_BATCH
         def _gen():
@@ -114,6 +121,25 @@ def run_gradient_descent(
         epoch_val_loss = validation_loss_fn(params)
         early_stopper = early_stopper.update(epoch_val_loss)
 
+        # Update best epoch based on positivity and validation loss
+        pos_pass = True
+        if positivity_check_fn is not None:
+            pos_pass = positivity_check_fn(params)
+
+        update_best = False
+        if pos_pass and not any_pos_pass:
+            update_best = True
+            any_pos_pass = True
+        elif pos_pass == any_pos_pass and pos_pass:
+            if epoch_val_loss < best_val_loss:
+                update_best = True
+
+        if update_best:
+            best_val_loss = epoch_val_loss
+            best_train_loss = epoch_train_loss
+            best_params = params
+            best_epoch_idx = epoch
+
         if record_every and (epoch % record_every == 0):
             log.info(
                 f"Epoch {epoch}, loss: {epoch_train_loss:.3f}, "
@@ -135,5 +161,11 @@ def run_gradient_descent(
             "max_epochs": max_epochs,
             "batch_size": batch_size,
             "record_every": record_every,
+        },
+        best_epoch={
+            "epoch": best_epoch_idx,
+            "best_parameters": best_params,
+            "best_val_loss": best_val_loss,
+            "best_train_loss": best_train_loss,
         },
     )

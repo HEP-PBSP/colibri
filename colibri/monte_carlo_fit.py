@@ -82,6 +82,10 @@ def monte_carlo_fit(
     t0 = time.time()
 
     # Delegate to generic gradient descent
+    positivity_check_fn = None
+    if hasattr(mc_log_likelihood[0], "get_pos_pass"):
+        positivity_check_fn = mc_log_likelihood[0].get_pos_pass
+
     gd_result = run_gradient_descent(
         initial_parameters=pdf_initial_parameters.copy(),
         training_loss_fn=loss_training,
@@ -91,6 +95,7 @@ def monte_carlo_fit(
         max_epochs=max_epochs,
         data_batch=data_batches,
         record_every=50,
+        positivity_check_fn=positivity_check_fn,
     )
 
     t1 = time.time()
@@ -101,10 +106,11 @@ def monte_carlo_fit(
             "max_epochs": max_epochs,
             "batch_size": data_batches.batch_size,
             "batch_seed": data_batches.batch_seed,
+            "best_epoch_specs": gd_result.best_epoch,
         },
         training_loss=gd_result.training_loss,
         validation_loss=gd_result.validation_loss,
-        optimized_parameters=gd_result.optimized_parameters,
+        optimized_parameters=gd_result.best_epoch["best_parameters"],
     )
 
 
@@ -167,4 +173,22 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, 
         str(output_path) + f"/fit_replicas/replica_{replica_index}" + "/mc_loss.csv",
         index=False,
         float_format="%.5e",
+    )
+
+    best_epoch_specs = mc_fit.monte_carlo_specs["best_epoch_specs"]
+    # save the best epoch specs
+    df = pd.DataFrame(
+        {
+            "best_epoch": best_epoch_specs["epoch"],
+            "best_val_loss": best_epoch_specs["best_val_loss"],
+            "best_train_loss": best_epoch_specs["best_train_loss"],
+        },
+        index=[0],
+    )
+
+    df.to_csv(
+        str(output_path)
+        + f"/fit_replicas/replica_{replica_index}"
+        + "/best_epoch_specs.csv",
+        index=False,
     )
