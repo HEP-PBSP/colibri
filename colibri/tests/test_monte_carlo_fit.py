@@ -85,7 +85,14 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
 
     # Define mock ultranest fit
     mock_monte_carlo_fit = Mock()
-    mock_monte_carlo_fit.monte_carlo_specs = {}
+    mock_monte_carlo_fit.monte_carlo_specs = {
+        "best_epoch_specs": {
+            "epoch": 1,
+            "best_parameters": 2,
+            "best_val_loss": 3,
+            "best_train_loss": 4,
+        }
+    }
     mock_monte_carlo_fit.training_loss = jnp.array([0.1, 0.2, 0.3])
     mock_monte_carlo_fit.validation_loss = jnp.array([0.2, 0.3, 0.4])
     mock_monte_carlo_fit.optimized_parameters = jnp.array([0.0, 0.0])
@@ -103,3 +110,4 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
     # Assertions - check if files are created in the output path
     assert (tmp_path / "fit_replicas/replica_1/mc_loss.csv").exists()
     assert (tmp_path / "fit_replicas/replica_1/mc_result_replica_1.csv").exists()
+    assert (tmp_path / "fit_replicas/replica_1/best_epoch_specs.csv").exists()
