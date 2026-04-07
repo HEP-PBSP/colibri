@@ -109,7 +109,6 @@ The following runcard can be used to run a Hessian fit with Colibri.
         #         transition_steps: 10000
 
     # Training settings
-    use_gen_t0: True             # Whether the t0 covariance is used to generated pseudodata.
     max_epochs: 30000
 
     param_initialiser_settings:               
