@@ -110,21 +110,22 @@ class LogLikelihood(object):
         )
 
     def positivity_check_and_penalty(self, pdf, positivity_fast_kernel_arrays):
-        pos_penalties = self.penalty_posdata(
-            pdf,
-            self.positivity_penalty_settings["alpha"],
-            self.positivity_penalty_settings["lambda_positivity"],
-            positivity_fast_kernel_arrays,
-        )
-        # Check if all penalty_posdata are above the threshold
-        pos_pass = jnp.all(pos_penalties < THRESHOLD_POS)
         if self.positivity_penalty_settings["positivity_penalty"]:
+            pos_penalties = self.penalty_posdata(
+                pdf,
+                self.positivity_penalty_settings["alpha"],
+                self.positivity_penalty_settings["lambda_positivity"],
+                positivity_fast_kernel_arrays,
+            )
+            pos_pass = jnp.all(pos_penalties < THRESHOLD_POS)
+
             pos_penalty = jnp.sum(
                 pos_penalties,
                 axis=-1,
             )
         else:
             pos_penalty = 0
+            pos_pass = True
         return pos_pass, pos_penalty
 
     @partial(jax.jit, static_argnames=("self",))
