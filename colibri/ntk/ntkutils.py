@@ -98,6 +98,10 @@ class NTKStats(MCStats):
             self._df_index = None
             self._df_columns = None
             super().__init__(data)
+        
+        self.shape = self.data.shape[1:]
+        self.ndim = len(self.data.shape) - 1  # Number of dimensions of the observable (e.g., 0 for scalar, 1 for vector, 2 for matrix)
+        self.nreplica = self.data.shape[0]  # Number of replicas (first dimension)
 
     @property
     def frames(self):
@@ -290,6 +294,40 @@ class NTKStats(MCStats):
         """
         self._assert_eigenvalues()
         return self._as_diag_matrices(np.exp(-t * self.data))
+    
+    def reshape(self, new_shape) -> NTKStats:
+        """Return a new NTKStats with data reshaped to new_shape.
+        
+        If the reshape is from data with ndim = 1 to ndim = 2 (vector to
+        matrix), the original index (if any) is split into equal parts and
+        assigned to rows and columns of the new shape. For other reshapes, the
+        original index is discarded and set to None, since it may not be
+        meaningful after reshaping.
+        """
+        if (self.ndim == 2 and self.shape[-1] == 1) and len(new_shape) == 2:
+            # Reshaping from vector to matrix: split index if possible
+            if self._df_index is not None:
+                n_rows, n_cols = new_shape
+                if len(self._df_index) != n_rows * n_cols:
+                    raise ValueError(
+                        f"Cannot reshape with index: original length {len(self._df_index)} "
+                        f"does not match new shape {new_shape}"
+                    )
+                row_index = self._df_index.droplevel(-1)[::n_cols]
+                col_index = self._df_index.droplevel(0)[:n_cols]
+            else:
+                row_index = None
+                col_index = None
+        else:
+            # For other reshapes, discard index since it may not be meaningful
+            row_index = None
+            col_index = None
+        
+
+        result = NTKStats(self.data.reshape((self.nreplica, *new_shape)))
+        result._df_index = row_index
+        result._df_columns = col_index
+        return result
 
 
 class NTKGrid(abc.ABC):
