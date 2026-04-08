@@ -124,7 +124,7 @@ class EigenvectorGrid(NTKGrid):
         Parameters
         ----------
         rank_index : int
-            Index of the eigenvector (0 = largest eigenvalue's eigenvector)
+            Index of the eigenvector (1 = largest eigenvalue's eigenvector)
         flavour_index : int, optional
             The ID that represents a specific flavour (see
             `FLAVOUR_TO_ID_MAPPING` in `colibri.constants`)
@@ -136,9 +136,9 @@ class EigenvectorGrid(NTKGrid):
         NTKStats
             Statistics for the eigenvector component, shape (nreplicas, n_xgrid)
         """
-        if rank_index < 0 or rank_index >= self.n_eigenvectors:
+        if rank_index <= 0 or rank_index > self.n_eigenvectors:
             raise ValueError(
-                f"rank_index {rank_index} out of range [0, {self.n_eigenvectors})"
+                f"rank_index {rank_index} out of range [0, {self.n_eigenvectors}]"
             )
         if flavour_index < 0 or flavour_index >= self.nflavors:
             raise ValueError(
@@ -146,7 +146,7 @@ class EigenvectorGrid(NTKGrid):
             )
 
         # Get eigenvector data for the specified rank: (nreplicas, n_flaovors * n_xgrid)
-        eigvec_data = self._eigenvectors_stat.data[:, :, rank_index]
+        eigvec_data = self._eigenvectors_stat.data[:, :, rank_index-1]
 
         # Reshape to (nreplicas, nflavors, n_xgrid)
         reshaped = eigvec_data.reshape(self.nreplicas, self.nflavors, self.n_xgrid, order=NTK_ORDERING)
@@ -165,7 +165,7 @@ class EigenvectorGrid(NTKGrid):
         Parameters
         ----------
         rank_index : int
-            Index of the eigenvector (0 = largest eigenvalue's eigenvector)
+            Index of the eigenvector (1 = largest eigenvalue's eigenvector)
         flavour_index : int, optional
             Index of the flavour (see `FLAVOUR_TO_ID_MAPPING` in `colibri.constants`)
         **kwargs
@@ -177,7 +177,7 @@ class EigenvectorGrid(NTKGrid):
             LaTeX-formatted label (e.g., r"$v^{(1)}_{\rm GLUON}$")
         """
         # TODO: choose if to include flavour in label
-        return rf"$z^{{({rank_index+1})}}$"
+        return rf"$z^{{({rank_index})}}$"
 
 
 @functools.cache

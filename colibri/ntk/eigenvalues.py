@@ -112,7 +112,7 @@ class EigenvalueGrid(NTKGrid):
         Parameters
         ----------
         rank_index : int
-            Index of the eigenvalue (0 = largest eigenvalue)
+            Index of the eigenvalue (1 = largest eigenvalue)
         **kwargs
             Ignored for eigenvalues (no additional selection needed)
 
@@ -121,12 +121,12 @@ class EigenvalueGrid(NTKGrid):
         NTKStats
             Statistics for the eigenvalue trajectory, shape (nreplicas, n_epochs)
         """
-        if rank_index < 0 or rank_index >= self.n_eigenvalues:
+        if rank_index <= 0 or rank_index > self.n_eigenvalues:
             raise ValueError(
-                f"rank_index {rank_index} out of range [0, {self.n_eigenvalues})"
+                f"rank_index {rank_index} out of range [1, {self.n_eigenvalues}]"
             )
         data_by_epoch = [
-            self._eigenvalues_stats[epoch].data[:, rank_index] for epoch in self.epochs
+            self._eigenvalues_stats[epoch].data[:, rank_index-1] for epoch in self.epochs
         ]
 
         # Stack into (nreplicas, n_epochs) array
@@ -140,7 +140,7 @@ class EigenvalueGrid(NTKGrid):
         Parameters
         ----------
         rank_index : int
-            Index of the eigenvalue (0 = largest eigenvalue)
+            Index of the eigenvalue (1 = largest eigenvalue)
         **kwargs
             Ignored for eigenvalues
 
@@ -149,7 +149,35 @@ class EigenvalueGrid(NTKGrid):
         str
             LaTeX-formatted label (e.g., r"$\\lambda^{(1)}$")
         """
-        return rf"$\lambda^{{({rank_index + 1})}}$"
+        return rf"$\lambda^{{({rank_index})}}$"
+    
+    def save(self, path: Path):
+        """Serialize this EigenvalueGrid to disk."""
+        epochs = np.array(self.epochs)
+        # Stack all epoch data into shape (n_epochs, n_replicas, n_eigenvalues)
+        data = np.stack(
+            [self._eigenvalues_stats[ep].data for ep in self.epochs], axis=0
+        )
+        np.savez_compressed(
+            path,
+            label=self._label,
+            epochs=epochs,
+            eigenvalues=data,
+        )
+    
+    @classmethod
+    def load(cls, path: Path) -> "EigenvalueGrid":
+        """Deserialize an EigenvalueGrid from a .npz file."""
+        f = np.load(path, allow_pickle=False)
+        label = str(f["label"])
+        epochs = f["epochs"].tolist()
+        eigenvalues = f["eigenvalues"]  # (n_epochs, n_replicas, n_eigenvalues)
+        eigenvalues_stats = {
+            epoch: NTKStats(eigenvalues[i]) for i, epoch in enumerate(epochs)
+        }
+        return cls(label=label, epochs=epochs, eigenvalues_stats=eigenvalues_stats)
+
+    
 
 
 def eigenvalues_ensemble(
