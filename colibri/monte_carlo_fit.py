@@ -28,7 +28,7 @@ def monte_carlo_fit(
     early_stopper,
     max_epochs,
     data_batches,
-    threshold_chi2,
+    threshold_chi2=10.0,
 ):
     """
     This function performs a Monte Carlo fit.
