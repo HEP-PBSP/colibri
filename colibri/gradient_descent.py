@@ -37,6 +37,7 @@ def run_gradient_descent(
     data_batch: Optional[colibri.DataBatches] = None,
     record_every: int = 50,
     positivity_check_fn: Optional[Callable[[jnp.ndarray], bool]] = None,
+    threshold_chi2: float = 10.0,
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 
@@ -127,12 +128,14 @@ def run_gradient_descent(
             pos_pass = positivity_check_fn(params)
 
         update_best = False
-        if pos_pass and not any_pos_pass:
-            update_best = True
-            any_pos_pass = True
-        elif pos_pass == any_pos_pass and pos_pass:
-            if epoch_val_loss < best_val_loss:
+        meets_threshold = epoch_val_loss < threshold_chi2
+        if meets_threshold:
+            if pos_pass and not any_pos_pass:
                 update_best = True
+                any_pos_pass = True
+            elif pos_pass == any_pos_pass and pos_pass:
+                if epoch_val_loss < best_val_loss:
+                    update_best = True
 
         if update_best:
             best_val_loss = epoch_val_loss

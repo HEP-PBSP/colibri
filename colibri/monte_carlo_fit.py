@@ -28,6 +28,7 @@ def monte_carlo_fit(
     early_stopper,
     max_epochs,
     data_batches,
+    threshold_chi2,
 ):
     """
     This function performs a Monte Carlo fit.
@@ -93,6 +94,7 @@ def monte_carlo_fit(
         data_batch=data_batches,
         record_every=50,
         positivity_check_fn=positivity_check_fn,
+        threshold_chi2=threshold_chi2,
     )
 
     t1 = time.time()
