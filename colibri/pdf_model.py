@@ -17,10 +17,6 @@ class PDFModel(ABC):
 
     name = "Abstract PDFModel"
 
-    def __init__(self):
-        """Initialize the PDF model."""
-        self._n_parameters = None  # CREATE this attribute
-
     @property
     @abstractmethod
     def param_names(self) -> list:
@@ -36,11 +32,6 @@ class PDFModel(ABC):
         Returns the number of parameters of the pdf model.
         """
         return len(self.param_names)
-
-    @n_parameters.setter  # ← SETTER - So param_names can be set based on n_parameters
-    def n_parameters(self, value):
-        """Set the number of parameters. Useful for testing."""
-        self._n_parameters = value
 
     @abstractmethod
     def grid_values_func(self, xgrid: ArrayLike) -> Callable[[jnp.array], jnp.ndarray]:
