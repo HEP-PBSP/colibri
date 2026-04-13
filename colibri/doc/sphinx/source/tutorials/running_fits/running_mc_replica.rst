@@ -107,7 +107,6 @@ executable.
         #         transition_begin: 3000
         #         transition_steps: 10000
 
-
     # Training settings
     max_epochs: 300                        # The max number of epochs in Monte Carlo training.
     patience: 1000  # The number of epochs to wait for an improvement in the validation loss before stopping the training
@@ -115,6 +114,7 @@ executable.
     # Monte Carlo settings
     use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
     positive_pseudodata: False             # If set to True, the pseudodata will be resampled until all pseudodata points are positive
+
     mc_validation_fraction: 0.2            # The fraction of the data used for validation in Monte Carlo training.
 
     param_initialiser_settings:               # The initialiser for Monte Carlo training.

@@ -113,6 +113,7 @@ The following runcard can be used to run a Hessian fit with Colibri.
     max_epochs: 30000       # The max number of epochs in Monte Carlo training.
     patience: 1000          # The number of epochs to wait for an improvement in the validation loss before stopping the training
 
+
     param_initialiser_settings:               
         type: uniform
         bounds:
