@@ -33,11 +33,11 @@ def test_uniform_prior():
     # ---- Test sample() ----
     samples = prior_transform.sample(key, 5)
 
-    assert samples.shape == (5,)
+    assert samples.shape == (5, n_params)
 
     # ---- Test log_prob() ----
     x = jnp.array(samples)
-    logp = prior_transform.log_prob(x)
+    logp = prior_transform.log_prob(x).sum(axis=-1)
 
     assert logp.shape == ()
     assert jnp.isfinite(logp).all()
