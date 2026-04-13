@@ -35,10 +35,6 @@ class PDFModel(ABC):
         """
         Returns the number of parameters of the pdf model.
         """
-        # If n_parameters was set explicitly (for testing), use that
-        if getattr(self, "_n_parameters", None) is not None:
-            return self._n_parameters
-        # Otherwise, derive it from param_names
         return len(self.param_names)
 
     @n_parameters.setter  # ← SETTER - So param_names can be set based on n_parameters
