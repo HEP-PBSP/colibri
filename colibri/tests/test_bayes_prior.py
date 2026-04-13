@@ -23,10 +23,11 @@ def test_uniform_prior():
     """
     Test the transformation of a uniform prior distribution.
     """
+    MOCK_PDF_MODEL.n_parameters = 2
     prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_PDF_MODEL)
 
     key = random.PRNGKey(0)
-    n_params = MOCK_PDF_MODEL.n_parameters  # 2
+    n_params = MOCK_PDF_MODEL.n_parameters
     cube = random.uniform(key, shape=(n_params,))
 
     # ---- Test sample() ----
