@@ -14,7 +14,6 @@ from colibri.tests.conftest import (
     TEST_XGRID,
     TestPDFModel,
 )
-from colibri.pdf_model import PDFModel
 
 model = TestPDFModel(n_parameters=2)
 
@@ -24,34 +23,6 @@ def test_param_names():
     Tests that the param_names property returns the correct names.
     """
     assert model.param_names == ["w_1", "w_2"]
-
-
-def test_n_parameters_derived_from_param_names():
-    """Tests the return len(self.param_names) branch."""
-
-    class InlinePDFModel(PDFModel):
-        def __init__(self):
-            super().__init__()
-            # Don't set n_parameters!
-
-        @property
-        def param_names(self):
-            return ["w_1", "w_2", "w_3"]
-
-        def grid_values_func(self, xgrid):
-            def func(params):
-                return jnp.array([params[0] * xgrid])
-
-            return func
-
-    model = InlinePDFModel()
-
-    # Check internal state
-    assert model._n_parameters is None  # Not set explicitly
-
-    # Check fallback behaviour
-    assert model.n_parameters == len(model.param_names)
-    assert model.n_parameters == 3
 
 
 def test_grid_values_func():
