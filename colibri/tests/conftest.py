@@ -266,12 +266,11 @@ class TestPDFModel(PDFModel):
     """
 
     def __init__(self, n_parameters):
-        super().__init__()
-        self.n_parameters = n_parameters
+        self._n_parameters = n_parameters
 
     @property
     def param_names(self):
-        return [f"w_{i+1}" for i in range(self.n_parameters)]
+        return [f"w_{i+1}" for i in range(self._n_parameters)]
 
     def grid_values_func(self, xgrid):
         """
@@ -290,7 +289,6 @@ class TestPDFModel(PDFModel):
 
 MOCK_PDF_MODEL = Mock()
 MOCK_PDF_MODEL.param_names = ["param1", "param2"]
-MOCK_PDF_MODEL.n_parameters = 2
 MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: jnp.sum(
     jnp.array([param * TEST_PDF_GRID for param in params]), axis=0
 )
