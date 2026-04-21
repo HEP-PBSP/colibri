@@ -71,24 +71,24 @@ def main():
 
     replicas_list = sorted(list(replicas_path.iterdir()))
 
-    final_losses = jnp.array([])
+    best_epoch_losses = jnp.array([])
 
     valid_replicas = []  # Keep track of which replicas are valid
 
     for replica in replicas_list:
         try:
-            df = pd.read_csv(replica / "mc_loss.csv")
+            df = pd.read_csv(replica / "best_epoch_specs.csv")
             if (
                 df.empty
-                or df["training_loss"].iloc[-1] is pd.NA
-                or pd.isna(df["training_loss"].iloc[-1])
+                or df["best_train_loss"] is pd.NA
+                or pd.isna(df["best_train_loss"])
             ):
                 log.warning(f"Skipping replica {replica} - empty or NaN training_loss")
                 continue
 
-            final_loss = df.iloc[-1]["training_loss"]
-            final_losses = jnp.concatenate(
-                (final_losses, jnp.array([final_loss])), axis=0
+            best_epoch_loss = df.iloc[-1]["training_loss"]
+            best_epoch_losses = jnp.concatenate(
+                (best_epoch_losses, jnp.array([best_epoch_loss])), axis=0
             )
             valid_replicas.append(replica)
 
@@ -96,8 +96,8 @@ def main():
             log.critical(f"Skipping replica {replica} - error reading file: {e}")
             continue
 
-    mean_loss = jnp.mean(final_losses)
-    std_loss = jnp.std(final_losses)
+    mean_loss = jnp.mean(best_epoch_losses)
+    std_loss = jnp.std(best_epoch_losses)
 
     # List of replicas to keep
     good_replicas = []
@@ -105,7 +105,7 @@ def main():
     # We will copy the replicas and order them starting with 0
     # and increasing the index for each good replica we find
     i = 0
-    for replica, loss in zip(valid_replicas, final_losses):
+    for replica, loss in zip(valid_replicas, best_epoch_losses):
 
         index = int(replica.name.split("_")[1])
 
