@@ -66,6 +66,7 @@ executable.
 
     theoryid: 40000000                     # The theory from which the predictions are drawn.
     use_cuts: internal                     # The kinematic cuts to be applied to the data.
+    mcseed: 519562661                      # Seed used for the production of pseudodata
 
     #####################
     # Loss function specs
