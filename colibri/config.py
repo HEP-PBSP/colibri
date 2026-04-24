@@ -19,7 +19,6 @@ from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
-from validphys import covmats
 from validphys.config import Config, Environment
 from validphys.fkparser import load_fktable
 

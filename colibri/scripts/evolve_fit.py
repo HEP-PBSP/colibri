@@ -12,9 +12,7 @@ import shutil
 import sys
 from glob import glob
 
-import evolven3fit
 import lhapdf
-from evolven3fit.utils import read_runcard
 from n3fit.scripts.evolven3fit import main as evolven3fit_main
 from reportengine import colors
 from validphys import lhio
@@ -30,19 +28,6 @@ root_logger.setLevel(logging.WARNING)  # Set higher threshold globally
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())
-
-
-def my_custom_get_theoryID_from_runcard(usr_path):
-    """
-    Does the same as `evolven3fit.utils.get_theoryID_from_runcard`
-    but assumes that `theoryid` is defined in the runcard.
-    """
-    my_runcard = read_runcard(usr_path)
-    return my_runcard["theoryid"]
-
-
-# override (monkey patch) the function
-evolven3fit.utils.get_theoryID_from_runcard = my_custom_get_theoryID_from_runcard
 
 
 def idx(path):
