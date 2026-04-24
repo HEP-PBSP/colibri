@@ -36,7 +36,7 @@ executable.
 
 .. code-block:: bash
 
-    meta: 'An example fit using Colibri, reduced DIS dataset.'
+    description: 'An example fit using Colibri, reduced DIS dataset.'
 
     #######################
     # Data and theory specs

@@ -15,7 +15,7 @@ The following runcard can be used to time the log-likelihood for the
 
 .. code-block:: bash
 
-    meta: 'An example script to time the log-likelihood using Colibri.'
+    description: 'An example script to time the log-likelihood using Colibri.'
 
     #######################
     # Data and theory specs

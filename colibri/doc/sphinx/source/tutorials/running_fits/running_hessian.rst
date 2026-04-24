@@ -23,7 +23,7 @@ The following runcard can be used to run a Hessian fit with Colibri.
 
 .. code-block:: bash
 
-    meta: 'An example Hessian fit using Colibri, reduced DIS dataset.'
+    description: 'An example Hessian fit using Colibri, reduced DIS dataset.'
 
     #######################
     # Data and theory specs

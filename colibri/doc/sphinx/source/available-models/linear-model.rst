@@ -30,7 +30,7 @@ The following is an example runcard that can be used to construct a POD basis:
 
 .. code-block:: bash
 
-    meta:
+    description:
     title: POD basis
     author: Lazy Person
     keywords: ["POD basis", "wmin"]

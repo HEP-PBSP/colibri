@@ -37,7 +37,7 @@ fit the weight minimisation (``wmin``) model presented in Ref.
 
 .. code-block:: bash
 
-    meta: 'An example Level 1 closure test analytic fit using Colibri'
+    description: 'An example Level 1 closure test analytic fit using Colibri'
 
     #######################
     # Data and theory specs
