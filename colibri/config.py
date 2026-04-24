@@ -168,6 +168,25 @@ class colibriConfig(Config):
         )
         return xgrid
 
+    def parse_theory(self, settings):
+        """
+        Parses theory namespace from the runcard.
+        """
+        theory = {}
+        theory_int = settings.get("theoryid")
+        # Use the loader to properly validate and convert theoryid
+        theory["theoryid"] = self.loader.check_theoryID(theory_int)
+        return theory
+
+    def produce_theoryid(self, theory):
+        """
+        Extract and produce theoryid from theory settings.
+        """
+        theoryid = theory.get("theoryid")
+        if theoryid is None:
+            raise ValueError("theoryid not found in theory settings")
+        return theoryid
+
     def parse_ultranest_settings(
         self,
         settings,
