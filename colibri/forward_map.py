@@ -81,7 +81,7 @@ class ForwardMap(ABC):
     by the forward map via ``self.n_pdf_params``.
     """
 
-    def __init__(self, pdf_model, extra_param_names: list[str] = ()):
+    def __init__(self, pdf_model, extra_param_names: list[str] = []):
 
         self.pdf_model = pdf_model
         if pdf_model is not None:
