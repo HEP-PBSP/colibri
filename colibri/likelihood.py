@@ -190,7 +190,7 @@ def log_likelihood(
 
 def mc_log_likelihood(
     mc_pseudodata,
-    fit_covariance_matrix,
+    general_covariance_matrix,
     pdf_model,
     forward_map,
     fast_kernel_arrays,
@@ -208,7 +208,7 @@ def mc_log_likelihood(
 
     tr_idx = mc_pseudodata.training_indices
     central_values_train = mc_pseudodata.pseudodata[tr_idx]
-    covmat_train = fit_covariance_matrix[tr_idx][:, tr_idx]
+    covmat_train = general_covariance_matrix[tr_idx][:, tr_idx]
 
     central_covmat_index_train = CentralCovmatIndex(
         central_values=central_values_train,
@@ -233,7 +233,7 @@ def mc_log_likelihood(
     else:
         val_idx = mc_pseudodata.validation_indices
         central_values_val = mc_pseudodata.pseudodata[val_idx]
-        covmat_val = fit_covariance_matrix[val_idx][:, val_idx]
+        covmat_val = general_covariance_matrix[val_idx][:, val_idx]
 
         central_covmat_index_val = CentralCovmatIndex(
             central_values=central_values_val,

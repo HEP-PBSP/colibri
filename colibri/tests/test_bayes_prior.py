@@ -34,6 +34,18 @@ def test_uniform_prior():
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10,))
 
+    # ---- Test sample() ----
+    samples = prior_transform.sample(key, 5)
+
+    assert samples.shape == (5,)
+
+    # ---- Test log_prob() ----
+    x = jnp.array(samples)
+    logp = prior_transform.log_prob(x)
+
+    assert logp.shape == ()
+    assert jnp.isfinite(logp).all()
+
     transformed = prior_transform.prior_transform(cube)
     expected = (
         cube
@@ -137,6 +149,14 @@ def test_gaussian_prior(mock_get_full_posterior):
     expected = mean + jnp.dot(independent_gaussian, jnp.linalg.cholesky(cov).T)
 
     assert np.allclose(transformed, expected), "Gaussian prior transformation failed."
+
+    # ---- Cover sample() ----
+    with pytest.raises(NotImplementedError, match="sample not implemented"):
+        prior_transform.sample(key, 10)
+
+    # ---- Cover log_prob() ----
+    with pytest.raises(NotImplementedError, match="log_prob not implemented"):
+        prior_transform.log_prob(jnp.zeros((10, 2)))
 
 
 def test_invalid_prior_type():

@@ -607,27 +607,14 @@ class colibriConfig(Config):
             )
 
     @explicit_node
-    def produce_fit_covariance_matrix(self, use_fit_t0: bool = True):
+    def produce_general_covariance_matrix(self, use_t0_covmat: bool = True):
         """
-        Produces the covariance matrix used in the fit.
+        Produces the covariance matrix used in the fit and noise generation for level 1 data and MC replicas.
         This covariance matrix is used in:
         - commondata_utils.central_covmat_index
         - mc_log_likelihood for the monte carlo fit
         """
-        if use_fit_t0:
-            return colibri_covmats.dataset_inputs_t0_covmat_from_systematics
-        else:
-            return colibri_covmats.dataset_inputs_covmat_from_systematics
-
-    @explicit_node
-    def produce_data_generation_covariance_matrix(self, use_gen_t0: bool = False):
-        """Produces the covariance matrix used in:
-        - level 1 closure test data construction (fluctuating around the level
-        0 data)
-        - Monte Carlo pseudodata (fluctuating either around the level 0 data or
-        level 1 data)
-        """
-        if use_gen_t0:
+        if use_t0_covmat:
             return colibri_covmats.dataset_inputs_t0_covmat_from_systematics
         else:
             return colibri_covmats.dataset_inputs_covmat_from_systematics

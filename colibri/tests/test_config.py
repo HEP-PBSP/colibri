@@ -489,7 +489,6 @@ def test_parse_hessian_settings_defaults():
 
 
 def test_parse_hessian_settings_with_seed():
-    import jax
 
     settings = {"rng_seed": 123, "iter_init": 2}
     res = BASE_CONFIG.parse_hessian_settings(settings)
@@ -522,3 +521,39 @@ def test_parse_hessian_settings_unknown_key_warns(mock_warning):
 def test_parse_hessian_settings_invalid_values(settings, match):
     with pytest.raises(ConfigError, match=match):
         BASE_CONFIG.parse_hessian_settings(settings)
+
+
+# -----------------------------
+#   parse blackjax settings
+# -----------------------------
+
+
+@patch("colibri.config.log.warning")
+def test_parse_blackjax_settings_full(mock_warning, tmp_path):
+    settings = {
+        "n_posterior_samples": 200,
+        "n_live": 100,
+        "repeats": 5,
+        "delete_fraction": 0.3,
+        "log_precision": -5,
+        "seed": 42,
+        "posterior_resampling_seed": 999,
+        "log_dir": str(tmp_path / "custom_logs"),
+        "unknown_key": "oops",  # triggers warning
+    }
+
+    result = BASE_CONFIG.parse_blackjax_settings(settings, tmp_path)
+
+    expected = {
+        "n_posterior_samples": 200,
+        "n_live": 100,
+        "repeats": 5,
+        "delete_fraction": 0.3,
+        "log_precision": -5,
+        "seed": 42,
+        "posterior_resampling_seed": 999,
+        "log_dir": str(tmp_path / "custom_logs"),
+    }
+
+    assert result == expected
+    assert mock_warning.called
