@@ -5,7 +5,6 @@ Module containing standard pytest data configurations for testing purposes.
 import pathlib
 from unittest.mock import Mock, MagicMock
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 
