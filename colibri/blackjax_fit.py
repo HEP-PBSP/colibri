@@ -150,7 +150,7 @@ def blackjax_fit(
     nested_samples.to_csv(log_dir + "/nested_samples.csv")
 
     # Export resampled posterior samples
-    posterior_df = pd.DataFrame(resampled_posterior, columns=pdf_model.param_names)
+    posterior_df = pd.DataFrame(resampled_posterior, columns=forward_map.param_names)
     posterior_df.to_csv(os.path.join(log_dir, "posterior_samples.csv"), index=False)
 
     # Compute bayesian metrics (similar to UltraNest)
