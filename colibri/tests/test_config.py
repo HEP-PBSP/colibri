@@ -536,7 +536,7 @@ def test_parse_blackjax_settings_full(mock_warning, tmp_path):
         "repeats": 5,
         "delete_fraction": 0.3,
         "log_precision": -5,
-        "seed": 42,
+        "blackjax_seed": 42,
         "posterior_resampling_seed": 999,
         "log_dir": str(tmp_path / "custom_logs"),
         "unknown_key": "oops",  # triggers warning
@@ -550,10 +550,42 @@ def test_parse_blackjax_settings_full(mock_warning, tmp_path):
         "repeats": 5,
         "delete_fraction": 0.3,
         "log_precision": -5,
-        "seed": 42,
+        "blackjax_seed": 42,
         "posterior_resampling_seed": 999,
         "log_dir": str(tmp_path / "custom_logs"),
     }
 
     assert result == expected
+    assert mock_warning.called
+
+
+@patch("colibri.config.os.path.exists")
+@patch("colibri.config.log.warning")
+def test_parse_blackjax_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path):
+    # Test with unknown keys in settings
+    settings = {
+        "unknown_key": "value",
+        "n_posterior_samples": 500,
+        "posterior_resampling_seed": 78910,
+    }
+
+    # Mock the existence of the log directory
+    mock_exists.return_value = False
+
+    # Call the function
+    blackjax_settings = BASE_CONFIG.parse_blackjax_settings(settings, tmp_path)
+
+    # Check that the settings were parsed correctly
+    expected_settings = {
+        "n_posterior_samples": 500,
+        "n_live": 500,
+        "repeats": 3,
+        "delete_fraction": 0.5,
+        "log_precision": -3,
+        "blackjax_seed": 0,
+        "posterior_resampling_seed": 78910,
+        "log_dir": str(tmp_path / "blackjax_logs"),
+    }
+
+    assert blackjax_settings == expected_settings
     assert mock_warning.called
