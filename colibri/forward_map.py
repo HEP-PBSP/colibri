@@ -160,7 +160,7 @@ class FKTableForwardMap(ForwardMap):
         return self._pred_func(pdf, fk_tables), pdf
 
 
-def forward_map(_pred_data, pdf_model, extra_param_names=()):
+def forward_map(_pred_data, pdf_model, extra_param_names=[]):
     """Reportengine provider that builds the default FK-table forward map.
 
     Parameters
