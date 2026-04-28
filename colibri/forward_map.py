@@ -13,7 +13,12 @@ Design choice: fixed call signature
 -----------------------------------
 The log-likelihood calls every forward map with the same fixed signature::
 
-    (pdf_grid_func, fk_tables, params) -> predictions, pdf
+    (fk_tables, params) -> predictions, pdf
+
+The PDF grid function is bound at construction time (via ``pdf_grid_func``
+stored on the instance), so ``fk_tables`` remain a dynamic argument that JAX
+traces as an abstract input — keeping them out of the compiled binary and
+avoiding expensive recompilation when values change.
 
 Parameter convention
 --------------------
@@ -23,21 +28,22 @@ or parameters of a custom prediction function).
 
 By convention:
 
-``params[:self.n_pdf_params]`` are PDF parameters consumed by ``pdf_grid_func``;
-any remaining entries are "extra" parameters interpreted by the chosen
-  ``ForwardMap`` implementation.
+``params[:self.n_pdf_params]`` are PDF parameters consumed by the bound
+``pdf_grid_func``; any remaining entries are "extra" parameters interpreted by
+the chosen ``ForwardMap`` implementation.
 
 Example - fitting a normalisation factor on top of the PDF
 ----------------------------------------------------------
 ::
 
     class NormForwardMap(ForwardMap):
-        def __init__(self, pred_func, pdf_model):
+        def __init__(self, pred_func, pdf_model, pdf_grid_func):
             super().__init__(pdf_model, extra_param_names=["norm"])
             self._pred_func = pred_func
+            self._pdf_grid_func = pdf_grid_func
 
-        def __call__(self, pdf_grid_func, fk_tables, params):
-            pdf = pdf_grid_func(params[: self.n_pdf_params])
+        def __call__(self, fk_tables, params):
+            pdf = self._pdf_grid_func(params[: self.n_pdf_params])
             norm = params[self.n_pdf_params]            # first extra parameter
             return norm * self._pred_func(pdf, fk_tables), pdf
 
@@ -52,7 +58,7 @@ Example - fixed PDF, fitting only extra parameters
             self.fixed_pdf = fixed_pdf
             self._fixed_pred = self._pred_func(fixed_pdf, fk_tables)
 
-        def __call__(self, pdf_grid_func, fk_tables, params):
+        def __call__(self, fk_tables, params):
             scale = params[0]
             return scale * self._fixed_pred, self.fixed_pdf
 """
@@ -73,7 +79,7 @@ class ForwardMap(ABC):
 
     All forward maps share the same call signature:
 
-        ``(pdf_grid_func, fk_tables, params) -> predictions``
+        ``(fk_tables, params) -> predictions``
 
     Notes
     -----
@@ -103,7 +109,6 @@ class ForwardMap(ABC):
     @abstractmethod
     def __call__(
         self,
-        pdf_grid_func: Callable[[jnp.ndarray], jnp.ndarray],
         fk_tables: Any,
         params: jnp.ndarray,
     ) -> jnp.ndarray:
@@ -111,14 +116,6 @@ class ForwardMap(ABC):
 
         Parameters
         ----------
-        pdf_grid_func : callable
-            Callable that evaluates PDF values on the fit x-grid from the PDF
-            parameters.
-
-            Expected call signature:
-                ``pdf = pdf_grid_func(pdf_params)``
-            with ``pdf`` shaped ``(N_fl, N_x)``.
-
         fk_tables : jnp.ndarray
             Fast-kernel tables needed by the prediction function.
 
@@ -149,18 +146,20 @@ class FKTableForwardMap(ForwardMap):
         self,
         pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
         pdf_model,
+        pdf_grid_func: Callable[[jnp.ndarray], jnp.ndarray],
         extra_param_names: list[str] = [],
     ):
         super().__init__(pdf_model, extra_param_names=extra_param_names)
         self._pred_func = pred_func
+        self._pdf_grid_func = pdf_grid_func
 
-    def __call__(self, pdf_grid_func, fk_tables, params):
+    def __call__(self, fk_tables, params):
         pdf_params = params[: self.n_pdf_params]
-        pdf = pdf_grid_func(pdf_params)
+        pdf = self._pdf_grid_func(pdf_params)
         return self._pred_func(pdf, fk_tables), pdf
 
 
-def forward_map(_pred_data, pdf_model, extra_param_names=[]):
+def forward_map(_pred_data, pdf_model, FIT_XGRID, extra_param_names=[]):
     """Reportengine provider that builds the default FK-table forward map.
 
     Parameters
@@ -168,14 +167,17 @@ def forward_map(_pred_data, pdf_model, extra_param_names=[]):
     _pred_data : callable
         Prediction function of the form ``pred_func(pdf, fk_tables) -> predictions``.
     pdf_model : object
-        The PDF model object; must expose a ``param_names`` attribute.
+        The PDF model object; must expose ``param_names`` and ``grid_values_func``.
+    FIT_XGRID : array-like
+        The x-grid on which the PDF is evaluated.
     extra_param_names : list[str], optional
         Names of any additional fit parameters beyond the PDF parameters.
 
     """
-
+    pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)
     return FKTableForwardMap(
         pred_func=_pred_data,
         pdf_model=pdf_model,
+        pdf_grid_func=pdf_grid_func,
         extra_param_names=extra_param_names,
     )

@@ -52,8 +52,7 @@ def check_pdf_model_is_linear(pdf_model, forward_map, FIT_XGRID, data):
     fk = fast_kernel_arrays(data, FIT_XGRID)
 
     parameters = pdf_model.param_names
-    pdf_grid = pdf_model.grid_values_func(FIT_XGRID)
-    intercept, _ = forward_map(pdf_grid, fk, jnp.zeros(len(parameters)))
+    intercept, _ = forward_map(fk, jnp.zeros(len(parameters)))
 
     # Run the check for 10 random points in the parameter space
     for i in range(10):
@@ -65,16 +64,16 @@ def check_pdf_model_is_linear(pdf_model, forward_map, FIT_XGRID, data):
 
         # Test additivity
         add_check = jnp.isclose(
-            forward_map(pdf_grid, fk, x1)[0] + forward_map(pdf_grid, fk, x2)[0],
-            forward_map(pdf_grid, fk, x1 + x2)[0] + intercept,
+            forward_map(fk, x1)[0] + forward_map(fk, x2)[0],
+            forward_map(fk, x1 + x2)[0] + intercept,
         )
 
         # Test homogeneity
         c = jax.random.uniform(key, (1,))
 
         homogeneity_check = jnp.isclose(
-            c * (forward_map(pdf_grid, fk, x1)[0] - intercept),
-            forward_map(pdf_grid, fk, c * x1)[0] - intercept,
+            c * (forward_map(fk, x1)[0] - intercept),
+            forward_map(fk, c * x1)[0] - intercept,
         )
 
         if not add_check.all() or not homogeneity_check.all():

@@ -23,7 +23,6 @@ class LogLikelihood(object):
         self,
         central_covmat_index,
         pdf_model,
-        fit_xgrid,
         forward_map,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
@@ -37,8 +36,6 @@ class LogLikelihood(object):
         central_covmat_index: commondata_utils.CentralCovmatIndex
 
         pdf_model: pdf_model.PDFModel
-
-        fit_xgrid: np.ndarray
 
         forward_map: Callable
 
@@ -62,7 +59,6 @@ class LogLikelihood(object):
         self.positivity_penalty_settings = positivity_penalty_settings
         self.integrability_penalty = integrability_penalty
 
-        self.pdf_grid = pdf_model.grid_values_func(fit_xgrid)
         self.forward_map = forward_map
 
         self.fast_kernel_arrays = fast_kernel_arrays
@@ -125,7 +121,7 @@ class LogLikelihood(object):
         jnp.ndarray
             jax array with the value of the log-likelihood.
         """
-        predictions, pdf = self.forward_map(self.pdf_grid, fast_kernel_arrays, params)
+        predictions, pdf = self.forward_map(fast_kernel_arrays, params)
         # Select only the data relevant for this likelihood
         # Especially important when using a training/validation split
         predictions = predictions[self.central_values_idx]
@@ -167,7 +163,6 @@ class LogLikelihood(object):
 def log_likelihood(
     central_covmat_index,
     pdf_model,
-    FIT_XGRID,
     forward_map,
     fast_kernel_arrays,
     positivity_fast_kernel_arrays,
@@ -184,7 +179,6 @@ def log_likelihood(
     return LogLikelihood(
         central_covmat_index,
         pdf_model,
-        FIT_XGRID,
         forward_map,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
@@ -198,7 +192,6 @@ def mc_log_likelihood(
     mc_pseudodata,
     fit_covariance_matrix,
     pdf_model,
-    FIT_XGRID,
     forward_map,
     fast_kernel_arrays,
     positivity_fast_kernel_arrays,
@@ -226,7 +219,6 @@ def mc_log_likelihood(
     train_loglike = LogLikelihood(
         central_covmat_index_train,
         pdf_model,
-        FIT_XGRID,
         forward_map,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
@@ -252,7 +244,6 @@ def mc_log_likelihood(
         val_loglike = LogLikelihood(
             central_covmat_index_val,
             pdf_model,
-            FIT_XGRID,
             forward_map,
             fast_kernel_arrays,
             positivity_fast_kernel_arrays,

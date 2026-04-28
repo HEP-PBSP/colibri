@@ -18,7 +18,7 @@ from colibri.tests.conftest import (
     TEST_FK_ARRAYS,
     TEST_FORWARD_MAP_DIS,
     TEST_POS_FK_ARRAYS,
-    TEST_XGRID,
+
 )
 from colibri.data_batch import BatchSpec
 
@@ -38,7 +38,6 @@ def test_LogLikelihood_class(pos_penalty):
     log_likelihood_class = LogLikelihood(
         central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -67,7 +66,7 @@ def test_LogLikelihood_class(pos_penalty):
     )
     # Compute expected value using actual prediction and covariance
     predictions, pdf = log_likelihood_class.forward_map(
-        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
+        log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
@@ -104,7 +103,6 @@ def test_log_likelihood(pos_penalty):
     log_likelihood_class = LogLikelihood(
         central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -115,7 +113,6 @@ def test_log_likelihood(pos_penalty):
     log_like = log_likelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -143,7 +140,6 @@ def test_log_likelihood_with_and_without_pos_penalty():
     log_likelihood_class = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -166,7 +162,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
 
     # Compute expectation directly: -0.5 * (chi2 + pos_pen + integ_pen)
     predictions, pdf = log_likelihood_class.forward_map(
-        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
+        log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
@@ -195,7 +191,6 @@ def test_log_likelihood_with_and_without_pos_penalty():
     log_likelihood_class = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -214,7 +209,7 @@ def test_log_likelihood_with_and_without_pos_penalty():
 
     # Expectation: Only chi2 value (penalties zeroed)
     predictions, pdf = log_likelihood_class.forward_map(
-        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
+        log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
@@ -255,7 +250,6 @@ def test_mc_log_likelihood_with_split(pos_penalty):
         mc_pd,
         fit_covariance_matrix,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -276,7 +270,7 @@ def test_mc_log_likelihood_with_split(pos_penalty):
     # Compute expected for train and validation independently
     def compute_expected(ll_obj):
         preds, pdf = ll_obj.forward_map(
-            ll_obj.pdf_grid, ll_obj.fast_kernel_arrays, params
+            ll_obj.fast_kernel_arrays, params
         )
         preds = preds[ll_obj.central_values_idx]
         diff = preds - ll_obj.central_values
@@ -335,7 +329,6 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
         mc_pd,
         fit_covariance_matrix,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -351,7 +344,7 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
     train_val = train_loglike(params)
     # Compute expected train value
     predictions, pdf = train_loglike.forward_map(
-        train_loglike.pdf_grid, train_loglike.fast_kernel_arrays, params
+        train_loglike.fast_kernel_arrays, params
     )
     predictions = predictions[train_loglike.central_values_idx]
     diff = predictions - train_loglike.central_values
@@ -394,7 +387,6 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     log_likelihood_class = LogLikelihood(
         central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -412,7 +404,7 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
 
     # Compute expected on the batch index: recompute inv_covmat on the sub-covmat
     predictions, pdf = log_likelihood_class.forward_map(
-        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
+        log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     predictions_b = predictions[batch.idx]
@@ -456,7 +448,6 @@ def test_LogLikelihood_call_with_batch_with_inv_cov(pos_penalty):
     log_likelihood_class = LogLikelihood(
         central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -479,7 +470,7 @@ def test_LogLikelihood_call_with_batch_with_inv_cov(pos_penalty):
 
     # Compute expected value using the provided inv_b (should be identical)
     predictions, pdf = log_likelihood_class.forward_map(
-        log_likelihood_class.pdf_grid, log_likelihood_class.fast_kernel_arrays, params
+        log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     predictions_b = predictions[batch.idx]
