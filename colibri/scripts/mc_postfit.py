@@ -80,13 +80,13 @@ def main():
             df = pd.read_csv(replica / "best_epoch_specs.csv")
             if (
                 df.empty
-                or df["best_train_loss"] is pd.NA
-                or pd.isna(df["best_train_loss"])
+                or df["best_train_loss"].iloc[0] is pd.NA
+                or pd.isna(df["best_train_loss"].iloc[0])
             ):
                 log.warning(f"Skipping replica {replica} - empty or NaN training_loss")
                 continue
 
-            best_epoch_loss = df.iloc[-1]["training_loss"]
+            best_epoch_loss = df.iloc[-1]["best_train_loss"]
             best_epoch_losses = jnp.concatenate(
                 (best_epoch_losses, jnp.array([best_epoch_loss])), axis=0
             )
