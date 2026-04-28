@@ -66,7 +66,6 @@ executable.
 
     theoryid: 40000000                     # The theory from which the predictions are drawn.
     use_cuts: internal                     # The kinematic cuts to be applied to the data.
-    mcseed: 519562661                      # Seed used for the production of pseudodata
 
     #####################
     # Loss function specs
@@ -115,6 +114,7 @@ executable.
     # Monte Carlo settings
     use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
     positive_pseudodata: False             # If set to True, the pseudodata will be resampled until all pseudodata points are positive
+    mcseed: 519562661                      # Seed used for the production of pseudodata
 
     mc_validation_fraction: 0.2            # The fraction of the data used for validation in Monte Carlo training.
 
@@ -142,9 +142,9 @@ executable.
 ^^^^^^^^^^^^^^^^^^^^^^
 These settings control the method of gradient descent. You can use any
 of the Optax optimizers and settings, which you can read more about
-`here <https://optax.readthedocs.io/en/latest/api/optimizers.html#>`_.
+`here <https://optax.readthedocs.io/en/latest/api/optimizers.html#>`__.
 Learning schedulers are also supported, and you can find the available options
-`here <https://optax.readthedocs.io/en/latest/api/optimizer_schedules.html#>`_.
+`here <https://optax.readthedocs.io/en/latest/api/optimizer_schedules.html#>`__.
 
 .. _param-initialiser-settings:
 
