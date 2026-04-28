@@ -109,7 +109,10 @@ The following runcard can be used to run a Hessian fit with Colibri.
         #         transition_steps: 10000
 
     # Training settings
-    max_epochs: 30000
+    use_gen_t0: True             # Whether the t0 covariance is used to generated pseudodata.
+    max_epochs: 30000       # The max number of epochs in Monte Carlo training.
+    patience: 1000          # The number of epochs to wait for an improvement in the validation loss before stopping the training
+
 
     param_initialiser_settings:               
         type: uniform
@@ -134,7 +137,7 @@ The following runcard can be used to run a Hessian fit with Colibri.
 
 Note that the Hessian fit uses the same ``param_initialiser_settings`` as a
 Monte Carlo fit, and so any of the initialisation options discussed in the
-:ref:`Monte Carlo fit tutorial <running_mc_replica>` can be used for these
+:ref:`Monte Carlo fit tutorial <param-initialiser-settings>` can be used for these
 settings (i.e. gaussian initialisation, global bounds for all parameters ...).
 
 ``hessian_settings``

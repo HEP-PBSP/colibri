@@ -15,7 +15,7 @@ and a likelihood function, :math:`\mathcal{l}(\mathbf{D} | \boldsymbol{\theta})`
 In this section, we will discuss the form of the likelihood function and its
 implementation in Colibri. Note that a complementary discussion of the likelihood
 function can be found in the
-`NNPDF documentation <https://docs.nnpdf.science/figuresofmerit/index.html>`_
+`NNPDF documentation <https://docs.nnpdf.science/figuresofmerit/index.html>`_ .
 
 In general, it is more convenient to work in terms of the *log-likelihood*,
 :math:`\mathcal{L}(\mathbf{D} | \boldsymbol{\theta}) = \log (\mathcal{l}(\mathbf{D} | \boldsymbol{\theta}))`.
