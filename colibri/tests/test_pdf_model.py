@@ -25,6 +25,13 @@ def test_param_names():
     assert model.param_names == ["w_1", "w_2"]
 
 
+def test_n_parameters():
+    """
+    Tests that n_parameters returns correct number.
+    """
+    assert model.n_parameters == 2
+
+
 def test_grid_values_func():
     """
     Tests that the grid_values_func returns the correct values.

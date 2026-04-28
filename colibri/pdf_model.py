@@ -26,6 +26,13 @@ class PDFModel(ABC):
         """
         pass
 
+    @property
+    def n_parameters(self):
+        """
+        Returns the number of parameters of the pdf model.
+        """
+        return len(self.param_names)
+
     @abstractmethod
     def grid_values_func(self, xgrid: ArrayLike) -> Callable[[jnp.array], jnp.ndarray]:
         """This function should produce a grid values function, which takes

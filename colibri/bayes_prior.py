@@ -43,8 +43,8 @@ def bayesian_prior(prior_settings, forward_map):
 
         elif "min_val" in prior_specs and "max_val" in prior_specs:
             # Global bounds for all parameters
-            mins = prior_specs["min_val"]
-            maxs = prior_specs["max_val"]
+            mins = jnp.array([float(prior_specs["min_val"])] * pdf_model.n_parameters)
+            maxs = jnp.array([float(prior_specs["max_val"])] * pdf_model.n_parameters)
 
         else:
             raise ValueError(

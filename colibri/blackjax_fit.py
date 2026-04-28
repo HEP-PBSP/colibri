@@ -17,6 +17,7 @@ from blackjax.ns.utils import finalise, sample, log_weights, ess
 from jax.scipy.special import logsumexp
 import tqdm
 import anesthetic
+import pandas as pd
 
 from colibri.core import BlackJAXFit
 from colibri.export_results import export_bayes_results, write_replicas
@@ -147,6 +148,10 @@ def blackjax_fit(
     log_dir = blackjax_settings["log_dir"]
     os.makedirs(log_dir, exist_ok=True)  # Create directory if it doesn't exist
     nested_samples.to_csv(log_dir + "/nested_samples.csv")
+
+    # Export resampled posterior samples
+    posterior_df = pd.DataFrame(resampled_posterior, columns=pdf_model.param_names)
+    posterior_df.to_csv(os.path.join(log_dir, "posterior_samples.csv"), index=False)
 
     # Compute bayesian metrics (similar to UltraNest)
     # Find maximum likelihood point

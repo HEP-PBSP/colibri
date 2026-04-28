@@ -30,18 +30,20 @@ def test_uniform_prior():
     Test the transformation of a uniform prior distribution.
     """
     prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_FORWARD_MAP)
+    MOCK_PDF_MODEL.n_parameters = 2
 
     key = random.PRNGKey(0)
-    cube = random.uniform(key, shape=(10,))
+    n_params = MOCK_PDF_MODEL.n_parameters
+    cube = random.uniform(key, shape=(n_params,))
 
     # ---- Test sample() ----
     samples = prior_transform.sample(key, 5)
 
-    assert samples.shape == (5,)
+    assert samples.shape == (5, n_params)
 
     # ---- Test log_prob() ----
     x = jnp.array(samples)
-    logp = prior_transform.log_prob(x)
+    logp = prior_transform.log_prob(x).sum(axis=-1)
 
     assert logp.shape == ()
     assert jnp.isfinite(logp).all()
