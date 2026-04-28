@@ -342,10 +342,12 @@ def test_likelihood_float_type(
     _pred_data = lambda x, fks: jnp.ones(
         len(MOCK_CENTRAL_COVMAT_INDEX.central_values)
     )  # Mock _pred_data
-    forward_map = FKTableForwardMap(
-        _pred_data, pdf_model=MOCK_PDF_MODEL
-    )  # Mock forward_map
     FIT_XGRID = jnp.linspace(0, 1, 10)  # Mock FIT_XGRID
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(FIT_XGRID),
+    )  # Mock forward_map
     output_path = tmp_path
 
     fast_kernel_arrays = jax.random.uniform(

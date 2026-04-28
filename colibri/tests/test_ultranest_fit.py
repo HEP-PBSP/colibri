@@ -67,11 +67,14 @@ vect_ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 def test_ultranest_fit(pos_penalty):
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -105,13 +108,16 @@ def test_ultranest_fit(pos_penalty):
 def test_ultranest_fit_vectorized(pos_penalty):
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
     ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -155,12 +161,15 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     }
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -204,12 +213,15 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     }
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -257,12 +269,15 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
     }
 
     _pred_data = lambda *args: jnp.array([0.0])
-    forward_map = FKTableForwardMap(_pred_data, pdf_model=MOCK_PDF_MODEL)
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,

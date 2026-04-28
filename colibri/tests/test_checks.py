@@ -129,14 +129,15 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     def pdf_linear_model(params):
         return params
 
+    # Set the mock's grid_values_func to return the linear_model function
+    mock_pdf_model.grid_values_func.return_value = pdf_linear_model
+
     forward_map_lin = FKTableForwardMap(
         # Simulating a simple linear model: f(x) = a*x + b*y + c*z + 3.0, where pdf = [a, b, c]
         lambda pdf, fk: jnp.dot(pdf, fk) + 3.0,
         pdf_model=mock_pdf_model,
+        pdf_grid_func=mock_pdf_model.grid_values_func(FIT_XGRID),
     )
-
-    # Set the mock's grid_values_func to return the linear_model function
-    mock_pdf_model.grid_values_func.return_value = pdf_linear_model
 
     # Test for linear model (should not raise an exception)
     check_pdf_model_is_linear(mock_pdf_model, forward_map_lin, FIT_XGRID, data)
@@ -146,6 +147,7 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
         # Introduce some non-linearity
         lambda pdf, fk: jnp.dot(pdf**2, FIT_XGRID) + fk,
         pdf_model=mock_pdf_model,
+        pdf_grid_func=mock_pdf_model.grid_values_func(FIT_XGRID),
     )
 
     # Ensure ValueError is raised for non-linear model

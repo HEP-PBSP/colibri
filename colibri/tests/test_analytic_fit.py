@@ -43,6 +43,7 @@ def test_analytic_fit_flat_direction():
     forward_map = FKTableForwardMap(
         lambda pdf, fkarrs: jnp.ones(n_params),
         pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
     )
 
     with pytest.raises(ValueError):
@@ -69,7 +70,11 @@ def test_analytic_fit(caplog, monkeypatch):
         MOCK_PDF_MODEL, "grid_values_func", lambda xgrid: lambda params: params
     )
 
-    forward_map = FKTableForwardMap(lambda pdf, fkarrs: pdf, pdf_model=MOCK_PDF_MODEL)
+    forward_map = FKTableForwardMap(
+        lambda pdf, fkarrs: pdf,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     # Run the analytic fit
     result = analytic_fit(
@@ -132,7 +137,11 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
         MOCK_PDF_MODEL, "grid_values_func", lambda xgrid: lambda params: params
     )
 
-    forward_map = FKTableForwardMap(lambda pdf, fkarrs: pdf, pdf_model=MOCK_PDF_MODEL)
+    forward_map = FKTableForwardMap(
+        lambda pdf, fkarrs: pdf,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     # Run the analytic fit
     result = analytic_fit(
