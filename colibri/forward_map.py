@@ -149,7 +149,7 @@ class FKTableForwardMap(ForwardMap):
         self,
         pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
         pdf_model,
-        extra_param_names: list[str] = (),
+        extra_param_names: list[str] = [],
     ):
         super().__init__(pdf_model, extra_param_names=extra_param_names)
         self._pred_func = pred_func
