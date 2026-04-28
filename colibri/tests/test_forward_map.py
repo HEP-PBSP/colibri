@@ -76,6 +76,19 @@ def test_forward_map_abstract_call_raises_not_implemented():
         fm(_make_pdf_grid_func(TEST_PDF_GRID), TEST_FK_ARRAYS, jnp.array([1.0, 2.0]))
 
 
+def test_forward_map_none_pdf_model_sets_empty_param_names():
+    """When pdf_model is None, pdf_param_names must be set to an empty list."""
+
+    class MinimalForwardMap(ForwardMap):
+        def __call__(self, pdf_grid_func, fk_tables, params):
+            return None
+
+    fm = MinimalForwardMap(pdf_model=None)
+    assert fm.pdf_param_names == []
+    assert fm.n_pdf_params == 0
+    assert fm.pdf_model is None
+
+
 def test_forward_map_subclass_stores_pdf_param_names():
     """pdf_param_names passed to super().__init__ must be stored on the instance."""
 
