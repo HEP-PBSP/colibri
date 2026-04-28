@@ -18,7 +18,6 @@ from colibri.tests.conftest import (
     TEST_FK_ARRAYS,
     TEST_FORWARD_MAP_DIS,
     TEST_POS_FK_ARRAYS,
-
 )
 from colibri.data_batch import BatchSpec
 
@@ -269,9 +268,7 @@ def test_mc_log_likelihood_with_split(pos_penalty):
 
     # Compute expected for train and validation independently
     def compute_expected(ll_obj):
-        preds, pdf = ll_obj.forward_map(
-            ll_obj.fast_kernel_arrays, params
-        )
+        preds, pdf = ll_obj.forward_map(ll_obj.fast_kernel_arrays, params)
         preds = preds[ll_obj.central_values_idx]
         diff = preds - ll_obj.central_values
         inv = ll_obj.inv_covmat
