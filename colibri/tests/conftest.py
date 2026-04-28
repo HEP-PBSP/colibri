@@ -274,11 +274,11 @@ class TestPDFModel(PDFModel):
     """
 
     def __init__(self, n_parameters):
-        self.n_parameters = n_parameters
+        self._n_parameters = n_parameters
 
     @property
     def param_names(self):
-        return [f"w_{i+1}" for i in range(self.n_parameters)]
+        return [f"w_{i+1}" for i in range(self._n_parameters)]
 
     def grid_values_func(self, xgrid):
         """
