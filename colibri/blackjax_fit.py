@@ -69,7 +69,7 @@ def blackjax_fit(
     log.info(f"Running fit with backend: {jax.default_backend()}")
 
     # set the BlackJAX seed
-    rng_key = jax.random.PRNGKey(blackjax_settings["seed"])
+    rng_key = jax.random.PRNGKey(blackjax_settings["blackjax_seed"])
     log.info(f"BlackJAX initialisation seed: {rng_key}")
     n_dims = pdf_model.n_parameters
     n_live = blackjax_settings["n_live"]
