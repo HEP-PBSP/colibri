@@ -111,7 +111,7 @@ Runcard
         delete_fraction: 0.5
         log_precision: -3
         posterior_resampling_seed: 52
-        seed: 0
+        blackjax_seed: 0
 
 
 
