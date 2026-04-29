@@ -5,7 +5,7 @@ Forward maps: parameters → theory predictions.
 
 A ``ForwardMap`` implements the final stage of the fit pipeline, turning the
 fit parameter vector into theory predictions that can be compared with
-data in the likelihood. It will also also return the PDF values on the fit x-grid,
+data in the likelihood. It will also return the PDF values on the fit x-grid,
 which is sometimes needed for computing penalties.
 
 
