@@ -48,7 +48,7 @@ Example - fitting a normalisation factor on top of the PDF
             return norm * self._pred_func(pdf, fk_tables), pdf
 
 Example - fixed PDF, fitting only extra parameters
----------------------------------------------------
+--------------------------------------------------
 ::
 
     class FixedPDFForwardMap(ForwardMap):
