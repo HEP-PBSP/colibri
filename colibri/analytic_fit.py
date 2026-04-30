@@ -130,14 +130,14 @@ def analytic_fit(
     """
     # Ensure that the PDF model is linear before running the fit.
     log.info("Checking that the PDF model is linear...")
-    check_pdf_model_is_linear(pdf_model, forward_map, FIT_XGRID, data)
+    check_pdf_model_is_linear(forward_map, FIT_XGRID, data)
 
     log.warning("The prior is assumed to be flat in the parameters.")
     log.warning(
         "Assuming that the prior is wide enough to fully cover the gaussian likelihood."
     )
 
-    parameters = pdf_model.param_names
+    parameters = forward_map.param_names
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
