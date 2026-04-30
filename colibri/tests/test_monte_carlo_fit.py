@@ -85,7 +85,11 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
     output_path = str(tmp_path)
 
     run_monte_carlo_fit(
-        mock_monte_carlo_fit, TEST_FORWARD_MAP_DIS, output_path, replica_index=1, Q0=1.65
+        mock_monte_carlo_fit,
+        TEST_FORWARD_MAP_DIS,
+        output_path,
+        replica_index=1,
+        Q0=1.65,
     )
 
     # Check if the write_exportgrid function was called once as expected
