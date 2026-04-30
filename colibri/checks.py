@@ -9,15 +9,15 @@ import jax.numpy as jnp
 import jax
 from colibri.theory_predictions import make_pred_data, fast_kernel_arrays
 
-from colibri.utils import get_fit_path, get_pdf_model, pdf_models_equal
+from colibri.utils import get_fit_path, get_pdf_model
 
 
 @make_argcheck
-def check_pdf_models_equal(prior_settings, pdf_model, theoryid):
+def check_pdf_models_equal(prior_settings, forward_map, theoryid):
     """
     Decorator that can be added to functions to check that the
     PDF model used as prior (eg when using prior_settings["type"] == "prior_from_gauss_posterior")
-    matches the PDF model used in the current fit (pdf_model).
+    matches the PDF model used in the current fit (via ``forward_map.pdf_param_names``).
     """
 
     if prior_settings.prior_distribution == "prior_from_gauss_posterior":
@@ -25,9 +25,10 @@ def check_pdf_models_equal(prior_settings, pdf_model, theoryid):
         prior_fit = prior_settings.prior_distribution_specs["prior_fit"]
         prior_pdf_model = get_pdf_model(prior_fit)
 
-        if not pdf_models_equal(prior_pdf_model, pdf_model):
+        if prior_pdf_model.param_names != list(forward_map.pdf_param_names):
             raise ValueError(
-                f"PDF model {pdf_model} does not match prior settings {prior_pdf_model}"
+                f"PDF param names from forward_map {list(forward_map.pdf_param_names)} "
+                f"do not match prior PDF model param names {prior_pdf_model.param_names}"
             )
 
         # load filter.yml runcard of the prior fit
@@ -41,8 +42,7 @@ def check_pdf_models_equal(prior_settings, pdf_model, theoryid):
             )
 
 
-@make_argcheck
-def check_pdf_model_is_linear(pdf_model, FIT_XGRID, data):
+def check_pdf_model_is_linear(pdf_model, forward_map, FIT_XGRID, data):
     """
     Decorator that can be added to functions to check that the
     PDF model is linear.
@@ -52,8 +52,7 @@ def check_pdf_model_is_linear(pdf_model, FIT_XGRID, data):
     fk = fast_kernel_arrays(data, FIT_XGRID)
 
     parameters = pdf_model.param_names
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=pred_data)
-    intercept = pred_and_pdf(jnp.zeros(len(parameters)), fk)[0]
+    intercept, _ = forward_map(fk, jnp.zeros(len(parameters)))
 
     # Run the check for 10 random points in the parameter space
     for i in range(10):
@@ -65,16 +64,16 @@ def check_pdf_model_is_linear(pdf_model, FIT_XGRID, data):
 
         # Test additivity
         add_check = jnp.isclose(
-            pred_and_pdf(x1, fk)[0] + pred_and_pdf(x2, fk)[0],
-            pred_and_pdf(x1 + x2, fk)[0] + intercept,
+            forward_map(fk, x1)[0] + forward_map(fk, x2)[0],
+            forward_map(fk, x1 + x2)[0] + intercept,
         )
 
         # Test homogeneity
         c = jax.random.uniform(key, (1,))
 
         homogeneity_check = jnp.isclose(
-            c * (pred_and_pdf(x1, fk)[0] - intercept),
-            pred_and_pdf(c * x1, fk)[0] - intercept,
+            c * (forward_map(fk, x1)[0] - intercept),
+            forward_map(fk, c * x1)[0] - intercept,
         )
 
         if not add_check.all() or not homogeneity_check.all():

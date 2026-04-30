@@ -42,17 +42,3 @@ def test_grid_values_func():
     expected_output = sum([param * TEST_PDF_GRID for param in params])
 
     assert_array_equal(func(params), expected_output)
-
-
-def test_pred_and_pdf_func():
-    """
-    Tests that the pred_and_pdf_func returns the correct values.
-    """
-    pred_and_pdf = model.pred_and_pdf_func(TEST_XGRID, TEST_FORWARD_MAP_DIS)
-
-    params = jnp.array([2, 3])
-    predictions, pdf = pred_and_pdf(params, TEST_FK_ARRAYS)
-
-    expected_predictions = jnp.einsum("ijk,jk->i", TEST_FK_ARRAYS[0], pdf)
-
-    assert jnp.allclose(predictions, expected_predictions)

@@ -291,7 +291,7 @@ def cast_to_numpy(func):
 
 
 def likelihood_float_type(
-    _pred_data,
+    forward_map,
     pdf_model,
     FIT_XGRID,
     bayesian_prior,
@@ -309,10 +309,8 @@ def likelihood_float_type(
     central_values = central_covmat_index.central_values
     covmat = central_covmat_index.covmat
 
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
-
     def log_likelihood(params, central_values, inv_covmat, fast_kernel_arrays):
-        predictions, _ = pred_and_pdf(params, fast_kernel_arrays)
+        predictions, pdf = forward_map(fast_kernel_arrays, params)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     params = bayesian_prior.prior_transform(
@@ -454,6 +452,7 @@ def write_resampled_bayesian_fit(
 
     # overwrite old ns_result.csv with resampled posterior
     parameters = pdf_model.param_names
+    n_pdf_params = len(pdf_model.param_names)
     df = pd.DataFrame(resampled_posterior, columns=parameters)
     df.to_csv(str(resampled_fit_path) + f"/{csv_results_name}.csv", float_format="%.5e")
 
@@ -466,7 +465,7 @@ def write_resampled_bayesian_fit(
     for i, parameters in enumerate(resampled_posterior):
         # Get the PDF grid in the evolution basis
         lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
-        grid_for_writing = np.array(lhapdf_interpolator(parameters))
+        grid_for_writing = np.array(lhapdf_interpolator(parameters[:n_pdf_params]))
 
         replica_index = i + 1
 
