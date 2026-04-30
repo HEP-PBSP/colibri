@@ -48,7 +48,7 @@ bayesian_prior = BayesianPrior(
 integrability_penalty = lambda pdf: jnp.array([0.0])
 
 blackjax_settings = {
-    "seed": 42,
+    "blackjax_seed": 42,
     "n_live": 50,
     "delete_fraction": 0.5,
     "repeats": 2,
@@ -103,7 +103,7 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
     )
 
     blackjax_settings = {
-        "seed": 0,
+        "blackjax_seed": 0,
         "n_live": 4,
         "delete_fraction": 0.5,
         "repeats": 1,
