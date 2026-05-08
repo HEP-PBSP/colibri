@@ -17,14 +17,20 @@ from jax import random
 from colibri.bayes_prior import bayesian_prior
 from colibri.core import PriorSettings
 from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_PRIOR_SETTINGS_UNIFORM
+from unittest.mock import Mock
+
+# Create a mock forward_map that exposes param_names matching MOCK_PDF_MODEL
+MOCK_FORWARD_MAP = Mock()
+MOCK_FORWARD_MAP.param_names = MOCK_PDF_MODEL.param_names
+MOCK_FORWARD_MAP.pdf_param_names = MOCK_PDF_MODEL.param_names
 
 
 def test_uniform_prior():
     """
     Test the transformation of a uniform prior distribution.
     """
+    prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_FORWARD_MAP)
     MOCK_PDF_MODEL.n_parameters = 2
-    prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_PDF_MODEL)
 
     key = random.PRNGKey(0)
     n_params = MOCK_PDF_MODEL.n_parameters
@@ -68,7 +74,7 @@ def test_uniform_prior():
         }
     )
 
-    prior_transform_bounds = bayesian_prior(prior_settings_bounds, MOCK_PDF_MODEL)
+    prior_transform_bounds = bayesian_prior(prior_settings_bounds, MOCK_FORWARD_MAP)
 
     cube_bounds = random.uniform(key, shape=(2,))
     expected_bounds = jnp.array(
@@ -98,7 +104,7 @@ def test_uniform_prior():
     )
 
     with pytest.raises(ValueError, match="Missing bounds for parameters"):
-        bayesian_prior(prior_settings_missing_bounds, MOCK_PDF_MODEL)
+        bayesian_prior(prior_settings_missing_bounds, MOCK_FORWARD_MAP)
 
     # ---- Test missing min_val/max_val and bounds ----
     prior_settings_invalid = PriorSettings(
@@ -109,7 +115,7 @@ def test_uniform_prior():
     )
 
     with pytest.raises(ValueError, match="prior_distribution_specs must define either"):
-        bayesian_prior(prior_settings_invalid, MOCK_PDF_MODEL)
+        bayesian_prior(prior_settings_invalid, MOCK_FORWARD_MAP)
 
 
 @patch("colibri.bayes_prior.get_full_posterior")
@@ -135,7 +141,7 @@ def test_gaussian_prior(mock_get_full_posterior):
         }
     )
 
-    prior_transform = bayesian_prior(prior_settings, MOCK_PDF_MODEL)
+    prior_transform = bayesian_prior(prior_settings, MOCK_FORWARD_MAP)
 
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10, 2))
@@ -162,4 +168,4 @@ def test_invalid_prior_type():
     )
 
     with pytest.raises(ValueError) as e:
-        bayesian_prior(prior_settings, MOCK_PDF_MODEL)
+        bayesian_prior(prior_settings, MOCK_FORWARD_MAP)

@@ -82,15 +82,15 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
     return log_evidence, log_occam_factor
 
 
-@check_pdf_model_is_linear
 def analytic_fit(
     central_covmat_index,
-    _pred_data,
+    forward_map,
     pdf_model,
     analytic_settings,
     prior_settings,
     FIT_XGRID,
     fast_kernel_arrays,
+    data,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -106,8 +106,8 @@ def analytic_fit(
     central_covmat_index: commondata_utils.CentralCovmatIndex
         dataclass containing central values and covariance matrix.
 
-    _pred_data: @jax.jit CompiledFunction
-        Prediction function for the fit.
+    forward_map: @jax.jit CompiledFunction
+        Forward map function for the fit.
 
     pdf_model: pdf_model.PDFModel
         PDF model to fit.
@@ -124,7 +124,13 @@ def analytic_fit(
 
     fast_kernel_arrays: tuple
         Tuple containing the fast kernel arrays.
+
+    data: validphys.core.DataGroupSpec
+        The data group specification for the fit.
     """
+    # Ensure that the PDF model is linear before running the fit.
+    log.info("Checking that the PDF model is linear...")
+    check_pdf_model_is_linear(pdf_model, forward_map, FIT_XGRID, data)
 
     log.warning("The prior is assumed to be flat in the parameters.")
     log.warning(
@@ -132,14 +138,13 @@ def analytic_fit(
     )
 
     parameters = pdf_model.param_names
-    pred_and_pdf = pdf_model.pred_and_pdf_func(FIT_XGRID, forward_map=_pred_data)
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
     predictions = jnp.array(
-        [pred_and_pdf(basis, fast_kernel_arrays)[0] for basis in bases]
+        [forward_map(fast_kernel_arrays, basis)[0] for basis in bases]
     )
-    intercept = pred_and_pdf(jnp.zeros(len(parameters)), fast_kernel_arrays)[0]
+    intercept = forward_map(fast_kernel_arrays, jnp.zeros(len(parameters)))[0]
 
     # Construct the analytic solution
     central_values = central_covmat_index.central_values

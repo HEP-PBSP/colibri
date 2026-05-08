@@ -5,15 +5,13 @@ from colibri.utils import (
     cast_to_numpy,
     get_full_posterior,
 )
-from colibri.checks import check_pdf_models_equal
 from colibri.core import BayesianPrior
 import tensorflow_probability.substrates.jax as tfp
 
 tfd = tfp.distributions
 
 
-@check_pdf_models_equal
-def bayesian_prior(prior_settings, pdf_model):
+def bayesian_prior(prior_settings, forward_map):
     """
     Produces a prior transform function.
 
@@ -31,8 +29,8 @@ def bayesian_prior(prior_settings, pdf_model):
         prior_specs = prior_settings.prior_distribution_specs
 
         if "bounds" in prior_specs:
-            # Use param names from the model to order bounds correctly
-            param_names = pdf_model.param_names
+            # Use param names from the forward map to order bounds correctly
+            param_names = forward_map.param_names
             bounds_dict = prior_specs["bounds"]
             missing = [p for p in param_names if p not in bounds_dict]
             if missing:
@@ -45,8 +43,9 @@ def bayesian_prior(prior_settings, pdf_model):
 
         elif "min_val" in prior_specs and "max_val" in prior_specs:
             # Global bounds for all parameters
-            mins = jnp.array([float(prior_specs["min_val"])] * pdf_model.n_parameters)
-            maxs = jnp.array([float(prior_specs["max_val"])] * pdf_model.n_parameters)
+            n_params = len(forward_map.param_names)
+            mins = jnp.array([float(prior_specs["min_val"])] * n_params)
+            maxs = jnp.array([float(prior_specs["max_val"])] * n_params)
 
         else:
             raise ValueError(
