@@ -1,6 +1,10 @@
 name: documentation
 # Trigger on pushes to main or manual dispatch
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 # Permissions needed for Pages deployment
 permissions:
