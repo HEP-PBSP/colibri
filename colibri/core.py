@@ -10,7 +10,7 @@ from typing import Callable, Any, Dict, Optional, List, Iterator, NamedTuple
 
 
 @dataclass(frozen=True)
-class PriorSettings:
+
     """
     Dataclass containing the settings for the prior transform.
 
