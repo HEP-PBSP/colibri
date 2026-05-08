@@ -39,7 +39,7 @@ Documentation regarding the usage and installation is available at <https://hep-
 - Command-line scripts for common workflows (`colibri`, `evolve_fit`, etc.)
 - Integration with external PDF model repositories
 
-<img src="./colibri-diagram-hessian.png" alt="colibri diagram" width="90%">
+<img src="./colibri-diagram-blackjax.png" alt="colibri diagram" width="90%">
 
 ---
 
