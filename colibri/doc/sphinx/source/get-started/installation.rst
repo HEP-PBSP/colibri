@@ -9,7 +9,7 @@ with ``pip`` and with **GPU (CUDA) JAX Support**.
 1. Development Installation via Conda
 -------------------------------------
 
-You can install Colibri easily by first cloning the  and then using the
+You can install Colibri easily by first cloning the repository and then using the
 provided ``environment.yml`` file
 
 .. code-block:: bash
