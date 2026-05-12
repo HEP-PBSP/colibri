@@ -1,7 +1,7 @@
 .. _installation:
 
 Installing Colibri on Linux or macOS
-====================================
+========================================
 
 This section covers installing Colibri in various ways, including via **Conda**,
 with ``pip`` and with **GPU (CUDA) JAX Support**.
