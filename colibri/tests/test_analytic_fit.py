@@ -196,10 +196,13 @@ def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
     mock_analytic_fit.full_posterior_samples = jax.random.normal(
         jax.random.PRNGKey(0), (100, 2)
     )
-    mock_analytic_fit.bayes_complexity = 2.0
-    mock_analytic_fit.avg_chi2 = 0.3
-    mock_analytic_fit.min_chi2 = 0.1
-    mock_analytic_fit.logz = 7.0
+    mock_analytic_fit.bayesian_metrics = {
+        "bayes_complexity": 2.0,
+        "avg_chi2": 0.3,
+        "avg_chi2_reduced": 0.01,
+        "min_chi2": 0.1,
+        "logz": 7.0,
+    }
 
     # Run the run_analytic_fit function
     output_path = str(tmp_path)
