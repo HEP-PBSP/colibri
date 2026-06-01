@@ -7,7 +7,7 @@ import yaml
 from reportengine.checks import make_argcheck
 import jax.numpy as jnp
 import jax
-from colibri.theory_predictions import make_pred_data, fast_kernel_arrays
+from colibri.theory_predictions import fast_kernel_arrays
 
 from colibri.utils import get_fit_path, get_pdf_model
 
@@ -42,16 +42,15 @@ def check_pdf_models_equal(prior_settings, forward_map, theoryid):
             )
 
 
-def check_pdf_model_is_linear(pdf_model, forward_map, FIT_XGRID, data):
+def check_pdf_model_is_linear(forward_map, FIT_XGRID, data):
     """
     Decorator that can be added to functions to check that the
     PDF model is linear.
     """
 
-    pred_data = make_pred_data(data, FIT_XGRID)
     fk = fast_kernel_arrays(data, FIT_XGRID)
 
-    parameters = pdf_model.param_names
+    parameters = forward_map.param_names
     intercept, _ = forward_map(fk, jnp.zeros(len(parameters)))
 
     # Run the check for 10 random points in the parameter space

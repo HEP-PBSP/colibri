@@ -13,7 +13,7 @@ import jax.numpy as jnp
 import pytest
 
 from colibri.time_likelihood import time_log_likelihood
-from colibri.tests.conftest import MOCK_PDF_MODEL
+from colibri.tests.conftest import TEST_FORWARD_MAP_DIS, TEST_FORWARD_MAP_DIS
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -55,7 +55,7 @@ def test_time_log_likelihood_default_sizes(
         sizes, times = time_log_likelihood(
             mock_log_likelihood,
             mock_param_initialiser_settings,
-            MOCK_PDF_MODEL,
+            TEST_FORWARD_MAP_DIS,
             tmp_output_path,
             batch_sample_sizes=[1, 10, 100],  # Use small sizes for testing
         )
@@ -101,7 +101,7 @@ def test_time_log_likelihood_custom_sizes(
         sizes, times = time_log_likelihood(
             mock_log_likelihood,
             mock_param_initialiser_settings,
-            MOCK_PDF_MODEL,
+            TEST_FORWARD_MAP_DIS,
             tmp_output_path,
             batch_sample_sizes=custom_sizes,
         )
@@ -125,7 +125,7 @@ def test_time_log_likelihood_generates_correct_number_of_samples(
         time_log_likelihood(
             mock_log_likelihood,
             mock_param_initialiser_settings,
-            MOCK_PDF_MODEL,
+            TEST_FORWARD_MAP_DIS,
             tmp_output_path,
             batch_sample_sizes=custom_sizes,
         )
@@ -135,7 +135,7 @@ def test_time_log_likelihood_generates_correct_number_of_samples(
 
         # Check that it was called with correct replica indices
         expected_calls = [
-            call(MOCK_PDF_MODEL, mock_param_initialiser_settings, i)
+            call(TEST_FORWARD_MAP_DIS, mock_param_initialiser_settings, i)
             for i in range(max_size)
         ]
         mock_init.assert_has_calls(expected_calls)
@@ -160,7 +160,7 @@ def test_time_log_likelihood_vectorization(
         time_log_likelihood(
             counting_likelihood,
             mock_param_initialiser_settings,
-            MOCK_PDF_MODEL,
+            TEST_FORWARD_MAP_DIS,
             tmp_output_path,
             batch_sample_sizes=[2, 5],
         )
@@ -179,7 +179,7 @@ def test_time_log_likelihood_csv_format(
         _, __ = time_log_likelihood(
             mock_log_likelihood,
             mock_param_initialiser_settings,
-            MOCK_PDF_MODEL,
+            TEST_FORWARD_MAP_DIS,
             tmp_output_path,
             batch_sample_sizes=[3, 7],
         )
@@ -219,7 +219,7 @@ def test_time_log_likelihood_none_uses_defaults(
             sizes, _ = time_log_likelihood(
                 mock_log_likelihood,
                 mock_param_initialiser_settings,
-                MOCK_PDF_MODEL,
+                TEST_FORWARD_MAP_DIS,
                 tmp_output_path,
                 batch_sample_sizes=None,
             )
@@ -245,7 +245,7 @@ def test_time_log_likelihood_handles_exception_during_warmup(
                 time_log_likelihood(
                     failing_likelihood,
                     mock_param_initialiser_settings,
-                    MOCK_PDF_MODEL,
+                    TEST_FORWARD_MAP_DIS,
                     tmp_output_path,
                     batch_sample_sizes=[2, 5],
                 )
@@ -278,7 +278,7 @@ def test_time_log_likelihood_handles_exception_during_timing(
                 sizes, times = time_log_likelihood(
                     lambda params: jnp.sum(params, axis=-1),
                     mock_param_initialiser_settings,
-                    MOCK_PDF_MODEL,
+                    TEST_FORWARD_MAP_DIS,
                     tmp_output_path,
                     batch_sample_sizes=[2, 5, 10],
                 )
@@ -318,7 +318,7 @@ def test_time_log_likelihood_successful_partial_run(
                 sizes, times = time_log_likelihood(
                     lambda params: jnp.sum(params, axis=-1),
                     mock_param_initialiser_settings,
-                    MOCK_PDF_MODEL,
+                    TEST_FORWARD_MAP_DIS,
                     tmp_output_path,
                     batch_sample_sizes=[2, 5, 10],
                 )
@@ -342,7 +342,7 @@ def test_time_log_likelihood_all_sizes_successful(
             sizes, times = time_log_likelihood(
                 mock_log_likelihood,
                 mock_param_initialiser_settings,
-                MOCK_PDF_MODEL,
+                TEST_FORWARD_MAP_DIS,
                 tmp_output_path,
                 batch_sample_sizes=[2, 5, 10],
             )
@@ -368,7 +368,7 @@ def test_time_log_likelihood_relative_time_calculation(
         _, __ = time_log_likelihood(
             mock_log_likelihood,
             mock_param_initialiser_settings,
-            MOCK_PDF_MODEL,
+            TEST_FORWARD_MAP_DIS,
             tmp_output_path,
             batch_sample_sizes=[2, 5, 10],
         )
@@ -419,7 +419,7 @@ def test_time_log_likelihood_jax_block_until_ready(
             time_log_likelihood(
                 simple_likelihood,
                 mock_param_initialiser_settings,
-                MOCK_PDF_MODEL,
+                TEST_FORWARD_MAP_DIS,
                 tmp_output_path,
                 batch_sample_sizes=[2, 5],
             )
@@ -438,7 +438,7 @@ def test_time_log_likelihood_with_single_batch_size(
         sizes, times = time_log_likelihood(
             mock_log_likelihood,
             mock_param_initialiser_settings,
-            MOCK_PDF_MODEL,
+            TEST_FORWARD_MAP_DIS,
             tmp_output_path,
             batch_sample_sizes=[10],
         )

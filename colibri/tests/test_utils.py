@@ -458,7 +458,9 @@ def test_ns_fit_resampler_normal_case(mock_resample, mock_read_csv, mock_exists)
 @patch("colibri.utils.os.system")
 @patch("colibri.utils.os.path.exists")
 @patch("colibri.utils.write_exportgrid")
+@patch("colibri.utils.pd.read_csv")
 def test_write_resampled_bayesian_fit(
+    mock_read_csv,
     mock_write_exportgrid,
     mock_exists,
     mock_os_system,
@@ -480,6 +482,9 @@ def test_write_resampled_bayesian_fit(
         params[1] + 1,
     ]
     mock_dill_load.return_value = mock_pdf_model
+
+    # Mock pd.read_csv to return a header-only DataFrame for full_posterior_sample.csv
+    mock_read_csv.return_value = pd.DataFrame(columns=["param1", "param2"])
 
     # Ensure os.path.exists returns True for necessary paths
     mock_exists.side_effect = lambda path: (
@@ -511,7 +516,7 @@ def test_write_resampled_bayesian_fit(
     mock_os_system.assert_any_call(f"rm -r {resampled_fit_path}/replicas/*")
 
     # Verify the correct data was written to CSV
-    df = pd.DataFrame(resampled_posterior, columns=mock_pdf_model.param_names)
+    df = pd.DataFrame(resampled_posterior, columns=["param1", "param2"])
     expected_csv_path = str(resampled_fit_path) + "/ns_result.csv"
     with patch("pandas.DataFrame.to_csv") as mock_to_csv:
         df.to_csv(expected_csv_path, float_format="%.5e")
@@ -542,7 +547,10 @@ def test_creates_replicas_dir_when_missing(tmp_path):
         "colibri.utils.os.mkdir"
     ) as mock_mkdir, mock.patch(
         "colibri.utils.write_exportgrid"
-    ) as mock_we:
+    ) as mock_we, mock.patch(
+        "colibri.utils.pd.read_csv",
+        return_value=pd.DataFrame(columns=[]),
+    ):
 
         # Call with an empty posterior so loop won’t actually try to mkdir again
         write_resampled_bayesian_fit(
@@ -584,6 +592,9 @@ def test_creates_each_replica_dir_when_missing(tmp_path):
         "colibri.utils.os.mkdir"
     ) as m_mkdir, mock.patch(
         "colibri.utils.write_exportgrid"
+    ), mock.patch(
+        "colibri.utils.pd.read_csv",
+        return_value=pd.DataFrame(columns=["a", "b"]),
     ):
 
         write_resampled_bayesian_fit(
