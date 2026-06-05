@@ -9,6 +9,7 @@ Design:
 - Iteration modes: "by_rank" or "by_fit"
 """
 
+import functools
 import warnings
 from collections import namedtuple
 from dataclasses import dataclass, field
@@ -20,18 +21,48 @@ import numpy as np
 from matplotlib import rc
 
 from validphys import plotutils
+from reportengine.figure import figuregen
 
 from colibri.constants import FLAVOURS_ID_MAPPINGS
 from colibri.ntk.ntkutils import NTKGrid, NTKStats
-
 rc("font", **{"family": "sans-serif", "sans-serif": ["Helvetica"]})
 rc("text", usetex=True)
 rc("text.latex", preamble=r"\usepackage{amsmath,amssymb}")
 
 
+def _figuregen(func):
+    """Variant of reportengine's :func:`figuregen` for generators that yield
+    ``(fig, metadata)`` tuples.
+
+    The plotting providers in this module yield both a matplotlib figure and a
+    :class:`PlotResult` carrying metadata (axes, name, title, legend handles).
+    That metadata is useful when the providers are called programmatically
+    (e.g. through the API), but reportengine's ``savefiglist`` only understands
+    bare figures or ``(fig, suffix)`` tuples -- given ``(fig, PlotResult)`` it
+    would mistake the metadata for the filename suffix (producing absurdly long
+    or invalid filenames).
+
+    This decorator keeps the wrapped function yielding the full
+    ``(fig, metadata)`` pairs, but strips the metadata just before the figures
+    are saved, reusing ``metadata.name`` as the filename suffix when available.
+    """
+    decorated = figuregen(func)
+    save_figures = decorated.final_action  # reportengine.figure.savefiglist
+
+    @functools.wraps(save_figures)
+    def final_action(figures, paths, output):
+        figures = [
+            (fig, meta.name) if getattr(meta, "name", None) else fig
+            for fig, meta in figures
+        ]
+        return save_figures(figures, paths, output)
+
+    decorated.final_action = final_action
+    return decorated
+
+
 HandlerSpec = namedtuple("HandlerSpec", ["color", "alpha"])
-
-
+    
 @dataclass
 class PlotResult:
     """Result from plotting a single figure."""
@@ -117,7 +148,7 @@ def draw_band(
     return np.array([lower, upper])
 
 
-def draw_replicas(ax, xgrid, stats, label, **kwargs):
+def draw_replicas(ax, xgrid, stats, label, error_type='mean', **kwargs):
     """
     Draw individual replica lines with mean overlay.
 
@@ -126,7 +157,12 @@ def draw_replicas(ax, xgrid, stats, label, **kwargs):
     color = ax._get_lines.get_next_color()
     data = stats.data
     ax.plot(xgrid, data.T, alpha=0.2, linewidth=0.5, color=color, zorder=1)
-    ax.plot(xgrid, stats.central_value(), color=color, linewidth=2, label=label)
+    if error_type == "median":
+        ax.plot(xgrid, stats.median(), color=color, linewidth=2, label=label)
+    elif error_type == "mean":
+      ax.plot(xgrid, stats.central_value(), color=color, linewidth=2, label=label)
+    else:
+        raise ValueError(f"Unknown error_type '{error_type}'")
     return data
 
 
@@ -181,9 +217,9 @@ def ntk_plot_provider(
     yscale: Optional[str] = None,
     ymin: Optional[float] = None,
     ymax: Optional[float] = None,
-    title_fn=None,
-    name_fn=None,
-    ylabel_fn=None,
+    title_fn: Optional[callable] = lambda _: "",
+    name_fn: Optional[callable] = lambda _: "",
+    ylabel_fn: Optional[callable] = lambda _: "",
 ) -> Iterator[Tuple[Any, PlotResult]]:
     """
     Unified NTK plotting function for eigenvalues and eigenvectors.
@@ -260,7 +296,15 @@ def ntk_plot_provider(
             ax.set_yscale(yscale)
 
         if all_vals:
-            plotutils.frame_center(ax, common_xgrid, np.concatenate(all_vals))
+            try:
+                plotutils.frame_center(ax, common_xgrid, np.concatenate(all_vals))
+            except (IndexError, ValueError):
+                # frame_center percentiles the values in the central 10% of the
+                # x-range; with a sparse / unevenly-spaced x-axis (e.g. a handful
+                # of custom epochs) that window can be empty -> np.percentile on
+                # an empty array raises. Fall back to matplotlib's autoscale.
+                ax.relim()
+                ax.autoscale_view()
         if ymin is not None:
             ax.set_ylim(bottom=ymin)
         if ymax is not None:
@@ -288,7 +332,7 @@ def ntk_plot_provider(
 # Convenience functions
 # =============================================================================
 
-
+@_figuregen
 def plot_eigvals_by_rank(
     eigval_grids_by_fit,
     rank_indices: Optional[list] = None,
@@ -313,23 +357,25 @@ def plot_eigvals_by_rank(
         ymax=ymax,
     )
 
-
+@_figuregen
 def plot_eigvals_by_fit(
     eigval_grids_by_fit,
     rank_indices: Optional[list] = None,
     error_type: str = "mean",
+    title_fn=None,
     xscale: Optional[str] = None,
     yscale: Optional[str] = None,
     ymin: Optional[float] = None,
     ymax: Optional[float] = None,
 ):
     """Plot eigenvalues, one figure per fit showing multiple ranks."""
+    
     yield from ntk_plot_provider(
         eigval_grids_by_fit,
         rank_indices,
         draw_fn=partial(draw_band, error_type=error_type),
         iterator_fn=iter_by_fit,
-        title_fn=lambda grid: grid.label,
+        title_fn=title_fn if title_fn is not None else lambda grid: grid.label,
         name_fn=lambda grid: f"eigvals_{grid.label}",
         ylabel_fn=lambda _: r"$\textrm{NTK eigenvalues}$",
         xscale=xscale,
@@ -339,6 +385,7 @@ def plot_eigvals_by_fit(
     )
 
 
+@_figuregen
 def plot_eigvals_replicas_by_rank(
     eigval_grids_by_fit,
     rank_indices: Optional[list] = None,
@@ -363,7 +410,7 @@ def plot_eigvals_replicas_by_rank(
         custom_handler=None,
     )
 
-
+@_figuregen
 def plot_eigenvectors_by_rank_and_flavour(
     eigvecs_grids_by_fit,
     flavour_indices: list,
@@ -399,7 +446,7 @@ def plot_eigenvectors_by_rank_and_flavour(
             ymax=ymax,
         )
 
-
+@_figuregen
 def plot_eigenvectors_by_fit_and_flavour(
     eigvecs_grids_by_fit,
     flavour_indices: list,
@@ -409,10 +456,17 @@ def plot_eigenvectors_by_fit_and_flavour(
     yscale: Optional[str] = None,
     ymin: Optional[float] = None,
     ymax: Optional[float] = None,
+    plot_type: str = "band",
 ):
     """
     Plot eigenvector components, one figure per (fit, flavour).
     """
+    if plot_type == "band":
+        _plot_provider = draw_band
+    elif plot_type == "replicas":
+        _plot_provider = draw_replicas
+    else:
+        raise ValueError(f"Unknown plot_type '{plot_type}'")
     if rank_indices is None:
         max_ranks = min(grid.n_ranks for grid in eigvecs_grids_by_fit)
         rank_indices = list(range(min(5, max_ranks)))
@@ -425,7 +479,7 @@ def plot_eigenvectors_by_fit_and_flavour(
             iterator_fn=partial(
                 iter_by_fit, extra_kwargs={"flavour_index": flavour_index}
             ),
-            draw_fn=partial(draw_band, error_type=error_type),
+            draw_fn=partial(_plot_provider, error_type=error_type),
             title_fn=lambda grid: f"{grid.label} - ${flavour_name}$",
             name_fn=lambda _: f"eigvecs_{flavour_name}",
             ylabel_fn=lambda _: f"${flavour_name}$",

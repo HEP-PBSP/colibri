@@ -91,6 +91,14 @@ class NTKStats(MCStats):
 
     def __init__(self, data):
         if isinstance(data, list) and data and isinstance(data[0], pd.DataFrame):
+            # Check if columns and index are consistent across all DataFrames
+            for df in data:
+                if not isinstance(df, pd.DataFrame):
+                    raise ValueError("All items in the data list must be pandas DataFrames.")
+            # if not all(df.index.equals(data[0].index) for df in data):
+            #     raise ValueError("All DataFrames must have the same index.")
+            # if not all(df.columns.equals(data[0].columns) for df in data):
+            #     raise ValueError("All DataFrames must have the same columns.")
             self._df_index = data[0].index
             self._df_columns = data[0].columns
             super().__init__(np.stack([df.values for df in data]))
@@ -720,7 +728,7 @@ def load_replica_eigenvalues(replica_idx: int, cache_dir: Path, name: str = None
 
 
 def load_eigenvalues_ensemble(
-    replicas_path: Path, max_epoch=None, name: str = None
+    replicas_path: Path, max_epoch=None, name: str = None, replica_index_list: list = None
 ) -> dict:
     """
     Load all replica eigenvalues into an ensemble format.
@@ -734,6 +742,8 @@ def load_eigenvalues_ensemble(
         data up to this epoch.
     name: str, optional
         Optional name to include in the filename to specify the set of eigenvalues.
+    replica_index_list : list, optional
+        Optional list of replica indices to include. If None, includes all completed replicas.
 
     Returns
     -------
@@ -748,6 +758,12 @@ def load_eigenvalues_ensemble(
 
     if not completed_replicas:
         raise ValueError(f"No completed replicas found in {replicas_path}")
+    
+
+    if replica_index_list is not None:
+        completed_replicas = [idx for idx in completed_replicas if idx in replica_index_list]
+        if not completed_replicas:
+            raise ValueError(f"No completed replicas found in {replicas_path} matching indices {replica_index_list}")
 
     # Load all replicas
     all_eigenvalues = []

@@ -310,7 +310,7 @@ def eigenvector_grid(fit: FitSpec, eigenvectors_ensemble_at_epoch) -> Eigenvecto
     )
 
 def eigenvectors_at_epoch(eigenvector_grid: EigenvectorGrid,
-                          flavours: list = list(FLAVOUR_TO_ID_MAPPING.keys())) -> NTKStats:
+                          evol_fl_names: list = list(FLAVOUR_TO_ID_MAPPING.keys())) -> NTKStats:
     """Returns DataFrame with eigenvector components for specified flavours."""
     eigvec_data = eigenvector_grid.get_stat().data # Shape (nreplicas, nflavors * n_xgrid, n_eigenvectors)
 
@@ -318,12 +318,12 @@ def eigenvectors_at_epoch(eigenvector_grid: EigenvectorGrid,
 
     # Index follows NTK_ORDERING: for each flavour, all x-points in sequence
     index = pd.MultiIndex.from_tuples(
-        [(fl, i + 1) for fl in flavours for i in range(len(XGRID))],
+        [(fl, i + 1) for fl in evol_fl_names for i in range(len(XGRID))],
         names=["flavour", "x"],
     )
-    if len(flavours) > eigenvector_grid.nflavors:
+    if len(evol_fl_names) > eigenvector_grid.nflavors:
             raise ValueError(
-                f"flavour_indices {flavours} out of range [0, {eigenvector_grid.nflavors})"
+                f"flavour_indices {evol_fl_names} out of range [0, {eigenvector_grid.nflavors})"
             )
 
     dfs = [pd.DataFrame(

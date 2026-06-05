@@ -227,7 +227,6 @@ def eigenvalues_ensemble(
         - `ntk_shape`: shape of the NTK matrix before flattening
         - `replica_indices`: list of replica indices included
     """
-
     # Determine which replicas to compute
     if replica_index_list is None:
         replica_index_list = get_replica_idx_list(replicas_path)
@@ -243,11 +242,13 @@ def eigenvalues_ensemble(
 
     if not pending:
         log.info(f"All {len(completed)} replicas already computed. Loading from cache.")
-        return load_eigenvalues_ensemble(replicas_path, max_epoch, name)
+        return load_eigenvalues_ensemble(replicas_path, max_epoch, name, replica_index_list)
 
     log.info(
         f"Computing eigenvalues: {len(pending)} pending, "
-        f"{len(completed)} already done"
+        f"{len(completed)} already done, "
+        f"Saving with name='{name}', "
+        f"Using model config: {kwargs}"
     )
 
     n_pending = len(pending)
@@ -283,7 +284,7 @@ def eigenvalues_ensemble(
                 log.warning(f"Error computing replica {replica_idx}: {e}")
 
     # Load all results (completed + newly computed)
-    return load_eigenvalues_ensemble(replicas_path, max_epoch, name)
+    return load_eigenvalues_ensemble(replicas_path, max_epoch, name, replica_index_list)
 
 
 def eigenvalue_grid(fit: FitSpec, eigenvalues_ensemble) -> EigenvalueGrid:
