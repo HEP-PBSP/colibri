@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 def hessian_fit(
-    pdf_model,
+    forward_map,
     log_likelihood,
     optimizer_provider,
     max_epochs,
@@ -27,8 +27,9 @@ def hessian_fit(
 
     Parameters
     ----------
-    pdf_model: pdf_model.PDFModel
-        The PDF model to be fitted.
+    forward_map: forward_map.ForwardMap
+        The forward map whose .param_names (PDF params + extra params) are used
+        for initialization and result labeling.
     log_likelihood: callable
         The log-likelihood function to be maximized.
     optimizer_provider: optax.GradientTransformation
@@ -72,7 +73,7 @@ def hessian_fit(
         log.info(f"Hessian fit initialization iteration {i+1}")
         # Generate random initial parameters
         initial_parameters = pdf_initial_parameters(
-            pdf_model, param_initialiser_settings, rng_seed + i
+            forward_map, param_initialiser_settings, rng_seed + i
         )
 
         # Delegate to generic gradient descent
@@ -191,7 +192,7 @@ def hessian_fit(
         hessian=hessian,
         cov_params=cov_params,
         resampled_posterior=hessian_param_set,
-        param_names=pdf_model.param_names,
+        param_names=forward_map.param_names,
     )
 
 
