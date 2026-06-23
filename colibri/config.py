@@ -641,7 +641,7 @@ class colibriConfig(Config):
     def parse_fit(self, fit=None):
         return API.fit(fit=fit)
 
-    def parse_closure_test_result(self, name):
+    def parse_closure_test_pdf(self, name):
         """PDF set used to generate fakedata"""
         if name == "colibri_model":
             return name
