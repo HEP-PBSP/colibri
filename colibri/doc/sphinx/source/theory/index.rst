@@ -18,3 +18,5 @@ This section discusses some relevant theoretical background to Colibri.
    ./prior_distributions.rst
 
    ./inference_methods.rst
+
+   ./closure-tests.rst
