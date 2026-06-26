@@ -479,6 +479,14 @@ class colibriConfig(Config):
             "n_posterior_samples",
             "sampling_seed",
             "full_sample_size",
+            "ridge_alpha",
+            "ridge_cv_alphas",
+            "ridge_cv_folds",
+            "elasticnet_alpha",
+            "elasticnet_l1_ratio",
+            "elasticnet_cv_alphas",
+            "elasticnet_cv_l1_ratios",
+            "elasticnet_cv_folds",
         }
 
         kdiff = settings.keys() - known_keys
@@ -501,6 +509,132 @@ class colibriConfig(Config):
 
         # Set the full sample size
         analytic_settings["full_sample_size"] = settings.get("full_sample_size", 1000)
+
+        # Ridge regularisation: fixed alpha or CV-selected alpha are mutually exclusive.
+        ridge_alpha = settings.get("ridge_alpha", 0.0)
+        ridge_cv_alphas = settings.get("ridge_cv_alphas", None)
+
+        if ridge_alpha != 0.0 and ridge_cv_alphas is not None:
+            raise ConfigError(
+                "Specify either 'ridge_alpha' (fixed) or 'ridge_cv_alphas' (CV), not both.",
+                "ridge_alpha",
+                known_keys,
+            )
+
+        if not isinstance(ridge_alpha, (int, float)) or ridge_alpha < 0:
+            raise ConfigError(
+                "ridge_alpha must be a non-negative number.", "ridge_alpha", known_keys
+            )
+        analytic_settings["ridge_alpha"] = float(ridge_alpha)
+
+        if ridge_cv_alphas is not None:
+            if (
+                not isinstance(ridge_cv_alphas, list)
+                or len(ridge_cv_alphas) < 2
+                or not all(isinstance(a, (int, float)) and a > 0 for a in ridge_cv_alphas)
+            ):
+                raise ConfigError(
+                    "ridge_cv_alphas must be a list of at least two positive numbers.",
+                    "ridge_cv_alphas",
+                    known_keys,
+                )
+        analytic_settings["ridge_cv_alphas"] = ridge_cv_alphas
+
+        ridge_cv_folds = settings.get("ridge_cv_folds", 5)
+        if not isinstance(ridge_cv_folds, int) or ridge_cv_folds < 2:
+            raise ConfigError(
+                "ridge_cv_folds must be an integer >= 2.", "ridge_cv_folds", known_keys
+            )
+        analytic_settings["ridge_cv_folds"] = ridge_cv_folds
+
+        # Elastic Net regularisation: fixed alpha or CV-selected alpha are mutually
+        # exclusive, and cannot be combined with Ridge regularisation.
+        elasticnet_alpha = settings.get("elasticnet_alpha", 0.0)
+        elasticnet_l1_ratio = settings.get("elasticnet_l1_ratio", 0.5)
+        elasticnet_cv_alphas = settings.get("elasticnet_cv_alphas", None)
+        elasticnet_cv_l1_ratios = settings.get("elasticnet_cv_l1_ratios", None)
+        elasticnet_cv_folds = settings.get("elasticnet_cv_folds", 5)
+
+        # Fixed-alpha and CV are mutually exclusive within Elastic Net
+        if elasticnet_alpha != 0.0 and (
+            elasticnet_cv_alphas is not None or elasticnet_cv_l1_ratios is not None
+        ):
+            raise ConfigError(
+                "Specify either 'elasticnet_alpha' (fixed) or "
+                "'elasticnet_cv_alphas'/'elasticnet_cv_l1_ratios' (CV), not both.",
+                "elasticnet_alpha",
+                known_keys,
+            )
+
+        # Ridge and Elastic Net cannot be mixed
+        elasticnet_requested = (
+            elasticnet_alpha != 0.0
+            or elasticnet_cv_alphas is not None
+            or elasticnet_cv_l1_ratios is not None
+        )
+        ridge_requested = ridge_alpha != 0.0 or ridge_cv_alphas is not None
+        if elasticnet_requested and ridge_requested:
+            raise ConfigError(
+                "Cannot combine Ridge ('ridge_alpha'/'ridge_cv_alphas') with "
+                "Elastic Net ('elasticnet_alpha'/'elasticnet_cv_alphas'/'elasticnet_cv_l1_ratios').",
+                "elasticnet_alpha",
+                known_keys,
+            )
+
+        if not isinstance(elasticnet_alpha, (int, float)) or elasticnet_alpha < 0:
+            raise ConfigError(
+                "elasticnet_alpha must be a non-negative number.",
+                "elasticnet_alpha",
+                known_keys,
+            )
+        analytic_settings["elasticnet_alpha"] = float(elasticnet_alpha)
+
+        if (
+            not isinstance(elasticnet_l1_ratio, (int, float))
+            or elasticnet_l1_ratio <= 0
+            or elasticnet_l1_ratio > 1
+        ):
+            raise ConfigError(
+                "elasticnet_l1_ratio must be a number in (0, 1].",
+                "elasticnet_l1_ratio",
+                known_keys,
+            )
+        analytic_settings["elasticnet_l1_ratio"] = float(elasticnet_l1_ratio)
+
+        if elasticnet_cv_alphas is not None:
+            if (
+                not isinstance(elasticnet_cv_alphas, list)
+                or len(elasticnet_cv_alphas) < 2
+                or not all(
+                    isinstance(a, (int, float)) and a > 0 for a in elasticnet_cv_alphas
+                )
+            ):
+                raise ConfigError(
+                    "elasticnet_cv_alphas must be a list of at least two positive numbers.",
+                    "elasticnet_cv_alphas",
+                    known_keys,
+                )
+        analytic_settings["elasticnet_cv_alphas"] = elasticnet_cv_alphas
+
+        if elasticnet_cv_l1_ratios is not None:
+            if not isinstance(elasticnet_cv_l1_ratios, list) or not all(
+                isinstance(r, (int, float)) and 0 < r <= 1
+                for r in elasticnet_cv_l1_ratios
+            ):
+                raise ConfigError(
+                    "elasticnet_cv_l1_ratios must be a list of numbers in (0, 1].",
+                    "elasticnet_cv_l1_ratios",
+                    known_keys,
+                )
+        analytic_settings["elasticnet_cv_l1_ratios"] = elasticnet_cv_l1_ratios
+
+        if not isinstance(elasticnet_cv_folds, int) or elasticnet_cv_folds < 2:
+            raise ConfigError(
+                "elasticnet_cv_folds must be an integer >= 2.",
+                "elasticnet_cv_folds",
+                known_keys,
+            )
+        analytic_settings["elasticnet_cv_folds"] = elasticnet_cv_folds
 
         return analytic_settings
 

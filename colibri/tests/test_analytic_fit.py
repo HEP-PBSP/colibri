@@ -165,6 +165,46 @@ def test_analytic_fit_different_priors(caplog):
     )
 
 
+def test_analytic_fit_elasticnet():
+    """
+    Tests that the analytic fit runs with Elastic Net regularisation
+    (fixed alpha, l1_ratio).
+    """
+    MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: (
+        lambda params, fkarrs: (params, TEST_PDF_GRID)
+    )
+
+    _pred_data = TEST_FORWARD_MAP_DIS
+
+    enet_settings = {
+        "sampling_seed": 123,
+        "full_sample_size": 100,
+        "n_posterior_samples": 10,
+        "elasticnet_alpha": 0.1,
+        "elasticnet_l1_ratio": 0.5,
+        "elasticnet_cv_alphas": None,
+        "elasticnet_cv_l1_ratios": None,
+        "elasticnet_cv_folds": 5,
+    }
+
+    result = analytic_fit(
+        MOCK_CENTRAL_COVMAT_INDEX,
+        _pred_data,
+        MOCK_PDF_MODEL,
+        enet_settings,
+        TEST_PRIOR_SETTINGS_UNIFORM,
+        TEST_XGRID,
+        TEST_FK_ARRAYS,
+    )
+
+    assert isinstance(result, AnalyticFit)
+    assert result.analytic_specs == enet_settings
+    assert (
+        result.resampled_posterior.shape[0] == enet_settings["n_posterior_samples"]
+    )
+    assert len(result.param_names) == len(MOCK_PDF_MODEL.param_names)
+
+
 @patch("colibri.export_results.write_exportgrid")
 def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
 

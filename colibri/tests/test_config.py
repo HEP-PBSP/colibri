@@ -111,6 +111,14 @@ def test_parse_analytic_settings(mock_warning):
         "sampling_seed": 42,
         "n_posterior_samples": 500,
         "full_sample_size": 2000,
+        "ridge_alpha": 0.0,
+        "ridge_cv_alphas": None,
+        "ridge_cv_folds": 5,
+        "elasticnet_alpha": 0.0,
+        "elasticnet_l1_ratio": 0.5,
+        "elasticnet_cv_alphas": None,
+        "elasticnet_cv_l1_ratios": None,
+        "elasticnet_cv_folds": 5,
     }
     assert result == expected
 
@@ -132,8 +140,61 @@ def test_parse_analytic_settings_defaults():
         "sampling_seed": 123456,
         "n_posterior_samples": 100,
         "full_sample_size": 1000,
+        "ridge_alpha": 0.0,
+        "ridge_cv_alphas": None,
+        "ridge_cv_folds": 5,
+        "elasticnet_alpha": 0.0,
+        "elasticnet_l1_ratio": 0.5,
+        "elasticnet_cv_alphas": None,
+        "elasticnet_cv_l1_ratios": None,
+        "elasticnet_cv_folds": 5,
     }
     assert result == expected
+
+
+def test_parse_analytic_settings_elasticnet():
+    """Verify that fixed-alpha Elastic Net settings are parsed correctly."""
+    settings = {
+        "elasticnet_alpha": 1.0,
+        "elasticnet_l1_ratio": 0.7,
+    }
+
+    result = BASE_CONFIG.parse_analytic_settings(settings)
+
+    assert result["elasticnet_alpha"] == 1.0
+    assert result["elasticnet_l1_ratio"] == 0.7
+    assert result["elasticnet_cv_alphas"] is None
+    assert result["elasticnet_cv_l1_ratios"] is None
+    # Ridge defaults remain untouched
+    assert result["ridge_alpha"] == 0.0
+    assert result["ridge_cv_alphas"] is None
+
+
+def test_parse_analytic_settings_elasticnet_cv():
+    """Verify that CV Elastic Net settings are parsed correctly."""
+    settings = {
+        "elasticnet_cv_alphas": [0.1, 1.0],
+        "elasticnet_cv_l1_ratios": [0.3, 0.7],
+    }
+
+    result = BASE_CONFIG.parse_analytic_settings(settings)
+
+    assert result["elasticnet_cv_alphas"] == [0.1, 1.0]
+    assert result["elasticnet_cv_l1_ratios"] == [0.3, 0.7]
+    assert result["elasticnet_alpha"] == 0.0
+    # default fold count
+    assert result["elasticnet_cv_folds"] == 5
+
+
+def test_parse_analytic_settings_ridge_elasticnet_conflict():
+    """Mixing Ridge and Elastic Net regularisation must raise ConfigError."""
+    settings = {
+        "ridge_alpha": 0.5,
+        "elasticnet_alpha": 1.0,
+    }
+
+    with pytest.raises(ConfigError):
+        BASE_CONFIG.parse_analytic_settings(settings)
 
 
 @patch("colibri.config.log.warning")

@@ -14,6 +14,8 @@ import jax.numpy.linalg as jla
 import jax.lax.linalg as jlinalg
 import numpy as np
 import scipy.special as special
+from sklearn.linear_model import Ridge, RidgeCV, ElasticNet, ElasticNetCV
+from sklearn.preprocessing import StandardScaler
 
 from colibri.core import AnalyticFit
 from colibri.export_results import write_replicas, export_bayes_results
@@ -151,28 +153,173 @@ def analytic_fit(
 
     t0 = time.time()
 
+    ridge_alpha = analytic_settings.get("ridge_alpha", 0.0)
+    ridge_cv_alphas = analytic_settings.get("ridge_cv_alphas", None)
+    ridge_cv_folds = analytic_settings.get("ridge_cv_folds", 5)
+
+    elasticnet_alpha = analytic_settings.get("elasticnet_alpha", 0.0)
+    elasticnet_l1_ratio = analytic_settings.get("elasticnet_l1_ratio", 0.5)
+    elasticnet_cv_alphas = analytic_settings.get("elasticnet_cv_alphas", None)
+    elasticnet_cv_l1_ratios = analytic_settings.get("elasticnet_cv_l1_ratios", None)
+    elasticnet_cv_folds = analytic_settings.get("elasticnet_cv_folds", 5)
+
     # Cholesky factorization: S = L L^T
     # upper False means that we want the lower triangular matrix L
     L = jla.cholesky(covmat, upper=False)
 
     # Whiten the problem: Y' = L^-1 Y, X' = L^-1 X
+    # (X^T Sigma^-1 X) = (X'^T X'), (X^T Sigma^-1 Y) = (X'^T Y')
     Y_tilde = jlinalg.triangular_solve(L, Y, left_side=True, lower=True)
     X_tilde = jlinalg.triangular_solve(L, X, left_side=True, lower=True)
 
-    if jnp.any(jla.eigh(X_tilde.T @ X_tilde)[0] <= 0.0):
-        raise ValueError(
-            "The obtained covariance matrix for the analytic solution is not positive definite."
+    if ridge_cv_alphas is not None or ridge_alpha > 0.0:
+        # Ridge regression with sklearn StandardScaler for scale-invariant regularisation.
+        #
+        # StandardScaler (with_mean=False) divides each column of X_tilde by its
+        # standard deviation s_j, so the Ridge penalty ||v||^2 on the scaled
+        # coefficients v treats every parameter equally regardless of feature scale.
+        # After fitting, we back-transform to the original parameter space:
+        #   sol_mean   = v_ridge / s
+        #   sol_covmat = D^{-1} (X_scaled^T X_scaled + alpha I)^{-1} D^{-1},  D = diag(s)
+        # Equivalent to a Bayesian MAP with Gaussian prior N(0, (1/alpha) I) on v.
+        log.warning(
+            "With Ridge regularisation the Bayesian evidence metrics assume a "
+            "Gaussian prior N(0, (1/alpha)*I) on the scaled parameters rather than a uniform prior."
         )
+        n_params = len(parameters)
+        X_tilde_np = np.array(X_tilde)
+        Y_tilde_np = np.array(Y_tilde)
 
-    # Compute QR decomposition of X_tilde for numerical stability in the inversion
-    Q, R = jla.qr(X_tilde)
+        scaler = StandardScaler(with_mean=False)
+        X_scaled = scaler.fit_transform(X_tilde_np)
+        col_scales = scaler.scale_  # per-feature standard deviations, shape (n_params,)
 
-    # NOTE: R is upper triangular in QR decomposition, so we need to set lower=False
-    sol_mean = jlinalg.triangular_solve(R, Q.T @ Y_tilde, left_side=True, lower=False)
+        if ridge_cv_alphas is not None:
+            # Select alpha via k-fold cross-validation on the whitened, scaled problem.
+            log.info(
+                f"Selecting Ridge alpha via {ridge_cv_folds}-fold CV "
+                f"over candidates {ridge_cv_alphas}."
+            )
+            ridge_cv = RidgeCV(
+                alphas=ridge_cv_alphas,
+                cv=ridge_cv_folds,
+                fit_intercept=False,
+            )
+            ridge_cv.fit(X_scaled, Y_tilde_np)
+            best_alpha = float(ridge_cv.alpha_)
+            v_ridge = ridge_cv.coef_
+            log.info(f"RidgeCV selected alpha={best_alpha}.")
+        else:
+            best_alpha = ridge_alpha
+            log.info(f"Using Ridge regression with alpha={best_alpha}.")
+            ridge = Ridge(alpha=best_alpha, fit_intercept=False)
+            ridge.fit(X_scaled, Y_tilde_np)
+            v_ridge = ridge.coef_
 
-    I_R = jnp.eye(R.shape[0])
-    R_inv = jlinalg.triangular_solve(R, I_R, left_side=True, lower=False)
-    sol_covmat = R_inv @ R_inv.T
+        # Posterior covariance in the scaled space: (X_scaled^T X_scaled + alpha I)^{-1}
+        A_scaled = X_scaled.T @ X_scaled + best_alpha * np.eye(n_params)
+        v_covmat = np.linalg.inv(A_scaled)
+
+        # Back-transform to original parameter space
+        sol_mean = jnp.array(v_ridge / col_scales)
+        sol_covmat = jnp.array(v_covmat / col_scales[:, None] / col_scales[None, :])
+    elif elasticnet_alpha > 0.0 or elasticnet_cv_alphas is not None:
+        # Elastic Net regularisation with sklearn StandardScaler for scale-invariant
+        # regularisation. As with Ridge we work in the whitened+scaled space so that
+        # the L1 and L2 penalties treat every feature on equal footing, and we
+        # back-transform afterwards.
+        #
+        # Elastic Net minimises (in the scaled space)
+        #   (1/(2n)) ||Y_tilde - X_scaled v||^2
+        #     + alpha * l1_ratio * ||v||_1
+        #     + 0.5 * alpha * (1 - l1_ratio) * ||v||_2^2
+        # which has no closed-form posterior covariance, so we use the Laplace
+        # approximation around the MAP solution v* (see below).
+        log.warning(
+            "With Elastic Net regularisation the Bayesian evidence metrics assume a "
+            "Laplace approximation around the MAP solution; this can be inaccurate "
+            "for very sparse solutions (many near-zero coefficients)."
+        )
+        n_params = len(parameters)
+        X_tilde_np = np.array(X_tilde)
+        Y_tilde_np = np.array(Y_tilde)
+
+        scaler = StandardScaler(with_mean=False)
+        X_scaled = scaler.fit_transform(X_tilde_np)
+        col_scales = scaler.scale_  # per-feature standard deviations, shape (n_params,)
+
+        if elasticnet_cv_alphas is not None:
+            # Select alpha (and possibly l1_ratio) via k-fold CV on the whitened,
+            # scaled problem.
+            log.info(
+                f"Selecting Elastic Net alpha via {elasticnet_cv_folds}-fold CV "
+                f"over alpha candidates {elasticnet_cv_alphas} "
+                f"and l1_ratio candidates {elasticnet_cv_l1_ratios}."
+            )
+            # ElasticNetCV defaults l1_ratio to 0.5 if None is passed; sklearn requires
+            # a list/scalar so fall back to the fixed-alpha default.
+            cv_l1_ratios = (
+                elasticnet_cv_l1_ratios
+                if elasticnet_cv_l1_ratios is not None
+                else elasticnet_l1_ratio
+            )
+            enet_cv = ElasticNetCV(
+                alphas=elasticnet_cv_alphas,
+                l1_ratio=cv_l1_ratios,
+                cv=elasticnet_cv_folds,
+                fit_intercept=False,
+            )
+            enet_cv.fit(X_scaled, Y_tilde_np)
+            best_alpha = float(enet_cv.alpha_)
+            best_l1_ratio = float(enet_cv.l1_ratio_)
+            v_enet = enet_cv.coef_
+            log.info(
+                f"ElasticNetCV selected alpha={best_alpha}, l1_ratio={best_l1_ratio}."
+            )
+        else:
+            best_alpha = elasticnet_alpha
+            best_l1_ratio = elasticnet_l1_ratio
+            log.info(
+                f"Using Elastic Net regression with alpha={best_alpha}, "
+                f"l1_ratio={best_l1_ratio}."
+            )
+            enet = ElasticNet(
+                alpha=best_alpha,
+                l1_ratio=best_l1_ratio,
+                fit_intercept=False,
+            )
+            enet.fit(X_scaled, Y_tilde_np)
+            v_enet = enet.coef_
+
+        # Posterior covariance via the Laplace approximation around v*.
+        # The Hessian of the Elastic Net objective in the scaled space at v* is
+        #   H = X_scaled^T X_scaled + diag(lambda2 + lambda1 / |v*_i|)
+        # with lambda1 = alpha * l1_ratio and lambda2 = alpha * (1 - l1_ratio).
+        # Near-zero coefficients are clamped (|v*_i| < 1e-10 -> 1e-10) to avoid
+        # division by zero; the penalty there becomes very large, which correctly
+        # reflects that the L1 term sharply pins these coefficients to zero.
+        lambda1 = best_alpha * best_l1_ratio
+        lambda2 = best_alpha * (1.0 - best_l1_ratio)
+        abs_v = np.maximum(np.abs(v_enet), 1e-10)
+        diag_penalty = lambda2 + lambda1 / abs_v
+        H = X_scaled.T @ X_scaled + np.diag(diag_penalty)
+        v_covmat = np.linalg.inv(H)
+
+        # Back-transform to original parameter space (same formula as Ridge)
+        sol_mean = jnp.array(v_enet / col_scales)
+        sol_covmat = jnp.array(v_covmat / col_scales[:, None] / col_scales[None, :])
+    else:
+        if jnp.any(jla.eigh(X_tilde.T @ X_tilde)[0] <= 0.0):
+            raise ValueError(
+                "The obtained covariance matrix for the analytic solution is not positive definite."
+            )
+        # OLS: use QR decomposition of X_tilde for numerical stability
+        Q, R = jla.qr(X_tilde)
+        # NOTE: R is upper triangular in QR decomposition, so lower=False
+        sol_mean = jlinalg.triangular_solve(R, Q.T @ Y_tilde, left_side=True, lower=False)
+        I_R = jnp.eye(R.shape[0])
+        R_inv = jlinalg.triangular_solve(R, I_R, left_side=True, lower=False)
+        sol_covmat = R_inv @ R_inv.T
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
