@@ -26,7 +26,8 @@ from colibri.utils import get_pdf_model
 log = logging.getLogger(__name__)
 
 NTK_EIGVAL_TOKEN = "ntk_eigenvalues"
-NTK_ORDERING = "C" # flavour-major C-order: all x-points per flavour, then next flavour
+NTK_ORDERING = "C"  # flavour-major C-order: all x-points per flavour, then next flavour
+
 
 def _check_replicas(self, other):
     if isinstance(other, NTKStats) and self.data.shape[0] != other.data.shape[0]:
@@ -38,24 +39,40 @@ def _check_replicas(self, other):
 def _check_indices(self, other, op_name):
     other_index, other_columns = self._get_index(other)
     if op_name == "__matmul__":
-        if self._df_columns is not None and other_index is not None and not self._df_columns.equals(other_index):
+        if (
+            self._df_columns is not None
+            and other_index is not None
+            and not self._df_columns.equals(other_index)
+        ):
             raise ValueError(
                 f"Index mismatch in matmul: left columns {self._df_columns.tolist()} "
                 f"do not match right index {other_index.tolist()}"
             )
     elif op_name == "__rmatmul__":
-        if other_columns is not None and self._df_index is not None and not other_columns.equals(self._df_index):
+        if (
+            other_columns is not None
+            and self._df_index is not None
+            and not other_columns.equals(self._df_index)
+        ):
             raise ValueError(
                 f"Index mismatch in matmul: left columns {other_columns.tolist()} "
                 f"do not match right index {self._df_index.tolist()}"
             )
     else:
-        if self._df_index is not None and other_index is not None and not self._df_index.equals(other_index):
+        if (
+            self._df_index is not None
+            and other_index is not None
+            and not self._df_index.equals(other_index)
+        ):
             raise ValueError(
                 f"Index mismatch in {op_name}: left index {self._df_index.tolist()} "
                 f"does not match right index {other_index.tolist()}"
             )
-        if self._df_columns is not None and other_columns is not None and not self._df_columns.equals(other_columns):
+        if (
+            self._df_columns is not None
+            and other_columns is not None
+            and not self._df_columns.equals(other_columns)
+        ):
             raise ValueError(
                 f"Column index mismatch in {op_name}: left columns {self._df_columns.tolist()} "
                 f"do not match right columns {other_columns.tolist()}"
@@ -72,8 +89,7 @@ def _checks_ntkstats_compat(method):
         return method(self, other)
 
     return wrapper
-                    
-            
+
 
 class NTKStats(MCStats):
     """
@@ -94,7 +110,9 @@ class NTKStats(MCStats):
             # Check if columns and index are consistent across all DataFrames
             for df in data:
                 if not isinstance(df, pd.DataFrame):
-                    raise ValueError("All items in the data list must be pandas DataFrames.")
+                    raise ValueError(
+                        "All items in the data list must be pandas DataFrames."
+                    )
             # if not all(df.index.equals(data[0].index) for df in data):
             #     raise ValueError("All DataFrames must have the same index.")
             # if not all(df.columns.equals(data[0].columns) for df in data):
@@ -106,9 +124,11 @@ class NTKStats(MCStats):
             self._df_index = None
             self._df_columns = None
             super().__init__(data)
-        
+
         self.shape = self.data.shape[1:]
-        self.ndim = len(self.data.shape) - 1  # Number of dimensions of the observable (e.g., 0 for scalar, 1 for vector, 2 for matrix)
+        self.ndim = (
+            len(self.data.shape) - 1
+        )  # Number of dimensions of the observable (e.g., 0 for scalar, 1 for vector, 2 for matrix)
         self.nreplica = self.data.shape[0]  # Number of replicas (first dimension)
 
     @property
@@ -127,10 +147,10 @@ class NTKStats(MCStats):
         result._df_index = self._df_index
         result._df_columns = self._df_columns
         return result
-    
+
     def _other_data(self, other):
         return other.data if isinstance(other, NTKStats) else other
-    
+
     def central_value(self):
         cv = self.data.mean(axis=0)
         if self._df_index is not None and self._df_columns is not None:
@@ -145,13 +165,12 @@ class NTKStats(MCStats):
         if self._df_index is not None and self._df_columns is not None:
             return pd.DataFrame(med, index=self._df_index, columns=self._df_columns)
         return med
-    
+
     def std_error(self):
         std = np.std(self.data, axis=0)
         if self._df_index is not None and self._df_columns is not None:
             return pd.DataFrame(std, index=self._df_index, columns=self._df_columns)
         return std
-
 
     @_checks_ntkstats_compat
     def __add__(self, other):
@@ -214,14 +233,20 @@ class NTKStats(MCStats):
     def __matmul__(self, other) -> NTKStats:
         _, other_cols = self._get_index(other)
 
-        other_data = other.values if isinstance(other, pd.DataFrame) else self._other_data(other)
+        other_data = (
+            other.values if isinstance(other, pd.DataFrame) else self._other_data(other)
+        )
 
         if isinstance(other, NTKStats) and other_data.ndim == 2:
             # Vector per replica (Nrep, n): treat as (Nrep, n, 1), multiply, then squeeze.
             result_data = (self.data @ other_data[:, :, None]).squeeze(-1)
         else:
             # Plain 2D matrix (no replica dim): add batch dim so numpy broadcasts over replicas.
-            if not isinstance(other, NTKStats) and isinstance(other_data, np.ndarray) and other_data.ndim == 2:
+            if (
+                not isinstance(other, NTKStats)
+                and isinstance(other_data, np.ndarray)
+                and other_data.ndim == 2
+            ):
                 other_data = other_data[None]
             result_data = self.data @ other_data
         result = NTKStats(result_data)
@@ -234,16 +259,26 @@ class NTKStats(MCStats):
         # treat `other` as the left operand: other @ self
         other_index, _ = self._get_index(other)
 
-        other_data = other.values if isinstance(other, pd.DataFrame) else self._other_data(other)
+        other_data = (
+            other.values if isinstance(other, pd.DataFrame) else self._other_data(other)
+        )
 
         if self.data.ndim == 2:
             # Vector per replica (Nrep, n): treat as (Nrep, n, 1), multiply, then squeeze.
-            if not isinstance(other, NTKStats) and isinstance(other_data, np.ndarray) and other_data.ndim == 2:
+            if (
+                not isinstance(other, NTKStats)
+                and isinstance(other_data, np.ndarray)
+                and other_data.ndim == 2
+            ):
                 other_data = other_data[None]
             result_data = (other_data @ self.data[:, :, None]).squeeze(-1)
         else:
             # Plain 2D matrix (no replica dim): add batch dim so numpy broadcasts over replicas.
-            if not isinstance(other, NTKStats) and isinstance(other_data, np.ndarray) and other_data.ndim == 2:
+            if (
+                not isinstance(other, NTKStats)
+                and isinstance(other_data, np.ndarray)
+                and other_data.ndim == 2
+            ):
                 other_data = other_data[None]
             result_data = other_data @ self.data
 
@@ -263,7 +298,7 @@ class NTKStats(MCStats):
         """Build (Nrep, n, n) diagonal matrices from (Nrep, n) values."""
         n = vals.shape[1]
         return NTKStats(vals[:, :, None] * np.eye(n))
-    
+
     def as_diag(self) -> NTKStats:
         """Convert (Nrep, n) eigenvalues to (Nrep, n, n) diagonal matrices."""
         self._assert_eigenvalues()
@@ -302,10 +337,10 @@ class NTKStats(MCStats):
         """
         self._assert_eigenvalues()
         return self._as_diag_matrices(np.exp(-t * self.data))
-    
+
     def reshape(self, new_shape) -> NTKStats:
         """Return a new NTKStats with data reshaped to new_shape.
-        
+
         If the reshape is from data with ndim = 1 to ndim = 2 (vector to
         matrix), the original index (if any) is split into equal parts and
         assigned to rows and columns of the new shape. For other reshapes, the
@@ -330,7 +365,6 @@ class NTKStats(MCStats):
             # For other reshapes, discard index since it may not be meaningful
             row_index = None
             col_index = None
-        
 
         result = NTKStats(self.data.reshape((self.nreplica, *new_shape)))
         result._df_index = row_index
@@ -411,7 +445,8 @@ class NTKGrid(abc.ABC):
             LaTeX-formatted label for the legend
         """
         pass
-    
+
+
 def generate_filename(replica_idx: int, name: str = None) -> str:
     """
     Generate a filename for saving NTK eigenvalues based on replica index and an optional name.
@@ -518,7 +553,7 @@ def compute_ntk(pdf_model, params, **kwargs):
     ntk = jnp.einsum("ijk,lmk->ijlm", jacobian, jacobian)
 
     # Flatten to (nflavors * n_xgrid) × (nflavors * n_xgrid)
-    d1, d2, d3, d4 = ntk.shape # d1=nf, d2=ng, d3=nf, d4=ng
+    d1, d2, d3, d4 = ntk.shape  # d1=nf, d2=ng, d3=nf, d4=ng
     ntk = ntk.reshape(d1 * d2, d3 * d4, order=NTK_ORDERING)
 
     return ntk, (d1, d2, d3, d4)
@@ -557,7 +592,12 @@ def compute_eigendecomposition(ntk_matrix, hermitian=True):
 
 
 def compute_eigenvalues_for_replica(
-    fit_name: str, replicas_path: Path, replica_idx: int, max_epoch=None, name: str = None, **kwargs
+    fit_name: str,
+    replicas_path: Path,
+    replica_idx: int,
+    max_epoch=None,
+    name: str = None,
+    **kwargs,
 ):
     """
     Compute the NTK eigenvalues for a given replica across all epochs.
@@ -612,7 +652,7 @@ def compute_eigenvalues_for_replica(
             replica_idx=replica_idx,
             replicas_path=replicas_path,
             ntk_shape=ntk_shape,
-            name=name
+            name=name,
         )
 
         return (replica_idx, epochs, ntk_shape)
@@ -660,7 +700,7 @@ def save_replica_eigenvalues(
     replica_idx: int,
     replicas_path: Path,
     ntk_shape: tuple = None,
-    name: str = None
+    name: str = None,
 ) -> None:
     """
     Save eigenvalues for a single replica to disk.
@@ -681,9 +721,7 @@ def save_replica_eigenvalues(
         Optional name to include in the filename for clarity
     """
     filename = generate_filename(replica_idx, name)
-    replica_file = (
-        replicas_path / f"replica_{replica_idx}/{filename}"
-    )
+    replica_file = replicas_path / f"replica_{replica_idx}/{filename}"
     np.savez_compressed(
         replica_file,
         eigenvalues=eigenvalues,
@@ -693,7 +731,9 @@ def save_replica_eigenvalues(
     log.debug(f"Saved eigenvalues for replica {replica_idx} to {replica_file}")
 
 
-def load_replica_eigenvalues(replica_idx: int, cache_dir: Path, name: str = None) -> dict:
+def load_replica_eigenvalues(
+    replica_idx: int, cache_dir: Path, name: str = None
+) -> dict:
     """
     Load eigenvalues for a single replica from disk.
 
@@ -712,9 +752,7 @@ def load_replica_eigenvalues(replica_idx: int, cache_dir: Path, name: str = None
         Dictionary with 'eigenvalues' (n_epochs, n_eigenvalues) and 'epochs'
     """
     filename = generate_filename(replica_idx, name)
-    replica_file = (
-        cache_dir / f"replica_{replica_idx}/{filename}"
-    )
+    replica_file = cache_dir / f"replica_{replica_idx}/{filename}"
 
     if not replica_file.exists():
         raise FileNotFoundError(f"Replica {replica_idx} not found at {replica_file}")
@@ -728,7 +766,10 @@ def load_replica_eigenvalues(replica_idx: int, cache_dir: Path, name: str = None
 
 
 def load_eigenvalues_ensemble(
-    replicas_path: Path, max_epoch=None, name: str = None, replica_index_list: list = None
+    replicas_path: Path,
+    max_epoch=None,
+    name: str = None,
+    replica_index_list: list = None,
 ) -> dict:
     """
     Load all replica eigenvalues into an ensemble format.
@@ -758,12 +799,15 @@ def load_eigenvalues_ensemble(
 
     if not completed_replicas:
         raise ValueError(f"No completed replicas found in {replicas_path}")
-    
 
     if replica_index_list is not None:
-        completed_replicas = [idx for idx in completed_replicas if idx in replica_index_list]
+        completed_replicas = [
+            idx for idx in completed_replicas if idx in replica_index_list
+        ]
         if not completed_replicas:
-            raise ValueError(f"No completed replicas found in {replicas_path} matching indices {replica_index_list}")
+            raise ValueError(
+                f"No completed replicas found in {replicas_path} matching indices {replica_index_list}"
+            )
 
     # Load all replicas
     all_eigenvalues = []
@@ -776,7 +820,7 @@ def load_eigenvalues_ensemble(
 
         if ntk_shape is None:
             ntk_shape = data["ntk_shape"]
-        
+
         # If max_epoch is set, filter epochs and eigenvalues
         if max_epoch is not None:
             if max_epoch not in epochs:
@@ -794,13 +838,13 @@ def load_eigenvalues_ensemble(
 
     if not all_eigenvalues:
         raise ValueError("No replicas have epochs up to the specified max_epoch.")
-    
+
     # Determine common epochs across included replicas
     all_epoch_sets = [set(epochs) for _, epochs, _ in all_eigenvalues]
     common_epochs = sorted(set.intersection(*all_epoch_sets))
     if not common_epochs:
         raise ValueError("No common epochs found across replicas.")
-    
+
     eigenvalues_by_epoch = {epoch: [] for epoch in common_epochs}
     for replica_idx, epochs, eigenvalues in all_eigenvalues:
         epoch_to_idx = {e: i for i, e in enumerate(epochs)}
@@ -826,11 +870,7 @@ def load_eigenvalues_ensemble(
 
 
 def compute_eigenvectors_at_epoch_for_replica(
-    fit_name: str,
-    replicas_path: Path,
-    replica_idx: int,
-    epoch: int,
-    **kwargs
+    fit_name: str, replicas_path: Path, replica_idx: int, epoch: int, **kwargs
 ):
     """
     Compute the eigenvectors of the NTK at a given epoch for a specific replica.

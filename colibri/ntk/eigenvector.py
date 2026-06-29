@@ -27,6 +27,7 @@ from colibri.ntk.ntkutils import (
 
 log = logging.getLogger(__name__)
 
+
 class EigenvectorGrid(NTKGrid):
     """
     Container for eigenvector data from a single fit at a specific epoch.
@@ -107,7 +108,7 @@ class EigenvectorGrid(NTKGrid):
     def xlabel(self) -> str:
         """Label for x-axis."""
         return r"$x$"
-    
+
     def get_stat(self) -> NTKStats:
         """Get the full eigenvector statistics object."""
         return self._eigenvectors_stat
@@ -146,10 +147,12 @@ class EigenvectorGrid(NTKGrid):
             )
 
         # Get eigenvector data for the specified rank: (nreplicas, n_flaovors * n_xgrid)
-        eigvec_data = self._eigenvectors_stat.data[:, :, rank_index-1]
+        eigvec_data = self._eigenvectors_stat.data[:, :, rank_index - 1]
 
         # Reshape to (nreplicas, nflavors, n_xgrid)
-        reshaped = eigvec_data.reshape(self.nreplicas, self.nflavors, self.n_xgrid, order=NTK_ORDERING)
+        reshaped = eigvec_data.reshape(
+            self.nreplicas, self.nflavors, self.n_xgrid, order=NTK_ORDERING
+        )
 
         # Select the specified flavour: (nreplicas, n_xgrid)
         flavour_data = reshaped[:, flavour_index, :]
@@ -309,10 +312,15 @@ def eigenvector_grid(fit: FitSpec, eigenvectors_ensemble_at_epoch) -> Eigenvecto
         eigenvectors_stat=eigenvectors_stat,
     )
 
-def eigenvectors_at_epoch(eigenvector_grid: EigenvectorGrid,
-                          evol_fl_names: list = list(FLAVOUR_TO_ID_MAPPING.keys())) -> NTKStats:
+
+def eigenvectors_at_epoch(
+    eigenvector_grid: EigenvectorGrid,
+    evol_fl_names: list = list(FLAVOUR_TO_ID_MAPPING.keys()),
+) -> NTKStats:
     """Returns DataFrame with eigenvector components for specified flavours."""
-    eigvec_data = eigenvector_grid.get_stat().data # Shape (nreplicas, nflavors * n_xgrid, n_eigenvectors)
+    eigvec_data = (
+        eigenvector_grid.get_stat().data
+    )  # Shape (nreplicas, nflavors * n_xgrid, n_eigenvectors)
 
     cl_index = pd.Index(range(eigenvector_grid.n_eigenvectors), name="rank")
 
@@ -322,15 +330,16 @@ def eigenvectors_at_epoch(eigenvector_grid: EigenvectorGrid,
         names=["flavour", "x"],
     )
     if len(evol_fl_names) > eigenvector_grid.nflavors:
-            raise ValueError(
-                f"flavour_indices {evol_fl_names} out of range [0, {eigenvector_grid.nflavors})"
-            )
+        raise ValueError(
+            f"flavour_indices {evol_fl_names} out of range [0, {eigenvector_grid.nflavors})"
+        )
 
-    dfs = [pd.DataFrame(
-        data=eigvec_data[k], index=index, columns=cl_index) 
+    dfs = [
+        pd.DataFrame(data=eigvec_data[k], index=index, columns=cl_index)
         for k in range(eigenvector_grid.nreplicas)
     ]
 
     return NTKStats(dfs)
+
 
 eigvecs_grids_by_fit = collect("eigenvector_grid", ("fits",))

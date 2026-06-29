@@ -98,7 +98,7 @@ class EigenvalueGrid(NTKGrid):
     def xlabel(self) -> str:
         """Label for x-axis."""
         return r"$\rm Epochs$"
-    
+
     def get_stat_by_epoch(self, epoch: int) -> NTKStats:
         """Get NTKStats for a specific epoch."""
         if epoch not in self._eigenvalues_stats:
@@ -126,7 +126,8 @@ class EigenvalueGrid(NTKGrid):
                 f"rank_index {rank_index} out of range [1, {self.n_eigenvalues}]"
             )
         data_by_epoch = [
-            self._eigenvalues_stats[epoch].data[:, rank_index-1] for epoch in self.epochs
+            self._eigenvalues_stats[epoch].data[:, rank_index - 1]
+            for epoch in self.epochs
         ]
 
         # Stack into (nreplicas, n_epochs) array
@@ -150,7 +151,7 @@ class EigenvalueGrid(NTKGrid):
             LaTeX-formatted label (e.g., r"$\\lambda^{(1)}$")
         """
         return rf"$\lambda^{{({rank_index})}}$"
-    
+
     def save(self, path: Path):
         """Serialize this EigenvalueGrid to disk."""
         epochs = np.array(self.epochs)
@@ -164,7 +165,7 @@ class EigenvalueGrid(NTKGrid):
             epochs=epochs,
             eigenvalues=data,
         )
-    
+
     @classmethod
     def load(cls, path: Path) -> "EigenvalueGrid":
         """Deserialize an EigenvalueGrid from a .npz file."""
@@ -176,8 +177,6 @@ class EigenvalueGrid(NTKGrid):
             epoch: NTKStats(eigenvalues[i]) for i, epoch in enumerate(epochs)
         }
         return cls(label=label, epochs=epochs, eigenvalues_stats=eigenvalues_stats)
-
-    
 
 
 def eigenvalues_ensemble(
@@ -242,7 +241,9 @@ def eigenvalues_ensemble(
 
     if not pending:
         log.info(f"All {len(completed)} replicas already computed. Loading from cache.")
-        return load_eigenvalues_ensemble(replicas_path, max_epoch, name, replica_index_list)
+        return load_eigenvalues_ensemble(
+            replicas_path, max_epoch, name, replica_index_list
+        )
 
     log.info(
         f"Computing eigenvalues: {len(pending)} pending, "
@@ -318,8 +319,10 @@ def eigenvalue_grid(fit: FitSpec, eigenvalues_ensemble) -> EigenvalueGrid:
         eigenvalues_stats=eigenvalues_stats,
     )
 
+
 def eigenvalues_at_epoch(eigenvalue_grid, epoch: int):
     return eigenvalue_grid.get_stat_by_epoch(epoch)
+
 
 # Collect eigenvalue grids across fits
 eigval_grids_by_fit = collect("eigenvalue_grid", ("fits",))

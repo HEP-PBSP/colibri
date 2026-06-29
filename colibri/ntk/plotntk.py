@@ -25,6 +25,7 @@ from reportengine.figure import figuregen
 
 from colibri.constants import FLAVOURS_ID_MAPPINGS
 from colibri.ntk.ntkutils import NTKGrid, NTKStats
+
 rc("font", **{"family": "sans-serif", "sans-serif": ["Helvetica"]})
 rc("text", usetex=True)
 rc("text.latex", preamble=r"\usepackage{amsmath,amssymb}")
@@ -62,7 +63,8 @@ def _figuregen(func):
 
 
 HandlerSpec = namedtuple("HandlerSpec", ["color", "alpha"])
-    
+
+
 @dataclass
 class PlotResult:
     """Result from plotting a single figure."""
@@ -148,7 +150,7 @@ def draw_band(
     return np.array([lower, upper])
 
 
-def draw_replicas(ax, xgrid, stats, label, error_type='mean', **kwargs):
+def draw_replicas(ax, xgrid, stats, label, error_type="mean", **kwargs):
     """
     Draw individual replica lines with mean overlay.
 
@@ -160,7 +162,7 @@ def draw_replicas(ax, xgrid, stats, label, error_type='mean', **kwargs):
     if error_type == "median":
         ax.plot(xgrid, stats.median(), color=color, linewidth=2, label=label)
     elif error_type == "mean":
-      ax.plot(xgrid, stats.central_value(), color=color, linewidth=2, label=label)
+        ax.plot(xgrid, stats.central_value(), color=color, linewidth=2, label=label)
     else:
         raise ValueError(f"Unknown error_type '{error_type}'")
     return data
@@ -332,6 +334,7 @@ def ntk_plot_provider(
 # Convenience functions
 # =============================================================================
 
+
 @_figuregen
 def plot_eigvals_by_rank(
     eigval_grids_by_fit,
@@ -357,6 +360,7 @@ def plot_eigvals_by_rank(
         ymax=ymax,
     )
 
+
 @_figuregen
 def plot_eigvals_by_fit(
     eigval_grids_by_fit,
@@ -369,7 +373,7 @@ def plot_eigvals_by_fit(
     ymax: Optional[float] = None,
 ):
     """Plot eigenvalues, one figure per fit showing multiple ranks."""
-    
+
     yield from ntk_plot_provider(
         eigval_grids_by_fit,
         rank_indices,
@@ -410,6 +414,7 @@ def plot_eigvals_replicas_by_rank(
         custom_handler=None,
     )
 
+
 @_figuregen
 def plot_eigenvectors_by_rank_and_flavour(
     eigvecs_grids_by_fit,
@@ -445,6 +450,7 @@ def plot_eigenvectors_by_rank_and_flavour(
             ymin=ymin,
             ymax=ymax,
         )
+
 
 @_figuregen
 def plot_eigenvectors_by_fit_and_flavour(
