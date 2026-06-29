@@ -16,7 +16,6 @@ readme = "README.md"
 python = ">=3.9"
 prompt_toolkit = "*"
 h5py = "*"
-tqdm = "*"
 
 jax = "*"
 optax = "*"
