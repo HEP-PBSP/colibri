@@ -4,13 +4,20 @@
 Computing Neural Tangent Kernel (NTK)
 =====================================
 
-This section describes how to compute and analyse this Neural Tangent Kernel (NTK)
+This section describes how to compute and analyse the Neural Tangent Kernel (NTK)
 during the training of a given fit. For information on what the NTK is, please
 refer to the :ref:`NTK theory section <ntk_theory>`.
 
-The NTK can be computed on any fit where the parameter values have been saved during
-training. To produce these saved parameter values during a fit set the
-`record_parameters` argument to `True` in the fit runcard.
+In principle, the NTK can be computed for any model.
+
+How to Compute the NTK with Colibri
+===================================
+
+In order to compute the NTK, you must first carry out a fit using gradient descent
+(i.e. a Monte Carlo fit). You will need to sabe the parameter values at different
+several epochs during training. In order to do so, you can follow the instructions
+specified in :ref:` this tutorial <running_mc_replica>` on running Monte Carlo fits,
+adding the following arguments to the runcard:
 
 .. code-block:: bash
 
