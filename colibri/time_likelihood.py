@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 def time_log_likelihood(
     log_likelihood,
     param_initialiser_settings,
-    pdf_model,
+    forward_map,
     output_path,
     batch_sample_sizes=None,
 ):
@@ -32,8 +32,8 @@ def time_log_likelihood(
         The log likelihood function that takes parameter vector(s)
     param_initialiser_settings : dict
         Settings for parameter initialization
-    pdf_model : pdf_model.PDFModel
-        The PDF model to fit
+    forward_map : forward_map.ForwardMap
+        The forward map whose .param_names are used for parameter initialization.
     batch_sample_sizes : sequence of int, optional
         Batch sizes (number of parameter vectors per batch) to time
     output_path : pathlib.PosixPath
@@ -68,7 +68,7 @@ def time_log_likelihood(
     all_samples = []
     for replica_idx in range(max_size):
         params = pdf_initial_parameters(
-            pdf_model, param_initialiser_settings, replica_idx
+            forward_map, param_initialiser_settings, replica_idx
         )
         all_samples.append(params)
 

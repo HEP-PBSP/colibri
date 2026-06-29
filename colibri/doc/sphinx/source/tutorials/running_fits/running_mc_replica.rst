@@ -98,10 +98,24 @@ executable.
         optimizer_hyperparams:
             learning_rate: 0.001
             # any hyperparameters specific to the chosen optimizer can be set here
+        # Optional learning rate scheduler
+        # scheduler:
+        #     name: linear_schedule
+        #     params:
+        #         end_value:  1e-6
+        #         init_value: 1e-3
+        #         transition_begin: 3000
+        #         transition_steps: 10000
+
+    # Training settings
+    max_epochs: 300                        # The max number of epochs in Monte Carlo training.
+    patience: 1000  # The number of epochs to wait for an improvement in the validation loss before stopping the training
 
     # Monte Carlo settings
     use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
-    max_epochs: 300                        # The max number of epochs in Monte Carlo training.
+    positive_pseudodata: False             # If set to True, the pseudodata will be resampled until all pseudodata points are positive
+    mcseed: 519562661                      # Seed used for the production of pseudodata
+
     mc_validation_fraction: 0.2            # The fraction of the data used for validation in Monte Carlo training.
 
     param_initialiser_settings:               # The initialiser for Monte Carlo training.
@@ -128,7 +142,11 @@ executable.
 ^^^^^^^^^^^^^^^^^^^^^^
 These settings control the method of gradient descent. You can use any
 of the Optax optimizers and settings, which you can read more about
-`here <https://optax.readthedocs.io/en/latest/api/optimizers.html#>`_.
+`here <https://optax.readthedocs.io/en/latest/api/optimizers.html#>`__.
+Learning schedulers are also supported, and you can find the available options
+`here <https://optax.readthedocs.io/en/latest/api/optimizer_schedules.html#>`__.
+
+.. _param-initialiser-settings:
 
 ``param_initialiser_settings``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -186,6 +204,24 @@ can do so:
     If you use initialise with a normal distribution and don't specify
     means or standard deviations, default values of **0.0** and **1.0**
     will be used respectively.
+
+
+Using data batching
+^^^^^^^^^^^^^^^^^^^
+In Monte Carlo replica fits, it is possible to use data batching during training.
+This can be done by adding the following settings to the runcard:
+
+.. code-block:: bash
+
+    batch_size: 128
+    batch_seed: 3
+    shuffle_each_epoch: False
+    
+* ``batch_size``: The size of the data batches. If the dataset is smaller
+  than this size or the ``batch_size`` is not specified, the full dataset will be used.
+* ``batch_seed``: The random seed used to generate the data batches.
+* ``shuffle_each_epoch``: Whether to reshuffle the data at the start of each epoch. If
+  set to ``False``, the data will be shuffled only once at the start of training and the batches will be fixed.
 
 Running the fit
 ---------------

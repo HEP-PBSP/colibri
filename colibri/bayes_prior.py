@@ -5,11 +5,13 @@ from colibri.utils import (
     cast_to_numpy,
     get_full_posterior,
 )
-from colibri.checks import check_pdf_models_equal
+from colibri.core import BayesianPrior
+import tensorflow_probability.substrates.jax as tfp
+
+tfd = tfp.distributions
 
 
-@check_pdf_models_equal
-def bayesian_prior(prior_settings, pdf_model):
+def bayesian_prior(prior_settings, forward_map):
     """
     Produces a prior transform function.
 
@@ -17,6 +19,10 @@ def bayesian_prior(prior_settings, pdf_model):
     ----------
     prior_settings: dict
         The settings for the prior transform.
+
+    forward_map: ForwardMap
+        The forward map of the problem, used to determine parameter names and ordering.
+
 
     Returns
     -------
@@ -27,10 +33,9 @@ def bayesian_prior(prior_settings, pdf_model):
         prior_specs = prior_settings.prior_distribution_specs
 
         if "bounds" in prior_specs:
-            # Use param names from the model to order bounds correctly
-            param_names = pdf_model.param_names
+            # Use param names from the forward map to order bounds correctly
+            param_names = forward_map.param_names
             bounds_dict = prior_specs["bounds"]
-
             missing = [p for p in param_names if p not in bounds_dict]
             if missing:
                 raise ValueError(f"Missing bounds for parameters: {missing}")
@@ -42,13 +47,23 @@ def bayesian_prior(prior_settings, pdf_model):
 
         elif "min_val" in prior_specs and "max_val" in prior_specs:
             # Global bounds for all parameters
-            mins = prior_specs["min_val"]
-            maxs = prior_specs["max_val"]
+            n_params = len(forward_map.param_names)
+            mins = jnp.array([float(prior_specs["min_val"])] * n_params)
+            maxs = jnp.array([float(prior_specs["max_val"])] * n_params)
 
         else:
             raise ValueError(
                 "prior_distribution_specs must define either 'bounds' or 'min_val' and 'max_val'"
             )
+
+        prior = tfd.Uniform(low=mins, high=maxs)
+
+        def sample(rng_key, n_samples):
+            return prior.sample(seed=rng_key, sample_shape=(n_samples,))
+
+        @jax.jit
+        def log_prob(x):
+            return prior.log_prob(x).sum(axis=-1)
 
         @jax.jit
         def prior_transform(cube):
@@ -65,6 +80,14 @@ def bayesian_prior(prior_settings, pdf_model):
 
         sqrt_cov_posterior = jnp.linalg.cholesky(cov_posterior)
 
+        # Define dummy log_prob and sample for now
+        @jax.jit
+        def log_prob(x):
+            raise NotImplementedError("log_prob not implemented for Gaussian prior")
+
+        def sample(rng_key, n_samples):
+            raise NotImplementedError("sample not implemented for Gaussian prior")
+
         @cast_to_numpy
         @jax.jit
         def prior_transform(cube):
@@ -76,4 +99,9 @@ def bayesian_prior(prior_settings, pdf_model):
 
     else:
         raise ValueError("Invalid prior type.")
-    return prior_transform
+
+    return BayesianPrior(
+        prior_transform=prior_transform,
+        log_prob=log_prob,
+        sample=sample,
+    )

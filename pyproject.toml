@@ -22,6 +22,8 @@ jax = "*"
 optax = "*"
 flax = "*"
 dill = "*"
+tqdm = "*"
+ipython = "*"
 
 # Mark Sphinx and its extensions optional:
 sphinx = {version="*", optional=true}
@@ -32,6 +34,10 @@ sphinx-copybutton = {version="*", optional=true}
 
 # nnpdf dependency, pinned to the branch this colibri branch is developed against.
 nnpdf = { git = "https://github.com/NNPDF/nnpdf.git", branch = "ntk_colibri" }
+anesthetic = "^2.10.2"
+tfp-nightly = { extras = ["jax"], version = "*" }
+tf-keras = "*"
+blackjax = {git = "https://github.com/handley-lab/blackjax", tag = "v0.1.0-beta"}
 
 
 [tool.poetry.extras]

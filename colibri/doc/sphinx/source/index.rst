@@ -24,7 +24,7 @@ Colibri's workflow
 
 The following diagram presents the workflow of the Colibri code.
 
-.. figure:: /_static/figures/colibri-diagram-hessian.png
+.. figure:: /_static/figures/colibri-diagram-blackjax.png
    :width: 100%
    :align: left
 
@@ -51,6 +51,7 @@ Contents
    get-started/index
    tutorials/index
    theory/index
+   available-models/index
    api/index
 
 Bibliography

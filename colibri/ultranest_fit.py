@@ -41,7 +41,7 @@ ultranest_logger.addHandler(handler)
 
 
 def ultranest_fit(
-    pdf_model,
+    forward_map,
     bayesian_prior,
     ultranest_settings,
     log_likelihood,
@@ -51,11 +51,11 @@ def ultranest_fit(
 
     Parameters
     ----------
-    pdf_model: pdf_model.PDFModel
-        The PDF model to fit.
+    forward_map: ForwardMap
+        The forward map whose ``param_names`` enumerate all fit parameters.
 
-    bayesian_prior: @jax.jit CompiledFunction
-        The prior function for the model.
+    bayesian_prior: BayesianPrior
+        The prior object containing prior_transform, log_prob, and sample functions.
 
     ultranest_settings: dict
         Settings for the Nested Sampling fit.
@@ -74,16 +74,19 @@ def ultranest_fit(
     # set the ultranest seed
     np.random.seed(ultranest_settings["ultranest_seed"])
 
-    parameters = pdf_model.param_names
+    parameters = forward_map.param_names
 
     if ultranest_settings["ReactiveNS_settings"]["vectorized"]:
         log.info("Vectorized likelihood for ultranest fit.")
         log_likelihood = jax.vmap(log_likelihood, in_axes=(0,), out_axes=0)
 
+    # Call bayesian_prior to get the prior_transform function
+    prior_transform = bayesian_prior.prior_transform
+
     sampler = ultranest.ReactiveNestedSampler(
         parameters,
         log_likelihood,
-        bayesian_prior,
+        prior_transform,
         **ultranest_settings["ReactiveNS_settings"],
     )
 

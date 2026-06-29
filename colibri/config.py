@@ -273,6 +273,50 @@ class colibriConfig(Config):
 
         return ultranest_settings
 
+    def parse_blackjax_settings(self, settings, output_path):
+        """For a BlackJAX fit, parses the blackjax_settings namespace from the runcard,
+        and ensures the choice of settings is valid.
+        """
+
+        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
+        known_keys = {
+            "n_posterior_samples",
+            "n_live",
+            "repeats",
+            "delete_fraction",
+            "log_precision",
+            "posterior_resampling_seed",
+            "blackjax_seed",
+        }
+
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in blackjax_settings not known.", k, known_keys)
+            )
+
+        # Now construct the blackjax_settings dictionary
+        blackjax_settings = {}
+
+        # Extract settings and set default values
+        blackjax_settings["n_posterior_samples"] = settings.get(
+            "n_posterior_samples", 1000
+        )
+        blackjax_settings["n_live"] = settings.get("n_live", 500)
+        blackjax_settings["repeats"] = settings.get("repeats", 3)
+        blackjax_settings["delete_fraction"] = settings.get("delete_fraction", 0.5)
+        blackjax_settings["log_precision"] = settings.get("log_precision", -3)
+        blackjax_settings["blackjax_seed"] = settings.get("blackjax_seed", 0)
+        blackjax_settings["posterior_resampling_seed"] = settings.get(
+            "posterior_resampling_seed", 123456
+        )
+        # Set directory where blackjax_logs will be saved
+        blackjax_settings["log_dir"] = settings.get(
+            "log_dir", str(output_path / "blackjax_logs")
+        )
+
+        return blackjax_settings
+
     def parse_positivity_penalty_settings(self, settings):
         """
         Parses the positivity_penalty_settings namespace from the runcard,
@@ -526,7 +570,7 @@ class colibriConfig(Config):
         For a gradient descent based fit. Parses the optimizer_settings namespace from the runcard.
         """
         # Begin by checking that the user-supplied keys are known; warn the user otherwise.
-        known_keys = {"clipnorm", "optimizer", "optimizer_hyperparams"}
+        known_keys = {"clipnorm", "optimizer", "optimizer_hyperparams", "scheduler"}
 
         kdiff = settings.keys() - known_keys
         for k in kdiff:
@@ -543,6 +587,7 @@ class colibriConfig(Config):
         )
         optimizer_settings["optimizer"] = settings.get("optimizer", "adam")
         optimizer_settings["clipnorm"] = settings.get("clipnorm", None)
+        optimizer_settings["scheduler"] = settings.get("scheduler", None)
 
         return optimizer_settings
 
@@ -564,27 +609,14 @@ class colibriConfig(Config):
             )
 
     @explicit_node
-    def produce_fit_covariance_matrix(self, use_fit_t0: bool = True):
+    def produce_general_covariance_matrix(self, use_t0_covmat: bool = True):
         """
-        Produces the covariance matrix used in the fit.
+        Produces the covariance matrix used in the fit and noise generation for level 1 data and MC replicas.
         This covariance matrix is used in:
         - commondata_utils.central_covmat_index
         - mc_log_likelihood for the monte carlo fit
         """
-        if use_fit_t0:
-            return colibri_covmats.dataset_inputs_t0_covmat_from_systematics
-        else:
-            return colibri_covmats.dataset_inputs_covmat_from_systematics
-
-    @explicit_node
-    def produce_data_generation_covariance_matrix(self, use_gen_t0: bool = False):
-        """Produces the covariance matrix used in:
-        - level 1 closure test data construction (fluctuating around the level
-        0 data)
-        - Monte Carlo pseudodata (fluctuating either around the level 0 data or
-        level 1 data)
-        """
-        if use_gen_t0:
+        if use_t0_covmat:
             return colibri_covmats.dataset_inputs_t0_covmat_from_systematics
         else:
             return colibri_covmats.dataset_inputs_covmat_from_systematics

@@ -18,8 +18,8 @@ from colibri.tests.conftest import (
     TEST_FK_ARRAYS,
     TEST_FORWARD_MAP_DIS,
     TEST_POS_FK_ARRAYS,
-    TEST_XGRID,
 )
+from colibri.data_batch import BatchSpec
 
 jax.config.update("jax_enable_x64", True)
 
@@ -37,7 +37,6 @@ def test_LogLikelihood_class(pos_penalty):
     log_likelihood_class = LogLikelihood(
         central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -65,8 +64,8 @@ def test_LogLikelihood_class(pos_penalty):
         ]
     )
     # Compute expected value using actual prediction and covariance
-    predictions, pdf = log_likelihood_class.pred_and_pdf(
-        params, log_likelihood_class.fast_kernel_arrays
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
@@ -103,7 +102,6 @@ def test_log_likelihood(pos_penalty):
     log_likelihood_class = LogLikelihood(
         central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -114,7 +112,6 @@ def test_log_likelihood(pos_penalty):
     log_like = log_likelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -142,7 +139,6 @@ def test_log_likelihood_with_and_without_pos_penalty():
     log_likelihood_class = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -164,8 +160,8 @@ def test_log_likelihood_with_and_without_pos_penalty():
     )
 
     # Compute expectation directly: -0.5 * (chi2 + pos_pen + integ_pen)
-    predictions, pdf = log_likelihood_class.pred_and_pdf(
-        params, log_likelihood_class.fast_kernel_arrays
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
@@ -194,7 +190,6 @@ def test_log_likelihood_with_and_without_pos_penalty():
     log_likelihood_class = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -212,8 +207,8 @@ def test_log_likelihood_with_and_without_pos_penalty():
     )
 
     # Expectation: Only chi2 value (penalties zeroed)
-    predictions, pdf = log_likelihood_class.pred_and_pdf(
-        params, log_likelihood_class.fast_kernel_arrays
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
     diff = predictions - log_likelihood_class.central_values
@@ -233,7 +228,7 @@ def test_mc_log_likelihood_with_split(pos_penalty):
 
     # Create a tiny pseudodata setup consistent with TEST_N_DATA = 2
     pseudodata = jnp.array([1.0, 2.0])
-    fit_covariance_matrix = jnp.eye(2)
+    general_covariance_matrix = jnp.eye(2)
     training_indices = jnp.array([0])
     validation_indices = jnp.array([1])
 
@@ -252,9 +247,8 @@ def test_mc_log_likelihood_with_split(pos_penalty):
 
     train_loglike, val_loglike = mc_log_likelihood(
         mc_pd,
-        fit_covariance_matrix,
+        general_covariance_matrix,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -274,7 +268,7 @@ def test_mc_log_likelihood_with_split(pos_penalty):
 
     # Compute expected for train and validation independently
     def compute_expected(ll_obj):
-        preds, pdf = ll_obj.pred_and_pdf(params, ll_obj.fast_kernel_arrays)
+        preds, pdf = ll_obj.forward_map(ll_obj.fast_kernel_arrays, params)
         preds = preds[ll_obj.central_values_idx]
         diff = preds - ll_obj.central_values
         inv = ll_obj.inv_covmat
@@ -311,7 +305,7 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
 
     # Pseudodata across both points; training uses all when no split
     pseudodata = jnp.array([1.0, 2.0])
-    fit_covariance_matrix = jnp.eye(2)
+    general_covariance_matrix = jnp.eye(2)
     training_indices = jnp.array([0, 1])
     validation_indices = jnp.array([])
 
@@ -330,9 +324,8 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
 
     train_loglike, val_loglike = mc_log_likelihood(
         mc_pd,
-        fit_covariance_matrix,
+        general_covariance_matrix,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
         TEST_FORWARD_MAP_DIS,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
@@ -347,8 +340,8 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
     params = jnp.array([0.3, 0.4])
     train_val = train_loglike(params)
     # Compute expected train value
-    predictions, pdf = train_loglike.pred_and_pdf(
-        params, train_loglike.fast_kernel_arrays
+    predictions, pdf = train_loglike.forward_map(
+        train_loglike.fast_kernel_arrays, params
     )
     predictions = predictions[train_loglike.central_values_idx]
     diff = predictions - train_loglike.central_values
@@ -391,7 +384,6 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     log_likelihood_class = LogLikelihood(
         central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
@@ -403,18 +395,18 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     params = jnp.array([0.3, 0.4])
 
     # Select only the first data point
-    batch_idx = jnp.array([0])
+    batch = BatchSpec(idx=jnp.array([0]))
 
-    ll_value_batched = log_likelihood_class(params, batch_idx=batch_idx)
+    ll_value_batched = log_likelihood_class(params, batch=batch)
 
     # Compute expected on the batch index: recompute inv_covmat on the sub-covmat
-    predictions, pdf = log_likelihood_class.pred_and_pdf(
-        params, log_likelihood_class.fast_kernel_arrays
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.fast_kernel_arrays, params
     )
     predictions = predictions[log_likelihood_class.central_values_idx]
-    predictions_b = predictions[batch_idx]
-    central_b = log_likelihood_class.central_values[batch_idx]
-    cov_b = log_likelihood_class.covmat[batch_idx][:, batch_idx]
+    predictions_b = predictions[batch.idx]
+    central_b = log_likelihood_class.central_values[batch.idx]
+    cov_b = log_likelihood_class.covmat[batch.idx][:, batch.idx]
     inv_b = jnp.linalg.inv(cov_b)
     diff_b = predictions_b - central_b
     chi2_b = jnp.einsum("i,ij,j", diff_b, inv_b, diff_b)
@@ -433,4 +425,69 @@ def test_LogLikelihood_call_with_batch_idx(pos_penalty):
     )
     integ_pen = jnp.sum(integrability_penalty(pdf), axis=-1)
     expected = -0.5 * (chi2_b + pos_pen + integ_pen)
+    assert_allclose(float(ll_value_batched), float(expected))
+
+
+@pytest.mark.parametrize("pos_penalty", [True, False])
+def test_LogLikelihood_call_with_batch_with_inv_cov(pos_penalty):
+    """
+    Tests that calling LogLikelihood with a BatchSpec that already has a
+    precomputed `inv_cov` uses the provided inverse covariance instead of
+    recomputing it.
+    """
+
+    positivity_penalty_settings = {
+        "positivity_penalty": pos_penalty,
+        "alpha": 1e-7,
+        "lambda_positivity": 1000,
+    }
+
+    log_likelihood_class = LogLikelihood(
+        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
+        pdf_model=MOCK_PDF_MODEL,
+        forward_map=TEST_FORWARD_MAP_DIS,
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+        positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
+        penalty_posdata=MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings=positivity_penalty_settings,
+        integrability_penalty=integrability_penalty,
+    )
+
+    params = jnp.array([0.3, 0.4])
+
+    # Select first two data points and precompute their inverse covariance
+    batch_idx = jnp.array([0, 1])
+    cov_b = log_likelihood_class.covmat[batch_idx][:, batch_idx]
+    inv_b = jnp.linalg.inv(cov_b)
+
+    # Provide the precomputed inverse covariance in the BatchSpec
+    batch = BatchSpec(idx=batch_idx, inv_cov=inv_b)
+
+    ll_value_batched = log_likelihood_class(params, batch=batch)
+
+    # Compute expected value using the provided inv_b (should be identical)
+    predictions, pdf = log_likelihood_class.forward_map(
+        log_likelihood_class.fast_kernel_arrays, params
+    )
+    predictions = predictions[log_likelihood_class.central_values_idx]
+    predictions_b = predictions[batch.idx]
+    central_b = log_likelihood_class.central_values[batch.idx]
+    diff_b = predictions_b - central_b
+    chi2_b = jnp.einsum("i,ij,j", diff_b, inv_b, diff_b)
+    pos_pen = (
+        jnp.sum(
+            log_likelihood_class.penalty_posdata(
+                pdf,
+                log_likelihood_class.positivity_penalty_settings["alpha"],
+                log_likelihood_class.positivity_penalty_settings["lambda_positivity"],
+                log_likelihood_class.positivity_fast_kernel_arrays,
+            ),
+            axis=-1,
+        )
+        if pos_penalty
+        else 0.0
+    )
+    integ_pen = jnp.sum(integrability_penalty(pdf), axis=-1)
+    expected = -0.5 * (chi2_b + pos_pen + integ_pen)
+
     assert_allclose(float(ll_value_batched), float(expected))

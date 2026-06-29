@@ -16,34 +16,51 @@ from colibri.constants import LHAPDF_XGRID, EXPORT_LABELS
 from colibri.export_results import write_exportgrid
 from colibri.core import MCPseudodata
 
+from validphys.pseudodata import make_replica
+from validphys.n3fit_data import replica_mcseed
+
 import logging
 
 log = logging.getLogger(__name__)
 
 
 def mc_pseudodata(
-    pseudodata_central_covmat_index,
+    central_covmat_index,
     replica_index,
     trval_seed,
+    mcseed=519562661,
     shuffle_indices=True,
+    positive_pseudodata=False,
     mc_validation_fraction=0.2,
 ):
     """Produces Monte Carlo pseudodata for the replica with index replica_index.
     The pseudodata is returned with a set of training indices, which account for
     a fraction mc_validation_fraction of the data.
-    """
 
-    central_values = pseudodata_central_covmat_index.central_values
-    covmat = pseudodata_central_covmat_index.covmat
-    all_indices = pseudodata_central_covmat_index.central_values_idx
+    If positive_pseudodata is True, the pseudodata will be resampled until all values
+    are positive"""
 
-    # Generate pseudodata according to a multivariate Gaussian centred on
-    # central_values and with covariance matrix covmat.
-    key = jax.random.PRNGKey(replica_index)
-    pseudodata = jax.random.multivariate_normal(
-        key,
-        central_values,
-        covmat,
+    central_values = central_covmat_index.central_values
+    covmat = central_covmat_index.covmat
+    all_indices = central_covmat_index.central_values_idx
+    # Produce the same seed as in NNPDF for the pseudodata generation
+    seed = replica_mcseed(replica_index, mcseed, genrep=True)
+
+    if positive_pseudodata:
+        log.warning(
+            f"Sampling only positive pseudodata for all datasets - This does not provide the correct treatment of asymmetry observables"
+        )
+        group_positivity_mask = np.ones_like(central_values, dtype=bool)
+    else:
+        group_positivity_mask = None
+
+    pseudodata = jnp.array(
+        make_replica(
+            central_values,
+            seed,
+            covmat,
+            group_positivity_mask=group_positivity_mask,
+        ).squeeze()
     )
 
     # Now select a subset of 1 - mc_validation_fraction indices to be the
@@ -79,6 +96,11 @@ def len_trval_data(mc_pseudodata):
     return len(mc_pseudodata.training_indices), len(mc_pseudodata.validation_indices)
 
 
+def training_indices(mc_pseudodata):
+    """Returns the training indices."""
+    return mc_pseudodata.training_indices
+
+
 def write_exportgrid_mc(
     parameters,
     pdf_model,
@@ -104,9 +126,10 @@ def write_exportgrid_mc(
 
     # Create the exportgrid
     lhapdf_interpolator = pdf_model.grid_values_func(LHAPDF_XGRID)
+    n_pdf_params = len(pdf_model.param_names)
 
     # Rotate the grid from the evolution basis into the export grid basis
-    grid_for_writing = np.array(lhapdf_interpolator(parameters))
+    grid_for_writing = np.array(lhapdf_interpolator(parameters[:n_pdf_params]))
 
     write_exportgrid(
         grid_for_writing=grid_for_writing,

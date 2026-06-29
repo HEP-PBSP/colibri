@@ -8,6 +8,9 @@ from unittest.mock import mock_open, patch
 
 import pandas as pd
 from numpy.testing import assert_allclose
+import jax
+import jax.numpy as jnp
+from colibri.mc_utils import MCPseudodata, training_indices
 
 from colibri.api import API as colibriAPI
 from colibri.constants import EXPORT_LABELS, LHAPDF_XGRID
@@ -19,15 +22,20 @@ from colibri.tests.conftest import (
     REPLICA_INDEX,
     TEST_COMMONDATA_FOLDER,
     TEST_DATASETS,
+    TEST_NEGATIVE_DATASETS,
     TRVAL_INDEX,
+    MCSEED,
+    T0_PDFSET,
 )
 
 MC_PSEUDODATA = {
     "level_1_seed": PSEUDODATA_SEED,
+    **T0_PDFSET,
     **CLOSURE_TEST_PDFSET,
     **TRVAL_INDEX,
     **REPLICA_INDEX,
     **TEST_DATASETS,
+    **MCSEED,
 }
 
 
@@ -43,6 +51,18 @@ def test_mc_pseudodata():
     current_pseudodata = colibriAPI.mc_pseudodata(**MC_PSEUDODATA)
 
     assert_allclose(reference_pseudodata["cv"].values, current_pseudodata.pseudodata)
+
+    reference_non_negative_pseudodata = pd.read_csv(
+        TEST_COMMONDATA_FOLDER / "HERA_level2_non_negative_pseudodata.csv"
+    )
+    non_negative_pseudodata = colibriAPI.mc_pseudodata(
+        **{**MC_PSEUDODATA, "positive_pseudodata": True, **TEST_NEGATIVE_DATASETS}
+    )
+
+    assert_allclose(
+        reference_non_negative_pseudodata["cv"].values,
+        non_negative_pseudodata.pseudodata,
+    )
 
 
 # Define the test parameters
@@ -113,3 +133,42 @@ def test_write_exportgrid_no_directory_creation_if_exists(
     write_exportgrid_mc(parameters, MOCK_PDF_MODEL, replica_index, tmp_path)
 
     mock_mkdir.assert_not_called()
+
+
+def test_training_indices_returns_expected():
+    """training_indices should return the training indices stored in MCPseudodata."""
+    pseudo = jnp.array([1.0, 2.0, 3.0])
+    tr_idx = jnp.array([0, 2])
+    val_idx = jnp.array([1])
+
+    mc = MCPseudodata(
+        pseudodata=pseudo,
+        training_indices=tr_idx,
+        validation_indices=val_idx,
+        trval_split=True,
+    )
+
+    out = training_indices(mc)
+
+    assert isinstance(out, jax.Array)
+    # same contents
+    assert jnp.array_equal(out, tr_idx)
+
+
+def test_training_indices_with_empty_training():
+    """If training_indices is empty, the function should return an empty array."""
+    pseudo = jnp.array([1.0, 2.0])
+    tr_idx = jnp.array([])
+    val_idx = jnp.array([0, 1])
+
+    mc = MCPseudodata(
+        pseudodata=pseudo,
+        training_indices=tr_idx,
+        validation_indices=val_idx,
+        trval_split=True,
+    )
+
+    out = training_indices(mc)
+
+    assert isinstance(out, jax.Array)
+    assert out.size == 0

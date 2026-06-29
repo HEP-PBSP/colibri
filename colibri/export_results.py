@@ -246,10 +246,11 @@ def write_replicas(
 
     # Create the exportgrid
     lhapdf_interpolator = pdf_model.grid_values_func(xgrid)
+    n_pdf_params = len(pdf_model.param_names)
 
     # Finish by writing the replicas to export grids, ready for evolution
     for i in indices_per_process:
-        parameters = jnp.array(bayes_fit.resampled_posterior[i, :])
+        parameters = jnp.array(bayes_fit.resampled_posterior[i, :n_pdf_params])
         grid_for_writing = np.array(lhapdf_interpolator(parameters))
 
         replica_index = i + 1

@@ -11,10 +11,9 @@ import pytest
 from numpy.testing import assert_allclose
 
 from colibri.hessian_fit import HessianFit, hessian_fit, run_hessian_fit
-from colibri.tests.conftest import MOCK_PDF_MODEL
+from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_FORWARD_MAP_DIS
 
-
-N_PARAMS = len(MOCK_PDF_MODEL.param_names)
+N_PARAMS = len(TEST_FORWARD_MAP_DIS.param_names)
 
 
 class MockOptimizerProvider:
@@ -54,7 +53,7 @@ def test_hessian_fit_runs_and_shapes():
     param_initialiser_settings = {"type": "zeros"}
 
     result = hessian_fit(
-        pdf_model=MOCK_PDF_MODEL,
+        forward_map=TEST_FORWARD_MAP_DIS,
         log_likelihood=log_likelihood,
         optimizer_provider=MockOptimizerProvider(),
         max_epochs=5,
@@ -63,7 +62,7 @@ def test_hessian_fit_runs_and_shapes():
     )
 
     assert isinstance(result, HessianFit)
-    assert result.param_names == MOCK_PDF_MODEL.param_names
+    assert result.param_names == TEST_FORWARD_MAP_DIS.param_names
 
     # Hessian of ||p||^2 with the internal 0.5 factor should be identity
     assert_allclose(result.hessian, jnp.eye(N_PARAMS), rtol=1e-12, atol=1e-12)
@@ -93,7 +92,7 @@ def test_run_hessian_fit_exports(mock_write_exportgrid, tmp_path):
     param_initialiser_settings = {"type": "zeros"}
 
     fit_result = hessian_fit(
-        pdf_model=MOCK_PDF_MODEL,
+        forward_map=TEST_FORWARD_MAP_DIS,
         log_likelihood=log_likelihood,
         optimizer_provider=MockOptimizerProvider(),
         max_epochs=1,
@@ -128,7 +127,7 @@ def test_hessian_fit_raises_when_require_local_min_fails():
 
     with pytest.raises(ValueError):
         hessian_fit(
-            pdf_model=MOCK_PDF_MODEL,
+            forward_map=TEST_FORWARD_MAP_DIS,
             log_likelihood=log_likelihood,
             optimizer_provider=MockOptimizerProvider(),
             max_epochs=1,
@@ -150,7 +149,7 @@ def test_hessian_fit_logs_warning_on_local_min_check_failed(caplog):
 
     with caplog.at_level("WARNING"):
         res = hessian_fit(
-            pdf_model=MOCK_PDF_MODEL,
+            forward_map=TEST_FORWARD_MAP_DIS,
             log_likelihood=log_likelihood,
             optimizer_provider=MockOptimizerProvider(),
             max_epochs=1,
@@ -180,7 +179,7 @@ def test_hessian_fit_logs_critical_on_non_pd_hessian(caplog):
 
     with caplog.at_level("CRITICAL"):
         hessian_fit(
-            pdf_model=MOCK_PDF_MODEL,
+            forward_map=TEST_FORWARD_MAP_DIS,
             log_likelihood=bad_loglike,
             optimizer_provider=MockOptimizerProvider(),
             max_epochs=1,
@@ -211,7 +210,7 @@ def test_hessian_fit_raises_on_nonfinite_min_chi2():
 
     with pytest.raises(ValueError):
         hessian_fit(
-            pdf_model=MOCK_PDF_MODEL,
+            forward_map=TEST_FORWARD_MAP_DIS,
             log_likelihood=nan_loglike,
             optimizer_provider=MockOptimizerProvider(),
             max_epochs=1,

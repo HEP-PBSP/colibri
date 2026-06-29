@@ -34,7 +34,7 @@ closure_test_pdf: NNPDF40_nnlo_as_01180
 #####################
 # Loss function specs
 #####################
-use_fit_t0: true                    # Whether the t0 covariance is used in the chi2 loss.
+use_t0_covmat: true                    # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
 
 #############

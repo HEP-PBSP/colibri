@@ -6,7 +6,7 @@ Core module of colibri, containing the main (data) classes for the framework.
 
 from dataclasses import dataclass, asdict
 import jax.numpy as jnp
-from typing import Callable, Any, Dict
+from typing import Callable, Any, Dict, Optional, List, Iterator, NamedTuple
 
 
 @dataclass(frozen=True)
@@ -117,6 +117,23 @@ class UltranestFit(BayesianFit):
 
 
 @dataclass(frozen=True)
+class BlackJAXFit(BayesianFit):
+    """
+    Dataclass containing the results and specs of a BlackJAX fit.
+
+    Attributes
+    ----------
+    blackjax_specs: dict
+        Dictionary containing the settings of the BlackJAX fit.
+    blackjax_result: dict
+        result from BlackJAX, can be used eg for corner plots
+    """
+
+    blackjax_specs: dict
+    blackjax_result: dict
+
+
+@dataclass(frozen=True)
 class HessianFit:
     """
     Dataclass containing the results and specs of a Hessian fit.
@@ -214,11 +231,19 @@ class MCPseudodata:
         return asdict(self)
 
 
+class BatchSpec(NamedTuple):
+    idx: jnp.ndarray
+    inv_cov: Optional[jnp.ndarray] = None
+
+
 @dataclass(frozen=True)
 class DataBatches:
-    data_batch_stream_index: Callable
+    data_batch_stream: Callable[[], Iterator[BatchSpec]]
     num_batches: int
     batch_size: int
+    batch_seed: int
+    # Optional cache for visibility / reuse
+    fixed_batches: Optional[List[BatchSpec]] = None
 
 
 @dataclass(frozen=True)
@@ -247,10 +272,7 @@ class CentralCovmatIndex:
 
 
 @dataclass(frozen=True)
-class CentralInvCovmatIndex:
-    central_values: jnp.array
-    inv_covmat: jnp.array
-    central_values_idx: jnp.array
-
-    def to_dict(self):
-        return asdict(self)
+class BayesianPrior:
+    prior_transform: Callable
+    log_prob: Callable
+    sample: Callable

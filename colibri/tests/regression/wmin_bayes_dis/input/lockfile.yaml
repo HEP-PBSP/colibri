@@ -17,7 +17,7 @@ positivity:                            # Positivity datasets, used in the positi
 
 alpha: 1e-7
 lambda_positivity: 0
-use_fit_t0: true
+use_t0_covmat: true
 t0pdfset: NNPDF40_nnlo_as_01180
 wmin_settings:
   wminpdfset: NNPDF40_nnlo_as_01180

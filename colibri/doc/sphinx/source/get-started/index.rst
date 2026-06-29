@@ -16,3 +16,4 @@ If you use the public Colibri code, please cite all references listed in :ref:`c
   ./installation.rst
   ./first-fit.rst
   ./cite.rst
+  ./document.rst

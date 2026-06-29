@@ -31,11 +31,6 @@ class LesHouchesPDF(PDFModel):
             "beta_sigma",
         ]
 
-    @property
-    def n_parameters(self):
-        """The number of parameters of the model."""
-        return len(self.param_names)
-
     def _pdf_gluon(
         self, x, alpha_gluon, beta_gluon, norm_sigma, alpha_sigma, beta_sigma
     ):

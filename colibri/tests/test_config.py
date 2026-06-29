@@ -143,6 +143,10 @@ def test_parse_optimizer_settings(mock_warning):
         "clipnorm": 6.3e-6,
         "optimizer": "adam",
         "optimizer_hyperparams": {"learning_rate": 0.001},
+        "scheduler": {
+            "name": "linear_schedule",
+            "params": {"end_value": 1e-6, "init_value": 1e-3},
+        },
         "unknown_key": "some_value",  # This should trigger the warning
         "another_unknown": "value",  # This should also trigger a warning
     }
@@ -155,6 +159,10 @@ def test_parse_optimizer_settings(mock_warning):
         "clipnorm": 6.3e-6,
         "optimizer": "adam",
         "optimizer_hyperparams": {"learning_rate": 0.001},
+        "scheduler": {
+            "name": "linear_schedule",
+            "params": {"end_value": 1e-6, "init_value": 1e-3},
+        },
     }
 
     print("Testing optimizer settings parsing...")
@@ -481,7 +489,6 @@ def test_parse_hessian_settings_defaults():
 
 
 def test_parse_hessian_settings_with_seed():
-    import jax
 
     settings = {"rng_seed": 123, "iter_init": 2}
     res = BASE_CONFIG.parse_hessian_settings(settings)
@@ -514,3 +521,71 @@ def test_parse_hessian_settings_unknown_key_warns(mock_warning):
 def test_parse_hessian_settings_invalid_values(settings, match):
     with pytest.raises(ConfigError, match=match):
         BASE_CONFIG.parse_hessian_settings(settings)
+
+
+# -----------------------------
+#   parse blackjax settings
+# -----------------------------
+
+
+@patch("colibri.config.log.warning")
+def test_parse_blackjax_settings_full(mock_warning, tmp_path):
+    settings = {
+        "n_posterior_samples": 200,
+        "n_live": 100,
+        "repeats": 5,
+        "delete_fraction": 0.3,
+        "log_precision": -5,
+        "blackjax_seed": 42,
+        "posterior_resampling_seed": 999,
+        "log_dir": str(tmp_path / "custom_logs"),
+        "unknown_key": "oops",  # triggers warning
+    }
+
+    result = BASE_CONFIG.parse_blackjax_settings(settings, tmp_path)
+
+    expected = {
+        "n_posterior_samples": 200,
+        "n_live": 100,
+        "repeats": 5,
+        "delete_fraction": 0.3,
+        "log_precision": -5,
+        "blackjax_seed": 42,
+        "posterior_resampling_seed": 999,
+        "log_dir": str(tmp_path / "custom_logs"),
+    }
+
+    assert result == expected
+    assert mock_warning.called
+
+
+@patch("colibri.config.os.path.exists")
+@patch("colibri.config.log.warning")
+def test_parse_blackjax_settings_with_unknown_keys(mock_warning, mock_exists, tmp_path):
+    # Test with unknown keys in settings
+    settings = {
+        "unknown_key": "value",
+        "n_posterior_samples": 500,
+        "posterior_resampling_seed": 78910,
+    }
+
+    # Mock the existence of the log directory
+    mock_exists.return_value = False
+
+    # Call the function
+    blackjax_settings = BASE_CONFIG.parse_blackjax_settings(settings, tmp_path)
+
+    # Check that the settings were parsed correctly
+    expected_settings = {
+        "n_posterior_samples": 500,
+        "n_live": 500,
+        "repeats": 3,
+        "delete_fraction": 0.5,
+        "log_precision": -3,
+        "blackjax_seed": 0,
+        "posterior_resampling_seed": 78910,
+        "log_dir": str(tmp_path / "blackjax_logs"),
+    }
+
+    assert blackjax_settings == expected_settings
+    assert mock_warning.called

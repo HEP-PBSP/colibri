@@ -16,7 +16,6 @@ from colibri.utils import (
     write_resampled_bayesian_fit,
 )
 
-
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 log.addHandler(colors.ColorHandler())

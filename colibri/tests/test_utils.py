@@ -26,11 +26,12 @@ from validphys.fkparser import load_fktable
 
 from colibri.api import API as cAPI
 from colibri.tests.conftest import (
-    MOCK_CENTRAL_INV_COVMAT_INDEX,
+    MOCK_CENTRAL_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     TEST_DATASET,
     TEST_DATASET_HAD,
 )
+from colibri.forward_map import FKTableForwardMap
 from colibri.utils import (
     cast_to_numpy,
     closest_indices,
@@ -48,6 +49,7 @@ from colibri.utils import (
     t0_pdf_grid,
     write_resampled_bayesian_fit,
 )
+from colibri.core import BayesianPrior
 
 SIMPLE_WMIN_FIT = "wmin_bayes_dis"
 
@@ -252,9 +254,11 @@ def test_get_full_posterior():
     shutil.rmtree(dest_path)
 
 
-def mock_bayesian_prior(array):
-    # Mocked version of bayesian_prior
-    return array
+mock_bayesian_prior = BayesianPrior(
+    prior_transform=lambda x: x,
+    log_prob=lambda x: -jnp.sum(x**2, axis=-1),
+    sample=lambda rng, n: jnp.zeros((n, len(MOCK_PDF_MODEL.param_names))),
+)
 
 
 @pytest.mark.parametrize("dataset_input", [TEST_DATASET_HAD, TEST_DATASET])
@@ -336,9 +340,14 @@ def test_likelihood_float_type(
 ):
 
     _pred_data = lambda x, fks: jnp.ones(
-        len(MOCK_CENTRAL_INV_COVMAT_INDEX.central_values)
+        len(MOCK_CENTRAL_COVMAT_INDEX.central_values)
     )  # Mock _pred_data
     FIT_XGRID = jnp.linspace(0, 1, 10)  # Mock FIT_XGRID
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(FIT_XGRID),
+    )  # Mock forward_map
     output_path = tmp_path
 
     fast_kernel_arrays = jax.random.uniform(
@@ -347,12 +356,12 @@ def test_likelihood_float_type(
 
     # Call the function under test
     likelihood_float_type(
-        _pred_data=_pred_data,
+        forward_map=forward_map,
         pdf_model=MOCK_PDF_MODEL,
         FIT_XGRID=FIT_XGRID,
         bayesian_prior=mock_bayesian_prior,
         output_path=output_path,
-        central_inv_covmat_index=MOCK_CENTRAL_INV_COVMAT_INDEX,
+        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         fast_kernel_arrays=fast_kernel_arrays,
     )
 
@@ -449,7 +458,9 @@ def test_ns_fit_resampler_normal_case(mock_resample, mock_read_csv, mock_exists)
 @patch("colibri.utils.os.system")
 @patch("colibri.utils.os.path.exists")
 @patch("colibri.utils.write_exportgrid")
+@patch("colibri.utils.pd.read_csv")
 def test_write_resampled_bayesian_fit(
+    mock_read_csv,
     mock_write_exportgrid,
     mock_exists,
     mock_os_system,
@@ -471,6 +482,9 @@ def test_write_resampled_bayesian_fit(
         params[1] + 1,
     ]
     mock_dill_load.return_value = mock_pdf_model
+
+    # Mock pd.read_csv to return a header-only DataFrame for full_posterior_sample.csv
+    mock_read_csv.return_value = pd.DataFrame(columns=["param1", "param2"])
 
     # Ensure os.path.exists returns True for necessary paths
     mock_exists.side_effect = lambda path: (
@@ -502,7 +516,7 @@ def test_write_resampled_bayesian_fit(
     mock_os_system.assert_any_call(f"rm -r {resampled_fit_path}/replicas/*")
 
     # Verify the correct data was written to CSV
-    df = pd.DataFrame(resampled_posterior, columns=mock_pdf_model.param_names)
+    df = pd.DataFrame(resampled_posterior, columns=["param1", "param2"])
     expected_csv_path = str(resampled_fit_path) + "/ns_result.csv"
     with patch("pandas.DataFrame.to_csv") as mock_to_csv:
         df.to_csv(expected_csv_path, float_format="%.5e")
@@ -533,7 +547,10 @@ def test_creates_replicas_dir_when_missing(tmp_path):
         "colibri.utils.os.mkdir"
     ) as mock_mkdir, mock.patch(
         "colibri.utils.write_exportgrid"
-    ) as mock_we:
+    ) as mock_we, mock.patch(
+        "colibri.utils.pd.read_csv",
+        return_value=pd.DataFrame(columns=[]),
+    ):
 
         # Call with an empty posterior so loop won’t actually try to mkdir again
         write_resampled_bayesian_fit(
@@ -575,6 +592,9 @@ def test_creates_each_replica_dir_when_missing(tmp_path):
         "colibri.utils.os.mkdir"
     ) as m_mkdir, mock.patch(
         "colibri.utils.write_exportgrid"
+    ), mock.patch(
+        "colibri.utils.pd.read_csv",
+        return_value=pd.DataFrame(columns=["a", "b"]),
     ):
 
         write_resampled_bayesian_fit(

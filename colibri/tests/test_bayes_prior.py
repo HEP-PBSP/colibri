@@ -17,18 +17,38 @@ from jax import random
 from colibri.bayes_prior import bayesian_prior
 from colibri.core import PriorSettings
 from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_PRIOR_SETTINGS_UNIFORM
+from unittest.mock import Mock
+
+# Create a mock forward_map that exposes param_names matching MOCK_PDF_MODEL
+MOCK_FORWARD_MAP = Mock()
+MOCK_FORWARD_MAP.param_names = MOCK_PDF_MODEL.param_names
+MOCK_FORWARD_MAP.pdf_param_names = MOCK_PDF_MODEL.param_names
 
 
 def test_uniform_prior():
     """
     Test the transformation of a uniform prior distribution.
     """
-    prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_PDF_MODEL)
+    prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_FORWARD_MAP)
+    MOCK_PDF_MODEL.n_parameters = 2
 
     key = random.PRNGKey(0)
-    cube = random.uniform(key, shape=(10,))
+    n_params = MOCK_PDF_MODEL.n_parameters
+    cube = random.uniform(key, shape=(n_params,))
 
-    transformed = prior_transform(cube)
+    # ---- Test sample() ----
+    samples = prior_transform.sample(key, 5)
+
+    assert samples.shape == (5, n_params)
+
+    # ---- Test log_prob() ----
+    x = jnp.array(samples)
+    logp = prior_transform.log_prob(x).sum(axis=-1)
+
+    assert logp.shape == ()
+    assert jnp.isfinite(logp).all()
+
+    transformed = prior_transform.prior_transform(cube)
     expected = (
         cube
         * (
@@ -54,7 +74,7 @@ def test_uniform_prior():
         }
     )
 
-    prior_transform_bounds = bayesian_prior(prior_settings_bounds, MOCK_PDF_MODEL)
+    prior_transform_bounds = bayesian_prior(prior_settings_bounds, MOCK_FORWARD_MAP)
 
     cube_bounds = random.uniform(key, shape=(2,))
     expected_bounds = jnp.array(
@@ -64,7 +84,7 @@ def test_uniform_prior():
         ]
     )
 
-    transformed_bounds = prior_transform_bounds(cube_bounds)
+    transformed_bounds = prior_transform_bounds.prior_transform(cube_bounds)
 
     assert jnp.allclose(
         transformed_bounds, expected_bounds
@@ -84,7 +104,7 @@ def test_uniform_prior():
     )
 
     with pytest.raises(ValueError, match="Missing bounds for parameters"):
-        bayesian_prior(prior_settings_missing_bounds, MOCK_PDF_MODEL)
+        bayesian_prior(prior_settings_missing_bounds, MOCK_FORWARD_MAP)
 
     # ---- Test missing min_val/max_val and bounds ----
     prior_settings_invalid = PriorSettings(
@@ -95,7 +115,7 @@ def test_uniform_prior():
     )
 
     with pytest.raises(ValueError, match="prior_distribution_specs must define either"):
-        bayesian_prior(prior_settings_invalid, MOCK_PDF_MODEL)
+        bayesian_prior(prior_settings_invalid, MOCK_FORWARD_MAP)
 
 
 @patch("colibri.bayes_prior.get_full_posterior")
@@ -121,16 +141,24 @@ def test_gaussian_prior(mock_get_full_posterior):
         }
     )
 
-    prior_transform = bayesian_prior(prior_settings, MOCK_PDF_MODEL)
+    prior_transform = bayesian_prior(prior_settings, MOCK_FORWARD_MAP)
 
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10, 2))
 
-    transformed = prior_transform(cube)
+    transformed = prior_transform.prior_transform(cube)
     independent_gaussian = jax.scipy.stats.norm.ppf(cube)
     expected = mean + jnp.dot(independent_gaussian, jnp.linalg.cholesky(cov).T)
 
     assert np.allclose(transformed, expected), "Gaussian prior transformation failed."
+
+    # ---- Cover sample() ----
+    with pytest.raises(NotImplementedError, match="sample not implemented"):
+        prior_transform.sample(key, 10)
+
+    # ---- Cover log_prob() ----
+    with pytest.raises(NotImplementedError, match="log_prob not implemented"):
+        prior_transform.log_prob(jnp.zeros((10, 2)))
 
 
 def test_invalid_prior_type():
@@ -140,4 +168,4 @@ def test_invalid_prior_type():
     )
 
     with pytest.raises(ValueError) as e:
-        bayesian_prior(prior_settings, MOCK_PDF_MODEL)
+        bayesian_prior(prior_settings, MOCK_FORWARD_MAP)

@@ -10,6 +10,7 @@ import jax
 import jax.numpy as jnp
 from colibri.loss_functions import chi2
 from colibri.commondata_utils import CentralCovmatIndex
+from colibri.data_batch import BatchSpec
 
 
 class LogLikelihood(object):
@@ -22,7 +23,6 @@ class LogLikelihood(object):
         self,
         central_covmat_index,
         pdf_model,
-        fit_xgrid,
         forward_map,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
@@ -36,8 +36,6 @@ class LogLikelihood(object):
         central_covmat_index: commondata_utils.CentralCovmatIndex
 
         pdf_model: pdf_model.PDFModel
-
-        fit_xgrid: np.ndarray
 
         forward_map: Callable
 
@@ -61,26 +59,26 @@ class LogLikelihood(object):
         self.positivity_penalty_settings = positivity_penalty_settings
         self.integrability_penalty = integrability_penalty
 
-        self.pred_and_pdf = pdf_model.pred_and_pdf_func(
-            fit_xgrid, forward_map=forward_map
-        )
+        self.forward_map = forward_map
 
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
 
-    def __call__(self, params, batch_idx=None):
+    def __call__(self, params, batch: BatchSpec | None = None):
         """
         Note that this function is called by the samplers, and it must be
-        a function of the model parameters only.
+        a function of the model parameters only by default.
+        If a batch is provided, the log-likelihood is computed only for the
+        subset of data indexed by batch.
 
         Parameters
         ----------
         params: jnp.ndarray
             The model parameters.
 
-        batch_idx: jnp.ndarray, optional
+        batch: BatchSpec, optional
             If provided, computes the log-likelihood only for the subset of data
-            indexed by batch_idx.
+            indexed by batch.idx, using precomputed batch.inv_cov if available.
 
         Returns
         -------
@@ -93,7 +91,7 @@ class LogLikelihood(object):
             self.inv_covmat,
             self.fast_kernel_arrays,
             self.positivity_fast_kernel_arrays,
-            batch_idx=batch_idx,
+            batch=batch,
         )
 
     @partial(jax.jit, static_argnames=("self",))
@@ -104,7 +102,7 @@ class LogLikelihood(object):
         inv_covmat: jnp.ndarray,
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
-        batch_idx: jnp.ndarray = None,
+        batch: BatchSpec | None = None,
     ) -> jnp.array:
         """
         This function takes care of computing the log_likelihood that is defined in LogLikelihood.
@@ -123,16 +121,19 @@ class LogLikelihood(object):
         jnp.ndarray
             jax array with the value of the log-likelihood.
         """
-        predictions, pdf = self.pred_and_pdf(params, fast_kernel_arrays)
+        predictions, pdf = self.forward_map(fast_kernel_arrays, params)
         # Select only the data relevant for this likelihood
         # Especially important when using a training/validation split
         predictions = predictions[self.central_values_idx]
 
-        if batch_idx is not None:
-            predictions = predictions[batch_idx]
-            central_values = central_values[batch_idx]
-            batched_covmat = self.covmat[batch_idx][:, batch_idx]
-            inv_covmat = jnp.linalg.inv(batched_covmat)
+        if batch is not None:
+            predictions = predictions[batch.idx]
+            central_values = central_values[batch.idx]
+            if batch.inv_cov is None:
+                batched_covmat = self.covmat[batch.idx][:, batch.idx]
+                inv_covmat = jnp.linalg.inv(batched_covmat)
+            else:
+                inv_covmat = batch.inv_cov
 
         if self.positivity_penalty_settings["positivity_penalty"]:
             pos_penalty = jnp.sum(
@@ -162,8 +163,7 @@ class LogLikelihood(object):
 def log_likelihood(
     central_covmat_index,
     pdf_model,
-    FIT_XGRID,
-    _pred_data,
+    forward_map,
     fast_kernel_arrays,
     positivity_fast_kernel_arrays,
     _penalty_posdata,
@@ -179,8 +179,7 @@ def log_likelihood(
     return LogLikelihood(
         central_covmat_index,
         pdf_model,
-        FIT_XGRID,
-        _pred_data,
+        forward_map,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
         _penalty_posdata,
@@ -191,10 +190,9 @@ def log_likelihood(
 
 def mc_log_likelihood(
     mc_pseudodata,
-    fit_covariance_matrix,
+    general_covariance_matrix,
     pdf_model,
-    FIT_XGRID,
-    _pred_data,
+    forward_map,
     fast_kernel_arrays,
     positivity_fast_kernel_arrays,
     _penalty_posdata,
@@ -210,7 +208,7 @@ def mc_log_likelihood(
 
     tr_idx = mc_pseudodata.training_indices
     central_values_train = mc_pseudodata.pseudodata[tr_idx]
-    covmat_train = fit_covariance_matrix[tr_idx][:, tr_idx]
+    covmat_train = general_covariance_matrix[tr_idx][:, tr_idx]
 
     central_covmat_index_train = CentralCovmatIndex(
         central_values=central_values_train,
@@ -221,8 +219,7 @@ def mc_log_likelihood(
     train_loglike = LogLikelihood(
         central_covmat_index_train,
         pdf_model,
-        FIT_XGRID,
-        _pred_data,
+        forward_map,
         fast_kernel_arrays,
         positivity_fast_kernel_arrays,
         _penalty_posdata,
@@ -236,7 +233,7 @@ def mc_log_likelihood(
     else:
         val_idx = mc_pseudodata.validation_indices
         central_values_val = mc_pseudodata.pseudodata[val_idx]
-        covmat_val = fit_covariance_matrix[val_idx][:, val_idx]
+        covmat_val = general_covariance_matrix[val_idx][:, val_idx]
 
         central_covmat_index_val = CentralCovmatIndex(
             central_values=central_values_val,
@@ -247,8 +244,7 @@ def mc_log_likelihood(
         val_loglike = LogLikelihood(
             central_covmat_index_val,
             pdf_model,
-            FIT_XGRID,
-            _pred_data,
+            forward_map,
             fast_kernel_arrays,
             positivity_fast_kernel_arrays,
             _penalty_posdata,
