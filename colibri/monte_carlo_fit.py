@@ -27,11 +27,11 @@ def monte_carlo_fit(
     optimizer_provider,
     early_stopper,
     max_epochs,
+    data_batches,
     batch_size=None,
     batch_seed=1,
     record_parameters=False,
     record_every=50,
-    data_batches,
 ):
     """
     This function performs a Monte Carlo fit.
@@ -121,7 +121,14 @@ def monte_carlo_fit(
     )
 
 
-def run_monte_carlo_fit(monte_carlo_fit, forward_map, output_path, replica_index, Q0, record_parameters=False):
+def run_monte_carlo_fit(
+    monte_carlo_fit,
+    forward_map,
+    output_path,
+    replica_index,
+    Q0,
+    record_parameters=False,
+):
     """
     Runs the Monte Carlo fit and writes the output to the output directory.
 
