@@ -13,10 +13,13 @@ In principle, the NTK can be computed for any model.
 How to Compute the NTK with Colibri
 ===================================
 
+Step 1: Save parameter values during training
+---------------------------------------------
+
 In order to compute the NTK, you must first carry out a fit using gradient descent
 (i.e. a Monte Carlo fit). You will need to sabe the parameter values at different
 several epochs during training. In order to do so, you can follow the instructions
-specified in :ref:` this tutorial <running_mc_replica>` on running Monte Carlo fits,
+specified in :ref:`this tutorial <running_mc_replica>` on running Monte Carlo fits,
 adding the following arguments to the runcard:
 
 .. code-block:: bash
@@ -24,9 +27,14 @@ adding the following arguments to the runcard:
     record_parameters: True
     record_every: 100
 
-This above example will save the parameter values every 100 epochs.
+This above example will save the parameter values every 100 epochs. These are saved
+for each replica in the file ``fit_directory/replica_n/parameters/``.
 
-Once the parameter values have been saved, the NTK can be computed using the `compute_ntk`
+
+Step 2: Save the parameters during training
+-------------------------------------------
+
+Once the parameter values have been saved, the NTK can be computed using the ``compute_ntk``
 action. An example runcard to compute the NTK is shown below.
 
 .. code-block:: bash
@@ -51,7 +59,7 @@ action. An example runcard to compute the NTK is shown below.
      
 This runcard can be run with the command
 ``colibri_model_exe compute_ntk.yaml -r replica_n``, where the ``colibri_model_exe``
-is the Colibri executable, and ``n`` is the replica number for which the NTK
+is the Colibri executable, and ``replica_n`` is the replica number for which the NTK
 should be computed. This will produce a folder called ``compute_ntk``.  The NTK values
 are stored in npz file format in ``compute_ntk/ntk_replicas/replica_n``.
 
