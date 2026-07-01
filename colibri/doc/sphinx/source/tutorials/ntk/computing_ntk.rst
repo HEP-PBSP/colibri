@@ -17,8 +17,8 @@ Step 1: Save parameter values during training
 ---------------------------------------------
 
 In order to compute the NTK, you must first carry out a fit using gradient descent
-(i.e. a Monte Carlo fit). You will need to save the parameter values at different
-several epochs during training. In order to do so, you can follow the instructions
+(i.e. a Monte Carlo fit). You will need to save the parameter values at multiple
+epochs during training. In order to do so, you can follow the instructions
 specified in :ref:`this tutorial <running_mc_replica>` on running Monte Carlo fits,
 adding the following arguments to the runcard:
 
