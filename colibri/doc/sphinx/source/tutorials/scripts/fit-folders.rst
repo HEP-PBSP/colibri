@@ -120,7 +120,7 @@ the first few lines would look like this:
 which would represent the losses for the first 150 epochs (i.e. 0, 1, 2 are just labels).
 
 Best epoch
------------
+----------
 The final model weights for each replica are taken from the best epoch. This is defined 
 as the epoch that satisfies the positivity threshold (as specified in `likelihood.py``) 
 and achieves the lowest validation loss among all such epochs.
