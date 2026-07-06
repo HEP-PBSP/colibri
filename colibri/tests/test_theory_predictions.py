@@ -9,6 +9,8 @@ import jaxlib
 from numpy.testing import assert_allclose
 from validphys.fkparser import load_fktable
 
+import numpy as np
+
 from colibri.api import API as colibriAPI
 from colibri.tests.conftest import (
     CLOSURE_TEST_PDFSET,
@@ -30,26 +32,12 @@ class FKTableDataMock:
         self.xgrid = xgrid
 
 
-def test_fktable_xgrid_indices_fill_with_zeros():
-    # Case where fill_fk_xgrid_with_zeros is True
-    fktable = FKTableDataMock(xgrid=jnp.array([0.1, 0.2, 0.3]))
-    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
-
-    expected_indices = jnp.arange(
-        len(FIT_XGRID)
-    )  # Should return indices for the entire FIT_XGRID
-    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=True)
-
-    assert jnp.array_equal(result, expected_indices)
-
-
-def test_fktable_xgrid_indices_no_fill():
-    # Case where fill_fk_xgrid_with_zeros is False
+def test_fktable_xgrid_indices():
     fktable = FKTableDataMock(xgrid=jnp.array([0.1, 0.2, 0.3]))
     FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
 
     expected_indices = jnp.array([1, 3, 5])  # Indices where fk_xgrid matches FIT_XGRID
-    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+    result = fktable_xgrid_indices(fktable, FIT_XGRID)
 
     assert jnp.array_equal(result, expected_indices)
 
@@ -61,7 +49,7 @@ def test_fktable_xgrid_indices_with_tolerance():
 
     # Due to tolerance, the indices should match as if they were the same
     expected_indices = jnp.array([1, 3, 5])
-    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+    result = fktable_xgrid_indices(fktable, FIT_XGRID)
 
     assert jnp.array_equal(result, expected_indices)
 
@@ -74,7 +62,7 @@ def test_fktable_xgrid_indices_no_matches():
     expected_indices = jnp.array(
         []
     )  # No matching indices, closest_indices returns empty array
-    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+    result = fktable_xgrid_indices(fktable, FIT_XGRID)
     assert jnp.array_equal(result, expected_indices)
 
 
@@ -120,6 +108,49 @@ def test_fast_kernel_arrays():
     fk_xgrid = load_fktable(ds.fkspecs[0]).xgrid
     non_zero_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-8)
     assert jnp.any(fk_arrays_filled[0][0][:, :, non_zero_indices] != 0)
+
+
+def test_fast_kernel_arrays_hadronic_fill_with_zeros():
+    """
+    Test that fast_kernel_arrays correctly fills the x-grid with zeros for hadronic FK tables.
+    This is a regression test for the bug where the 4D hadronic array was assigned
+    into a 3D zeros array.
+    """
+    from colibri.utils import closest_indices
+    from validphys.fkparser import load_fktable
+
+    dataset = colibriAPI.data(**TEST_DATASETS_HAD)
+    ds = dataset.datasets[0]
+    FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS_HAD)
+
+    # This should not raise an error (regression check)
+    fk_arrays_filled = colibriAPI.fast_kernel_arrays(
+        **{**TEST_DATASETS_HAD, "fill_fk_xgrid_with_zeros": True}
+    )
+
+    fk_arr = fk_arrays_filled[0][0]
+
+    # Hadronic FK array should be 4D: (Ndat, Nfl, Nfit_x, Nfit_x)
+    assert fk_arr.ndim == 4
+    assert fk_arr.shape[2] == len(FIT_XGRID)
+    assert fk_arr.shape[3] == len(FIT_XGRID)
+
+    # Check that non-zero values are placed at the correct x-grid positions
+    fk_xgrid = load_fktable(ds.fkspecs[0]).xgrid
+    non_zero_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-8)
+    non_zero_indices = np.array(non_zero_indices)
+
+    # The non-zero block should contain non-zero values
+    assert jnp.any(
+        fk_arr[:, :, non_zero_indices[:, None], non_zero_indices[None, :]] != 0
+    )
+
+    # Entries outside the non-zero block should be zero
+    all_indices = np.arange(len(FIT_XGRID))
+    zero_indices = np.setdiff1d(all_indices, non_zero_indices)
+    if len(zero_indices) > 0:
+        assert jnp.all(fk_arr[:, :, zero_indices, :] == 0)
+        assert jnp.all(fk_arr[:, :, :, zero_indices] == 0)
 
 
 def test_make_dis_prediction():
