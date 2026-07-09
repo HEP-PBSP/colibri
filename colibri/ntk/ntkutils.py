@@ -601,7 +601,13 @@ def compute_eigendecomposition(ntk_matrix, hermitian=True):
 
 
 def compute_eigenvalues_for_replica(
-    fit_name: str, replicas_path: Path, replica_idx: int, max_epoch=None, name: str = None, pending_epochs: list = None, **kwargs
+    fit_name: str,
+    replicas_path: Path,
+    replica_idx: int,
+    max_epoch=None,
+    name: str = None,
+    pending_epochs: list = None,
+    **kwargs,
 ):
     """
     Compute the NTK eigenvalues for a given replica across all epochs.
@@ -635,8 +641,14 @@ def compute_eigenvalues_for_replica(
 
         if pending_epochs is not None:
             # Filter param_files to only include pending epochs
-            log.info(f"Replica {replica_idx}: computing eigenvalues for pending epochs {pending_epochs}")
-            param_files = {epoch: param_file for epoch, param_file in param_files.items() if epoch in pending_epochs}
+            log.info(
+                f"Replica {replica_idx}: computing eigenvalues for pending epochs {pending_epochs}"
+            )
+            param_files = {
+                epoch: param_file
+                for epoch, param_file in param_files.items()
+                if epoch in pending_epochs
+            }
 
         for epoch, param_file in param_files.items():
             if max_epoch is not None and epoch > max_epoch:
@@ -656,13 +668,17 @@ def compute_eigenvalues_for_replica(
         # new eigenvalues to the existing ones and save the combined result.
         if pending_epochs is not None:
             try:
-                existing_data = load_replica_eigenvalues(replica_idx, replicas_path, name)
+                existing_data = load_replica_eigenvalues(
+                    replica_idx, replicas_path, name
+                )
                 existing_epochs = existing_data["epochs"]
                 existing_eigenvalues = existing_data["eigenvalues"]
 
                 # Combine existing and new eigenvalues
                 combined_epochs = existing_epochs + epochs
-                combined_eigenvalues = np.vstack([existing_eigenvalues, eigenvalues_list])
+                combined_eigenvalues = np.vstack(
+                    [existing_eigenvalues, eigenvalues_list]
+                )
 
                 # Sort by epoch
                 sorted_indices = np.argsort(combined_epochs)
@@ -670,7 +686,9 @@ def compute_eigenvalues_for_replica(
                 eigenvalues_list = [combined_eigenvalues[i] for i in sorted_indices]
 
             except FileNotFoundError:
-                log.info(f"No existing data found for replica {replica_idx}, saving new data.")
+                log.info(
+                    f"No existing data found for replica {replica_idx}, saving new data."
+                )
 
         # Stack eigenvalues: (n_epochs, n_eigenvalues)
         eigenvalues = np.stack(eigenvalues_list, axis=0)
@@ -722,6 +740,7 @@ def get_completed_replicas(replicas_path: Path, name: str = None) -> list:
             continue
 
     return sorted(completed)
+
 
 def get_completed_epochs_for_replica(replicas_path: Path, name: str = None) -> dict:
     """

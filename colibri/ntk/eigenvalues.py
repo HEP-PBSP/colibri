@@ -246,15 +246,24 @@ def eigenvalues_ensemble(
 
     # Check pending epochs for completed replicas
     pending_epochs = {
-        r: [ep for ep in get_parameters_all_epochs(replicas_path, r).keys() if ep not in completed_epochs.get(r, [])] for r in completed
+        r: [
+            ep
+            for ep in get_parameters_all_epochs(replicas_path, r).keys()
+            if ep not in completed_epochs.get(r, [])
+        ]
+        for r in completed
     }
 
     if not pending and all(not eps for eps in pending_epochs.values()):
         if not pending:
-          log.info(f"All {len(completed)} replicas already computed. Loading from cache.")
+            log.info(
+                f"All {len(completed)} replicas already computed. Loading from cache."
+            )
         else:
             log.info(f"Pending epochs for completed replicas: {pending_epochs}")
-        return load_eigenvalues_ensemble(replicas_path, max_epoch, name, replica_index_list)
+        return load_eigenvalues_ensemble(
+            replicas_path, max_epoch, name, replica_index_list
+        )
 
     log.info(
         f"Computing eigenvalues: {len(pending)} pending, "
