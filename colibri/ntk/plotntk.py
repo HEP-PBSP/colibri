@@ -18,17 +18,12 @@ from typing import Any, Iterator, List, Optional, Tuple
 
 import matplotlib.patches as mpatches
 import numpy as np
-from matplotlib import rc
 
 from validphys import plotutils
 from reportengine.figure import figuregen
 
 from colibri.constants import FLAVOURS_ID_MAPPINGS
 from colibri.ntk.ntkutils import NTKGrid, NTKStats
-
-rc("font", **{"family": "sans-serif", "sans-serif": ["Helvetica"]})
-rc("text", usetex=True)
-rc("text.latex", preamble=r"\usepackage{amsmath,amssymb}")
 
 
 def _figuregen(func):
@@ -222,6 +217,7 @@ def ntk_plot_provider(
     title_fn: Optional[callable] = lambda _: "",
     name_fn: Optional[callable] = lambda _: "",
     ylabel_fn: Optional[callable] = lambda _: "",
+    legend_outside: bool = False,
 ) -> Iterator[Tuple[Any, PlotResult]]:
     """
     Unified NTK plotting function for eigenvalues and eigenvectors.
@@ -318,11 +314,23 @@ def ntk_plot_provider(
         ax.set_axisbelow(True)
         ax.grid(True, alpha=0.3)
 
-        # Legend
+        # Legend. With many ranks the in-plot legend overlaps the curves, so
+        # `legend_outside` anchors it just to the right of the axes instead
+        # (reportengine saves with bbox_inches='tight', so it is not clipped).
+        legend_kw = (
+            {"loc": "upper left", "bbox_to_anchor": (1.01, 1.0)}
+            if legend_outside
+            else {}
+        )
         if custom_handler is None:
-            ax.legend()
+            ax.legend(**legend_kw)
         else:
-            ax.legend(handles, labels_list, handler_map={HandlerSpec: custom_handler()})
+            ax.legend(
+                handles,
+                labels_list,
+                handler_map={HandlerSpec: custom_handler()},
+                **legend_kw,
+            )
 
         result = PlotResult(
             fig=fig, ax=ax, name=name, title=title, handles=handles, labels=labels_list
@@ -371,6 +379,7 @@ def plot_eigvals_by_fit(
     yscale: Optional[str] = None,
     ymin: Optional[float] = None,
     ymax: Optional[float] = None,
+    legend_outside: bool = False,
 ):
     """Plot eigenvalues, one figure per fit showing multiple ranks."""
 
@@ -386,6 +395,7 @@ def plot_eigvals_by_fit(
         yscale=yscale,
         ymin=ymin,
         ymax=ymax,
+        legend_outside=legend_outside,
     )
 
 
