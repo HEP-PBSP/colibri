@@ -183,7 +183,13 @@ class EigenvectorGrid(NTKGrid):
         return rf"$z^{{({rank_index})}}$"
 
 
-@functools.cache
+# Bounded to the current epoch only. Each cache entry is a full
+# (n_replicas, n_flav*n_xgrid, n_eigenvectors) array (tens of MB); the unbounded
+# @functools.cache retained one per epoch, so iterating the epoch trajectory (e.g.
+# h_val_grid) grew memory without bound -> OOM. Callers index a grid built once per
+# epoch, so cross-epoch caching is never hit; maxsize=1 keeps any immediate re-request
+# while letting the previous epoch be freed.
+@functools.lru_cache(maxsize=1)
 def eigenvectors_ensemble_at_epoch(
     fit: FitSpec,
     replicas_path: Path,

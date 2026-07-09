@@ -22,6 +22,8 @@ from colibri.ntk.ntkutils import (
     NTKStats,
     compute_eigenvalues_for_replica,
     get_completed_replicas,
+    get_completed_epochs_for_replica,
+    get_parameters_all_epochs,
     get_replica_idx_list,
     load_eigenvalues_ensemble,
 )
@@ -233,17 +235,26 @@ def eigenvalues_ensemble(
     # Check for already completed replicas
     if force_recompute:
         completed = []
+        completed_epochs = {}
         log.info("Force recompute enabled: ignoring cached replicas")
     else:
         completed = get_completed_replicas(replicas_path, name)
+        completed_epochs = get_completed_epochs_for_replica(replicas_path, name)
 
+    # Check pending replicas
     pending = sorted([r for r in replica_index_list if r not in completed])
 
-    if not pending:
-        log.info(f"All {len(completed)} replicas already computed. Loading from cache.")
-        return load_eigenvalues_ensemble(
-            replicas_path, max_epoch, name, replica_index_list
-        )
+    # Check pending epochs for completed replicas
+    pending_epochs = {
+        r: [ep for ep in get_parameters_all_epochs(replicas_path, r).keys() if ep not in completed_epochs.get(r, [])] for r in completed
+    }
+
+    if not pending and all(not eps for eps in pending_epochs.values()):
+        if not pending:
+          log.info(f"All {len(completed)} replicas already computed. Loading from cache.")
+        else:
+            log.info(f"Pending epochs for completed replicas: {pending_epochs}")
+        return load_eigenvalues_ensemble(replicas_path, max_epoch, name, replica_index_list)
 
     log.info(
         f"Computing eigenvalues: {len(pending)} pending, "
@@ -252,10 +263,12 @@ def eigenvalues_ensemble(
         f"Using model config: {kwargs}"
     )
 
-    n_pending = len(pending)
+    n_pending = max(len(pending), len(list(pending_epochs.keys())))
     if max_workers is None:
         max_workers = min(10, n_pending)
     log.info(f"Using max_workers={max_workers} for parallel computation")
+
+    pending_replicas = list(set(pending + list(pending_epochs.keys())))
 
     # Compute pending replicas in parallel
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -267,9 +280,10 @@ def eigenvalues_ensemble(
                 replica_idx,
                 max_epoch,
                 name,
+                pending_epochs.get(replica_idx, None),
                 **dict(kwargs),
             ): replica_idx
-            for replica_idx in pending
+            for replica_idx in pending_replicas
         }
 
         # TODO: Do we want to keep that status bar with tqdm?

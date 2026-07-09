@@ -556,6 +556,15 @@ def compute_ntk(pdf_model, params, **kwargs):
     d1, d2, d3, d4 = ntk.shape  # d1=nf, d2=ng, d3=nf, d4=ng
     ntk = ntk.reshape(d1 * d2, d3 * d4, order=NTK_ORDERING)
 
+    # Materialise the NTK to host (NumPy), then drop JAX's compilation cache. Each call
+    # rebuilds the model -> a fresh jacfwd -> a new XLA program with this epoch's weights
+    # baked in; without clearing, those compiled programs accumulate (~0.3 GB/call). This
+    # matters because the report recomputes the *same* snapshot epochs many times (the
+    # eigenvector_grid is resolved per presentation leaf, and the bounded functools cache
+    # thrashes when those epochs interleave), so the per-call leak compounds -> OOM.
+    ntk = np.asarray(ntk)
+    jax.clear_caches()
+
     return ntk, (d1, d2, d3, d4)
 
 
@@ -592,12 +601,7 @@ def compute_eigendecomposition(ntk_matrix, hermitian=True):
 
 
 def compute_eigenvalues_for_replica(
-    fit_name: str,
-    replicas_path: Path,
-    replica_idx: int,
-    max_epoch=None,
-    name: str = None,
-    **kwargs,
+    fit_name: str, replicas_path: Path, replica_idx: int, max_epoch=None, name: str = None, pending_epochs: list = None, **kwargs
 ):
     """
     Compute the NTK eigenvalues for a given replica across all epochs.
@@ -629,6 +633,11 @@ def compute_eigenvalues_for_replica(
         epochs = []
         ntk_shape = None
 
+        if pending_epochs is not None:
+            # Filter param_files to only include pending epochs
+            log.info(f"Replica {replica_idx}: computing eigenvalues for pending epochs {pending_epochs}")
+            param_files = {epoch: param_file for epoch, param_file in param_files.items() if epoch in pending_epochs}
+
         for epoch, param_file in param_files.items():
             if max_epoch is not None and epoch > max_epoch:
                 continue
@@ -641,6 +650,27 @@ def compute_eigenvalues_for_replica(
             eigvals, _ = compute_eigendecomposition(ntk, hermitian=True)
             eigenvalues_list.append(eigvals)
             epochs.append(epoch)
+
+        # pending_epochs means that we are only computing a subset of epochs for a replica
+        # that may already have some epochs computed. In that case, we want to append the
+        # new eigenvalues to the existing ones and save the combined result.
+        if pending_epochs is not None:
+            try:
+                existing_data = load_replica_eigenvalues(replica_idx, replicas_path, name)
+                existing_epochs = existing_data["epochs"]
+                existing_eigenvalues = existing_data["eigenvalues"]
+
+                # Combine existing and new eigenvalues
+                combined_epochs = existing_epochs + epochs
+                combined_eigenvalues = np.vstack([existing_eigenvalues, eigenvalues_list])
+
+                # Sort by epoch
+                sorted_indices = np.argsort(combined_epochs)
+                epochs = [combined_epochs[i] for i in sorted_indices]
+                eigenvalues_list = [combined_eigenvalues[i] for i in sorted_indices]
+
+            except FileNotFoundError:
+                log.info(f"No existing data found for replica {replica_idx}, saving new data.")
 
         # Stack eigenvalues: (n_epochs, n_eigenvalues)
         eigenvalues = np.stack(eigenvalues_list, axis=0)
@@ -692,6 +722,37 @@ def get_completed_replicas(replicas_path: Path, name: str = None) -> list:
             continue
 
     return sorted(completed)
+
+def get_completed_epochs_for_replica(replicas_path: Path, name: str = None) -> dict:
+    """
+    Get a dictionary mapping replica indices to lists of completed epochs.
+
+    Parameters
+    ----------
+    replicas_path : Path
+        Directory containing replica folders.
+    name : str, optional
+        Optional name to include in the filename to specify the set of eigenvalues.
+
+    Returns
+    -------
+    dict
+        Dictionary mapping replica index -> list of completed epochs
+    """
+    completed_epochs = {}
+    for replica_folder in replicas_path.glob("replica_*"):
+        try:
+            idx = int(replica_folder.stem.split("_")[1])
+            filename = generate_filename(idx, name)
+            replica_file = replica_folder / f"{filename}"
+            if replica_file.exists():
+                data = np.load(replica_file)
+                completed_epochs[idx] = data["epochs"].tolist()
+        except (ValueError, IndexError) as e:
+            log.debug(f"Skipping folder {replica_folder.name}: {e}")
+            continue
+
+    return completed_epochs
 
 
 def save_replica_eigenvalues(

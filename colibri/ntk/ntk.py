@@ -24,7 +24,10 @@ from colibri.ntk.ntkutils import (
 log = logging.getLogger(__name__)
 
 
-@lru_cache(maxsize=None)
+# Bounded to the current epoch only. Each entry holds the full per-epoch NTK ensemble;
+# the old unbounded cache retained one per epoch -> unbounded growth over the epoch
+# trajectory (OOM). See eigenvectors_ensemble_at_epoch for the same fix/rationale.
+@lru_cache(maxsize=1)
 def ntk_ensemble_at_epoch(
     fit: FitSpec,
     replicas_path: Path,
