@@ -12,6 +12,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 
+from colibri import time_likelihood
 from colibri.time_likelihood import time_log_likelihood
 from colibri.tests.conftest import TEST_FORWARD_MAP_DIS, TEST_FORWARD_MAP_DIS
 
@@ -209,10 +210,39 @@ def test_time_log_likelihood_csv_format(
         assert relative_time_2 > 0  # Second should be positive
 
 
+def test_default_batch_sample_sizes_values():
+    """The advertised default batch sizes. Checked without running the sweep."""
+    assert time_likelihood.DEFAULT_BATCH_SAMPLE_SIZES == [
+        1,
+        10,
+        100,
+        1000,
+        5000,
+        10000,
+        20000,
+        50000,
+        100000,
+    ]
+
+
 def test_time_log_likelihood_none_uses_defaults(
-    mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path, caplog
+    mock_log_likelihood,
+    mock_param_initialiser_settings,
+    tmp_output_path,
+    caplog,
+    monkeypatch,
 ):
-    """Test that passing None for batch_sample_sizes uses default sizes."""
+    """
+    Test that passing None for batch_sample_sizes uses the module default.
+
+    NOTE: the default is patched to something small. The real default tops out at
+    100000, and time_log_likelihood generates max(sizes) parameter vectors up
+    front, so running this test against the true default costs ~200k device
+    operations to assert two facts that do not depend on the sizes at all. The
+    values themselves are covered by test_default_batch_sample_sizes_values.
+    """
+    monkeypatch.setattr(time_likelihood, "DEFAULT_BATCH_SAMPLE_SIZES", [1, 10, 100])
+
     with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
         mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
         with caplog.at_level(logging.INFO):
@@ -223,9 +253,8 @@ def test_time_log_likelihood_none_uses_defaults(
                 tmp_output_path,
                 batch_sample_sizes=None,
             )
-            # Check that default sizes were used
-            default_sizes = [1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]
-            assert sizes == default_sizes
+            # Check that the default sizes were used
+            assert sizes == [1, 10, 100]
             assert "Using default batch sample sizes" in caplog.text
 
 
