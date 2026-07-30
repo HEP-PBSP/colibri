@@ -254,9 +254,7 @@ def test_predictions_independent_of_fill_fk_xgrid_with_zeros():
 
     # Guard: the setup must actually exercise a non-trivial x-grid mapping.
     mappings = [
-        fktable_xgrid_indices(
-            load_fktable(ds.fkspecs[0]).with_cuts(ds.cuts), FIT_XGRID
-        )
+        fktable_xgrid_indices(load_fktable(ds.fkspecs[0]).with_cuts(ds.cuts), FIT_XGRID)
         for ds in data.datasets
     ]
     assert any(
