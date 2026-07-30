@@ -12,6 +12,7 @@ from validphys.fkparser import load_fktable
 import numpy as np
 
 from validphys.api import API as vpAPI
+from validphys.convolution import central_predictions
 
 from colibri.api import API as colibriAPI
 from colibri.tests.conftest import (
@@ -274,20 +275,12 @@ def test_predictions_independent_of_fill_fk_xgrid_with_zeros():
     assert_allclose(preds[False], preds[True], rtol=1e-6)
 
     # Cross-check both against validphys, which is the ground truth here.
+    # NOTE: use central_predictions rather than dataset_inputs_results: the latter
+    # convolves every replica of the PDF set (and makes LHAPDF load all 101 members)
+    # only for its central value to be taken, which is ~200x slower here.
+    pdf = vpAPI.pdf(pdf=CLOSURE_TEST_PDFSET["closure_test_pdf"])
     vp_preds = np.concatenate(
-        [
-            np.array(
-                vpAPI.dataset_inputs_results(
-                    **{
-                        **TEST_DATASETS_DIS_HAD,
-                        "dataset_inputs": [ds_inp],
-                        "pdf": CLOSURE_TEST_PDFSET["closure_test_pdf"],
-                        "use_t0": False,
-                    }
-                )[1].central_value
-            )
-            for ds_inp in TEST_DATASETS_DIS_HAD["dataset_inputs"]
-        ]
+        [np.array(central_predictions(ds, pdf)).ravel() for ds in data.datasets]
     )
     assert_allclose(preds[False], vp_preds, rtol=1e-6)
     assert_allclose(preds[True], vp_preds, rtol=1e-6)
