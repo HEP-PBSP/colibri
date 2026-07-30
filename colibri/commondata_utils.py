@@ -37,6 +37,7 @@ def level_0_commondata_tuple(
     FIT_XGRID,
     fast_kernel_arrays,
     flavour_indices=None,
+    fill_fk_xgrid_with_zeros=False,
 ):
     """
     Returns a tuple (validphys nodes should be immutable)
@@ -65,6 +66,9 @@ def level_0_commondata_tuple(
     flavour_indices: list, default is None
         Subset of flavour (evolution basis) indices to be used.
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+        Must match the value used to build ``fast_kernel_arrays``.
+
     Returns
     -------
     tuple
@@ -84,6 +88,7 @@ def level_0_commondata_tuple(
                     ds,
                     FIT_XGRID,
                     flavour_indices=flavour_indices,
+                    fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
                 )(closure_test_central_pdf_grid, fk_dataset)
             )
         )
