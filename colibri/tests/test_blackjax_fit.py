@@ -119,10 +119,13 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
     log_likelihood = lambda x: -jnp.sum(x**2)
 
     # --- minimal blackjax.nss mock ---
+    # blackjax.ns.nss states carry the evidence estimates on the integrator
     fake_algo = types.SimpleNamespace(
         init=lambda particles: types.SimpleNamespace(
-            logZ=0.0,
-            logZ_live=0.0,
+            integrator=types.SimpleNamespace(
+                logZ=0.0,
+                logZ_live=0.0,
+            )
         )
     )
 
@@ -132,15 +135,19 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
         patch("colibri.blackjax_fit.ess", return_value=2),
         patch("colibri.blackjax_fit.log_weights", return_value=jnp.zeros(5)),
         patch(
-            "colibri.blackjax_fit.sample", return_value=jnp.ones((2, 2))
+            "colibri.blackjax_fit.sample",
+            return_value=types.SimpleNamespace(position=jnp.ones((2, 2))),
         ),  # only 2 samples
         patch("colibri.blackjax_fit.resample_from_ns_posterior") as mock_resample,
         patch("colibri.blackjax_fit.anesthetic.NestedSamples"),
     ):
+        # finalise returns an NSInfo whose particles hold positions and logL info
         mock_finalise.return_value = types.SimpleNamespace(
-            particles=jnp.ones((5, 2)),
-            loglikelihood=jnp.arange(5.0),
-            loglikelihood_birth=jnp.zeros(5),
+            particles=types.SimpleNamespace(
+                position=jnp.ones((5, 2)),
+                loglikelihood=jnp.arange(5.0),
+                loglikelihood_birth=jnp.zeros(5),
+            )
         )
 
         caplog.set_level("WARNING")

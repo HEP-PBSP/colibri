@@ -36,7 +36,7 @@ nnpdf = { git = "https://github.com/NNPDF/nnpdf" }
 anesthetic = "^2.10.2"
 tfp-nightly = { extras = ["jax"], version = "*" }
 tf-keras = "*"
-blackjax = {git = "https://github.com/handley-lab/blackjax", tag = "v0.1.0-beta"}
+blackjax = "*"
 
 
 [tool.poetry.extras]
