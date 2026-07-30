@@ -11,17 +11,9 @@ import csv
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 from colibri.param_initialisation import pdf_initial_parameters
 
 log = logging.getLogger(__name__)
-
-DEFAULT_BATCH_SAMPLE_SIZES = [1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]
-"""
-Batch sizes timed when ``batch_sample_sizes`` is not given. Note that the cost of
-``time_log_likelihood`` is driven by ``max(batch_sample_sizes)``, since that many
-parameter vectors have to be generated up front.
-"""
 
 
 def time_log_likelihood(
@@ -53,7 +45,7 @@ def time_log_likelihood(
 
     # Batch sizes to test - use provided or default
     if batch_sample_sizes is None:
-        sizes = list(DEFAULT_BATCH_SAMPLE_SIZES)
+        sizes = [1, 10, 100, 1000, 5000, 10000, 20000, 50000, 100000]
         log.info("Using default batch sample sizes")
     else:
         sizes = batch_sample_sizes
@@ -78,13 +70,10 @@ def time_log_likelihood(
         params = pdf_initial_parameters(
             forward_map, param_initialiser_settings, replica_idx
         )
-        all_samples.append(np.asarray(params))
+        all_samples.append(params)
 
-    # Stack all samples into one large batch.
-    # NOTE: the stacking is done on the host and transferred to the device once.
-    # jnp.stack on a list of max_size device arrays instead builds a single XLA op
-    # with max_size operands, which is ~9x slower here at the default max_size.
-    all_samples_batch = jnp.asarray(np.stack(all_samples))
+    # Stack all samples into one large batch
+    all_samples_batch = jnp.stack(all_samples)
 
     # Create subsets for each size
     samples_list = []
