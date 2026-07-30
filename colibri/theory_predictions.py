@@ -43,7 +43,7 @@ def fktable_xgrid_indices(fktable, FIT_XGRID):
 
 
 def fast_kernel_arrays(
-    data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=True
+    data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
 ):
     """
     Returns a tuple of tuples of jax.numpy arrays.
@@ -116,6 +116,7 @@ def make_dis_prediction(
     fktable,
     FIT_XGRID,
     flavour_indices=None,
+    fill_fk_xgrid_with_zeros=False,
 ):
     """
     Closure to compute the theory prediction for a DIS observable.
@@ -132,6 +133,13 @@ def make_dis_prediction(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+        Must match the value used to build the FK arrays passed to the
+        returned closure (see :func:`fast_kernel_arrays`). If True the FK
+        array is padded to the full fit x-grid and therefore has to be
+        masked back onto the FK x-grid before the convolution; if False the
+        FK array already lives on the FK x-grid and must not be masked.
+
     Returns
     -------
     Callable
@@ -139,6 +147,18 @@ def make_dis_prediction(
     lumi_indices = mask_luminosity_mapping(fktable, flavour_indices)
 
     fk_xgrid_indices = fktable_xgrid_indices(fktable, FIT_XGRID)
+
+    # NOTE: the FK array is indexed on the fit x-grid only when it has been
+    # zero-padded onto it; otherwise its x-grid axis is already the FK x-grid.
+    if fill_fk_xgrid_with_zeros:
+
+        def mask_fk_arr(fk_arr):
+            return fk_arr[:, :, fk_xgrid_indices]
+
+    else:
+
+        def mask_fk_arr(fk_arr):
+            return fk_arr
 
     def dis_prediction(pdf, fk_arr):
         """
@@ -167,7 +187,7 @@ def make_dis_prediction(
         # NOTE: for computational efficiency, in the convolution, we only sum over xgrid points that are non-zero in the FK table.
         return jnp.einsum(
             "ijk, jk ->i",
-            fk_arr[:, :, fk_xgrid_indices],
+            mask_fk_arr(fk_arr),
             pdf[lumi_indices, :][:, fk_xgrid_indices],
         )
 
@@ -178,6 +198,7 @@ def make_had_prediction(
     fktable,
     FIT_XGRID,
     flavour_indices=None,
+    fill_fk_xgrid_with_zeros=False,
 ):
     """
     Closure to compute the theory prediction for a Hadronic observable.
@@ -192,6 +213,13 @@ def make_had_prediction(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+        Must match the value used to build the FK arrays passed to the
+        returned closure (see :func:`fast_kernel_arrays`). If True the FK
+        array is padded to the full fit x-grid and therefore has to be
+        masked back onto the FK x-grid before the convolution; if False the
+        FK array already lives on the FK x-grid and must not be masked.
+
     Returns
     -------
     Callable
@@ -201,6 +229,18 @@ def make_had_prediction(
     second_lumi_indices = lumi_indices[1::2]
 
     fk_xgrid_indices = fktable_xgrid_indices(fktable, FIT_XGRID)
+
+    # NOTE: the FK array is indexed on the fit x-grid only when it has been
+    # zero-padded onto it; otherwise its x-grid axes are already the FK x-grid.
+    if fill_fk_xgrid_with_zeros:
+
+        def mask_fk_arr(fk_arr):
+            return fk_arr[:, :, fk_xgrid_indices[:, None], fk_xgrid_indices[None, :]]
+
+    else:
+
+        def mask_fk_arr(fk_arr):
+            return fk_arr
 
     def had_prediction(pdf, fk_arr):
         """
@@ -229,7 +269,7 @@ def make_had_prediction(
         # NOTE: for computational efficiency, in the convolution, we only sum over xgrid points that are non-zero in the FK table.
         return jnp.einsum(
             "ijkl,jk,jl->i",
-            fk_arr[:, :, fk_xgrid_indices[:, None], fk_xgrid_indices[None, :]],
+            mask_fk_arr(fk_arr),
             pdf[first_lumi_indices, :][:, fk_xgrid_indices],
             pdf[second_lumi_indices, :][:, fk_xgrid_indices],
         )
@@ -241,6 +281,7 @@ def pred_funcs_from_dataset(
     dataset,
     FIT_XGRID,
     flavour_indices,
+    fill_fk_xgrid_with_zeros=False,
 ):
     """
     Returns a list containing the forward maps associated with the fkspecs of a dataset.
@@ -253,6 +294,10 @@ def pred_funcs_from_dataset(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+        Must match the value used to build the FK arrays passed to the
+        returned closures (see :func:`fast_kernel_arrays`).
+
     Returns
     -------
     list
@@ -264,9 +309,13 @@ def pred_funcs_from_dataset(
         fk = load_fktable(fkspec).with_cuts(dataset.cuts)
 
         if fk.hadronic:
-            pred = make_had_prediction(fk, FIT_XGRID, flavour_indices)
+            pred = make_had_prediction(
+                fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+            )
         else:
-            pred = make_dis_prediction(fk, FIT_XGRID, flavour_indices)
+            pred = make_dis_prediction(
+                fk, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+            )
         pred_funcs.append(pred)
 
     return pred_funcs
@@ -276,6 +325,7 @@ def make_pred_dataset(
     dataset,
     FIT_XGRID,
     flavour_indices=None,
+    fill_fk_xgrid_with_zeros=False,
 ):
     """
     Compute theory prediction for a DataSetSpec
@@ -290,12 +340,18 @@ def make_pred_dataset(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+        Must match the value used to build the FK arrays passed to the
+        returned closure (see :func:`fast_kernel_arrays`).
+
     Returns
     -------
     Callable
     """
 
-    pred_funcs = pred_funcs_from_dataset(dataset, FIT_XGRID, flavour_indices)
+    pred_funcs = pred_funcs_from_dataset(
+        dataset, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros
+    )
 
     def prediction(pdf, fk_dataset):
         return OP[dataset.op](
@@ -309,6 +365,7 @@ def make_pred_data(
     data,
     FIT_XGRID,
     flavour_indices=None,
+    fill_fk_xgrid_with_zeros=False,
 ):
     """
     Compute theory prediction for entire DataGroupSpec
@@ -323,6 +380,10 @@ def make_pred_data(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+        Must match the value used to build the FK arrays passed to the
+        returned closure (see :func:`fast_kernel_arrays`).
+
     Returns
     -------
     Callable
@@ -336,6 +397,7 @@ def make_pred_data(
                 ds,
                 FIT_XGRID,
                 flavour_indices,
+                fill_fk_xgrid_with_zeros,
             )
         )
 
@@ -355,6 +417,7 @@ def make_pred_t0data(
     data,
     FIT_XGRID,
     flavour_indices=None,
+    fill_fk_xgrid_with_zeros=False,
 ):
     """
     Compute theory prediction for entire DataGroupSpec.
@@ -371,6 +434,10 @@ def make_pred_t0data(
 
     flavour_indices: list, default is None
 
+    fill_fk_xgrid_with_zeros: bool, default is False
+        Must match the value used to build the FK arrays passed to the
+        returned closure (see :func:`fast_kernel_arrays`).
+
     Returns
     -------
     Callable
@@ -384,6 +451,7 @@ def make_pred_t0data(
                 ds,
                 FIT_XGRID,
                 flavour_indices=flavour_indices,
+                fill_fk_xgrid_with_zeros=fill_fk_xgrid_with_zeros,
             )
         )
 
