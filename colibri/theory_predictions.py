@@ -43,7 +43,7 @@ def fktable_xgrid_indices(fktable, FIT_XGRID):
 
 
 def fast_kernel_arrays(
-    data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=True
+    data, FIT_XGRID, flavour_indices=None, fill_fk_xgrid_with_zeros=False
 ):
     """
     Returns a tuple of tuples of jax.numpy arrays.
