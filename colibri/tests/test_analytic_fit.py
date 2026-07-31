@@ -13,12 +13,11 @@ import pytest
 
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
 from colibri.core import PriorSettings
+from colibri.forward_map import FKTableForwardMap
 from colibri.tests.conftest import (
     MOCK_CENTRAL_COVMAT_INDEX,
     MOCK_PDF_MODEL,
     TEST_FK_ARRAYS,
-    TEST_FORWARD_MAP_DIS,
-    TEST_PDF_GRID,
     TEST_PRIOR_SETTINGS_UNIFORM,
     TEST_XGRID,
 )
@@ -33,48 +32,49 @@ analytic_settings = {
 def test_analytic_fit_flat_direction():
     """
     Tests that the analytic fit raises a ValueError when the
-    pred_and_pdf_func returns a flat direction in the parameter space.
+    forward_map returns a flat direction in the parameter space.
     """
-    # override the pred_and_pdf_func to return a flat direction
-    # in the parameter space
-    MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fkarrs: (jnp.ones_like(params), TEST_PDF_GRID)
-    )
+    n_params = len(MOCK_PDF_MODEL.param_names)
 
-    _pred_data = TEST_FORWARD_MAP_DIS
+    forward_map = FKTableForwardMap(
+        lambda pdf, fkarrs: jnp.ones(n_params),
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     with pytest.raises(ValueError):
         # Run the analytic fit and make sure that the Value Error is raised
         analytic_fit(
             MOCK_CENTRAL_COVMAT_INDEX,
-            _pred_data,
-            MOCK_PDF_MODEL,
+            forward_map,
             analytic_settings,
             TEST_PRIOR_SETTINGS_UNIFORM,
-            TEST_XGRID,
             TEST_FK_ARRAYS,
         )
 
 
-def test_analytic_fit(caplog):
+def test_analytic_fit(caplog, monkeypatch):
     """
     Tests basic functionality of the analytic fit function.
     """
 
-    MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fkarrs: (params, TEST_PDF_GRID)
+    # Mock the grid_values_func of the PDF model within the test to return the input parameters as the PDF grid values
+    monkeypatch.setattr(
+        MOCK_PDF_MODEL, "grid_values_func", lambda xgrid: lambda params: params
     )
 
-    _pred_data = TEST_FORWARD_MAP_DIS
+    forward_map = FKTableForwardMap(
+        lambda pdf, fkarrs: pdf,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     # Run the analytic fit
     result = analytic_fit(
         MOCK_CENTRAL_COVMAT_INDEX,
-        _pred_data,
-        MOCK_PDF_MODEL,
+        forward_map,
         analytic_settings,
         TEST_PRIOR_SETTINGS_UNIFORM,
-        TEST_XGRID,
         TEST_FK_ARRAYS,
     )
 
@@ -92,11 +92,9 @@ def test_analytic_fit(caplog):
     with caplog.at_level(logging.ERROR):  # Set the log level to ERROR
         result_2 = analytic_fit(
             MOCK_CENTRAL_COVMAT_INDEX,
-            _pred_data,
-            MOCK_PDF_MODEL,
+            forward_map,
             analytic_settings,
             TEST_PRIOR_SETTINGS_UNIFORM,
-            TEST_XGRID,
             TEST_FK_ARRAYS,
         )
 
@@ -112,7 +110,7 @@ def test_analytic_fit(caplog):
     assert len(result_2.param_names) == len(MOCK_PDF_MODEL.param_names)
 
 
-def test_analytic_fit_different_priors(caplog):
+def test_analytic_fit_different_priors(caplog, monkeypatch):
 
     PRIOR_SETTINGS1 = PriorSettings(
         **{
@@ -121,20 +119,23 @@ def test_analytic_fit_different_priors(caplog):
         }
     )
 
-    MOCK_PDF_MODEL.pred_and_pdf_func = lambda xgrid, forward_map: (
-        lambda params, fkarrs: (params, TEST_PDF_GRID)
+    # Mock the grid_values_func of the PDF model within the test to return the input parameters as the PDF grid values
+    monkeypatch.setattr(
+        MOCK_PDF_MODEL, "grid_values_func", lambda xgrid: lambda params: params
     )
 
-    _pred_data = None
+    forward_map = FKTableForwardMap(
+        lambda pdf, fkarrs: pdf,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     # Run the analytic fit
     result = analytic_fit(
         MOCK_CENTRAL_COVMAT_INDEX,
-        _pred_data,
-        MOCK_PDF_MODEL,
+        forward_map,
         analytic_settings,
         PRIOR_SETTINGS1,
-        TEST_XGRID,
         TEST_FK_ARRAYS,
     )
 
@@ -156,11 +157,9 @@ def test_analytic_fit_different_priors(caplog):
     # Run the analytic fit with custom uniform prior
     result = analytic_fit(
         MOCK_CENTRAL_COVMAT_INDEX,
-        _pred_data,
-        MOCK_PDF_MODEL,
+        forward_map,
         analytic_settings,
         PRIOR_SETTINGS2,
-        TEST_XGRID,
         TEST_FK_ARRAYS,
     )
 

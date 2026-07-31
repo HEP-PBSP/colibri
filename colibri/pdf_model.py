@@ -6,7 +6,7 @@ This module implements an abstract class PDFModel which is filled by the various
 """
 
 from abc import ABC, abstractmethod
-from typing import Callable, Tuple
+from typing import Callable
 
 import jax.numpy as jnp
 from jax.typing import ArrayLike
@@ -25,6 +25,13 @@ class PDFModel(ABC):
         fed to the model.
         """
         pass
+
+    @property
+    def n_parameters(self):
+        """
+        Returns the number of parameters of the pdf model.
+        """
+        return len(self.param_names)
 
     @abstractmethod
     def grid_values_func(self, xgrid: ArrayLike) -> Callable[[jnp.array], jnp.ndarray]:
@@ -53,40 +60,3 @@ class PDFModel(ABC):
                 return func
         """
         pass
-
-    def pred_and_pdf_func(
-        self,
-        xgrid: ArrayLike,
-        forward_map: Callable[[jnp.ndarray, jnp.ndarray], jnp.ndarray],
-    ) -> Callable[[jnp.ndarray, jnp.ndarray], Tuple[jnp.ndarray, jnp.ndarray]]:
-        """Creates a function that returns a tuple of two arrays, given the model parameters and the fast kernel arrays as input.
-
-        The returned function produces:
-        - The first array: 1D vector of theory predictions for the data.
-        - The second array: PDF values evaluated on the x-grid, using `self.grid_values_func`, with shape (Nfl, Nx).
-
-        The `forward_map` is used to map the PDF values defined on the x-grid and the fast kernel arrays into the corresponding theory prediction vector.
-        """
-        pdf_func = self.grid_values_func(xgrid)
-
-        def pred_and_pdf(params, fast_kernel_arrays):
-            """
-            Parameters
-            ----------
-            params: jnp.array
-                The model parameters.
-
-            fast_kernel_arrays: tuple
-                tuple of tuples of jnp.arrays
-                The FK tables to use.
-
-            Returns
-            -------
-            tuple
-                The predictions and the PDF values.
-            """
-            pdf = pdf_func(params)
-            predictions = forward_map(pdf, fast_kernel_arrays)
-            return predictions, pdf
-
-        return pred_and_pdf

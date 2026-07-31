@@ -17,6 +17,7 @@ from blackjax.ns.utils import finalise, sample, log_weights, ess
 from jax.scipy.special import logsumexp
 import tqdm
 import anesthetic
+import pandas as pd
 
 from colibri.core import BlackJAXFit
 from colibri.export_results import export_bayes_results, write_replicas
@@ -37,7 +38,7 @@ blackjax_logger.addHandler(handler)
 
 
 def blackjax_fit(
-    pdf_model,
+    forward_map,
     bayesian_prior,
     blackjax_settings,
     log_likelihood,
@@ -47,8 +48,8 @@ def blackjax_fit(
 
     Parameters
     ----------
-    pdf_model: pdf_model.PDFModel
-        The PDF model to fit.
+    forward_map: ForwardMap
+        The forward map whose ``param_names`` enumerate all fit parameters.
 
     bayesian_prior: BayesianPrior, @jax.jit CompiledFunction
         The prior function for the model.
@@ -68,9 +69,9 @@ def blackjax_fit(
     log.info(f"Running fit with backend: {jax.default_backend()}")
 
     # set the BlackJAX seed
-    rng_key = jax.random.PRNGKey(blackjax_settings["seed"])
+    rng_key = jax.random.PRNGKey(blackjax_settings["blackjax_seed"])
     log.info(f"BlackJAX initialisation seed: {rng_key}")
-    n_dims = pdf_model.n_parameters
+    n_dims = len(forward_map.param_names)
     n_live = blackjax_settings["n_live"]
     n_delete = int(blackjax_settings["delete_fraction"] * n_live)
 
@@ -141,12 +142,16 @@ def blackjax_fit(
         data=final_states.particles,
         logL=final_states.loglikelihood,
         logL_birth=final_states.loglikelihood_birth,
-        columns=pdf_model.param_names,
+        columns=forward_map.param_names,
     )
     # write nested_samples.csv to blackjax_logs
     log_dir = blackjax_settings["log_dir"]
     os.makedirs(log_dir, exist_ok=True)  # Create directory if it doesn't exist
     nested_samples.to_csv(log_dir + "/nested_samples.csv")
+
+    # Export resampled posterior samples
+    posterior_df = pd.DataFrame(resampled_posterior, columns=forward_map.param_names)
+    posterior_df.to_csv(os.path.join(log_dir, "posterior_samples.csv"), index=False)
 
     # Compute bayesian metrics (similar to UltraNest)
     # Find maximum likelihood point
@@ -167,7 +172,7 @@ def blackjax_fit(
             "logZ_err": logzs.std(),
             "ess": ess_value,
         },
-        param_names=pdf_model.param_names,
+        param_names=forward_map.param_names,
         resampled_posterior=resampled_posterior,
         full_posterior_samples=full_samples,
         bayesian_metrics={

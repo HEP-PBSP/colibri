@@ -5,12 +5,12 @@ Module containing standard pytest data configurations for testing purposes.
 import pathlib
 from unittest.mock import Mock, MagicMock
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 
 from colibri.pdf_model import PDFModel
 from colibri.core import PriorSettings
+from colibri.forward_map import FKTableForwardMap
 
 CONFIG_YML_PATH = "test_runcards/test_config.yaml"
 
@@ -37,6 +37,13 @@ TEST_DATASETS = {
     "theoryid": TEST_THEORYID,
     "use_cuts": TEST_USECUTS,
 }
+
+TEST_NEGATIVE_DATASETS = {
+    "dataset_inputs": [{"dataset": "HERA_CC_318GEV_EM-SIGMARED", "variant": "legacy"}],
+    "theoryid": TEST_THEORYID,
+    "use_cuts": TEST_USECUTS,
+}
+
 """
 This should contain the exact same info as TEST_DATASET, but with the use of
 the "dataset_inputs" key instead of "dataset_input"
@@ -105,6 +112,7 @@ CLOSURE_TEST_PDFSET = {"closure_test_pdf": "NNPDF40_nnlo_as_01180"}
 
 TRVAL_INDEX = {"trval_index": 1}
 REPLICA_INDEX = {"replica_index": 1}
+MCSEED = {"mcseed": 519562661}
 
 
 PSEUDODATA_SEED = 123456
@@ -266,11 +274,11 @@ class TestPDFModel(PDFModel):
     """
 
     def __init__(self, n_parameters):
-        self.n_parameters = n_parameters
+        self._n_parameters = n_parameters
 
     @property
     def param_names(self):
-        return [f"w_{i+1}" for i in range(self.n_parameters)]
+        return [f"w_{i+1}" for i in range(self._n_parameters)]
 
     def grid_values_func(self, xgrid):
         """
@@ -292,16 +300,7 @@ MOCK_PDF_MODEL.param_names = ["param1", "param2"]
 MOCK_PDF_MODEL.grid_values_func = lambda xgrid: lambda params: jnp.sum(
     jnp.array([param * TEST_PDF_GRID for param in params]), axis=0
 )
-"""
-Mock PDF model with 2 parameters and grid_values_func simple mult add operation on np.ones grid.
-"""
 
-MOCK_PDF_MODEL.pred_and_pdf_func = (
-    lambda xgrid, forward_map: lambda params, fast_kernel_arrays: (
-        forward_map(MOCK_PDF_MODEL.grid_values_func(xgrid)(params), fast_kernel_arrays),
-        MOCK_PDF_MODEL.grid_values_func(xgrid)(params),
-    )
-)
 """
 Mock prediction function of PDF model.
 """
@@ -333,7 +332,11 @@ This mocks a POS fast kernel mapping the PDF grid to 2 datapoints.
 """
 
 
-TEST_FORWARD_MAP_DIS = lambda pdf, fk_arrays: jnp.einsum("ijk,jk->i", fk_arrays[0], pdf)
+TEST_FORWARD_MAP_DIS = FKTableForwardMap(
+    lambda pdf, fk_arrays: jnp.einsum("ijk,jk->i", fk_arrays[0], pdf),
+    pdf_model=MOCK_PDF_MODEL,
+    pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+)
 """
 Mock DIS forward map function for testing purposes.
 Function expects a tuple of DIS-like fast kernel array of shape (N_data, TEST_N_FL, TEST_N_XGRID) and a PDF of shape (TEST_N_FL, TEST_N_XGRID).

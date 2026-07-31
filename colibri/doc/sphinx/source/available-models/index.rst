@@ -14,3 +14,4 @@ To implement your own model, follow :ref:`this tutorial <in_les_houches>`.
 
    linear-model
    grid-pdf-model
+   n3fit

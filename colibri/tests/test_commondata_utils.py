@@ -107,7 +107,12 @@ def test_level1_commondata_tuple():
     )
 
     current_level1_central_values = colibriAPI.level_1_commondata_tuple(
-        **{**TEST_DATASETS, **CLOSURE_TEST_PDFSET, "level_1_seed": PSEUDODATA_SEED}
+        **{
+            **TEST_DATASETS,
+            **CLOSURE_TEST_PDFSET,
+            "level_1_seed": PSEUDODATA_SEED,
+            **T0_PDFSET,
+        }
     )
 
     assert_allclose(
