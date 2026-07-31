@@ -113,7 +113,7 @@ def monte_carlo_fit(
     )
 
 
-def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, Q0):
+def run_monte_carlo_fit(monte_carlo_fit, forward_map, output_path, replica_index, Q0):
     """
     Runs the Monte Carlo fit and writes the output to the output directory.
 
@@ -122,8 +122,10 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, 
     monte_carlo_fit: MonteCarloFit
         The results of the Monte Carlo fit.
 
-    pdf_model: pdf_model.PDFModel
-        The PDF model used in the fit.
+    forward_map: forward_map.ForwardMap
+        The forward map used in the fit. Its .param_names (PDF + extra params)
+        label the optimized parameters; its .pdf_model is used to write the
+        export grid.
 
     output_path: pathlib.PosixPath
         Path to the output folder.
@@ -136,7 +138,7 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, 
     """
     mc_fit = monte_carlo_fit
 
-    df = pd.DataFrame(mc_fit.optimized_parameters, index=pdf_model.param_names).T
+    df = pd.DataFrame(mc_fit.optimized_parameters, index=forward_map.param_names).T
 
     # In a Monte Carlo fit, replicas are written to the fit_replicas
     # directory, and mc_postfit must then be applied to select valid ones
@@ -149,7 +151,7 @@ def run_monte_carlo_fit(monte_carlo_fit, pdf_model, output_path, replica_index, 
     log.info(f"Writing exportgrid for replica {replica_index}")
     write_exportgrid_mc(
         jnp.array(df.iloc[0, :].tolist()),
-        pdf_model,
+        forward_map.pdf_model,
         replica_index,
         output_path,
         Q0,

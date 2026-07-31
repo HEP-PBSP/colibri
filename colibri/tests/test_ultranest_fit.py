@@ -22,6 +22,7 @@ from colibri.tests.conftest import (
 from colibri.ultranest_fit import UltranestFit, run_ultranest_fit, ultranest_fit
 from colibri.likelihood import LogLikelihood
 from colibri.core import BayesianPrior
+from colibri.forward_map import FKTableForwardMap
 
 jax.config.update("jax_enable_x64", True)
 
@@ -66,11 +67,15 @@ vect_ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 def test_ultranest_fit(pos_penalty):
 
     _pred_data = lambda *args: jnp.array([0.0])
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
-        _pred_data,
+        forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -83,7 +88,7 @@ def test_ultranest_fit(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings,
         mock_log_likelihood,
@@ -103,13 +108,17 @@ def test_ultranest_fit(pos_penalty):
 def test_ultranest_fit_vectorized(pos_penalty):
 
     _pred_data = lambda *args: jnp.array([0.0])
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
     ultranest_settings["ReactiveNS_settings"]["vectorized"] = True
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
-        _pred_data,
+        forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -122,7 +131,7 @@ def test_ultranest_fit_vectorized(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings,
         mock_log_likelihood,
@@ -152,12 +161,16 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     }
 
     _pred_data = lambda *args: jnp.array([0.0])
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
-        _pred_data,
+        forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -170,7 +183,7 @@ def test_ultranest_fit_with_SliceSampler(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings,
         mock_log_likelihood,
@@ -200,12 +213,16 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     }
 
     _pred_data = lambda *args: jnp.array([0.0])
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
-        _pred_data,
+        forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -218,7 +235,7 @@ def test_ultranest_fit_with_popSliceSampler(pos_penalty):
     )
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings,
         mock_log_likelihood,
@@ -252,12 +269,16 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
     }
 
     _pred_data = lambda *args: jnp.array([0.0])
+    forward_map = FKTableForwardMap(
+        _pred_data,
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
 
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
-        _pred_data,
+        forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -285,7 +306,7 @@ def test_ultranest_fit_with_sampler_plot(mock_sampler_class, pos_penalty):
     mock_sampler_instance.plot = Mock()
 
     fit_result = ultranest_fit(
-        MOCK_PDF_MODEL,
+        forward_map,
         bayesian_prior,
         ultranest_settings_with_plot,
         mock_log_likelihood,

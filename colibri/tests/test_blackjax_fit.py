@@ -21,6 +21,7 @@ from colibri.tests.conftest import (
 
 from colibri.core import BlackJAXFit, BayesianPrior
 from colibri.blackjax_fit import blackjax_fit, run_blackjax_fit
+from colibri.forward_map import FKTableForwardMap
 from colibri.likelihood import LogLikelihood
 
 jax.config.update("jax_enable_x64", True)
@@ -42,13 +43,13 @@ def mock_sample(rng_key, n_samples):
 bayesian_prior = BayesianPrior(
     prior_transform=lambda x: x,
     log_prob=lambda x: -jnp.sum(x**2, axis=-1),
-    sample=lambda rng, n: jnp.zeros((n, MOCK_PDF_MODEL.n_parameters)),
+    sample=lambda rng, n: jnp.zeros((n, len(MOCK_PDF_MODEL.param_names))),
 )
 
 integrability_penalty = lambda pdf: jnp.array([0.0])
 
 blackjax_settings = {
-    "seed": 42,
+    "blackjax_seed": 42,
     "n_live": 50,
     "delete_fraction": 0.5,
     "repeats": 2,
@@ -61,12 +62,15 @@ blackjax_settings = {
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_blackjax_fit(pos_penalty):
-    _pred_data = lambda *args: jnp.array([0.0])
+    forward_map = FKTableForwardMap(
+        lambda pdf, fk: jnp.zeros(len(MOCK_PDF_MODEL.param_names)),
+        pdf_model=MOCK_PDF_MODEL,
+        pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+    )
     mock_log_likelihood = LogLikelihood(
         MOCK_CENTRAL_COVMAT_INDEX,
         MOCK_PDF_MODEL,
-        TEST_XGRID,
-        _pred_data,
+        forward_map,
         TEST_FK_ARRAYS,
         TEST_POS_FK_ARRAYS,
         MOCK_PENALTY_POSDATA,
@@ -78,12 +82,10 @@ def test_blackjax_fit(pos_penalty):
         integrability_penalty=integrability_penalty,
     )
 
-    MOCK_PDF_MODEL.n_parameters = len(MOCK_PDF_MODEL.param_names)
-
     with patch("colibri.blackjax_fit.anesthetic.NestedSamples"):
 
         fit_result = blackjax_fit(
-            MOCK_PDF_MODEL,
+            forward_map,
             bayesian_prior,
             blackjax_settings,
             mock_log_likelihood,
@@ -93,17 +95,18 @@ def test_blackjax_fit(pos_penalty):
 
 
 def test_blackjax_fit_truncates_posterior_and_warns(caplog):
-    # --- ensure pdf_model is consistent ---
-    MOCK_PDF_MODEL.n_parameters = len(MOCK_PDF_MODEL.param_names)
+    # --- build a forward_map with the right param_names ---
+    mock_forward_map = Mock()
+    mock_forward_map.param_names = ["param1", "param2"]
 
     bayesian_prior = BayesianPrior(
         prior_transform=lambda x: x,
         log_prob=lambda x: -jnp.sum(x**2, axis=-1),
-        sample=lambda rng, n: jnp.zeros((n, MOCK_PDF_MODEL.n_parameters)),
+        sample=lambda rng, n: jnp.zeros((n, len(mock_forward_map.param_names))),
     )
 
     blackjax_settings = {
-        "seed": 0,
+        "blackjax_seed": 0,
         "n_live": 4,
         "delete_fraction": 0.5,
         "repeats": 1,
@@ -143,7 +146,7 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
         caplog.set_level("WARNING")
 
         fit_result = blackjax_fit(
-            MOCK_PDF_MODEL,
+            mock_forward_map,
             bayesian_prior,
             blackjax_settings,
             log_likelihood,

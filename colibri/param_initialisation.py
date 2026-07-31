@@ -5,14 +5,15 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=-1):
+def pdf_initial_parameters(forward_map, param_initialiser_settings, replica_index=-1):
     """
-    This function provides initial parameters for the PDF model.
+    This function provides initial parameters for the forward map.
 
     Parameters
     ----------
-    pdf_model: pdf_mode.PDFModel
-        The PDF model to initialise the parameters for.
+    forward_map: forward_map.ForwardMap
+        The forward map whose .param_names (PDF parameters + any extra parameters)
+        are used to determine the size and ordering of the initialised array.
 
     param_initialiser_settings: dict
         The settings for the initialiser.
@@ -34,7 +35,7 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
         param_initialiser_settings["type"] = "zeros"
 
     if param_initialiser_settings["type"] == "zeros":
-        return jnp.array([0.0] * len(pdf_model.param_names))
+        return jnp.array([0.0] * len(forward_map.param_names))
 
     if "random_seed" in param_initialiser_settings:
         random_seed = jax.random.PRNGKey(
@@ -43,7 +44,7 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
     else:
         random_seed = jax.random.PRNGKey(replica_index)
 
-    param_names = pdf_model.param_names
+    param_names = forward_map.param_names
 
     if param_initialiser_settings["type"] == "normal":
         means_setting = param_initialiser_settings.get("means", 0.0)
@@ -127,7 +128,7 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
 
         initial_values = jax.random.uniform(
             key=random_seed,
-            shape=(len(pdf_model.param_names),),
+            shape=(len(forward_map.param_names),),
             minval=min_val,
             maxval=max_val,
         )
