@@ -116,7 +116,24 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
         "log_dir": "test_logs",
     }
 
-    log_likelihood = lambda x: -jnp.sum(x**2)
+    mock_log_likelihood = LogLikelihood(
+        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_PDF_MODEL,
+        FKTableForwardMap(
+            lambda pdf, fk: jnp.zeros(len(MOCK_PDF_MODEL.param_names)),
+            pdf_model=MOCK_PDF_MODEL,
+            pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+        ),
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
+        MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings={
+            "positivity_penalty": False,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
+        integrability_penalty=integrability_penalty,
+    )
 
     # --- minimal blackjax.nss mock ---
     fake_algo = types.SimpleNamespace(
@@ -149,7 +166,7 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
             mock_forward_map,
             bayesian_prior,
             blackjax_settings,
-            log_likelihood,
+            mock_log_likelihood,
         )
 
     # --- assertions ---

@@ -165,6 +165,12 @@ def blackjax_fit(
 
     Cb = avg_chi2 - min_chi2
 
+    # number of data points
+    ndata = log_likelihood.central_values.shape[0]
+
+    # reduced chi2
+    avg_chi2_red = avg_chi2 / ndata
+
     fit_result = BlackJAXFit(
         blackjax_specs=blackjax_settings,
         blackjax_result={
@@ -178,6 +184,7 @@ def blackjax_fit(
         bayesian_metrics={
             "bayes_complexity": Cb,
             "avg_chi2": avg_chi2,
+            "avg_chi2_reduced": avg_chi2_red,
             "min_chi2": min_chi2,
             "logz": logzs.mean(),
         },

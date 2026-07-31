@@ -338,10 +338,13 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
     mock_ultranest_fit.full_posterior_samples = jax.random.normal(
         jax.random.PRNGKey(0), (100, 2)
     )
-    mock_ultranest_fit.bayes_complexity = 2.0
-    mock_ultranest_fit.avg_chi2 = 0.3
-    mock_ultranest_fit.min_chi2 = 0.1
-    mock_ultranest_fit.logz = 7.0
+    mock_ultranest_fit.bayesian_metrics = {
+        "bayes_complexity": 2.0,
+        "avg_chi2": 0.3,
+        "avg_chi2_reduced": 0.009,
+        "min_chi2": 0.1,
+        "logz": 7.0,
+    }
 
     # Run the run_ultranest_fit function
     output_path = str(tmp_path)
