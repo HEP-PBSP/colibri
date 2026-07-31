@@ -113,11 +113,7 @@ def level_0_commondata_tuple(
         Subset of flavour (evolution basis) indices to be used.
 
     fill_fk_xgrid_with_zeros: bool, default is False
-        If True, then the missing xgrid points in the FK table
-        will be filled with zeros. This is useful when the FK table
-        is needed as tensor of shape (Ndat, Nfl, Nfk_xgrid) with Nfk_xgrid and Nfl fixed
-        for all datasets.
-
+        Must match the value used to build ``fast_kernel_arrays``.
 
     Returns
     -------
