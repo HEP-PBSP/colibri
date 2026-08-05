@@ -184,12 +184,15 @@ class MonteCarloFit:
         Array containing the validation loss.
     optimized_parameters: jnp.array
         Array containing the optimized parameters.
+    parameters_by_epoch: jnp.array
+        Array containing the parameters of the model recorded during training.
     """
 
     monte_carlo_specs: dict
     training_loss: jnp.array
     validation_loss: jnp.array
     optimized_parameters: jnp.array
+    parameters_by_epoch: jnp.array
 
 
 @dataclass(frozen=True)
@@ -206,12 +209,15 @@ class GradientDescentResult:
         Recorded (epoch) validation losses (sampled according to record_every).
     specs: dict
         Dictionary of settings used for the run (epochs, batch size, etc.).
+    parameters_by_epoch: jnp.array
+        Array containing the parameters of the model recorded during training.
     """
 
     optimized_parameters: Any
     training_loss: jnp.array
     validation_loss: jnp.array
     specs: Dict[str, Any]
+    parameters_by_epoch: jnp.array
 
 
 @dataclass(frozen=True)

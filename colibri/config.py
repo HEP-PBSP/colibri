@@ -10,6 +10,7 @@ import hashlib
 import logging
 import os
 import shutil
+from pathlib import Path
 
 import jax
 import jax.numpy as jnp
@@ -18,10 +19,11 @@ from colibri import covmats as colibri_covmats
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
 from mpi4py import MPI
-from reportengine.configparser import ConfigError, explicit_node
+from reportengine.configparser import ConfigError, explicit_node, element_of
 from validphys import covmats
-from validphys.config import Config, Environment
+from validphys.config import Config, Environment, _id_with_label
 from validphys.fkparser import load_fktable
+from validphys.loader import LoadFailedError
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -654,3 +656,20 @@ class colibriConfig(Config):
         Returns None as the pdf_model is not used in the colibri module.
         """
         return None
+
+    def produce_replicas_path(self, fit):
+        """
+        Produces the replicas folder where the fit replicas are stored.
+        """
+        replicas_path = fit.path / "fit_replicas"
+        replicas_path.mkdir(parents=True, exist_ok=True)
+        return replicas_path
+
+    @element_of("fits")
+    @_id_with_label
+    def parse_fit(self, fit: str):
+        """A fit in the results folder, containing at least a valid filter result."""
+        try:
+            return self.loader.check_fit(fit)
+        except LoadFailedError as e:
+            raise ConfigError(str(e), fit, self.loader.available_fits)

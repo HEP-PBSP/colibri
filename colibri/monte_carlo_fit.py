@@ -28,6 +28,10 @@ def monte_carlo_fit(
     early_stopper,
     max_epochs,
     data_batches,
+    batch_size=None,
+    batch_seed=1,
+    record_parameters=False,
+    record_every=50,
 ):
     """
     This function performs a Monte Carlo fit.
@@ -56,6 +60,13 @@ def monte_carlo_fit(
     data_batches: colibri.data_batch.DataBatches
         Data batches provider.
 
+    record_parameters: bool, default False
+        Whether to monitor the parameters during the Monte Carlo fit.
+
+    record_every: int, default 50
+        Frequency (in epochs) at which to record losses parameters of
+        model. If record_parameters is False, only losses are recorded.
+
     Returns
     -------
     MonteCarloFit: The result of the fit with following attributes:
@@ -63,7 +74,6 @@ def monte_carlo_fit(
         training_loss: jnp.array
         validation_loss: jnp.array
     """
-
     len_tr_idx, len_val_idx = len_trval_data
 
     @jax.jit
@@ -90,7 +100,8 @@ def monte_carlo_fit(
         early_stopper=early_stopper,
         max_epochs=max_epochs,
         data_batch=data_batches,
-        record_every=50,
+        record_every=record_every,
+        record_parameters=record_parameters,
     )
 
     t1 = time.time()
@@ -99,16 +110,25 @@ def monte_carlo_fit(
     return MonteCarloFit(
         monte_carlo_specs={
             "max_epochs": max_epochs,
+            "record_every": record_every,
             "batch_size": data_batches.batch_size,
             "batch_seed": data_batches.batch_seed,
         },
         training_loss=gd_result.training_loss,
         validation_loss=gd_result.validation_loss,
         optimized_parameters=gd_result.optimized_parameters,
+        parameters_by_epoch=gd_result.parameters_by_epoch,
     )
 
 
-def run_monte_carlo_fit(monte_carlo_fit, forward_map, output_path, replica_index, Q0):
+def run_monte_carlo_fit(
+    monte_carlo_fit,
+    forward_map,
+    output_path,
+    replica_index,
+    Q0,
+    record_parameters=False,
+):
     """
     Runs the Monte Carlo fit and writes the output to the output directory.
 
@@ -170,3 +190,20 @@ def run_monte_carlo_fit(monte_carlo_fit, forward_map, output_path, replica_index
         index=False,
         float_format="%.5e",
     )
+
+    if record_parameters:
+        # Save the parameters by epoch if recorded
+        record_every = mc_fit.monte_carlo_specs["record_every"]
+        parameters_by_epoch = mc_fit.parameters_by_epoch
+        params_path = (
+            str(output_path) + f"/fit_replicas/replica_{replica_index}/parameters/"
+        )
+        if not os.path.exists(params_path):
+            os.makedirs(params_path, exist_ok=True)
+
+        for epoch_idx in range(parameters_by_epoch.shape[0]):
+            epoch = epoch_idx * record_every
+            jnp.savez(
+                params_path + f"params_{epoch}.npz",
+                params=parameters_by_epoch[epoch_idx],
+            )
