@@ -524,6 +524,31 @@ def get_replica_idx_list(replicas_path):
     return rep_list
 
 
+def _ntk_from_jacobian(jacobian_func, params):
+    """The NTK from an already-built jacobian function, as a host NumPy array.
+
+    Split out of :func:`compute_ntk` so that callers with an *epoch loop* can build
+    the jacobian **once** and reuse it (see ``compute_eigenvalues_for_replica``).
+
+    Returns
+    -------
+    ntk : np.ndarray
+        The NTK matrix, flattened to (nflavours * n_xgrid) x (nflavours * n_xgrid)
+    ntk_shape : tuple
+        Shape of the NTK matrix before flattening
+    """
+    jacobian = jacobian_func(params)
+
+    # Compute NTK (nf,ng,nf,ng) -> assumes shape from jacobian
+    ntk = jnp.einsum("ijk,lmk->ijlm", jacobian, jacobian)
+
+    # Flatten to (nflavors * n_xgrid) × (nflavors * n_xgrid)
+    d1, d2, d3, d4 = ntk.shape  # d1=nf, d2=ng, d3=nf, d4=ng
+    ntk = ntk.reshape(d1 * d2, d3 * d4, order=NTK_ORDERING)
+
+    return np.asarray(ntk), (d1, d2, d3, d4)
+
+
 def compute_ntk(pdf_model, params, **kwargs):
     """
     Compute the NTK matrix given model parameters.
@@ -546,26 +571,17 @@ def compute_ntk(pdf_model, params, **kwargs):
         Shape of the NTK matrix
     """
     pdf_func = pdf_model.grid_values_func(XGRID, **kwargs)
-    jacobian_func = jax.jacfwd(pdf_func)
-    jacobian = jacobian_func(params)
+    ntk, shape = _ntk_from_jacobian(jax.jacfwd(pdf_func), params)
 
-    # Compute NTK (nf,ng,nf,ng) -> assumes shape from jacobian
-    ntk = jnp.einsum("ijk,lmk->ijlm", jacobian, jacobian)
-
-    # Flatten to (nflavors * n_xgrid) × (nflavors * n_xgrid)
-    d1, d2, d3, d4 = ntk.shape  # d1=nf, d2=ng, d3=nf, d4=ng
-    ntk = ntk.reshape(d1 * d2, d3 * d4, order=NTK_ORDERING)
-
-    # Materialise the NTK to host (NumPy), then drop JAX's compilation cache. Each call
+    # The NTK is on the host by now, so drop JAX's compilation cache. Each call
     # rebuilds the model -> a fresh jacfwd -> a new XLA program with this epoch's weights
     # baked in; without clearing, those compiled programs accumulate (~0.3 GB/call). This
     # matters because the report recomputes the *same* snapshot epochs many times (the
     # eigenvector_grid is resolved per presentation leaf, and the bounded functools cache
     # thrashes when those epochs interleave), so the per-call leak compounds -> OOM.
-    ntk = np.asarray(ntk)
     jax.clear_caches()
 
-    return ntk, (d1, d2, d3, d4)
+    return ntk, shape
 
 
 def compute_eigendecomposition(ntk_matrix, hermitian=True):
@@ -650,12 +666,22 @@ def compute_eigenvalues_for_replica(
                 if epoch in pending_epochs
             }
 
+        # Build the jacobian ONCE for this replica, not once per epoch. It depends only
+        # on the model and ``kwargs`` -- never on the weights, which enter as an argument
+        # -- so a single ``jit`` cache key serves every epoch: one trace, one compiled
+        # program, reused.
+        # Do not clear caches inside this loop: it is process-global and replicas run in a
+        # ThreadPoolExecutor, so one thread clearing would force its siblings to recompile.
+        # ``jac`` is released with this frame when the replica is done.
+        pdf_func = pdf_model.grid_values_func(XGRID, **kwargs)
+        jac = jax.jit(jax.jacfwd(pdf_func))
+
         for epoch, param_file in param_files.items():
             if max_epoch is not None and epoch > max_epoch:
                 continue
             params = jnp.load(param_file)["params"]
 
-            ntk, shape = compute_ntk(pdf_model, params, **kwargs)
+            ntk, shape = _ntk_from_jacobian(jac, params)
             if ntk_shape is None:
                 ntk_shape = shape
 
