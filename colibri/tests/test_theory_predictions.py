@@ -9,12 +9,18 @@ import jaxlib
 from numpy.testing import assert_allclose
 from validphys.fkparser import load_fktable
 
+import numpy as np
+
+from validphys.api import API as vpAPI
+from validphys.convolution import central_predictions
+
 from colibri.api import API as colibriAPI
 from colibri.tests.conftest import (
     CLOSURE_TEST_PDFSET,
     TEST_DATASET,
     TEST_DATASET_HAD,
     TEST_DATASETS,
+    TEST_DATASETS_DIS_HAD,
     TEST_DATASETS_HAD,
 )
 from colibri.theory_predictions import (
@@ -30,26 +36,12 @@ class FKTableDataMock:
         self.xgrid = xgrid
 
 
-def test_fktable_xgrid_indices_fill_with_zeros():
-    # Case where fill_fk_xgrid_with_zeros is True
-    fktable = FKTableDataMock(xgrid=jnp.array([0.1, 0.2, 0.3]))
-    FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
-
-    expected_indices = jnp.arange(
-        len(FIT_XGRID)
-    )  # Should return indices for the entire FIT_XGRID
-    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=True)
-
-    assert jnp.array_equal(result, expected_indices)
-
-
-def test_fktable_xgrid_indices_no_fill():
-    # Case where fill_fk_xgrid_with_zeros is False
+def test_fktable_xgrid_indices():
     fktable = FKTableDataMock(xgrid=jnp.array([0.1, 0.2, 0.3]))
     FIT_XGRID = jnp.array([0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
 
     expected_indices = jnp.array([1, 3, 5])  # Indices where fk_xgrid matches FIT_XGRID
-    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+    result = fktable_xgrid_indices(fktable, FIT_XGRID)
 
     assert jnp.array_equal(result, expected_indices)
 
@@ -61,7 +53,7 @@ def test_fktable_xgrid_indices_with_tolerance():
 
     # Due to tolerance, the indices should match as if they were the same
     expected_indices = jnp.array([1, 3, 5])
-    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+    result = fktable_xgrid_indices(fktable, FIT_XGRID)
 
     assert jnp.array_equal(result, expected_indices)
 
@@ -74,7 +66,7 @@ def test_fktable_xgrid_indices_no_matches():
     expected_indices = jnp.array(
         []
     )  # No matching indices, closest_indices returns empty array
-    result = fktable_xgrid_indices(fktable, FIT_XGRID, fill_fk_xgrid_with_zeros=False)
+    result = fktable_xgrid_indices(fktable, FIT_XGRID)
     assert jnp.array_equal(result, expected_indices)
 
 
@@ -120,6 +112,49 @@ def test_fast_kernel_arrays():
     fk_xgrid = load_fktable(ds.fkspecs[0]).xgrid
     non_zero_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-8)
     assert jnp.any(fk_arrays_filled[0][0][:, :, non_zero_indices] != 0)
+
+
+def test_fast_kernel_arrays_hadronic_fill_with_zeros():
+    """
+    Test that fast_kernel_arrays correctly fills the x-grid with zeros for hadronic FK tables.
+    This is a regression test for the bug where the 4D hadronic array was assigned
+    into a 3D zeros array.
+    """
+    from colibri.utils import closest_indices
+    from validphys.fkparser import load_fktable
+
+    dataset = colibriAPI.data(**TEST_DATASETS_HAD)
+    ds = dataset.datasets[0]
+    FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS_HAD)
+
+    # This should not raise an error (regression check)
+    fk_arrays_filled = colibriAPI.fast_kernel_arrays(
+        **{**TEST_DATASETS_HAD, "fill_fk_xgrid_with_zeros": True}
+    )
+
+    fk_arr = fk_arrays_filled[0][0]
+
+    # Hadronic FK array should be 4D: (Ndat, Nfl, Nfit_x, Nfit_x)
+    assert fk_arr.ndim == 4
+    assert fk_arr.shape[2] == len(FIT_XGRID)
+    assert fk_arr.shape[3] == len(FIT_XGRID)
+
+    # Check that non-zero values are placed at the correct x-grid positions
+    fk_xgrid = load_fktable(ds.fkspecs[0]).xgrid
+    non_zero_indices = closest_indices(FIT_XGRID, fk_xgrid, atol=1e-8)
+    non_zero_indices = np.array(non_zero_indices)
+
+    # The non-zero block should contain non-zero values
+    assert jnp.any(
+        fk_arr[:, :, non_zero_indices[:, None], non_zero_indices[None, :]] != 0
+    )
+
+    # Entries outside the non-zero block should be zero
+    all_indices = np.arange(len(FIT_XGRID))
+    zero_indices = np.setdiff1d(all_indices, non_zero_indices)
+    if len(zero_indices) > 0:
+        assert jnp.all(fk_arr[:, :, zero_indices, :] == 0)
+        assert jnp.all(fk_arr[:, :, :, zero_indices] == 0)
 
 
 def test_make_dis_prediction():
@@ -198,3 +233,54 @@ def test_make_pred_data():
 
     assert callable(eval_preds)
     assert pred_data.shape == (fk_arrs[0][0].shape[0],)
+
+
+def test_predictions_independent_of_fill_fk_xgrid_with_zeros():
+    """
+    Regression test: ``fill_fk_xgrid_with_zeros`` is a memory/layout option and
+    must not change the theory predictions.
+
+    Previously the prediction closures unconditionally indexed the FK array with
+    ``fktable_xgrid_indices``, which are indices into FIT_XGRID. That is only
+    valid for zero-padded FK arrays; with ``fill_fk_xgrid_with_zeros=False`` the
+    FK x-grid axis was silently re-shuffled and out-of-range indices were clamped
+    by jax, giving wrong predictions.
+
+    Uses a mixed DIS + hadronic setup so that both convolution paths are covered
+    and FIT_XGRID is a strict superset of at least one FK x-grid (otherwise the
+    index mapping is the identity and the bug is invisible).
+    """
+    data = colibriAPI.data(**TEST_DATASETS_DIS_HAD)
+    FIT_XGRID = colibriAPI.FIT_XGRID(**TEST_DATASETS_DIS_HAD)
+
+    # Guard: the setup must actually exercise a non-trivial x-grid mapping.
+    mappings = [
+        fktable_xgrid_indices(load_fktable(ds.fkspecs[0]).with_cuts(ds.cuts), FIT_XGRID)
+        for ds in data.datasets
+    ]
+    assert any(
+        not jnp.array_equal(idx, jnp.arange(len(idx))) for idx in mappings
+    ), "test setup is degenerate: every FK x-grid maps onto FIT_XGRID as the identity"
+
+    pdf_grid = colibriAPI.closure_test_central_pdf_grid(
+        **{**CLOSURE_TEST_PDFSET, **TEST_DATASETS_DIS_HAD}
+    )
+
+    preds = {}
+    for fill in (False, True):
+        inp = {**TEST_DATASETS_DIS_HAD, "fill_fk_xgrid_with_zeros": fill}
+        eval_preds = colibriAPI.make_pred_data(**inp)
+        preds[fill] = eval_preds(pdf_grid, colibriAPI.fast_kernel_arrays(**inp))
+
+    assert_allclose(preds[False], preds[True], rtol=1e-6)
+
+    # Cross-check both against validphys, which is the ground truth here.
+    # NOTE: use central_predictions rather than dataset_inputs_results: the latter
+    # convolves every replica of the PDF set (and makes LHAPDF load all 101 members)
+    # only for its central value to be taken, which is ~200x slower here.
+    pdf = vpAPI.pdf(pdf=CLOSURE_TEST_PDFSET["closure_test_pdf"])
+    vp_preds = np.concatenate(
+        [np.array(central_predictions(ds, pdf)).ravel() for ds in data.datasets]
+    )
+    assert_allclose(preds[False], vp_preds, rtol=1e-6)
+    assert_allclose(preds[True], vp_preds, rtol=1e-6)
