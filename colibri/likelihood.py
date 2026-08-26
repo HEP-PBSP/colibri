@@ -249,7 +249,10 @@ def mc_log_likelihood(
     )
 
     if not mc_pseudodata.trval_split:
-        val_loglike = lambda params: jnp.nan
+        # Match n3fit's no-validation behaviour: use the full training set as
+        # the monitoring set.  This evaluates the same objective after the
+        # epoch update and allows best-epoch selection without a held-out set.
+        val_loglike = train_loglike
 
     else:
         val_idx = mc_pseudodata.validation_indices

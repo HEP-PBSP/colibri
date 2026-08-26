@@ -298,10 +298,10 @@ def test_mc_log_likelihood_with_split(pos_penalty):
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
-def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty):
+def test_mc_log_likelihood_without_split_uses_training_for_validation(pos_penalty):
     """
     Tests mc_log_likelihood when no train/validation split is requested: the
-    validation log-likelihood should return NaN.
+    validation monitor should reuse the full training likelihood.
     """
 
     # Pseudodata across both points; training uses all when no split
@@ -335,8 +335,9 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
         integrability_penalty,
     )
 
-    # Train should be a LogLikelihood, validation is a callable returning NaN
+    # As in n3fit, no held-out data means the training model is also monitored.
     assert isinstance(train_loglike, LogLikelihood)
+    assert val_loglike is train_loglike
 
     params = jnp.array([0.3, 0.4])
     train_val = train_loglike(params)
@@ -365,7 +366,7 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
     assert_allclose(float(train_val), float(expected))
 
     val_val = val_loglike(params)
-    assert jnp.isnan(val_val)
+    assert_allclose(float(val_val), float(train_val))
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])

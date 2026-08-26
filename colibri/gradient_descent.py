@@ -38,6 +38,7 @@ def run_gradient_descent(
     record_every: int = 50,
     positivity_check_fn: Optional[Callable[[jnp.ndarray], bool]] = None,
     threshold_chi2: float = 10.0,
+    validation_ndata: int = 1,
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 
@@ -71,7 +72,19 @@ def run_gradient_descent(
 
     record_every : int, default 50
         Record losses every this many epochs.
+
+    threshold_chi2 : float, default 10.0
+        Maximum validation chi2 per data point required before an epoch can be
+        selected as the best epoch.
+
+    validation_ndata : int, default 1
+        Number of points in the dataset used for monitoring. When there is no
+        validation split, this is the number of training points because the
+        full training set is used as the monitoring set.
     """
+
+    if validation_ndata <= 0:
+        raise ValueError("validation_ndata must be a positive integer")
 
     params = initial_parameters
     opt_state = optimizer.init(params)
@@ -95,7 +108,7 @@ def run_gradient_descent(
     best_params = params
     best_train_loss = jnp.inf
     best_val_loss = jnp.inf
-    best_epoch_idx = 0
+    best_epoch_idx = None
     any_pos_pass = False
 
     if data_batch is None:
@@ -127,8 +140,11 @@ def run_gradient_descent(
         if positivity_check_fn is not None:
             pos_pass = positivity_check_fn(params)
 
+        # Match n3fit: the eligibility threshold is applied to chi2/Ndat,
+        # while improvements are judged using the unnormalised total loss.
+        epoch_val_chi2 = epoch_val_loss / validation_ndata
         update_best = False
-        meets_threshold = epoch_val_loss < threshold_chi2
+        meets_threshold = epoch_val_chi2 < threshold_chi2
         if meets_threshold:
             if pos_pass and not any_pos_pass:
                 update_best = True
@@ -146,7 +162,8 @@ def run_gradient_descent(
         if record_every and (epoch % record_every == 0):
             log.info(
                 f"Epoch {epoch}, loss: {epoch_train_loss:.3f}, "
-                f"validation_loss: {epoch_val_loss:.3f}"
+                f"validation_loss: {epoch_val_loss:.3f}, "
+                f"validation_chi2_per_point: {epoch_val_chi2:.3f}"
             )
             log.info(f"    Early_stopper: {early_stopper}")
             train_losses.append(epoch_train_loss)
@@ -156,9 +173,9 @@ def run_gradient_descent(
             log.info(f"Early stopping at epoch {epoch}")
             break
 
-    if best_epoch_idx == 0:
+    if best_epoch_idx is None:
         log.warning(
-            "No epoch passed positivity check. Returning last epoch's parameters."
+            "No epoch passed the selection criteria. Returning last epoch's parameters."
         )
         best_epoch_dict = {
             "epoch": epoch,

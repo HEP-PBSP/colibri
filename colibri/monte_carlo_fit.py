@@ -69,20 +69,23 @@ def monte_carlo_fit(
 
     @jax.jit
     def loss_training(parameters, batch):
-        return -2 * mc_log_likelihood[0](parameters, batch) / len_tr_idx
+        return -2 * mc_log_likelihood[0](parameters, batch)
 
     @jax.jit
     def loss_validation(parameters):
 
         val = -2 * mc_log_likelihood[1](parameters)
 
-        return val / len_val_idx if len_val_idx > 0 else val
+        return val
 
     log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
     positivity_check_fn = mc_log_likelihood[0].get_pos_pass
+    # With no split, n3fit monitors the full training set and normalises its
+    # threshold chi2 by the number of training points.
+    validation_ndata = len_val_idx if len_val_idx > 0 else len_tr_idx
 
     gd_result = run_gradient_descent(
         initial_parameters=pdf_initial_parameters.copy(),
@@ -95,6 +98,7 @@ def monte_carlo_fit(
         record_every=50,
         positivity_check_fn=positivity_check_fn,
         threshold_chi2=threshold_chi2,
+        validation_ndata=validation_ndata,
     )
 
     t1 = time.time()
