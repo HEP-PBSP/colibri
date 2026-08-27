@@ -38,13 +38,21 @@ class MockEarlyStopper:
         return self
 
 
+class MockLikelihood:
+    def __call__(self, *args, **kwargs):
+        return 0.0
+
+    def get_pos_pass(self, params):
+        return True
+
+
 def test_monte_carlo_fit_runs_without_errors():
     # Provide necessary inputs for the function
     training_indices = jnp.arange(100)
     data_batch = data_batches(training_indices, 100)
 
     result = monte_carlo_fit(
-        mc_log_likelihood=(lambda *args: 0.0, lambda *args: 0.0),
+        mc_log_likelihood=(MockLikelihood(), MockLikelihood()),
         len_trval_data=(100, 50),
         pdf_initial_parameters=np.zeros((N_PARAMS,)),
         optimizer_provider=MockOptimizerProvider(),
@@ -76,7 +84,14 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
 
     # Define mock ultranest fit
     mock_monte_carlo_fit = Mock()
-    mock_monte_carlo_fit.monte_carlo_specs = {}
+    mock_monte_carlo_fit.monte_carlo_specs = {
+        "best_epoch_specs": {
+            "epoch": 1,
+            "best_parameters": 2,
+            "best_val_loss": 3,
+            "best_train_loss": 4,
+        }
+    }
     mock_monte_carlo_fit.training_loss = jnp.array([0.1, 0.2, 0.3])
     mock_monte_carlo_fit.validation_loss = jnp.array([0.2, 0.3, 0.4])
     mock_monte_carlo_fit.optimized_parameters = jnp.array([0.0, 0.0])
@@ -98,3 +113,4 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
     # Assertions - check if files are created in the output path
     assert (tmp_path / "fit_replicas/replica_1/mc_loss.csv").exists()
     assert (tmp_path / "fit_replicas/replica_1/mc_result_replica_1.csv").exists()
+    assert (tmp_path / "fit_replicas/replica_1/best_epoch_specs.csv").exists()

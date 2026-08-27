@@ -131,3 +131,57 @@ def test_run_gradient_descent_record_every_behavior():
     assert result.validation_loss.size == 3
     # Monotonic non-increasing validation loss across recorded epochs
     assert jnp.all(result.validation_loss[1:] <= result.validation_loss[:-1] + 1e-10)
+
+
+def test_epoch_zero_can_be_selected_as_best_epoch():
+    """An optimum reached at epoch zero must not trigger last-epoch fallback."""
+
+    def training_loss_fn(params, _batch):
+        return params**2
+
+    # Deliberately worsens as training moves toward its own optimum.
+    def validation_loss_fn(params):
+        return (params - 2.0) ** 2
+
+    result = run_gradient_descent(
+        initial_parameters=jnp.array(1.0),
+        training_loss_fn=training_loss_fn,
+        validation_loss_fn=validation_loss_fn,
+        optimizer=optax.sgd(learning_rate=0.25),
+        early_stopper=EarlyStopping(min_delta=0.0, patience=100),
+        max_epochs=3,
+        data_batch=None,
+        record_every=1,
+        threshold_chi2=10.0,
+    )
+
+    assert result.best_epoch["epoch"] == 0
+    assert jnp.allclose(result.best_epoch["best_parameters"], 0.5)
+
+
+def test_threshold_uses_chi2_per_data_point_but_improvement_uses_total_loss():
+    """The threshold follows n3fit's normalized-chi2 selection logic."""
+
+    def training_loss_fn(params, _batch):
+        return params**2
+
+    def validation_loss_fn(params):
+        # After epoch zero params=0.5, giving total chi2=20.25. This fails a
+        # raw threshold of 3.5 but passes 20.25 / 10 < 3.5.
+        return (params + 4.0) ** 2
+
+    result = run_gradient_descent(
+        initial_parameters=jnp.array(1.0),
+        training_loss_fn=training_loss_fn,
+        validation_loss_fn=validation_loss_fn,
+        optimizer=optax.sgd(learning_rate=0.25),
+        early_stopper=EarlyStopping(min_delta=0.0, patience=100),
+        max_epochs=1,
+        data_batch=None,
+        record_every=1,
+        threshold_chi2=3.5,
+        validation_ndata=10,
+    )
+
+    assert result.best_epoch["epoch"] == 0
+    assert jnp.allclose(result.best_epoch["best_val_loss"], 20.25)

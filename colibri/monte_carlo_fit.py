@@ -28,6 +28,7 @@ def monte_carlo_fit(
     early_stopper,
     max_epochs,
     data_batches,
+    threshold_chi2=10.0,
 ):
     """
     This function performs a Monte Carlo fit.
@@ -68,20 +69,24 @@ def monte_carlo_fit(
 
     @jax.jit
     def loss_training(parameters, batch):
-        return -2 * mc_log_likelihood[0](parameters, batch) / len_tr_idx
+        return -2 * mc_log_likelihood[0](parameters, batch)
 
     @jax.jit
     def loss_validation(parameters):
 
         val = -2 * mc_log_likelihood[1](parameters)
 
-        return val / len_val_idx if len_val_idx > 0 else val
+        return val
 
     log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
-    # Delegate to generic gradient descent
+    positivity_check_fn = mc_log_likelihood[0].get_pos_pass
+    # With no split, n3fit monitors the full training set and normalises its
+    # threshold chi2 by the number of training points.
+    validation_ndata = len_val_idx if len_val_idx > 0 else len_tr_idx
+
     gd_result = run_gradient_descent(
         initial_parameters=pdf_initial_parameters.copy(),
         training_loss_fn=loss_training,
@@ -91,6 +96,9 @@ def monte_carlo_fit(
         max_epochs=max_epochs,
         data_batch=data_batches,
         record_every=50,
+        positivity_check_fn=positivity_check_fn,
+        threshold_chi2=threshold_chi2,
+        validation_ndata=validation_ndata,
     )
 
     t1 = time.time()
@@ -101,10 +109,11 @@ def monte_carlo_fit(
             "max_epochs": max_epochs,
             "batch_size": data_batches.batch_size,
             "batch_seed": data_batches.batch_seed,
+            "best_epoch_specs": gd_result.best_epoch,
         },
         training_loss=gd_result.training_loss,
         validation_loss=gd_result.validation_loss,
-        optimized_parameters=gd_result.optimized_parameters,
+        optimized_parameters=gd_result.best_epoch["best_parameters"],
     )
 
 
@@ -169,4 +178,22 @@ def run_monte_carlo_fit(monte_carlo_fit, forward_map, output_path, replica_index
         str(output_path) + f"/fit_replicas/replica_{replica_index}" + "/mc_loss.csv",
         index=False,
         float_format="%.5e",
+    )
+
+    best_epoch_specs = mc_fit.monte_carlo_specs.get("best_epoch_specs")
+
+    df = pd.DataFrame(
+        {
+            "best_epoch": best_epoch_specs["epoch"],
+            "best_val_loss": best_epoch_specs["best_val_loss"],
+            "best_train_loss": best_epoch_specs["best_train_loss"],
+        },
+        index=[0],
+    )
+
+    df.to_csv(
+        str(output_path)
+        + f"/fit_replicas/replica_{replica_index}"
+        + "/best_epoch_specs.csv",
+        index=False,
     )

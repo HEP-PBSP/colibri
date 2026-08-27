@@ -119,6 +119,14 @@ the first few lines would look like this:
 
 which would represent the losses for the first 150 epochs (i.e. 0, 1, 2 are just labels).
 
+Best epoch
+----------
+The final model weights for each replica are taken from the best epoch. This is defined 
+as the epoch that satisfies the positivity threshold (as specified in `likelihood.py``) 
+and achieves the lowest validation loss among all such epochs.
+The information for the best epoch is stored in ``fit_replicas/replica_n/best_epoch_specs.csv``, 
+which contains the epoch number, the training loss and the validation loss.
+
 Postfit selection
 """""""""""""""""
 
@@ -135,7 +143,7 @@ You can run a postfit selection by running:
 
 where the ``-c`` is optional and ``CHI2_THRESHOLD`` is a number that determines
 the :math:`\chi^2` threshold above which a MC replica will be rejected, where this
-value is taken from the last row of the ``training_loss`` column shown above.
+value is taken from the training loss of the best epoch.
 This can also be run as ``--chi2_threshold`` instead of ``-c``. If no value is 
 specified, a default value of 1.5 will be applied.
 
