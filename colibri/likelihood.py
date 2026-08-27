@@ -67,7 +67,7 @@ class LogLikelihood(object):
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
 
     def get_pos_pass(self, params):
-        _, pdf = self.pred_and_pdf(params, self.fast_kernel_arrays)
+        _, pdf = self.forward_map(self.fast_kernel_arrays, params)
         pos_pass, _ = self.positivity_check_and_penalty(
             pdf,
             self.positivity_fast_kernel_arrays,
