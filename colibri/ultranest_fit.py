@@ -140,6 +140,9 @@ def ultranest_fit(
         # Get the full samples
         full_samples = ultranest_result["samples"]
 
+        # number of data points
+        ndata = log_likelihood.central_values.shape[0]
+
         # Compute bayesian metrics
         min_chi2 = -2 * ultranest_result["maximum_likelihood"]["logl"]
 
@@ -155,6 +158,9 @@ def ultranest_fit(
             ).mean()
         Cb = avg_chi2 - min_chi2
 
+        # reduced chi2
+        avg_chi2_red = avg_chi2 / ndata
+
         fit_result = UltranestFit(
             ultranest_specs=ultranest_settings,
             ultranest_result=ultranest_result,
@@ -164,6 +170,7 @@ def ultranest_fit(
             bayesian_metrics={
                 "bayes_complexity": Cb,
                 "avg_chi2": avg_chi2,
+                "avg_chi2_reduced": avg_chi2_red,
                 "min_chi2": min_chi2,
                 "logz": ultranest_result["logz"],
             },
