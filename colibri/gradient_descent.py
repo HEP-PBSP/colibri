@@ -83,9 +83,6 @@ def run_gradient_descent(
         full training set is used as the monitoring set.
     """
 
-    if validation_ndata <= 0:
-        raise ValueError("validation_ndata must be a positive integer")
-
     params = initial_parameters
     opt_state = optimizer.init(params)
     loss_and_grad = jax.value_and_grad(training_loss_fn)
