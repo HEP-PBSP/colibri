@@ -22,6 +22,7 @@ from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
 from validphys.config import Config, Environment
 from validphys.fkparser import load_fktable
+from validphys.api import API
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -590,13 +591,18 @@ class colibriConfig(Config):
         return optimizer_settings
 
     @explicit_node
-    def produce_commondata_tuple(self, closure_test_level=False):
+    def produce_commondata_tuple(
+        self, closure_test_level=False, use_fitcommondata=False
+    ):
         """
         Produces a commondata tuple node in the reportengine dag
         according to some options
         """
         if closure_test_level is False:
-            return commondata_utils.experimental_commondata_tuple
+            if use_fitcommondata is False:
+                return commondata_utils.experimental_commondata_tuple
+            else:
+                return commondata_utils.experimental_commondata_tuple_from_fit
         elif closure_test_level == 0:
             return commondata_utils.level_0_commondata_tuple
         elif closure_test_level == 1:
@@ -607,7 +613,9 @@ class colibriConfig(Config):
             )
 
     @explicit_node
-    def produce_general_covariance_matrix(self, use_t0_covmat: bool = True):
+    def produce_general_covariance_matrix(
+        self, use_t0_covmat: bool = True, use_fitcommondata: bool = False
+    ):
         """
         Produces the covariance matrix used in the fit and noise generation for level 1 data and MC replicas.
         This covariance matrix is used in:
@@ -615,9 +623,23 @@ class colibriConfig(Config):
         - mc_log_likelihood for the monte carlo fit
         """
         if use_t0_covmat:
-            return colibri_covmats.dataset_inputs_t0_covmat_from_systematics
+            if use_fitcommondata:
+                return (
+                    colibri_covmats.dataset_inputs_t0_covmat_from_systematics_from_fit
+                )
+            else:
+                return colibri_covmats.dataset_inputs_t0_covmat_from_systematics
         else:
-            return colibri_covmats.dataset_inputs_covmat_from_systematics
+            if use_fitcommondata:
+                return colibri_covmats.dataset_inputs_covmat_from_systematics_from_fit
+            else:
+                return colibri_covmats.dataset_inputs_covmat_from_systematics
+
+    def parse_use_fitcommondata(self, use_fitcommondata=False):
+        return use_fitcommondata
+
+    def parse_fit(self, fit=None):
+        return API.fit(fit=fit)
 
     def parse_closure_test_pdf(self, name):
         """PDF set used to generate fakedata"""

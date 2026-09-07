@@ -12,6 +12,8 @@ import jax.numpy as jnp
 from colibri.theory_predictions import make_pred_dataset
 from colibri.core import CentralCovmatIndex
 
+from validphys.loader import Loader
+
 
 def experimental_commondata_tuple(data):
     """
@@ -28,6 +30,50 @@ def experimental_commondata_tuple(data):
         Tuple of nnpdf_data.coredata.CommonData instances.
     """
     return tuple(data.load_commondata_instance())
+
+
+def experimental_commondata_tuple_from_fit(
+    data, theoryid, use_fitcommondata=False, fit=None
+):
+    """
+    Returns a tuple of commondata instances with experimental central values
+    loaded from existing n3fit fit.
+
+    Parameters
+    ----------
+    data: validphys.core.DataGroupSpec
+
+    Returns
+    -------
+    tuple
+        Tuple of nnpdf_data.coredata.CommonData instances.
+    """
+    if use_fitcommondata:
+        if not fit:
+            raise ConfigError(
+                f"use_fitcommondata set to True but no fit provided in the runcard."
+            )
+        ds_inputs = []
+        for ds in data.datasets:
+            ds_inputs.append(
+                Loader().check_dataset(
+                    ds.name,
+                    theoryid=theoryid.id,
+                    cuts="internal",
+                    use_fitcommondata=True,
+                    fit=fit,
+                )
+            )
+        data_group_spec = Loader().check_experiment("DataGroupSpec_from_fit", ds_inputs)
+
+        # Construct a list of commondata object cointaining level-1 data
+        sample_list = []
+        for datasetspec in data_group_spec.datasets:
+            cd = datasetspec.load_commondata()
+            sample_list.append(cd)
+        return tuple(sample_list)
+    else:
+        return
 
 
 def level_0_commondata_tuple(
