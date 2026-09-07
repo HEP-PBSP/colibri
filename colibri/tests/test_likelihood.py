@@ -508,7 +508,6 @@ def test_LogLikelihood_get_pos_pass():
     log_likelihood_class = LogLikelihood(
         central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         pdf_model=MOCK_PDF_MODEL,
-        fit_xgrid=TEST_XGRID,
         forward_map=TEST_FORWARD_MAP_DIS,
         fast_kernel_arrays=TEST_FK_ARRAYS,
         positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
