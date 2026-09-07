@@ -12,6 +12,8 @@ from colibri.loss_functions import chi2
 from colibri.commondata_utils import CentralCovmatIndex
 from colibri.data_batch import BatchSpec
 
+THRESHOLD_POS = 1e-6
+
 
 class LogLikelihood(object):
     """
@@ -64,6 +66,14 @@ class LogLikelihood(object):
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
 
+    def get_pos_pass(self, params):
+        _, pdf = self.forward_map(self.fast_kernel_arrays, params)
+        pos_pass, _ = self.positivity_check_and_penalty(
+            pdf,
+            self.positivity_fast_kernel_arrays,
+        )
+        return pos_pass
+
     def __call__(self, params, batch: BatchSpec | None = None):
         """
         Note that this function is called by the samplers, and it must be
@@ -93,6 +103,25 @@ class LogLikelihood(object):
             self.positivity_fast_kernel_arrays,
             batch=batch,
         )
+
+    def positivity_check_and_penalty(self, pdf, positivity_fast_kernel_arrays):
+        if self.positivity_penalty_settings["positivity_penalty"]:
+            pos_penalties = self.penalty_posdata(
+                pdf,
+                self.positivity_penalty_settings["alpha"],
+                self.positivity_penalty_settings["lambda_positivity"],
+                positivity_fast_kernel_arrays,
+            )
+            pos_pass = jnp.all(pos_penalties < THRESHOLD_POS)
+
+            pos_penalty = jnp.sum(
+                pos_penalties,
+                axis=-1,
+            )
+        else:
+            pos_penalty = 0
+            pos_pass = True
+        return pos_pass, pos_penalty
 
     @partial(jax.jit, static_argnames=("self",))
     def log_likelihood(
@@ -135,18 +164,10 @@ class LogLikelihood(object):
             else:
                 inv_covmat = batch.inv_cov
 
-        if self.positivity_penalty_settings["positivity_penalty"]:
-            pos_penalty = jnp.sum(
-                self.penalty_posdata(
-                    pdf,
-                    self.positivity_penalty_settings["alpha"],
-                    self.positivity_penalty_settings["lambda_positivity"],
-                    positivity_fast_kernel_arrays,
-                ),
-                axis=-1,
-            )
-        else:
-            pos_penalty = 0
+        _, pos_penalty = self.positivity_check_and_penalty(
+            pdf,
+            positivity_fast_kernel_arrays,
+        )
 
         integ_penalty = jnp.sum(
             self.integrability_penalty(
@@ -228,7 +249,10 @@ def mc_log_likelihood(
     )
 
     if not mc_pseudodata.trval_split:
-        val_loglike = lambda params: jnp.nan
+        # Match n3fit's no-validation behaviour: use the full training set as
+        # the monitoring set.  This evaluates the same objective after the
+        # epoch update and allows best-epoch selection without a held-out set.
+        val_loglike = train_loglike
 
     else:
         val_idx = mc_pseudodata.validation_indices
