@@ -90,6 +90,7 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
             "best_parameters": 2,
             "best_val_loss": 3,
             "best_train_loss": 4,
+            "ndat_train": 100,
         }
     }
     mock_monte_carlo_fit.training_loss = jnp.array([0.1, 0.2, 0.3])

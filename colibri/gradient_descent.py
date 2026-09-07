@@ -38,7 +38,7 @@ def run_gradient_descent(
     record_every: int = 50,
     positivity_check_fn: Optional[Callable[[jnp.ndarray], bool]] = None,
     threshold_chi2: float = 10.0,
-    validation_ndata: int = 1,
+    validation_ndata: int = 1,  # If not defined then original loss will be used - As in Hessian
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 

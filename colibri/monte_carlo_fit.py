@@ -104,6 +104,8 @@ def monte_carlo_fit(
     t1 = time.time()
     log.info("MONTE CARLO RUNNING TIME: %f" % (t1 - t0))
 
+    gd_result.best_epoch["ndat_train"] = len_tr_idx
+
     return MonteCarloFit(
         monte_carlo_specs={
             "max_epochs": max_epochs,
@@ -187,6 +189,7 @@ def run_monte_carlo_fit(monte_carlo_fit, forward_map, output_path, replica_index
             "best_epoch": best_epoch_specs["epoch"],
             "best_val_loss": best_epoch_specs["best_val_loss"],
             "best_train_loss": best_epoch_specs["best_train_loss"],
+            "ndat_train": best_epoch_specs["ndat_train"],
         },
         index=[0],
     )

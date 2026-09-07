@@ -9,6 +9,7 @@ import pandas as pd
 import argparse
 import logging
 import pathlib
+import math
 import jax.numpy as jnp
 
 from reportengine import colors
@@ -28,7 +29,7 @@ def main():
         "-c",
         type=float,
         default=1.5,
-        help="The chi2 threshold, above which an MC replica will be rejected.",
+        help="The training chi2 per point threshold, above which an MC replica will be rejected.",
     )
     parser.add_argument(
         "--nsigma",
@@ -78,21 +79,31 @@ def main():
     for replica in replicas_list:
         try:
             df = pd.read_csv(replica / "best_epoch_specs.csv")
-            if (
-                df.empty
-                or df["best_train_loss"].iloc[0] is pd.NA
-                or pd.isna(df["best_train_loss"].iloc[0])
-            ):
-                log.warning(f"Skipping replica {replica} - empty or NaN training_loss")
+            if df.empty:
+                log.warning(f"Skipping replica {replica} - empty best epoch data")
                 continue
 
-            best_epoch_loss = df.iloc[-1]["best_train_loss"]
+            row = df.iloc[-1]
+            ndat_train = float(row["ndat_train"])
+            training_loss = float(row["best_train_loss"])
+            if (
+                not math.isfinite(ndat_train)
+                or ndat_train <= 0
+                or not ndat_train.is_integer()
+                or not math.isfinite(training_loss)
+            ):
+                log.warning(
+                    f"Skipping replica {replica} - invalid training loss or point count"
+                )
+                continue
+
+            best_epoch_loss = training_loss / ndat_train
             best_epoch_losses = jnp.concatenate(
                 (best_epoch_losses, jnp.array([best_epoch_loss])), axis=0
             )
             valid_replicas.append(replica)
 
-        except (FileNotFoundError, KeyError, IndexError) as e:
+        except (FileNotFoundError, KeyError, IndexError, ValueError, TypeError) as e:
             log.critical(f"Skipping replica {replica} - error reading file: {e}")
             continue
 
@@ -127,7 +138,7 @@ def main():
     if i < args.target_replicas:
         log.critical(
             f"You asked for {args.target_replicas} replicas, but only {i} replicas pass postfit selection.\n"
-            f"You could consider increasing the threshold for the final training loss.",
+            f"You could consider increasing the threshold for the training chi2 per point.",
         )
 
     else:
