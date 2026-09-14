@@ -156,7 +156,7 @@ def test_epoch_zero_can_be_selected_as_best_epoch():
     )
 
     assert result.best_epoch["epoch"] == 0
-    assert jnp.allclose(result.best_epoch["best_parameters"], 0.5)
+    assert jnp.allclose(result.optimized_parameters, 0.5)
 
 
 def test_threshold_uses_chi2_per_data_point_but_improvement_uses_total_loss():
