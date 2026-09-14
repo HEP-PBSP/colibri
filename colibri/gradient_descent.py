@@ -180,16 +180,16 @@ def run_gradient_descent(
             "best_val_loss": epoch_val_loss,
             "best_train_loss": epoch_train_loss,
         }
+        best_params = params
     else:
         best_epoch_dict = {
             "epoch": best_epoch_idx,
-            "best_parameters": best_params,
             "best_val_loss": best_val_loss,
             "best_train_loss": best_train_loss,
         }
 
     return GradientDescentResult(
-        optimized_parameters=params,
+        optimized_parameters=best_params,
         training_loss=jnp.array(train_losses),
         validation_loss=jnp.array(val_losses),
         specs={

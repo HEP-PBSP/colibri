@@ -115,7 +115,7 @@ def monte_carlo_fit(
         },
         training_loss=gd_result.training_loss,
         validation_loss=gd_result.validation_loss,
-        optimized_parameters=gd_result.best_epoch["best_parameters"],
+        optimized_parameters=gd_result.optimized_parameters,
     )
 
 
