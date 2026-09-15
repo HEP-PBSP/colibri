@@ -206,12 +206,15 @@ class GradientDescentResult:
         Recorded (epoch) validation losses (sampled according to record_every).
     specs: dict
         Dictionary of settings used for the run (epochs, batch size, etc.).
+    best_epoch: dict
+        Dictionary containing the best epoch and corresponding parameters and losses.
     """
 
     optimized_parameters: Any
     training_loss: jnp.array
     validation_loss: jnp.array
     specs: Dict[str, Any]
+    best_epoch: Dict[str, Any]
 
 
 @dataclass(frozen=True)
