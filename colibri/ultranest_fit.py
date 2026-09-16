@@ -168,12 +168,13 @@ def ultranest_fit(
             param_names=parameters,
             resampled_posterior=resampled_posterior,
             full_posterior_samples=full_samples,
+            ndata=ndata,
             bayesian_metrics={
                 "bayes_complexity": Cb,
                 "avg_chi2": avg_chi2,
                 "avg_chi2_reduced": avg_chi2_red,
                 "min_chi2": min_chi2,
-                "avg_chi2_reduced": avg_chi2_red,
+                "min_chi2_reduced": min_chi2_red,
                 "logz": ultranest_result["logz"],
             },
         )
