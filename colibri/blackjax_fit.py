@@ -182,6 +182,7 @@ def blackjax_fit(
         param_names=forward_map.param_names,
         resampled_posterior=resampled_posterior,
         full_posterior_samples=full_samples,
+        ndata=ndata,
         bayesian_metrics={
             "bayes_complexity": Cb,
             "avg_chi2": avg_chi2,
