@@ -170,6 +170,7 @@ def blackjax_fit(
 
     # reduced chi2
     avg_chi2_red = avg_chi2 / ndata
+    min_chi2_red = min_chi2 / ndata
 
     fit_result = BlackJAXFit(
         blackjax_specs=blackjax_settings,
@@ -186,6 +187,7 @@ def blackjax_fit(
             "avg_chi2": avg_chi2,
             "avg_chi2_reduced": avg_chi2_red,
             "min_chi2": min_chi2,
+            "min_chi2_reduced": min_chi2_red,
             "logz": logzs.mean(),
         },
     )

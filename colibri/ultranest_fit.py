@@ -160,6 +160,7 @@ def ultranest_fit(
 
         # reduced chi2
         avg_chi2_red = avg_chi2 / ndata
+        min_chi2_red = min_chi2 / ndata
 
         fit_result = UltranestFit(
             ultranest_specs=ultranest_settings,
@@ -172,6 +173,7 @@ def ultranest_fit(
                 "avg_chi2": avg_chi2,
                 "avg_chi2_reduced": avg_chi2_red,
                 "min_chi2": min_chi2,
+                "avg_chi2_reduced": avg_chi2_red,
                 "logz": ultranest_result["logz"],
             },
         )
