@@ -343,6 +343,7 @@ def test_run_ultranest_fit(mock_write_exportgrid, tmp_path):
         "avg_chi2": 0.3,
         "avg_chi2_reduced": 0.009,
         "min_chi2": 0.1,
+        "min_chi2_reduced": 0.0033,
         "logz": 7.0,
     }
 
