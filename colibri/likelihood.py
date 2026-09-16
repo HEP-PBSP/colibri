@@ -93,7 +93,6 @@ class LogLikelihood(object):
             self.inv_covmat,
             self.fast_kernel_arrays,
             self.positivity_fast_kernel_arrays,
-            self.ndata,
             batch=batch,
         )
 
@@ -105,7 +104,6 @@ class LogLikelihood(object):
         inv_covmat: jnp.ndarray,
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
-        ndata: int,
         batch: BatchSpec | None = None,
     ) -> jnp.array:
         """
