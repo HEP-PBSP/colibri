@@ -111,15 +111,10 @@ def test_check_pdf_models_equal_false_param_names(
         check_pdf_models_equal.__wrapped__(prior_settings, forward_map, theoryid)
 
 
-@patch("colibri.checks.make_pred_data")
-@patch("colibri.checks.fast_kernel_arrays")
-def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data):
+def test_check_pdf_model_is_linear():
     # Create test data
     FIT_XGRID = jnp.array([1.0, 2.0, 3.0])
-    data = jnp.array([0.1, 0.2, 0.3])
     fk = jnp.array([0.3, 0.1, 0.6])
-
-    mock_fast_kernel_arrays.return_value = fk
 
     # Create a mock for the PDF model
     mock_pdf_model = MagicMock()
@@ -140,7 +135,7 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
     )
 
     # Test for linear model (should not raise an exception)
-    check_pdf_model_is_linear(mock_pdf_model, forward_map_lin, FIT_XGRID, data)
+    check_pdf_model_is_linear(forward_map_lin, fk)
 
     # Now mock a non-linear model to ensure the ValueError is raised
     non_linear_model = FKTableForwardMap(
@@ -152,4 +147,4 @@ def test_check_pdf_model_is_linear(mock_fast_kernel_arrays, mock_make_pred_data)
 
     # Ensure ValueError is raised for non-linear model
     with pytest.raises(ValueError):
-        check_pdf_model_is_linear(mock_pdf_model, non_linear_model, FIT_XGRID, data)
+        check_pdf_model_is_linear(non_linear_model, fk)

@@ -11,6 +11,7 @@ import csv
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 from colibri.param_initialisation import pdf_initial_parameters
 
 log = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ log = logging.getLogger(__name__)
 def time_log_likelihood(
     log_likelihood,
     param_initialiser_settings,
-    pdf_model,
+    forward_map,
     output_path,
     batch_sample_sizes=None,
 ):
@@ -32,8 +33,8 @@ def time_log_likelihood(
         The log likelihood function that takes parameter vector(s)
     param_initialiser_settings : dict
         Settings for parameter initialization
-    pdf_model : pdf_model.PDFModel
-        The PDF model to fit
+    forward_map : forward_map.ForwardMap
+        The forward map whose .param_names are used for parameter initialization.
     batch_sample_sizes : sequence of int, optional
         Batch sizes (number of parameter vectors per batch) to time
     output_path : pathlib.PosixPath
@@ -68,12 +69,16 @@ def time_log_likelihood(
     all_samples = []
     for replica_idx in range(max_size):
         params = pdf_initial_parameters(
-            pdf_model, param_initialiser_settings, replica_idx
+            forward_map, param_initialiser_settings, replica_idx
         )
-        all_samples.append(params)
+        all_samples.append(np.asarray(params))
 
-    # Stack all samples into one large batch
-    all_samples_batch = jnp.stack(all_samples)
+    # Stack all samples into one large batch.
+    # NOTE: the stacking is done on the host and transferred to the device once.
+    # jnp.stack on a list of max_size device arrays instead builds a single XLA op
+    # with max_size operands, which is quadratic in max_size as of jax 0.11
+    # (~222 s at 25k operands, vs 0.5 s for this version at the default 100k).
+    all_samples_batch = jnp.asarray(np.stack(all_samples))
 
     # Create subsets for each size
     samples_list = []

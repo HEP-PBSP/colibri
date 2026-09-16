@@ -12,11 +12,10 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_carlo_fit
-from colibri.tests.conftest import MOCK_PDF_MODEL
+from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_FORWARD_MAP_DIS
 from colibri.data_batch import data_batches
 
-mock_pdf_model = MOCK_PDF_MODEL
-N_PARAMS = len(MOCK_PDF_MODEL.param_names)
+N_PARAMS = len(TEST_FORWARD_MAP_DIS.param_names)
 
 
 class MockOptimizerProvider:
@@ -86,7 +85,11 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
     output_path = str(tmp_path)
 
     run_monte_carlo_fit(
-        mock_monte_carlo_fit, mock_pdf_model, output_path, replica_index=1, Q0=1.65
+        mock_monte_carlo_fit,
+        TEST_FORWARD_MAP_DIS,
+        output_path,
+        replica_index=1,
+        Q0=1.65,
     )
 
     # Check if the write_exportgrid function was called once as expected

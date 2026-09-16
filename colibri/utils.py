@@ -314,7 +314,7 @@ def likelihood_float_type(
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
     params = bayesian_prior.prior_transform(
-        jax.random.uniform(jax.random.PRNGKey(0), shape=(len(pdf_model.param_names),))
+        jax.random.uniform(jax.random.PRNGKey(0), shape=(len(forward_map.param_names),))
     )
 
     dtype = log_likelihood(params, central_values, covmat, fast_kernel_arrays).dtype
@@ -451,9 +451,13 @@ def write_resampled_bayesian_fit(
     os.system(f"rm -r {resampled_fit_path}/replicas/*")
 
     # overwrite old ns_result.csv with resampled posterior
-    parameters = pdf_model.param_names
+    all_param_names = list(
+        pd.read_csv(
+            fit_path / "full_posterior_sample.csv", nrows=0, index_col=0
+        ).columns
+    )
     n_pdf_params = len(pdf_model.param_names)
-    df = pd.DataFrame(resampled_posterior, columns=parameters)
+    df = pd.DataFrame(resampled_posterior, columns=all_param_names)
     df.to_csv(str(resampled_fit_path) + f"/{csv_results_name}.csv", float_format="%.5e")
 
     new_rep_path = resampled_fit_path / "replicas"

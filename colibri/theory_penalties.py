@@ -79,8 +79,13 @@ def make_penalty_posdataset(posdataset, FIT_XGRID, flavour_indices=None):
 
     """
 
+    # NOTE: positivity_fast_kernel_arrays never zero-pads the FK x-grid, so the
+    # prediction closures must not mask the FK arrays onto the fit x-grid.
     pred_funcs = pred_funcs_from_dataset(
-        posdataset, FIT_XGRID, flavour_indices, fill_fk_xgrid_with_zeros=False
+        posdataset,
+        FIT_XGRID,
+        flavour_indices,
+        fill_fk_xgrid_with_zeros=False,
     )
 
     def pos_penalty(pdf, alpha, lambda_positivity, fk_dataset):

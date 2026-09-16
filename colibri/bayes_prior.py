@@ -20,6 +20,10 @@ def bayesian_prior(prior_settings, forward_map):
     prior_settings: dict
         The settings for the prior transform.
 
+    forward_map: ForwardMap
+        The forward map of the problem, used to determine parameter names and ordering.
+
+
     Returns
     -------
     prior_transform: @jax.jit CompiledFunction

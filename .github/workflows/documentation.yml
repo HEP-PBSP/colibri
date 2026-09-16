@@ -30,7 +30,7 @@ jobs:
       - name: Build Sphinx HTML
         run: |
           cd colibri/doc/sphinx
-          make html
+          make html SPHINXOPTS="-W --keep-going"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

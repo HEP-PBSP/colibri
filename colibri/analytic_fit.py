@@ -85,12 +85,9 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 def analytic_fit(
     central_covmat_index,
     forward_map,
-    pdf_model,
     analytic_settings,
     prior_settings,
-    FIT_XGRID,
     fast_kernel_arrays,
-    data,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -109,35 +106,25 @@ def analytic_fit(
     forward_map: @jax.jit CompiledFunction
         Forward map function for the fit.
 
-    pdf_model: pdf_model.PDFModel
-        PDF model to fit.
-
     analytic_settings: dict
         Settings for the analytic fit.
 
     prior_settings: PriorSettings
         Settings for the prior.
 
-    FIT_XGRID: np.ndarray
-        xgrid of the theory, computed by a production rule by taking
-        the sorted union of the xgrids of the datasets entering the fit.
-
     fast_kernel_arrays: tuple
         Tuple containing the fast kernel arrays.
-
-    data: validphys.core.DataGroupSpec
-        The data group specification for the fit.
     """
     # Ensure that the PDF model is linear before running the fit.
     log.info("Checking that the PDF model is linear...")
-    check_pdf_model_is_linear(pdf_model, forward_map, FIT_XGRID, data)
+    check_pdf_model_is_linear(forward_map, fast_kernel_arrays)
 
     log.warning("The prior is assumed to be flat in the parameters.")
     log.warning(
         "Assuming that the prior is wide enough to fully cover the gaussian likelihood."
     )
 
-    parameters = pdf_model.param_names
+    parameters = forward_map.param_names
 
     # Precompute predictions for the basis of the model
     bases = jnp.identity(len(parameters))
