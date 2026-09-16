@@ -166,7 +166,7 @@ def blackjax_fit(
     Cb = avg_chi2 - min_chi2
 
     # number of data points
-    ndata = log_likelihood.central_values.shape[0]
+    ndata = log_likelihood.ndata
 
     # reduced chi2
     avg_chi2_red = avg_chi2 / ndata

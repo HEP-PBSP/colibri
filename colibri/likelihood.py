@@ -64,6 +64,8 @@ class LogLikelihood(object):
         self.fast_kernel_arrays = fast_kernel_arrays
         self.positivity_fast_kernel_arrays = positivity_fast_kernel_arrays
 
+        self.ndata = central_covmat_index.central_values.shape[0]
+
     def __call__(self, params, batch: BatchSpec | None = None):
         """
         Note that this function is called by the samplers, and it must be
@@ -91,6 +93,7 @@ class LogLikelihood(object):
             self.inv_covmat,
             self.fast_kernel_arrays,
             self.positivity_fast_kernel_arrays,
+            self.ndata,
             batch=batch,
         )
 
@@ -102,6 +105,7 @@ class LogLikelihood(object):
         inv_covmat: jnp.ndarray,
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
+        ndata: int,
         batch: BatchSpec | None = None,
     ) -> jnp.array:
         """
