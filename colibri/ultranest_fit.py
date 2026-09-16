@@ -141,7 +141,7 @@ def ultranest_fit(
         full_samples = ultranest_result["samples"]
 
         # number of data points
-        ndata = log_likelihood.central_values.shape[0]
+        ndata = log_likelihood.ndata
 
         # Compute bayesian metrics
         min_chi2 = -2 * ultranest_result["maximum_likelihood"]["logl"]
