@@ -14,15 +14,26 @@ import jax.numpy.linalg as jla
 import jax.lax.linalg as jlinalg
 import numpy as np
 import scipy.special as special
+import scipy.linalg as sla
+
+from validphys import convolution
+from validphys.fkparser import load_fktable
 
 from colibri.core import AnalyticFit
 from colibri.export_results import write_replicas, export_bayes_results
 from colibri.checks import check_pdf_model_is_linear
 from colibri.utils import compute_determinants_of_principal_minors
+from colibri.theory_predictions import fktable_xgrid_indices
 
 import logging
 
 log = logging.getLogger(__name__)
+
+# Size of the evolution-basis flavour space that pdf_model.grid_values_func
+# returns PDF values on (the "N_fl" in the (N_fl, Nx) shape documented in
+# colibri.pdf_model.PDFModel.grid_values_func), same basis as
+# colibri.constants.FLAVOUR_TO_ID_MAPPING / colibri.compute_svd.N_FLAVOURS.
+N_FLAVOURS = len(convolution.FK_FLAVOURS)
 
 
 def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec):
@@ -82,12 +93,452 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
     return log_evidence, log_occam_factor
 
 
+def _combined_dis_fk_matrix(data, FIT_XGRID):
+    """
+    Builds the raw (un-whitened) combined DIS FK matrix entering ``data``,
+    padded onto the full (N_FLAVOURS, len(FIT_XGRID)) basis -- i.e. exactly
+    the object diagnosed by ``colibri.compute_svd.compute_svd`` (full-basis
+    version). Used here to regularise the *forward operator* itself via
+    TSVD before it is composed with the (much lower-dimensional) PDF
+    parametrisation.
+
+    Hadronic FK tables are skipped (with a warning): they enter
+    predictions bilinearly in the PDF and are not part of a linear forward
+    operator, so an analytic fit could not have included them in the first
+    place (``check_pdf_model_is_linear`` would already have failed).
+
+    Parameters
+    ----------
+    data : validphys.core.DataGroupSpec
+    FIT_XGRID : array-like
+
+    Returns
+    -------
+    np.ndarray
+        Array of shape (Ndat, N_FLAVOURS * len(FIT_XGRID)), datasets
+        stacked in the same order as ``data.datasets``.
+    """
+    blocks = []
+    skipped = []
+
+    for ds in data.datasets:
+        for i, fkspec in enumerate(ds.fkspecs):
+            fk = load_fktable(fkspec).with_cuts(ds.cuts)
+
+            if fk.hadronic:
+                skipped.append(f"{ds.name}_fk{i}")
+                continue
+
+            fk_arr = np.asarray(fk.get_np_fktable())  # (Ndat, n_present_fl, Nx_local)
+            n_dat = fk_arr.shape[0]
+
+            lumi_indices = np.asarray(fk.luminosity_mapping)
+            x_indices = np.asarray(fktable_xgrid_indices(fk, FIT_XGRID))
+
+            padded = np.zeros((n_dat, N_FLAVOURS, len(FIT_XGRID)))
+            padded[:, lumi_indices[:, None], x_indices[None, :]] = fk_arr
+
+            blocks.append(padded.reshape(n_dat, -1))
+
+    if skipped:
+        log.warning(
+            f"_combined_dis_fk_matrix: skipped {len(skipped)} hadronic FK "
+            f"table(s), not usable in a linear/analytic fit: {skipped}"
+        )
+
+    if not blocks:
+        raise ValueError("No DIS FK tables found in `data` -- cannot build the FK operator.")
+
+    return np.concatenate(blocks, axis=0)
+
+
+def _build_whitened_linear_system(
+    central_covmat_index,
+    forward_map,
+    analytic_settings,
+    fast_kernel_arrays,
+    data,
+    FIT_XGRID,
+):
+    """
+    Builds the whitened linear system X_tilde w ~ Y_tilde entering the
+    analytic fit's chi2, including the FK-level TSVD regularisation
+    (``analytic_settings["tsvd_n_components"]``) if set. Factored out so it
+    can be shared between ``analytic_fit`` (the actual solve) and
+    ``compute_lcurve`` (an L-curve diagnostic over a grid of L2/Tikhonov
+    regularisation strengths, applied on top of whatever TSVD truncation is
+    already set here).
+
+    See ``analytic_fit``'s docstring for the meaning of T(w) = T(0) + X w,
+    Y = D - T(0), and of the FK-level TSVD regularisation.
+
+    Returns
+    -------
+    X_tilde : jnp.ndarray, shape (Ndat, n_params)
+    Y_tilde : jnp.ndarray, shape (Ndat,)
+    parameters : list of str
+        forward_map.param_names.
+    B : np.ndarray, shape (N_FLAVOURS * len(FIT_XGRID), n_params)
+        Basis-to-grid matrix: column i is the flattened (N_fl, Nx) PDF
+        grid produced by the model for unit parameter vector e_i. Always
+        computed (independently of whether TSVD is enabled), so that
+        grid-space regularisation penalties (e.g. in ``compute_lcurve``)
+        can be built via L_eff = L_grid @ B regardless of the TSVD
+        setting.
+    """
+    # Ensure that the PDF model is linear before running the fit.
+    log.info("Checking that the PDF model is linear...")
+    check_pdf_model_is_linear(forward_map, fast_kernel_arrays)
+
+    parameters = forward_map.param_names
+    n_params = len(parameters)
+
+    # Precompute predictions (and PDF grids) for the basis of the model
+    bases = jnp.identity(n_params)
+    pred_pdf_pairs = [forward_map(fast_kernel_arrays, basis) for basis in bases]
+    predictions = jnp.array([pred for pred, _ in pred_pdf_pairs])
+    pdf_grids = jnp.array([grid for _, grid in pred_pdf_pairs])  # (n_params, N_fl, Nx)
+
+    intercept, intercept_pdf = forward_map(fast_kernel_arrays, jnp.zeros(n_params))
+
+    n_fl, n_x = pdf_grids.shape[1], pdf_grids.shape[2]
+    if n_x != len(FIT_XGRID):
+        raise ValueError(
+            f"pdf grid has {n_x} x-points but FIT_XGRID has {len(FIT_XGRID)}; "
+            "these must match to build grid-space regularisation."
+        )
+    if n_fl != N_FLAVOURS:
+        raise ValueError(
+            f"pdf grid has {n_fl} flavours but the FK operator basis "
+            f"expects N_FLAVOURS={N_FLAVOURS}; check pdf_model.grid_values_func."
+        )
+    n_grid = n_fl * n_x
+
+    # B: (n_grid, n_params) basis-to-grid matrix; columns are pdf(e_i),
+    # flattened in the same (N_fl, Nx) convention as the FK operator.
+    # Computed unconditionally (cheap -- pdf_grids is already in memory)
+    # since grid-space regularisation (compute_lcurve) needs it whether or
+    # not TSVD is also enabled.
+    B = np.asarray(pdf_grids).reshape(n_params, n_grid).T
+
+    central_values = central_covmat_index.central_values
+    covmat = central_covmat_index.covmat
+
+    tsvd_n_components = analytic_settings.get("tsvd_n_components", None)
+
+    if tsvd_n_components is None:
+        # Default: no regularisation of the forward operator.
+        Y = central_values - intercept
+        X = predictions.T - intercept[:, None]
+    else:
+        intercept_grid_flat = np.asarray(intercept_pdf).reshape(n_grid)
+
+        fk_flat = _combined_dis_fk_matrix(data, FIT_XGRID)  # (Ndat, n_grid)
+
+        max_components = min(fk_flat.shape)
+        if tsvd_n_components > max_components:
+            raise ValueError(
+                f"tsvd_n_components={tsvd_n_components} cannot exceed "
+                f"min(Ndat, N_FLAVOURS * len(FIT_XGRID))={max_components}."
+            )
+
+        log.warning(
+            f"Applying TSVD regularisation to the FK operator: keeping the "
+            f"top {tsvd_n_components} out of {max_components} singular "
+            f"values/vectors (FK operator shape {fk_flat.shape})."
+        )
+
+        U, S, Vt = np.linalg.svd(fk_flat, full_matrices=False)
+        U_k = U[:, :tsvd_n_components]
+        S_k = S[:tsvd_n_components]
+        Vt_k = Vt[:tsvd_n_components, :]
+
+        log.info(
+            f"Discarded singular values range from {S[tsvd_n_components]:.3e} "
+            f"down to {S[-1]:.3e}; kept singular values range from "
+            f"{S_k[0]:.3e} down to {S_k[-1]:.3e}."
+        )
+
+        # FK_trunc @ v = U_k @ (S_k * (V_k^T @ v)) for any vector/matrix v,
+        # without ever forming the full (Ndat, n_grid) FK_trunc explicitly.
+        def apply_fk_trunc(v):
+            return U_k @ (S_k[:, None] * (Vt_k @ v)) if v.ndim > 1 else U_k @ (
+                S_k * (Vt_k @ v)
+            )
+
+        X_trunc_np = apply_fk_trunc(B)  # (Ndat, n_params)
+        intercept_trunc_np = apply_fk_trunc(intercept_grid_flat)  # (Ndat,)
+
+        # Sanity check: with no truncation (k == max_components) this should
+        # reproduce the un-regularised intercept/X from forward_map to high
+        # precision -- logged here to help validate the FK/pdf padding and
+        # dataset-ordering conventions line up.
+        if tsvd_n_components == max_components:
+            diff = np.max(np.abs(intercept_trunc_np - np.asarray(intercept)))
+            log.info(
+                f"TSVD self-consistency check (k=max_components): max "
+                f"|intercept_trunc - intercept| = {diff:.3e} (should be ~0)."
+            )
+
+        X = jnp.asarray(X_trunc_np)
+        intercept_reg = jnp.asarray(intercept_trunc_np)
+        Y = central_values - intercept_reg
+
+    # Cholesky factorization: S = L L^T
+    # upper False means that we want the lower triangular matrix L
+    L = jla.cholesky(covmat, upper=False)
+
+    # Whiten the problem: Y' = L^-1 Y, X' = L^-1 X
+    Y_tilde = jlinalg.triangular_solve(L, Y, left_side=True, lower=True)
+    X_tilde = jlinalg.triangular_solve(L, X, left_side=True, lower=True)
+
+    return X_tilde, Y_tilde, parameters, B, n_fl, n_x
+
+
+def _second_order_roughening_matrix(FIT_XGRID, n_fl):
+    """
+    Builds the block-diagonal (per flavour) second-order roughening matrix
+    L_grid acting on a flattened (n_fl, len(FIT_XGRID)) PDF grid, i.e. the
+    spacing-corrected generalisation of the constant-spacing L2 stencil of
+    eq. (4.28) in Aster, Borchers & Thurber, "Parameter Estimation and
+    Inverse Problems" (2013).
+
+    For a non-uniform grid x_0, ..., x_{Nx-1}, the interior rows use the
+    standard three-point finite-difference approximation to f''(x_i):
+
+        f''(x_i) ~ 2 * [ f_{i-1} / (h_i^- (h_i^- + h_i^+))
+                          - f_i   / (h_i^- h_i^+)
+                          + f_{i+1} / (h_i^+ (h_i^- + h_i^+)) ]
+
+    where h_i^- = x_i - x_{i-1} and h_i^+ = x_{i+1} - x_i. This reduces
+    exactly to the constant-spacing [1, -2, 1] stencil of eq. (4.28) when
+    the grid is uniform (h_i^- = h_i^+ = h for all i, up to the overall
+    1/h^2 normalisation).
+
+    No cross-flavour differencing is applied (flavours are not neighbours
+    in x), so the full operator is block-diagonal across the n_fl
+    flavours, each block being the (Nx - 2, Nx) stencil above.
+
+    Parameters
+    ----------
+    FIT_XGRID : array-like
+        The (possibly non-uniform) x-grid, length Nx.
+
+    n_fl : int
+        Number of flavours (grid rows); N_FLAVOURS in the un-truncated
+        case, or len(flavour_indices) if restricting to a subset.
+
+    Returns
+    -------
+    np.ndarray of shape (n_fl * (Nx - 2), n_fl * Nx)
+    """
+    x = np.asarray(FIT_XGRID, dtype=float)
+    n_x = len(x)
+
+    if n_x < 3:
+        raise ValueError("FIT_XGRID must have at least 3 points for a second-order penalty.")
+
+    L1 = np.zeros((n_x - 2, n_x))
+    for i in range(1, n_x - 1):
+        h_minus = x[i] - x[i - 1]
+        h_plus = x[i + 1] - x[i]
+        L1[i - 1, i - 1] = 2.0 / (h_minus * (h_minus + h_plus))
+        L1[i - 1, i] = -2.0 / (h_minus * h_plus)
+        L1[i - 1, i + 1] = 2.0 / (h_plus * (h_minus + h_plus))
+
+    # Block-diagonal across flavours; ordering matches the (n_fl, Nx)
+    # row-major flattening used everywhere else (B, the FK operator, etc.)
+    return np.kron(np.eye(n_fl), L1)
+
+
+def compute_lcurve(
+    central_covmat_index,
+    forward_map,
+    analytic_settings,
+    fast_kernel_arrays,
+    data,
+    FIT_XGRID,
+    output_path,
+    lcurve_settings=None,
+):
+    """
+    Computes the L-curve for second-order Tikhonov regularisation (eq. 4.25
+    and 4.28 in Aster, Borchers & Thurber), applied *on top* of whatever
+    FK-level TSVD truncation is set via
+    ``analytic_settings["tsvd_n_components"]`` (if any). This is purely a
+    diagnostic to help choose a regularisation strength lambda by eye
+    (looking for the "corner" of the L-curve) -- it does not change the
+    actual fit result computed by ``analytic_fit``.
+
+    Where the roughness penalty lives
+    ----------------------------------
+    The fit still solves for the n_params (e.g. 43) basis-function
+    weights w -- that does not change. However "smoothness" is only a
+    meaningful notion on the reconstructed (N_FLAVOURS, Nx) PDF grid
+    (consecutive weights are not, in general, neighbours; consecutive
+    x-grid points are). So the roughening matrix L_grid (see
+    ``_second_order_roughening_matrix``) is built directly on that grid,
+    exactly like the FK-level TSVD operator is, and then pulled back onto
+    the weights via the same basis-to-grid matrix B used for TSVD:
+
+        L_eff = L_grid @ B,   shape (N_FLAVOURS * (Nx - 2), n_params)
+
+    so that the penalised quantity is the seminorm of the *reconstructed
+    grid*, ||L_grid @ (B w)||_2 = ||L_eff @ w||_2, restricted to the part
+    of the grid spanned by the fit's own parametrisation (the fixed
+    intercept T(0)/pdf(0) is not part of what is optimised over, so it is
+    excluded from the penalty).
+
+    For each lambda in a grid, the regularised solution solves the
+    (n_params x n_params) normal equations directly (cheap, since
+    n_params is small -- no need for the GSVD machinery of section 4.4,
+    which exists purely for computational efficiency on much larger
+    problems than this one):
+
+        (X_tilde^T X_tilde + lambda^2 L_eff^T L_eff) w_lambda = X_tilde^T Y_tilde
+
+    and this function records:
+
+    - residual_norm(lambda) = ||Y_tilde - X_tilde w_lambda||
+    - seminorm(lambda) = ||L_eff w_lambda||
+
+    Writes ``<output_path>/lcurve/lcurve.txt`` with columns
+    "lambda,residual_norm,seminorm".
+
+    Parameters
+    ----------
+    central_covmat_index, forward_map, analytic_settings, fast_kernel_arrays,
+    data, FIT_XGRID : see ``analytic_fit``.
+
+    output_path : pathlib.Path
+        Colibri output folder. Automatically provided by
+        ``colibri.config.Environment``.
+
+    lcurve_settings : dict, default is None
+        Optional dict with keys:
+
+        - "n_lambda" (int, default 100): number of lambda values.
+        - "lambda_min" (float, default S[-1] * 1e-3): smallest lambda.
+        - "lambda_max" (float, default S[0] * 1e3): largest lambda.
+
+        where S are the singular values of X_tilde. lambda values are
+        log-spaced between lambda_min and lambda_max (see
+        ``compute_lcurve``'s module-level discussion for why a grid of
+        lambda is needed at all: the L-curve is the parametric curve
+        traced out by lambda, not a single computable point). Can be set
+        directly in the runcard.
+
+    Returns
+    -------
+    tuple of np.ndarray
+        (lambdas, residual_norms, seminorms), the same arrays written to
+        the CSV.
+    """
+    X_tilde, Y_tilde, _, B, n_fl, n_x = _build_whitened_linear_system(
+        central_covmat_index,
+        forward_map,
+        analytic_settings,
+        fast_kernel_arrays,
+        data,
+        FIT_XGRID,
+    )
+
+    X_tilde = np.asarray(X_tilde)
+    Y_tilde = np.asarray(Y_tilde)
+    n_params = X_tilde.shape[1]
+
+    L_grid = _second_order_roughening_matrix(FIT_XGRID, n_fl)
+    L_eff = L_grid @ B  # (n_fl * (n_x - 2), n_params)
+
+    log.info(
+        f"Second-order roughening matrix built on the ({n_fl}, {n_x}) grid, "
+        f"pulled back to L_eff with shape {L_eff.shape} via B."
+    )
+
+    XtX = X_tilde.T @ X_tilde  # (n_params, n_params), fixed across lambda
+    XtY = X_tilde.T @ Y_tilde  # (n_params,), fixed across lambda
+    LtL = L_eff.T @ L_eff  # (n_params, n_params), fixed across lambda
+
+    # lambda grid defaults: the natural scale for lambda is set by the
+    # *generalized* singular values gamma_i (section 4.4 of Aster, Borchers
+    # & Thurber), i.e. the square roots of the generalized eigenvalues of
+    # the pencil (X_tilde^T X_tilde, L_eff^T L_eff): X^TX v = gamma^2 L^TL v.
+    # Using only X_tilde's own singular values (as an earlier version of
+    # this function did) ignores L_eff's scale entirely -- and L_eff, built
+    # from second-derivative finite differences 1/h^2 on a possibly very
+    # non-uniform FIT_XGRID (tiny h near small x), can have a wildly
+    # different magnitude than X_tilde. Getting this wrong means the swept
+    # lambda range can land entirely in one asymptotic tail of the true
+    # L-curve, missing the corner (and both flat segments) completely --
+    # producing a curve that looks like a single steep drop in the wrong
+    # place rather than a proper "L".
+    try:
+        gen_eigvals = sla.eigh(XtX, LtL, eigvals_only=True)
+        gen_eigvals = np.clip(gen_eigvals, 1e-300, None)
+        gammas = np.sqrt(gen_eigvals)
+        default_lambda_min = gammas.min() * 1e-2
+        default_lambda_max = gammas.max() * 1e2
+        log.info(
+            f"Generalized singular values (gamma_i) of (X_tilde, L_eff) "
+            f"range from {gammas.min():.3e} to {gammas.max():.3e}."
+        )
+    except Exception as exc:
+        # Falls back to the old X_tilde-only heuristic if L_eff is rank
+        # deficient (LtL not positive definite) or the generalized
+        # eigenproblem otherwise fails to solve.
+        log.warning(
+            f"Generalized eigenvalue problem for the lambda range failed "
+            f"({exc}); falling back to a heuristic based on X_tilde's own "
+            f"singular values only. Consider setting lambda_min/lambda_max "
+            f"manually via lcurve_settings if the resulting L-curve looks off."
+        )
+        S = np.linalg.svd(X_tilde, compute_uv=False)
+        default_lambda_min = S[-1] * 1e-3
+        default_lambda_max = S[0] * 1e3
+
+    lcurve_settings = lcurve_settings or {}
+    n_lambda = lcurve_settings.get("n_lambda", 100)
+    lambda_min = lcurve_settings.get("lambda_min", default_lambda_min)
+    lambda_max = lcurve_settings.get("lambda_max", default_lambda_max)
+
+    log.info(
+        f"Computing L-curve: {n_lambda} lambda values log-spaced between "
+        f"{lambda_min:.3e} and {lambda_max:.3e}."
+    )
+
+    lambdas = np.logspace(np.log10(lambda_min), np.log10(lambda_max), n_lambda)
+
+    residual_norms = np.empty(n_lambda)
+    seminorms = np.empty(n_lambda)
+
+    for j, lam in enumerate(lambdas):
+        w_lambda = np.linalg.solve(XtX + lam**2 * LtL, XtY)
+        residual_norms[j] = np.linalg.norm(Y_tilde - X_tilde @ w_lambda)
+        seminorms[j] = np.linalg.norm(L_eff @ w_lambda)
+
+    lcurve_folder = output_path / "lcurve"
+    lcurve_folder.mkdir(exist_ok=True)
+    lcurve_path = lcurve_folder / "lcurve.txt"
+    np.savetxt(
+        lcurve_path,
+        np.column_stack([lambdas, residual_norms, seminorms]),
+        header="lambda,residual_norm,seminorm",
+        delimiter=",",
+        comments="",
+    )
+    log.info(f"L-curve ({n_lambda} lambda values) saved to {lcurve_path}")
+
+    return lambdas, residual_norms, seminorms
+
+
 def analytic_fit(
     central_covmat_index,
     forward_map,
     analytic_settings,
     prior_settings,
     fast_kernel_arrays,
+    data,
+    FIT_XGRID,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -98,6 +549,55 @@ def analytic_fit(
     chi2 = (D - (T(0) + X w))^T Sigma^-1 (D - (T(0) + X w)) = (Y - X w)^T Sigma^-1 (Y - X w)
     with Y = D - T(0).
 
+    Optional TSVD regularisation (``analytic_settings["tsvd_n_components"]``)
+    -------------------------------------------------------------------------
+    T(w) itself factorises as T(w) = FK @ pdf(w), where FK is the raw
+    (Ndat, N_FLAVOURS * Nx) FK operator (see ``_combined_dis_fk_matrix``,
+    the same object diagnosed by ``colibri.compute_svd``) and pdf(w) is the
+    (N_FLAVOURS * Nx,)-flattened PDF grid produced by the model's
+    ``grid_values_func``. Since the fit parametrisation typically has far
+    fewer parameters than N_FLAVOURS * Nx (e.g. 43 vs. 700), truncating the
+    *parameter-space* design matrix X (shape (Ndat, n_params)) can only ever
+    keep at most n_params components -- there is nothing to truncate there.
+
+    Instead, when ``tsvd_n_components`` is set, this function truncates the
+    FK operator itself: FK = U S V^T -> FK_trunc = U_k S_k V_k^T (keeping
+    the k=tsvd_n_components largest singular values/vectors), and then
+    composes the *truncated* operator with the model's basis:
+    X_trunc = FK_trunc @ B, intercept_trunc = FK_trunc @ pdf(0), where B is
+    the (N_FLAVOURS * Nx, n_params) matrix whose columns are pdf(e_i) for
+    each unit parameter vector e_i (obtained directly from the ``pdf``
+    output of ``forward_map``). The subsequent whitening + exact QR solve
+    are unchanged and operate on this regularised X_trunc/intercept_trunc,
+    so the posterior covariance remains full-rank (n_params x n_params) and
+    the evidence formulas below stay valid.
+
+    See ``compute_lcurve`` for how to choose ``analytic_settings["l2_lambda"]``
+    via the L-curve criterion before setting it here.
+
+    Optional L2/Tikhonov (second-order) regularisation (``analytic_settings["l2_lambda"]``)
+    -------------------------------------------------------------------------------------
+    Applied on top of whatever TSVD truncation is set above (independent
+    setting -- can be used alone, together with TSVD, or not at all).
+    Penalises the curvature (second derivative, spacing-corrected for a
+    non-uniform FIT_XGRID) of the reconstructed PDF grid B w, pulled back
+    onto the n_params weights exactly as TSVD pulls the FK operator back
+    onto them: L_eff = L_grid @ B (see ``_second_order_roughening_matrix``
+    and ``compute_lcurve``, which computes the L-curve diagnostic for this
+    same L_eff without applying it to the fit). When
+    ``analytic_settings["l2_lambda"]`` is set to a float, the exact QR
+    solve below is replaced by the regularised normal equations
+
+        (X_tilde^T X_tilde + l2_lambda^2 L_eff^T L_eff) sol_mean = X_tilde^T Y_tilde
+        sol_covmat = (X_tilde^T X_tilde + l2_lambda^2 L_eff^T L_eff)^-1
+
+    which is exactly the Bayesian MAP/posterior-covariance solution under
+    an additional Gaussian prior on w with precision l2_lambda^2 L_eff^T L_eff
+    (mean zero) -- i.e. still a well-defined Gaussian posterior, so the
+    evidence formulas below remain valid. When ``l2_lambda`` is None
+    (default), this reduces exactly to the original unregularised QR
+    solve.
+
     Parameters
     ----------
     central_covmat_index: commondata_utils.CentralCovmatIndex
@@ -107,64 +607,82 @@ def analytic_fit(
         Forward map function for the fit.
 
     analytic_settings: dict
-        Settings for the analytic fit.
+        Settings for the analytic fit. May contain "tsvd_n_components"
+        (int or None) to enable FK-level TSVD regularisation, and
+        "l2_lambda" (float or None) to enable second-order Tikhonov
+        regularisation on top of it.
 
     prior_settings: PriorSettings
         Settings for the prior.
 
     fast_kernel_arrays: tuple
         Tuple containing the fast kernel arrays.
-    """
-    # Ensure that the PDF model is linear before running the fit.
-    log.info("Checking that the PDF model is linear...")
-    check_pdf_model_is_linear(forward_map, fast_kernel_arrays)
 
+    data: validphys.core.DataGroupSpec
+        The data entering the fit. Only used when ``tsvd_n_components`` is
+        set, to rebuild the raw FK operator for truncation.
+
+    FIT_XGRID: np.ndarray
+        Common fit x-grid. Used when ``tsvd_n_components`` and/or
+        ``l2_lambda`` are set.
+    """
     log.warning("The prior is assumed to be flat in the parameters.")
     log.warning(
         "Assuming that the prior is wide enough to fully cover the gaussian likelihood."
     )
 
-    parameters = forward_map.param_names
-
-    # Precompute predictions for the basis of the model
-    bases = jnp.identity(len(parameters))
-    predictions = jnp.array(
-        [forward_map(fast_kernel_arrays, basis)[0] for basis in bases]
-    )
-    intercept = forward_map(fast_kernel_arrays, jnp.zeros(len(parameters)))[0]
-
-    # Construct the analytic solution
-    central_values = central_covmat_index.central_values
     covmat = central_covmat_index.covmat
 
-    # Solve chi2 analytically for the mean
-    Y = central_values - intercept
-    X = predictions.T - intercept[:, None]
+    X_tilde, Y_tilde, parameters, B, n_fl, n_x = _build_whitened_linear_system(
+        central_covmat_index,
+        forward_map,
+        analytic_settings,
+        fast_kernel_arrays,
+        data,
+        FIT_XGRID,
+    )
+
+    l2_lambda = analytic_settings.get("l2_lambda", None)
 
     t0 = time.time()
 
-    # Cholesky factorization: S = L L^T
-    # upper False means that we want the lower triangular matrix L
-    L = jla.cholesky(covmat, upper=False)
+    if l2_lambda is None:
+        if jnp.any(jla.eigh(X_tilde.T @ X_tilde)[0] <= 0.0):
+            raise ValueError(
+                "The obtained covariance matrix for the analytic solution is not positive definite."
+            )
 
-    # Whiten the problem: Y' = L^-1 Y, X' = L^-1 X
-    Y_tilde = jlinalg.triangular_solve(L, Y, left_side=True, lower=True)
-    X_tilde = jlinalg.triangular_solve(L, X, left_side=True, lower=True)
+        # Compute QR decomposition of X_tilde for numerical stability in the inversion
+        Q, R = jla.qr(X_tilde)
 
-    if jnp.any(jla.eigh(X_tilde.T @ X_tilde)[0] <= 0.0):
-        raise ValueError(
-            "The obtained covariance matrix for the analytic solution is not positive definite."
+        # NOTE: R is upper triangular in QR decomposition, so we need to set lower=False
+        sol_mean = jlinalg.triangular_solve(R, Q.T @ Y_tilde, left_side=True, lower=False)
+
+        I_R = jnp.eye(R.shape[0])
+        R_inv = jlinalg.triangular_solve(R, I_R, left_side=True, lower=False)
+        sol_covmat = R_inv @ R_inv.T
+    else:
+        log.warning(
+            f"Applying L2/second-order Tikhonov regularisation with "
+            f"l2_lambda = {l2_lambda:.6e} (chosen e.g. via the L-curve "
+            f"corner from compute_lcurve)."
         )
 
-    # Compute QR decomposition of X_tilde for numerical stability in the inversion
-    Q, R = jla.qr(X_tilde)
+        L_grid = _second_order_roughening_matrix(FIT_XGRID, n_fl)
+        L_eff = jnp.asarray(L_grid @ B)  # (n_fl * (n_x - 2), n_params)
 
-    # NOTE: R is upper triangular in QR decomposition, so we need to set lower=False
-    sol_mean = jlinalg.triangular_solve(R, Q.T @ Y_tilde, left_side=True, lower=False)
+        XtX = X_tilde.T @ X_tilde
+        LtL = L_eff.T @ L_eff
+        A = XtX + l2_lambda**2 * LtL
 
-    I_R = jnp.eye(R.shape[0])
-    R_inv = jlinalg.triangular_solve(R, I_R, left_side=True, lower=False)
-    sol_covmat = R_inv @ R_inv.T
+        if jnp.any(jla.eigh(A)[0] <= 0.0):
+            raise ValueError(
+                "The regularised (X_tilde^T X_tilde + l2_lambda^2 L_eff^T L_eff) "
+                "matrix is not positive definite."
+            )
+
+        sol_covmat = jla.inv(A)
+        sol_mean = sol_covmat @ (X_tilde.T @ Y_tilde)
 
     key = jax.random.PRNGKey(analytic_settings["sampling_seed"])
 
