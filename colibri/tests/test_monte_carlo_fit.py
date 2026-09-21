@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_carlo_fit
@@ -39,6 +40,9 @@ class MockEarlyStopper:
 
 
 class MockLikelihood:
+    def __init__(self, ndata):
+        self.ndata = ndata
+
     def __call__(self, *args, **kwargs):
         return 0.0
 
@@ -46,14 +50,16 @@ class MockLikelihood:
         return True
 
 
-def test_monte_carlo_fit_runs_without_errors():
+@pytest.mark.parametrize("split", [False, True])
+def test_monte_carlo_fit_runs_without_errors(split):
     # Provide necessary inputs for the function
     training_indices = jnp.arange(100)
     data_batch = data_batches(training_indices, 100)
+    training = MockLikelihood(100)
+    validation = MockLikelihood(50) if split else training
 
     result = monte_carlo_fit(
-        mc_log_likelihood=(MockLikelihood(), MockLikelihood()),
-        len_trval_data=(100, 50),
+        mc_log_likelihood=(training, validation),
         pdf_initial_parameters=np.zeros((N_PARAMS,)),
         optimizer_provider=MockOptimizerProvider(),
         early_stopper=MockEarlyStopper(),
@@ -66,6 +72,7 @@ def test_monte_carlo_fit_runs_without_errors():
     assert result.monte_carlo_specs["max_epochs"] == 100
     assert result.monte_carlo_specs["batch_size"] == 100
     assert result.monte_carlo_specs["batch_seed"] == 1
+    assert result.monte_carlo_specs["best_epoch_specs"]["ndat_train"] == 100
 
     assert_allclose(result.optimized_parameters, jnp.array([0.0, 0.0]))
     assert_allclose(result.training_loss, jnp.array([0.0]))

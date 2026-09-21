@@ -75,12 +75,15 @@ class BayesianFit:
         The minimum chi2 of the model.
     logz: float
         The log evidence of the model.
+    ndata: int
+        The number of datapoints involved in the fit.
     """
 
     param_names: list
     resampled_posterior: jnp.array
     full_posterior_samples: jnp.array
     bayesian_metrics: dict
+    ndata: int
 
 
 @dataclass(frozen=True)
