@@ -180,7 +180,6 @@ def run_gradient_descent(
         )
         best_epoch_dict = {
             "epoch": epoch,
-            "best_parameters": params,
             "best_val_loss": epoch_val_loss,
             "best_train_loss": epoch_train_loss,
         }
