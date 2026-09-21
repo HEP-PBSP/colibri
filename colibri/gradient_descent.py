@@ -147,13 +147,12 @@ def run_gradient_descent(
         epoch_val_chi2 = epoch_val_loss / validation_ndata
         update_best = False
         meets_threshold = epoch_val_chi2 < threshold_chi2
-        if meets_threshold:
-            if pos_pass and not any_pos_pass:
+        if meets_threshold and pos_pass:
+            if not any_pos_pass:
                 update_best = True
                 any_pos_pass = True
-            elif pos_pass == any_pos_pass and pos_pass:
-                if epoch_val_loss < best_val_loss:
-                    update_best = True
+            elif epoch_val_loss < best_val_loss:
+                update_best = True
 
         if update_best:
             best_val_loss = epoch_val_loss
