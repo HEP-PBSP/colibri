@@ -73,6 +73,11 @@ def run_gradient_descent(
     record_every : int, default 50
         Record losses every this many epochs.
 
+    positivity_check_fn : callable or None, default None
+        Called as positivity_check_fn(params) after each epoch; must return
+        True for best-epoch selection. None skips this check. If no epoch
+        qualifies, the last epoch's parameters are returned regardless.
+
     threshold_chi2 : float, default 10.0
         Maximum validation chi2 per data point required before an epoch can be
         selected as the best epoch.
