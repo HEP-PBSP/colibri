@@ -122,7 +122,7 @@ which would represent the losses for the first 150 epochs (i.e. 0, 1, 2 are just
 Best epoch
 """"""""""
 The final model weights for each replica are taken from the best epoch. This is defined 
-as the epoch that satisfies the positivity threshold (as specified in `likelihood.py``) 
+as the epoch that satisfies the positivity threshold (as specified in ``likelihood.py``) 
 and achieves the lowest validation loss among all such epochs.
 The information for the best epoch is stored in ``fit_replicas/replica_n/best_epoch_specs.csv``, 
 which contains the epoch number, the training loss and the validation loss.
