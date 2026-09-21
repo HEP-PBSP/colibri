@@ -36,6 +36,7 @@ def run_gradient_descent(
     max_epochs: int,
     data_batch: Optional[colibri.DataBatches] = None,
     record_every: int = 50,
+    record_parameters: bool = False,
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 
@@ -68,7 +69,11 @@ def run_gradient_descent(
         If None, we pass a sentinel EMPTY_BATCH to training_loss_fn.
 
     record_every : int, default 50
-        Record losses every this many epochs.
+        Record losses every this many epochs. If `record_parameters` is True,
+        parameters of the model are also recorded.
+
+    record_parameters : bool, default False
+        Whether to record parameters every `record_every` epochs.
     """
 
     params = initial_parameters
@@ -89,6 +94,7 @@ def run_gradient_descent(
 
     train_losses = []
     val_losses = []
+    parameters_by_epoch = [] if record_parameters else None
 
     if data_batch is None:
         # single fake iterator repeatedly yielding EMPTY_BATCH
@@ -123,6 +129,11 @@ def run_gradient_descent(
             train_losses.append(epoch_train_loss)
             val_losses.append(epoch_val_loss)
 
+        if record_parameters:
+            if epoch % record_every == 0:
+                log.info(f"Recording parameters at epoch {epoch}")
+                parameters_by_epoch.append(params)
+
         if early_stopper.should_stop:
             log.info(f"Early stopping at epoch {epoch}")
             break
@@ -136,4 +147,5 @@ def run_gradient_descent(
             "batch_size": batch_size,
             "record_every": record_every,
         },
+        parameters_by_epoch=jnp.array(parameters_by_epoch),
     )

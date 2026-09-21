@@ -31,8 +31,8 @@ sphinx-rtd-theme = {version="*", optional=true}
 tabulate = {version="*", optional=true}
 sphinx-copybutton = {version="*", optional=true}
 
-# nnpdf dependency
-nnpdf = { git = "https://github.com/NNPDF/nnpdf" }
+# nnpdf dependency, pinned to the branch this colibri branch is developed against.
+nnpdf = { git = "https://github.com/NNPDF/nnpdf.git", branch = "ntk_colibri" }
 anesthetic = "^2.10.2"
 tfp-nightly = { extras = ["jax"], version = "*" }
 tf-keras = "*"

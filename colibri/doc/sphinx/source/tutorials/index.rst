@@ -17,3 +17,5 @@ such as implementing a custom PDF model or using it to fit data.
    closure_tests/index
 
    scripts/index
+
+   ntk/computing_ntk
