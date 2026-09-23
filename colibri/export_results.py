@@ -62,10 +62,17 @@ def export_bayes_results(
     df.to_csv(str(output_path) + f"/{results_name}.csv", float_format="%.5e")
 
     # Save bayesian metrics to csv file
-    pd.DataFrame.from_dict([bayes_fit.bayesian_metrics]).to_csv(
-        str(output_path) + f"/bayes_metrics.csv",
+    metrics_df = pd.DataFrame(
+        {
+            "Metric": list(bayes_fit.bayesian_metrics.keys()),
+            "Value": list(bayes_fit.bayesian_metrics.values()),
+        }
+    )
+    metrics_df.to_csv(
+        str(output_path) + "/bayes_metrics.csv",
         float_format="%.5e",
         index=False,
+        header=False,
     )
 
 
