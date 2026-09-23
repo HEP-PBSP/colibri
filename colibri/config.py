@@ -479,6 +479,7 @@ class colibriConfig(Config):
             "n_posterior_samples",
             "sampling_seed",
             "full_sample_size",
+            "sampler_plot",
         }
 
         kdiff = settings.keys() - known_keys
@@ -501,6 +502,9 @@ class colibriConfig(Config):
 
         # Set the full sample size
         analytic_settings["full_sample_size"] = settings.get("full_sample_size", 1000)
+
+        # Set whether to generate a corner plot
+        analytic_settings["sampler_plot"] = settings.get("sampler_plot", True)
 
         return analytic_settings
 
