@@ -77,6 +77,23 @@ def dataset_inputs_covmat_from_systematics(
     return covmat
 
 
+def dataset_inputs_covmat_from_systematics_from_fit(
+    data,
+    experimental_commondata_tuple_from_fit,
+):
+    covmat = jnp.array(
+        covmats.dataset_inputs_covmat_from_systematics(
+            experimental_commondata_tuple_from_fit,
+            data.dsinputs,
+            use_weights_in_covmat=False,
+            norm_threshold=None,
+            _list_of_central_values=None,
+            _only_additive=False,
+        )
+    )
+    return covmat
+
+
 def colibri_dataset_inputs_t0_predictions(
     _pred_t0data, t0_pdf_grid, fast_kernel_arrays
 ):
@@ -117,6 +134,29 @@ def dataset_inputs_t0_covmat_from_systematics(
     covmat = jnp.array(
         covmats.dataset_inputs_t0_covmat_from_systematics(
             experimental_commondata_tuple,
+            data_input=data.dsinputs,
+            use_weights_in_covmat=False,
+            norm_threshold=None,
+            dataset_inputs_t0_predictions=colibri_dataset_inputs_t0_predictions,
+        )
+    )
+    return covmat
+
+
+def dataset_inputs_t0_covmat_from_systematics_from_fit(
+    data,
+    experimental_commondata_tuple_from_fit,
+    colibri_dataset_inputs_t0_predictions,
+):
+    """
+    Similar as `validphys.covmats.dataset_inputs_t0_covmat_from_systematics`
+    but jax.numpy array.
+
+    Note: see production rule in `config.py` for commondata_tuple options.
+    """
+    covmat = jnp.array(
+        covmats.dataset_inputs_t0_covmat_from_systematics(
+            experimental_commondata_tuple_from_fit,
             data_input=data.dsinputs,
             use_weights_in_covmat=False,
             norm_threshold=None,
