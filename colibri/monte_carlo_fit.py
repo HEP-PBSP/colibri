@@ -80,7 +80,7 @@ def monte_carlo_fit(
     gd_result = run_gradient_descent(
         initial_parameters=pdf_initial_parameters.copy(),
         training_loss_fn=loss_training,
-        validation_loss_fn=None,
+        validation_loss_fn=loss_validation,
         optimizer=optimizer_provider,
         early_stopper=early_stopper,
         max_epochs=max_epochs,
@@ -88,7 +88,6 @@ def monte_carlo_fit(
         record_every=50,
         threshold_chi2=threshold_chi2,
         validation_ndata=val_loglike.ndata,
-        validation_metrics_fn=loss_validation,
     )
 
     t1 = time.time()

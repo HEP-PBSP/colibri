@@ -27,16 +27,12 @@ def test_combined_metrics_preserve_best_epoch_and_history(pos_mode, threshold):
             "early": params > 0.3,
         }[pos_mode]
 
-    def unexpected_call(params):
-        raise AssertionError("Combined metrics must replace separate evaluations")
-
     def run(combined):
         return run_gradient_descent(
             initial_parameters=jnp.array(1.0),
             training_loss_fn=lambda p, batch: p**2,
-            validation_loss_fn=unexpected_call if combined else validation,
-            validation_metrics_fn=(
-                (lambda p: (validation(p), positivity(p))) if combined else None
+            validation_loss_fn=(
+                (lambda p: (validation(p), positivity(p))) if combined else validation
             ),
             optimizer=optax.sgd(learning_rate=0.25),
             early_stopper=EarlyStopping(min_delta=0.0, patience=2),
