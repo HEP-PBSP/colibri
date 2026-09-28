@@ -15,6 +15,11 @@ import jax.numpy as jnp
 import pandas as pd
 from mpi4py import MPI
 
+from ultranest.plot import (
+    cornerplot,
+)  # this is to plot corner plots with every bayesian fitting routine
+import matplotlib.pyplot as plt
+
 from colibri.constants import (
     LHAPDF_XGRID,
     evolution_to_flavour_matrix,
@@ -68,12 +73,42 @@ def export_bayes_results(
             "Value": list(bayes_fit.bayesian_metrics.values()),
         }
     )
+
     metrics_df.to_csv(
         str(output_path) + "/bayes_metrics.csv",
         float_format="%.5e",
         index=False,
         header=False,
     )
+
+
+def plot_bayes_plots(bayes_fit, output_path, logs_dir_name, filename="corner.pdf"):
+    """
+    Make a corner plot for all of the fit parameters of any Bayesian fit
+    (analytic, ultranest or blackjax)
+
+    Parameters
+    ----------
+    bayes_fit: BayesianFit
+
+    """
+
+    samples = np.asarray(bayes_fit.full_posterior_samples)
+    results = {
+        "paramnames": list(bayes_fit.param_names),
+        "weighted_samples": {
+            "points": samples,
+            "weights": np.full(len(samples), 1 / len(samples)),
+        },
+    }
+
+    fig = cornerplot(results, min_weight=0.0, logger=log)
+    if fig is not None:
+        plot_dir = Path(output_path) / logs_dir_name / "plots"
+        plot_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(plot_dir / filename)
+        plt.close(fig)
+        log.info(f"Corner plot saved to {plot_dir / filename}")
 
 
 def export_hessian_results(

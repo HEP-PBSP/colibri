@@ -15,11 +15,12 @@ import jax.lax.linalg as jlinalg
 import numpy as np
 import scipy.special as special
 
-from ultranest.plot import cornerplot
-import matplotlib.pyplot as plt
-
 from colibri.core import AnalyticFit
-from colibri.export_results import write_replicas, export_bayes_results
+from colibri.export_results import (
+    write_replicas,
+    export_bayes_results,
+    plot_bayes_plots,
+)
 from colibri.checks import check_pdf_model_is_linear
 from colibri.utils import compute_determinants_of_principal_minors
 
@@ -279,9 +280,6 @@ def analytic_fit(
     t1 = time.time()
     log.info("ANALYTIC SAMPLING RUNTIME: %f s" % (t1 - t0))
 
-
-    
-
     return AnalyticFit(
         analytic_specs=analytic_settings,
         resampled_posterior=samples,
@@ -311,6 +309,8 @@ def run_analytic_fit(analytic_fit, analytic_settings, output_path, pdf_model, Q0
     ----------
     analytic_fit: AnalyticFit
         The results of the analytic fit.
+    analytic_settings: dict
+        Settings for the analytic fit.
     output_path: pathlib.PosixPath
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
@@ -319,26 +319,10 @@ def run_analytic_fit(analytic_fit, analytic_settings, output_path, pdf_model, Q0
         The scale at which to export the PDFs.
     """
 
-    
-
     export_bayes_results(analytic_fit, output_path, "analytic_result")
 
     if analytic_settings["sampler_plot"]:
-                log.info("Plotting sampler plots")
-                # Make a corner plot
-                samples = np.asarray(analytic_fit.full_posterior_samples)
-                result = {
-                    "paramnames": list(analytic_fit.param_names),
-                    "weighted_samples": {
-                        "points": samples,
-                        "weights": np.full(len(samples), 1 / len(samples)),
-                    },
-                }
-                fig = cornerplot(result, min_weight=0.0, logger=log)
-                if fig is not None:
-                    plot_dir = output_path / "analytic_logs" / "plots"
-                    plot_dir.mkdir(parents=True, exist_ok=True)
-                    fig.savefig( plot_dir / "corner.pdf")
-                    plt.close(fig)
+        log.info("Plotting corner plot")
+        plot_bayes_plots(analytic_fit, output_path, "analytic_logs")
 
     write_replicas(analytic_fit, output_path, pdf_model, Q0)

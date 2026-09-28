@@ -285,6 +285,7 @@ class colibriConfig(Config):
             "log_precision",
             "posterior_resampling_seed",
             "blackjax_seed",
+            "sampler_plot",
         }
 
         kdiff = settings.keys() - known_keys
@@ -312,6 +313,8 @@ class colibriConfig(Config):
         blackjax_settings["log_dir"] = settings.get(
             "log_dir", str(output_path / "blackjax_logs")
         )
+
+        blackjax_settings["sampler_plot"] = settings.get("sampler_plot", True)
 
         return blackjax_settings
 
