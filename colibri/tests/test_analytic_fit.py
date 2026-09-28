@@ -26,6 +26,7 @@ analytic_settings = {
     "sampling_seed": 123,
     "full_sample_size": 100,
     "n_posterior_samples": 10,
+    "sampler_plot": False,
 }
 
 
@@ -188,7 +189,9 @@ def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
 
     # Run the run_analytic_fit function
     output_path = str(tmp_path)
-    run_analytic_fit(mock_analytic_fit, output_path, MOCK_PDF_MODEL, Q0=1.65)
+    run_analytic_fit(
+        mock_analytic_fit, analytic_settings, output_path, MOCK_PDF_MODEL, Q0=1.65
+    )
 
     # Check if the write_exportgrid function was called for each sample
     assert (

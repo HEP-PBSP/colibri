@@ -57,6 +57,7 @@ blackjax_settings = {
     "n_posterior_samples": 10,
     "posterior_resampling_seed": 123,
     "log_dir": "test_logs",
+    "sampler_plot": False,
 }
 
 
@@ -206,7 +207,7 @@ def test_run_blackjax_fit(mock_export_bayes, mock_write_replicas, tmp_path):
         "logz": 5.0,
     }
 
-    run_blackjax_fit(mock_fit, tmp_path, MOCK_PDF_MODEL)
+    run_blackjax_fit(mock_fit, blackjax_settings, tmp_path, MOCK_PDF_MODEL)
 
     mock_export_bayes.assert_called_once_with(
         mock_fit,
