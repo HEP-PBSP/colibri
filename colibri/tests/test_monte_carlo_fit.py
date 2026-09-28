@@ -15,6 +15,7 @@ from numpy.testing import assert_allclose
 from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_carlo_fit
 from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_FORWARD_MAP_DIS
 from colibri.data_batch import data_batches
+from colibri.likelihood import LogLikelihood
 
 N_PARAMS = len(TEST_FORWARD_MAP_DIS.param_names)
 
@@ -46,8 +47,51 @@ class MockLikelihood:
     def __call__(self, *args, **kwargs):
         return 0.0
 
-    def get_pos_pass(self, params):
-        return True
+    def loss_and_pos_pass(self, params):
+        return self(params), True
+
+
+@pytest.mark.parametrize("split", [False, True])
+def test_standard_likelihood_reuses_validation_positivity(split):
+    shared = dict(
+        pdf_model=None,
+        forward_map=lambda arrays, p: (jnp.array([p[0], p[0]]), p),
+        fast_kernel_arrays=(),
+        positivity_fast_kernel_arrays=(),
+        penalty_posdata=lambda pdf, alpha, weight, arrays: jnp.maximum(-pdf, 0),
+        positivity_penalty_settings={
+            "positivity_penalty": True,
+            "alpha": 1e-7,
+            "lambda_positivity": 1.0,
+        },
+        integrability_penalty=lambda pdf: jnp.array([0.0]),
+    )
+
+    def make_like(index):
+        return LogLikelihood(
+            central_covmat_index=Mock(
+                central_values=jnp.array([1.0]),
+                covmat=jnp.eye(1),
+                central_values_idx=jnp.array([index]),
+            ),
+            **shared,
+        )
+
+    training = make_like(0)
+    validation = make_like(1) if split else training
+    # The historical standalone check must no longer be evaluated.
+    with patch.object(
+        training, "get_pos_pass", side_effect=AssertionError("duplicate check")
+    ):
+        result = monte_carlo_fit(
+            mc_log_likelihood=(training, validation),
+            pdf_initial_parameters=np.ones(N_PARAMS),
+            optimizer_provider=MockOptimizerProvider(),
+            early_stopper=MockEarlyStopper(),
+            max_epochs=3,
+            data_batches=data_batches(jnp.arange(1), 1),
+        )
+    assert result.monte_carlo_specs["best_epoch_specs"]["epoch"] == 0
 
 
 @pytest.mark.parametrize("split", [False, True])

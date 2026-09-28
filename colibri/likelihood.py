@@ -125,7 +125,18 @@ class LogLikelihood(object):
             pos_pass = True
         return pos_pass, pos_penalty
 
-    @partial(jax.jit, static_argnames=("self",))
+    def loss_and_pos_pass(self, params):
+        """Return likelihood and positivity from the same forward evaluation."""
+        return self.log_likelihood(
+            params,
+            self.central_values,
+            self.inv_covmat,
+            self.fast_kernel_arrays,
+            self.positivity_fast_kernel_arrays,
+            return_pos=True,
+        )
+
+    @partial(jax.jit, static_argnames=("self", "return_pos"))
     def log_likelihood(
         self,
         params: jnp.ndarray,
@@ -134,6 +145,7 @@ class LogLikelihood(object):
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
         batch: BatchSpec | None = None,
+        return_pos: bool = False,
     ) -> jnp.array:
         """
         This function takes care of computing the log_likelihood that is defined in LogLikelihood.
@@ -146,11 +158,13 @@ class LogLikelihood(object):
         inv_covmat: jnp.ndarray
         fast_kernel_arrays: tuple
         positivity_fast_kernel_arrays: tuple
+        return_pos: bool
+            Also return the positivity decision from this evaluation when True.
 
         Returns
         -------
         jnp.ndarray
-            jax array with the value of the log-likelihood.
+            Log-likelihood, or (log-likelihood, positivity pass) if return_pos.
         """
         predictions, pdf = self.forward_map(fast_kernel_arrays, params)
         # Select only the data relevant for this likelihood
@@ -166,7 +180,7 @@ class LogLikelihood(object):
             else:
                 inv_covmat = batch.inv_cov
 
-        _, pos_penalty = self.positivity_check_and_penalty(
+        pos_pass, pos_penalty = self.positivity_check_and_penalty(
             pdf,
             positivity_fast_kernel_arrays,
         )
@@ -178,9 +192,10 @@ class LogLikelihood(object):
             axis=-1,
         )
 
-        return -0.5 * (
+        loss = -0.5 * (
             chi2(central_values, predictions, inv_covmat) + pos_penalty + integ_penalty
         )
+        return (loss, pos_pass) if return_pos else loss
 
 
 def log_likelihood(

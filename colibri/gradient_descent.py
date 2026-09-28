@@ -30,15 +30,15 @@ log = logging.getLogger(__name__)
 def run_gradient_descent(
     initial_parameters: jnp.ndarray,
     training_loss_fn: Callable[[jnp.ndarray, BatchSpec], jnp.ndarray],
-    validation_loss_fn: Callable[[jnp.ndarray], jnp.ndarray],
+    validation_loss_fn: Optional[Callable[[jnp.ndarray], jnp.ndarray]],
     optimizer: optax.GradientTransformation,
     early_stopper: Any,
     max_epochs: int,
     data_batch: Optional[colibri.DataBatches] = None,
     record_every: int = 50,
-    positivity_check_fn: Optional[Callable[[jnp.ndarray], bool]] = None,
     threshold_chi2: float = 10.0,
     validation_ndata: int = 1,  # If not defined then original loss will be used - As in Hessian
+    validation_metrics_fn: Optional[Callable] = None,
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 
@@ -54,8 +54,9 @@ def run_gradient_descent(
 
         Convention: if batch.idx.size == 0, interpret as "full dataset" (no subselect).
 
-    validation_loss_fn : callable -> scalar
+    validation_loss_fn : callable -> scalar, or None
         Validation loss (jit-able). Signature: validation_loss_fn(params) -> scalar
+        May be None when validation_metrics_fn is supplied.
 
     optimizer : optax.GradientTransformation
         Optax optimizer.
@@ -73,11 +74,6 @@ def run_gradient_descent(
     record_every : int, default 50
         Record losses every this many epochs.
 
-    positivity_check_fn : callable or None, default None
-        Called as positivity_check_fn(params) after each epoch; must return
-        True for best-epoch selection. None skips this check. If no epoch
-        qualifies, the last epoch's parameters are returned regardless.
-
     threshold_chi2 : float, default 10.0
         Maximum validation chi2 per data point required before an epoch can be
         selected as the best epoch.
@@ -86,13 +82,22 @@ def run_gradient_descent(
         Number of points in the dataset used for monitoring. When there is no
         validation split, this is the number of training points because the
         full training set is used as the monitoring set.
+
+    validation_metrics_fn : callable or None
+        Optional combined evaluation returning (validation loss, positivity pass)
+        at the updated parameters. Replaces validation_loss_fn when supplied.
+        Otherwise positivity is not checked. If no epoch qualifies, the last
+        epoch's parameters are returned.
     """
 
     params = initial_parameters
     opt_state = optimizer.init(params)
     loss_and_grad = jax.value_and_grad(training_loss_fn)
-    # JIT the validation loss in case it isn't already
-    validation_loss_fn = jax.jit(validation_loss_fn)
+    if validation_metrics_fn is not None:
+        validation_metrics_fn = jax.jit(validation_metrics_fn)
+    else:
+        # Preserve the original scalar-validation path for Hessian and other fits.
+        validation_loss_fn = jax.jit(validation_loss_fn)
 
     # Sentinel for "use full dataset" inside the loss
     EMPTY_BATCH = BatchSpec(idx=jnp.array([], dtype=jnp.int32), inv_cov=None)
@@ -134,13 +139,12 @@ def run_gradient_descent(
             params, opt_state, batch_loss = _step(params, opt_state, batch)
             epoch_train_loss += batch_loss
 
-        epoch_val_loss = validation_loss_fn(params)
+        if validation_metrics_fn is None:
+            epoch_val_loss = validation_loss_fn(params)
+            pos_pass = True
+        else:
+            epoch_val_loss, pos_pass = validation_metrics_fn(params)
         early_stopper = early_stopper.update(epoch_val_loss)
-
-        # Update best epoch based on positivity and validation loss
-        pos_pass = True
-        if positivity_check_fn is not None:
-            pos_pass = positivity_check_fn(params)
 
         # Match n3fit: the eligibility threshold is applied to chi2/Ndat,
         # while improvements are judged using the unnormalised total loss.

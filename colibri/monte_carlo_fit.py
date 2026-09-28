@@ -69,29 +69,26 @@ def monte_carlo_fit(
 
     @jax.jit
     def loss_validation(parameters):
-
-        val = -2 * val_loglike(parameters)
-
-        return val
+        # Training and validation share the PDF and positivity constraints.
+        loss, pos_pass = val_loglike.loss_and_pos_pass(parameters)
+        return -2 * loss, pos_pass
 
     log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
     log.info("Starting Monte Carlo fit...")
     t0 = time.time()
 
-    positivity_check_fn = train_loglike.get_pos_pass
-
     gd_result = run_gradient_descent(
         initial_parameters=pdf_initial_parameters.copy(),
         training_loss_fn=loss_training,
-        validation_loss_fn=loss_validation,
+        validation_loss_fn=None,
         optimizer=optimizer_provider,
         early_stopper=early_stopper,
         max_epochs=max_epochs,
         data_batch=data_batches,
         record_every=50,
-        positivity_check_fn=positivity_check_fn,
         threshold_chi2=threshold_chi2,
         validation_ndata=val_loglike.ndata,
+        validation_metrics_fn=loss_validation,
     )
 
     t1 = time.time()

@@ -6,10 +6,70 @@ Tests for the generic gradient descent training loop in `gradient_descent.py`.
 
 import jax.numpy as jnp
 import optax
+import pytest
 from flax.training.early_stopping import EarlyStopping
 
 from colibri.gradient_descent import run_gradient_descent, GradientDescentResult
 from colibri.data_batch import data_batches
+
+
+@pytest.mark.parametrize("pos_mode", ["pass", "fail", "late", "early"])
+@pytest.mark.parametrize("threshold", [0.0, 10.0])
+def test_combined_metrics_preserve_best_epoch_and_history(pos_mode, threshold):
+    def validation(params):
+        return (params - 0.2) ** 2
+
+    def positivity(params):
+        return {
+            "pass": jnp.array(True),
+            "fail": jnp.array(False),
+            "late": params < 0.3,
+            "early": params > 0.3,
+        }[pos_mode]
+
+    def unexpected_call(params):
+        raise AssertionError("Combined metrics must replace separate evaluations")
+
+    def run(combined):
+        return run_gradient_descent(
+            initial_parameters=jnp.array(1.0),
+            training_loss_fn=lambda p, batch: p**2,
+            validation_loss_fn=unexpected_call if combined else validation,
+            validation_metrics_fn=(
+                (lambda p: (validation(p), positivity(p))) if combined else None
+            ),
+            optimizer=optax.sgd(learning_rate=0.25),
+            early_stopper=EarlyStopping(min_delta=0.0, patience=2),
+            max_epochs=20,
+            record_every=1,
+            threshold_chi2=threshold,
+            validation_ndata=2,
+        )
+
+    separate, combined = run(False), run(True)
+    assert separate.specs == combined.specs
+    assert jnp.array_equal(separate.training_loss, combined.training_loss)
+    assert jnp.array_equal(separate.validation_loss, combined.validation_loss)
+    # SGD halves the parameter each epoch. Select the expected checkpoint
+    # independently using the original threshold and strict-improvement rules.
+    candidates = [
+        epoch
+        for epoch, loss in enumerate(separate.validation_loss)
+        if loss / 2 < threshold and positivity(0.5 ** (epoch + 1))
+    ]
+    expected_epoch = (
+        min(candidates, key=lambda epoch: float(separate.validation_loss[epoch]))
+        if candidates
+        else len(separate.validation_loss) - 1
+    )
+    assert combined.best_epoch["epoch"] == expected_epoch
+    assert combined.optimized_parameters == 0.5 ** (expected_epoch + 1)
+    assert (
+        combined.best_epoch["best_val_loss"] == separate.validation_loss[expected_epoch]
+    )
+    assert (
+        combined.best_epoch["best_train_loss"] == separate.training_loss[expected_epoch]
+    )
 
 
 def test_run_gradient_descent_no_batch_converges_and_early_stop():

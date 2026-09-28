@@ -90,6 +90,22 @@ def test_LogLikelihood_class(pos_penalty):
 
     assert_allclose(float(log_likelihood_class(params)), float(expected))
 
+    expected_pos = log_likelihood_class.get_pos_pass(params)
+    # Count actual calls without JIT hiding Python execution behind tracing.
+    original_forward = log_likelihood_class.forward_map
+    log_likelihood_class.forward_map = MagicMock(wraps=original_forward)
+    with jax.disable_jit():
+        combined_loss, combined_pos = log_likelihood_class.loss_and_pos_pass(params)
+    assert log_likelihood_class.forward_map.call_count == 1
+    assert_allclose(combined_loss, expected)
+    assert bool(combined_pos) == bool(expected_pos)
+    log_likelihood_class.forward_map = original_forward
+    compiled_loss, compiled_pos = jax.jit(log_likelihood_class.loss_and_pos_pass)(
+        params
+    )
+    assert_allclose(compiled_loss, expected)
+    assert bool(compiled_pos) == bool(expected_pos)
+
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
 def test_log_likelihood(pos_penalty):
