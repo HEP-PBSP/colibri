@@ -203,3 +203,52 @@ def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
     assert (tmp_path / "analytic_result.csv").exists()
     assert (tmp_path / "bayes_metrics.csv").exists()
     assert (tmp_path / "full_posterior_sample.csv").exists()
+
+
+@patch("colibri.export_results.write_exportgrid")
+@patch("colibri.analytic_fit.plot_bayes_plots")
+def test_run_analytic_fit_with_sampler_plot(
+    mock_plot_bayes_plots, mock_write_exportgrid, tmp_path
+):
+    """Test the run_analytic_fit function with sampler_plot=True to cover the plotting lines."""
+
+    # Create settings with sampler_plot enabled
+    analytic_settings_with_plot = {
+        "sampling_seed": 123,
+        "full_sample_size": 100,
+        "n_posterior_samples": 10,
+        "sampler_plot": True,  # Enable plotting
+    }
+
+    # Define mock analytic fit
+    mock_analytic_fit = Mock()
+    mock_analytic_fit.analytic_specs = analytic_settings_with_plot
+    mock_analytic_fit.resampled_posterior = jax.random.normal(
+        jax.random.PRNGKey(0), (10, 2)
+    )
+    mock_analytic_fit.param_names = ["param1", "param2"]
+    mock_analytic_fit.full_posterior_samples = jax.random.normal(
+        jax.random.PRNGKey(0), (100, 2)
+    )
+    mock_analytic_fit.bayesian_metrics = {
+        "bayes_complexity": 2.0,
+        "avg_chi2": 0.3,
+        "avg_chi2_reduced": 0.01,
+        "min_chi2": 0.1,
+        "min_chi2_reduced": 0.0033,
+        "logz": 7.0,
+    }
+
+    # Run the run_analytic_fit function
+    output_path = str(tmp_path)
+    run_analytic_fit(
+        mock_analytic_fit,
+        analytic_settings_with_plot,
+        output_path,
+        MOCK_PDF_MODEL,
+        Q0=1.65,
+    )
+
+    mock_plot_bayes_plots.assert_called_once_with(
+        mock_analytic_fit, output_path, "analytic_logs"
+    )
