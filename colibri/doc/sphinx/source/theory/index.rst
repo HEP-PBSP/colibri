@@ -19,4 +19,3 @@ This section discusses some relevant theoretical background to Colibri.
 
    ./inference_methods.rst
 
-   ./closure-tests.rst
