@@ -90,10 +90,19 @@ def plot_bayes_plots(bayes_fit, output_path, logs_dir_name, filename="corner.pdf
     Parameters
     ----------
     bayes_fit: BayesianFit
+    output_path: pathlib.PosixPath
+        Path to the output folder.
+    logs_dir_name: str
+        Name of the directory where the plots will be stored.
+    filename: "corner.pdf"
+        Name of the corner plot file.
 
     """
 
+    # Pull samples out of fit object
     samples = np.asarray(bayes_fit.full_posterior_samples)
+
+    # Repackage data into UltraNest's expected input format
     results = {
         "paramnames": list(bayes_fit.param_names),
         "weighted_samples": {
@@ -102,7 +111,9 @@ def plot_bayes_plots(bayes_fit, output_path, logs_dir_name, filename="corner.pdf
         },
     }
 
+    # Call cornerplot to build the figure
     fig = cornerplot(results, min_weight=0.0, logger=log)
+    # Save the figure if one was produced
     if fig is not None:
         plot_dir = Path(output_path) / logs_dir_name / "plots"
         plot_dir.mkdir(parents=True, exist_ok=True)
