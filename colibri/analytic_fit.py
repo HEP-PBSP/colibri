@@ -16,7 +16,11 @@ import numpy as np
 import scipy.special as special
 
 from colibri.core import AnalyticFit
-from colibri.export_results import write_replicas, export_bayes_results
+from colibri.export_results import (
+    write_replicas,
+    export_bayes_results,
+    plot_bayes_plots,
+)
 from colibri.checks import check_pdf_model_is_linear
 from colibri.utils import compute_determinants_of_principal_minors
 
@@ -297,7 +301,7 @@ def analytic_fit(
     )
 
 
-def run_analytic_fit(analytic_fit, output_path, pdf_model, Q0):
+def run_analytic_fit(analytic_fit, analytic_settings, output_path, pdf_model, Q0):
     """
     Export the results of an analytic fit.
 
@@ -305,6 +309,8 @@ def run_analytic_fit(analytic_fit, output_path, pdf_model, Q0):
     ----------
     analytic_fit: AnalyticFit
         The results of the analytic fit.
+    analytic_settings: dict
+        Settings for the analytic fit.
     output_path: pathlib.PosixPath
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
@@ -314,5 +320,9 @@ def run_analytic_fit(analytic_fit, output_path, pdf_model, Q0):
     """
 
     export_bayes_results(analytic_fit, output_path, "analytic_result")
+
+    if analytic_settings["sampler_plot"]:
+        log.info("Plotting corner plot")
+        plot_bayes_plots(analytic_fit, output_path, "analytic_logs")
 
     write_replicas(analytic_fit, output_path, pdf_model, Q0)

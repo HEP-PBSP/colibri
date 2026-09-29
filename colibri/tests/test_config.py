@@ -101,6 +101,7 @@ def test_parse_analytic_settings(mock_warning):
         "n_posterior_samples": 500,
         "full_sample_size": 2000,
         "unknown_key": "should_warn",
+        "sampler_plot": False,
     }
 
     # Call the method
@@ -111,6 +112,7 @@ def test_parse_analytic_settings(mock_warning):
         "sampling_seed": 42,
         "n_posterior_samples": 500,
         "full_sample_size": 2000,
+        "sampler_plot": False,
     }
     assert result == expected
 
@@ -132,6 +134,7 @@ def test_parse_analytic_settings_defaults():
         "sampling_seed": 123456,
         "n_posterior_samples": 100,
         "full_sample_size": 1000,
+        "sampler_plot": True,
     }
     assert result == expected
 
@@ -540,6 +543,7 @@ def test_parse_blackjax_settings_full(mock_warning, tmp_path):
         "posterior_resampling_seed": 999,
         "log_dir": str(tmp_path / "custom_logs"),
         "unknown_key": "oops",  # triggers warning
+        "sampler_plot": False,
     }
 
     result = BASE_CONFIG.parse_blackjax_settings(settings, tmp_path)
@@ -553,6 +557,7 @@ def test_parse_blackjax_settings_full(mock_warning, tmp_path):
         "blackjax_seed": 42,
         "posterior_resampling_seed": 999,
         "log_dir": str(tmp_path / "custom_logs"),
+        "sampler_plot": False,
     }
 
     assert result == expected
@@ -567,6 +572,7 @@ def test_parse_blackjax_settings_with_unknown_keys(mock_warning, mock_exists, tm
         "unknown_key": "value",
         "n_posterior_samples": 500,
         "posterior_resampling_seed": 78910,
+        "sampler_plot": False,
     }
 
     # Mock the existence of the log directory
@@ -585,6 +591,7 @@ def test_parse_blackjax_settings_with_unknown_keys(mock_warning, mock_exists, tm
         "blackjax_seed": 0,
         "posterior_resampling_seed": 78910,
         "log_dir": str(tmp_path / "blackjax_logs"),
+        "sampler_plot": False,
     }
 
     assert blackjax_settings == expected_settings
