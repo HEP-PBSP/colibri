@@ -237,15 +237,14 @@ def test_run_analytic_fit_with_sampler_plot(mock_plot_bayes_plots, tmp_path):
     }
 
     # Run the run_analytic_fit function
-    output_path = str(tmp_path)
     run_analytic_fit(
         mock_analytic_fit,
         analytic_settings_with_plot,
-        output_path,
+        tmp_path,
         MOCK_PDF_MODEL,
         Q0=1.65,
     )
 
     mock_plot_bayes_plots.assert_called_once_with(
-        mock_analytic_fit, output_path, "analytic_logs"
+        mock_analytic_fit, tmp_path, "analytic_logs"
     )
