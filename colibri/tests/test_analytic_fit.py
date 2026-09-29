@@ -205,11 +205,8 @@ def test_run_analytic_fit(mock_write_exportgrid, tmp_path):
     assert (tmp_path / "full_posterior_sample.csv").exists()
 
 
-@patch("colibri.export_results.write_exportgrid")
 @patch("colibri.analytic_fit.plot_bayes_plots")
-def test_run_analytic_fit_with_sampler_plot(
-    mock_plot_bayes_plots, mock_write_exportgrid, tmp_path
-):
+def test_run_analytic_fit_with_sampler_plot(mock_plot_bayes_plots, tmp_path):
     """Test the run_analytic_fit function with sampler_plot=True to cover the plotting lines."""
 
     # Create settings with sampler_plot enabled
