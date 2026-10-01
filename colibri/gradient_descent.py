@@ -129,12 +129,12 @@ def run_gradient_descent(
 
     for epoch in range(max_epochs):
         epoch_train_loss = jnp.array(0.0)
-        validation_result = validation_loss_fn(params)
         for _ in range(num_batches):
             batch = next(batches_iter)
             params, opt_state, batch_loss = _step(params, opt_state, batch)
             epoch_train_loss += batch_loss
 
+        validation_result = validation_loss_fn(params)
         if isinstance(validation_result, tuple):
             epoch_val_loss, pos_pass = validation_result
         else:
