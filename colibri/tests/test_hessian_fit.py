@@ -33,13 +33,50 @@ class MockEarlyStopper:
         self.should_stop = False
 
     def update(self, epoch_val_loss):
-        # Never early stop (validation loss is NaN in Hessian fit loop)
+        # Never early stop.
         self.should_stop = False
         return self
 
 
 # Simple concave log-likelihood around 0 so chi2(p) = ||p||^2
 log_likelihood = lambda p: -0.5 * jnp.sum(p**2)
+
+
+def test_hessian_fit_selects_best_epoch_above_default_threshold():
+    """Apply the threshold to chi2 per training point, rather than total chi2."""
+
+    class MockWorseningOptimizerProvider(MockOptimizerProvider):
+        @staticmethod
+        def update(grads, opt_state, params):
+            # Double the parameters each epoch so the first epoch is best.
+            return params, opt_state
+
+    def training_loglike(p):
+        return -0.5 * (100.0 + jnp.sum(p**2))
+
+    training_loglike.ndata = 100
+
+    hessian_settings = {
+        "iter_init": 1,
+        "tolerance": 1.0,
+        "n_eigvec": 2,
+        "rng_seed": 0,
+    }
+    param_initialiser_settings = {"type": "normal", "means": 1.0, "stds": 0.0}
+
+    result = hessian_fit(
+        forward_map=TEST_FORWARD_MAP_DIS,
+        log_likelihood=training_loglike,
+        optimizer_provider=MockWorseningOptimizerProvider(),
+        max_epochs=3,
+        hessian_settings=hessian_settings,
+        param_initialiser_settings=param_initialiser_settings,
+        record_every=1,
+    )
+
+    assert_allclose(result.optimized_parameters, 2.0 * jnp.ones(N_PARAMS))
+    assert_allclose(result.min_chi2, 100.0 + 4.0 * N_PARAMS)
+    assert result.training_loss.size == 3
 
 
 def test_hessian_fit_runs_and_shapes():

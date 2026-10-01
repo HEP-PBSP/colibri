@@ -12,6 +12,8 @@ from colibri.loss_functions import chi2
 from colibri.commondata_utils import CentralCovmatIndex
 from colibri.data_batch import BatchSpec
 
+THRESHOLD_POS = 1e-6
+
 
 class LogLikelihood(object):
     """
@@ -66,6 +68,14 @@ class LogLikelihood(object):
 
         self.ndata = central_covmat_index.central_values.shape[0]
 
+    def get_pos_pass(self, params):
+        _, pdf = self.forward_map(self.fast_kernel_arrays, params)
+        pos_pass, _ = self.positivity_check_and_penalty(
+            pdf,
+            self.positivity_fast_kernel_arrays,
+        )
+        return pos_pass
+
     def __call__(self, params, batch: BatchSpec | None = None):
         """
         Note that this function is called by the samplers, and it must be
@@ -96,7 +106,37 @@ class LogLikelihood(object):
             batch=batch,
         )
 
-    @partial(jax.jit, static_argnames=("self",))
+    def positivity_check_and_penalty(self, pdf, positivity_fast_kernel_arrays):
+        if self.positivity_penalty_settings["positivity_penalty"]:
+            pos_penalties = self.penalty_posdata(
+                pdf,
+                self.positivity_penalty_settings["alpha"],
+                self.positivity_penalty_settings["lambda_positivity"],
+                positivity_fast_kernel_arrays,
+            )
+            pos_pass = jnp.all(pos_penalties < THRESHOLD_POS)
+
+            pos_penalty = jnp.sum(
+                pos_penalties,
+                axis=-1,
+            )
+        else:
+            pos_penalty = 0
+            pos_pass = True
+        return pos_pass, pos_penalty
+
+    def loss_and_pos_pass(self, params):
+        """Return likelihood and positivity from the same forward evaluation."""
+        return self.log_likelihood(
+            params,
+            self.central_values,
+            self.inv_covmat,
+            self.fast_kernel_arrays,
+            self.positivity_fast_kernel_arrays,
+            return_pos=True,
+        )
+
+    @partial(jax.jit, static_argnames=("self", "return_pos"))
     def log_likelihood(
         self,
         params: jnp.ndarray,
@@ -105,6 +145,7 @@ class LogLikelihood(object):
         fast_kernel_arrays: tuple,
         positivity_fast_kernel_arrays: tuple,
         batch: BatchSpec | None = None,
+        return_pos: bool = False,
     ) -> jnp.array:
         """
         This function takes care of computing the log_likelihood that is defined in LogLikelihood.
@@ -117,11 +158,13 @@ class LogLikelihood(object):
         inv_covmat: jnp.ndarray
         fast_kernel_arrays: tuple
         positivity_fast_kernel_arrays: tuple
+        return_pos: bool
+            Also return the positivity decision from this evaluation when True.
 
         Returns
         -------
         jnp.ndarray
-            jax array with the value of the log-likelihood.
+            Log-likelihood, or (log-likelihood, positivity pass) if return_pos.
         """
         predictions, pdf = self.forward_map(fast_kernel_arrays, params)
         # Select only the data relevant for this likelihood
@@ -137,18 +180,10 @@ class LogLikelihood(object):
             else:
                 inv_covmat = batch.inv_cov
 
-        if self.positivity_penalty_settings["positivity_penalty"]:
-            pos_penalty = jnp.sum(
-                self.penalty_posdata(
-                    pdf,
-                    self.positivity_penalty_settings["alpha"],
-                    self.positivity_penalty_settings["lambda_positivity"],
-                    positivity_fast_kernel_arrays,
-                ),
-                axis=-1,
-            )
-        else:
-            pos_penalty = 0
+        pos_pass, pos_penalty = self.positivity_check_and_penalty(
+            pdf,
+            positivity_fast_kernel_arrays,
+        )
 
         integ_penalty = jnp.sum(
             self.integrability_penalty(
@@ -157,9 +192,10 @@ class LogLikelihood(object):
             axis=-1,
         )
 
-        return -0.5 * (
+        loss = -0.5 * (
             chi2(central_values, predictions, inv_covmat) + pos_penalty + integ_penalty
         )
+        return (loss, pos_pass) if return_pos else loss
 
 
 def log_likelihood(
@@ -230,7 +266,10 @@ def mc_log_likelihood(
     )
 
     if not mc_pseudodata.trval_split:
-        val_loglike = lambda params: jnp.nan
+        # Match n3fit's no-validation behaviour: use the full training set as
+        # the monitoring set.  This evaluates the same objective after the
+        # epoch update and allows best-epoch selection without a held-out set.
+        val_loglike = train_loglike
 
     else:
         val_idx = mc_pseudodata.validation_indices

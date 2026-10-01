@@ -9,11 +9,13 @@ from unittest.mock import Mock, patch
 
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_carlo_fit
 from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_FORWARD_MAP_DIS
 from colibri.data_batch import data_batches
+from colibri.likelihood import LogLikelihood
 
 N_PARAMS = len(TEST_FORWARD_MAP_DIS.param_names)
 
@@ -38,14 +40,70 @@ class MockEarlyStopper:
         return self
 
 
-def test_monte_carlo_fit_runs_without_errors():
+class MockLikelihood:
+    def __init__(self, ndata):
+        self.ndata = ndata
+
+    def __call__(self, *args, **kwargs):
+        return 0.0
+
+    def loss_and_pos_pass(self, params):
+        return self(params), True
+
+
+@pytest.mark.parametrize("split", [False, True])
+def test_standard_likelihood_reuses_validation_positivity(split):
+    shared = dict(
+        pdf_model=None,
+        forward_map=lambda arrays, p: (jnp.array([p[0], p[0]]), p),
+        fast_kernel_arrays=(),
+        positivity_fast_kernel_arrays=(),
+        penalty_posdata=lambda pdf, alpha, weight, arrays: jnp.maximum(-pdf, 0),
+        positivity_penalty_settings={
+            "positivity_penalty": True,
+            "alpha": 1e-7,
+            "lambda_positivity": 1.0,
+        },
+        integrability_penalty=lambda pdf: jnp.array([0.0]),
+    )
+
+    def make_like(index):
+        return LogLikelihood(
+            central_covmat_index=Mock(
+                central_values=jnp.array([1.0]),
+                covmat=jnp.eye(1),
+                central_values_idx=jnp.array([index]),
+            ),
+            **shared,
+        )
+
+    training = make_like(0)
+    validation = make_like(1) if split else training
+    # The historical standalone check must no longer be evaluated.
+    with patch.object(
+        training, "get_pos_pass", side_effect=AssertionError("duplicate check")
+    ):
+        result = monte_carlo_fit(
+            mc_log_likelihood=(training, validation),
+            pdf_initial_parameters=np.ones(N_PARAMS),
+            optimizer_provider=MockOptimizerProvider(),
+            early_stopper=MockEarlyStopper(),
+            max_epochs=3,
+            data_batches=data_batches(jnp.arange(1), 1),
+        )
+    assert result.monte_carlo_specs["best_epoch_specs"]["epoch"] == 0
+
+
+@pytest.mark.parametrize("split", [False, True])
+def test_monte_carlo_fit_runs_without_errors(split):
     # Provide necessary inputs for the function
     training_indices = jnp.arange(100)
     data_batch = data_batches(training_indices, 100)
+    training = MockLikelihood(100)
+    validation = MockLikelihood(50) if split else training
 
     result = monte_carlo_fit(
-        mc_log_likelihood=(lambda *args: 0.0, lambda *args: 0.0),
-        len_trval_data=(100, 50),
+        mc_log_likelihood=(training, validation),
         pdf_initial_parameters=np.zeros((N_PARAMS,)),
         optimizer_provider=MockOptimizerProvider(),
         early_stopper=MockEarlyStopper(),
@@ -58,6 +116,7 @@ def test_monte_carlo_fit_runs_without_errors():
     assert result.monte_carlo_specs["max_epochs"] == 100
     assert result.monte_carlo_specs["batch_size"] == 100
     assert result.monte_carlo_specs["batch_seed"] == 1
+    assert result.monte_carlo_specs["best_epoch_specs"]["ndat_train"] == 100
 
     assert_allclose(result.optimized_parameters, jnp.array([0.0, 0.0]))
     assert_allclose(result.training_loss, jnp.array([0.0]))
@@ -76,7 +135,15 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
 
     # Define mock ultranest fit
     mock_monte_carlo_fit = Mock()
-    mock_monte_carlo_fit.monte_carlo_specs = {}
+    mock_monte_carlo_fit.monte_carlo_specs = {
+        "best_epoch_specs": {
+            "epoch": 1,
+            "best_parameters": 2,
+            "best_val_loss": 3,
+            "best_train_loss": 4,
+            "ndat_train": 100,
+        }
+    }
     mock_monte_carlo_fit.training_loss = jnp.array([0.1, 0.2, 0.3])
     mock_monte_carlo_fit.validation_loss = jnp.array([0.2, 0.3, 0.4])
     mock_monte_carlo_fit.optimized_parameters = jnp.array([0.0, 0.0])
@@ -98,3 +165,4 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
     # Assertions - check if files are created in the output path
     assert (tmp_path / "fit_replicas/replica_1/mc_loss.csv").exists()
     assert (tmp_path / "fit_replicas/replica_1/mc_result_replica_1.csv").exists()
+    assert (tmp_path / "fit_replicas/replica_1/best_epoch_specs.csv").exists()
