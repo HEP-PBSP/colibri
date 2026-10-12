@@ -262,6 +262,14 @@ def analytic_fit(
     Cb = avg_chi2 - min_chi2
     log.info(f"Bayesian complexity = {Cb}")
 
+    # number of data points
+    ndata = central_values.shape[0]
+
+    # reduced chi2
+
+    avg_chi2_red = avg_chi2 / ndata
+    min_chi2_red = min_chi2 / ndata
+
     # Resample the posterior for PDF set
     samples = full_samples[: analytic_settings["n_posterior_samples"]]
 
@@ -273,10 +281,13 @@ def analytic_fit(
         resampled_posterior=samples,
         param_names=parameters,
         full_posterior_samples=full_samples,
+        ndata=ndata,
         bayesian_metrics={
             "bayes_complexity": Cb,
             "avg_chi2": avg_chi2,
+            "avg_chi2_reduced": avg_chi2_red,
             "min_chi2": min_chi2,
+            "min_chi2_reduced": min_chi2_red,
             "logZ_laplace": logZ_laplace,
             "logz": logZ_analytical,
             "log_occam_factor": log_occam_factor,

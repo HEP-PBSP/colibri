@@ -75,12 +75,15 @@ class BayesianFit:
         The minimum chi2 of the model.
     logz: float
         The log evidence of the model.
+    ndata: int
+        The number of datapoints involved in the fit.
     """
 
     param_names: list
     resampled_posterior: jnp.array
     full_posterior_samples: jnp.array
     bayesian_metrics: dict
+    ndata: int
 
 
 @dataclass(frozen=True)
@@ -206,12 +209,15 @@ class GradientDescentResult:
         Recorded (epoch) validation losses (sampled according to record_every).
     specs: dict
         Dictionary of settings used for the run (epochs, batch size, etc.).
+    best_epoch: dict
+        Dictionary containing the best epoch and corresponding parameters and losses.
     """
 
     optimized_parameters: Any
     training_loss: jnp.array
     validation_loss: jnp.array
     specs: Dict[str, Any]
+    best_epoch: Dict[str, Any]
 
 
 @dataclass(frozen=True)

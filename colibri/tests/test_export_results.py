@@ -68,7 +68,10 @@ def test_export_bayes_results(tmp_path):
     with open(str(output_path) + "/bayes_metrics.csv", "r") as f:
         content = f.read()
 
-    assert content.strip() == f'logz\n{bayes_fit.bayesian_metrics["logz"]}\n'.strip()
+    assert (
+        content.strip()
+        == f"{list(bayes_fit.bayesian_metrics.keys())[0]},{list(bayes_fit.bayesian_metrics.values())[0]}"
+    )
 
 
 def test_write_exportgrid():

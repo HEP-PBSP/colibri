@@ -116,13 +116,33 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
         "log_dir": "test_logs",
     }
 
-    log_likelihood = lambda x: -jnp.sum(x**2)
+    mock_log_likelihood = LogLikelihood(
+        MOCK_CENTRAL_COVMAT_INDEX,
+        MOCK_PDF_MODEL,
+        FKTableForwardMap(
+            lambda pdf, fk: jnp.zeros(len(MOCK_PDF_MODEL.param_names)),
+            pdf_model=MOCK_PDF_MODEL,
+            pdf_grid_func=MOCK_PDF_MODEL.grid_values_func(TEST_XGRID),
+        ),
+        TEST_FK_ARRAYS,
+        TEST_POS_FK_ARRAYS,
+        MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings={
+            "positivity_penalty": False,
+            "alpha": 1e-7,
+            "lambda_positivity": 1000,
+        },
+        integrability_penalty=integrability_penalty,
+    )
 
     # --- minimal blackjax.nss mock ---
+    # blackjax.ns.nss states carry the evidence estimates on the integrator
     fake_algo = types.SimpleNamespace(
         init=lambda particles: types.SimpleNamespace(
-            logZ=0.0,
-            logZ_live=0.0,
+            integrator=types.SimpleNamespace(
+                logZ=0.0,
+                logZ_live=0.0,
+            )
         )
     )
 
@@ -132,15 +152,19 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
         patch("colibri.blackjax_fit.ess", return_value=2),
         patch("colibri.blackjax_fit.log_weights", return_value=jnp.zeros(5)),
         patch(
-            "colibri.blackjax_fit.sample", return_value=jnp.ones((2, 2))
+            "colibri.blackjax_fit.sample",
+            return_value=types.SimpleNamespace(position=jnp.ones((2, 2))),
         ),  # only 2 samples
         patch("colibri.blackjax_fit.resample_from_ns_posterior") as mock_resample,
         patch("colibri.blackjax_fit.anesthetic.NestedSamples"),
     ):
+        # finalise returns an NSInfo whose particles hold positions and logL info
         mock_finalise.return_value = types.SimpleNamespace(
-            particles=jnp.ones((5, 2)),
-            loglikelihood=jnp.arange(5.0),
-            loglikelihood_birth=jnp.zeros(5),
+            particles=types.SimpleNamespace(
+                position=jnp.ones((5, 2)),
+                loglikelihood=jnp.arange(5.0),
+                loglikelihood_birth=jnp.zeros(5),
+            )
         )
 
         caplog.set_level("WARNING")
@@ -149,7 +173,7 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
             mock_forward_map,
             bayesian_prior,
             blackjax_settings,
-            log_likelihood,
+            mock_log_likelihood,
         )
 
     # --- assertions ---

@@ -8,6 +8,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 from numpy.testing import assert_allclose
+from unittest.mock import MagicMock
 
 from colibri.likelihood import LogLikelihood, log_likelihood, mc_log_likelihood
 from colibri.mc_utils import MCPseudodata
@@ -88,6 +89,22 @@ def test_LogLikelihood_class(pos_penalty):
     expected = -0.5 * (chi2_val + pos_pen + integ_pen)
 
     assert_allclose(float(log_likelihood_class(params)), float(expected))
+
+    expected_pos = log_likelihood_class.get_pos_pass(params)
+    # Count actual calls without JIT hiding Python execution behind tracing.
+    original_forward = log_likelihood_class.forward_map
+    log_likelihood_class.forward_map = MagicMock(wraps=original_forward)
+    with jax.disable_jit():
+        combined_loss, combined_pos = log_likelihood_class.loss_and_pos_pass(params)
+    assert log_likelihood_class.forward_map.call_count == 1
+    assert_allclose(combined_loss, expected)
+    assert bool(combined_pos) == bool(expected_pos)
+    log_likelihood_class.forward_map = original_forward
+    compiled_loss, compiled_pos = jax.jit(log_likelihood_class.loss_and_pos_pass)(
+        params
+    )
+    assert_allclose(compiled_loss, expected)
+    assert bool(compiled_pos) == bool(expected_pos)
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
@@ -297,10 +314,10 @@ def test_mc_log_likelihood_with_split(pos_penalty):
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
-def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty):
+def test_mc_log_likelihood_without_split_uses_training_for_validation(pos_penalty):
     """
     Tests mc_log_likelihood when no train/validation split is requested: the
-    validation log-likelihood should return NaN.
+    validation monitor should reuse the full training likelihood.
     """
 
     # Pseudodata across both points; training uses all when no split
@@ -334,8 +351,9 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
         integrability_penalty,
     )
 
-    # Train should be a LogLikelihood, validation is a callable returning NaN
+    # As in n3fit, no held-out data means the training model is also monitored.
     assert isinstance(train_loglike, LogLikelihood)
+    assert val_loglike is train_loglike
 
     params = jnp.array([0.3, 0.4])
     train_val = train_loglike(params)
@@ -364,7 +382,7 @@ def test_mc_log_likelihood_without_split_returns_nan_for_validation(pos_penalty)
     assert_allclose(float(train_val), float(expected))
 
     val_val = val_loglike(params)
-    assert jnp.isnan(val_val)
+    assert_allclose(float(val_val), float(train_val))
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
@@ -491,3 +509,35 @@ def test_LogLikelihood_call_with_batch_with_inv_cov(pos_penalty):
     expected = -0.5 * (chi2_b + pos_pen + integ_pen)
 
     assert_allclose(float(ll_value_batched), float(expected))
+
+
+def test_LogLikelihood_get_pos_pass():
+    """
+    Tests the get_pos_pass method of LogLikelihood.
+    """
+    positivity_penalty_settings = {
+        "positivity_penalty": True,
+        "alpha": 1e-7,
+        "lambda_positivity": 1000,
+    }
+
+    log_likelihood_class = LogLikelihood(
+        central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
+        pdf_model=MOCK_PDF_MODEL,
+        forward_map=TEST_FORWARD_MAP_DIS,
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+        positivity_fast_kernel_arrays=TEST_POS_FK_ARRAYS,
+        penalty_posdata=MOCK_PENALTY_POSDATA,
+        positivity_penalty_settings=positivity_penalty_settings,
+        integrability_penalty=integrability_penalty,
+    )
+
+    params = jnp.array([0.3, 0.4])
+
+    # MOCK_PENALTY_POSDATA returns [5.0] by default, which is > THRESHOLD_POS (1e-6)
+    pos_pass = log_likelihood_class.get_pos_pass(params)
+    assert pos_pass == False
+
+    log_likelihood_class.penalty_posdata = MagicMock(return_value=jnp.array([1e-10]))
+    pos_pass = log_likelihood_class.get_pos_pass(params)
+    assert pos_pass == True

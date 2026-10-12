@@ -22,6 +22,7 @@ def hessian_fit(
     hessian_settings,
     param_initialiser_settings,
     record_every=50,
+    threshold_chi2=10.0,
 ):
     """Run Hessian-based fit and uncertainty propagation.
 
@@ -42,6 +43,9 @@ def hessian_fit(
         Dictionary containing the settings for the parameter initialisation.
     record_every: int, default = 50
         Frequency of recording the training loss during the gradient descent.
+    threshold_chi2: float, default = 10.0
+        Maximum chi2 per training point for best-epoch selection. The point
+        count comes from log_likelihood.ndata (defaults to 1 for plain callables).
     """
 
     log.info(f"Running fit with backend: {jbackend.get_backend().platform}")
@@ -52,7 +56,9 @@ def hessian_fit(
         return -2 * log_likelihood(params)
 
     def valid_chi2(params):
-        return jnp.nan
+        # Monitor the full objective at the updated parameters so the generic
+        # loop retains the lowest-chi2 epoch of each initialization.
+        return train_chi2(params, None)
 
     iter_init = hessian_settings["iter_init"]
     tolerance = hessian_settings["tolerance"]
@@ -86,6 +92,8 @@ def hessian_fit(
             max_epochs=max_epochs,
             data_batch=None,
             record_every=record_every,
+            threshold_chi2=threshold_chi2,
+            validation_ndata=getattr(log_likelihood, "ndata", 1),
         )
         parameters_min_iter = gd_result_iter.optimized_parameters
         min_chi2_iter = train_chi2(parameters_min_iter, 0)
