@@ -6,10 +6,66 @@ Tests for the generic gradient descent training loop in `gradient_descent.py`.
 
 import jax.numpy as jnp
 import optax
+import pytest
 from flax.training.early_stopping import EarlyStopping
 
 from colibri.gradient_descent import run_gradient_descent, GradientDescentResult
 from colibri.data_batch import data_batches
+
+
+@pytest.mark.parametrize("pos_mode", ["pass", "fail", "late", "early"])
+@pytest.mark.parametrize("threshold", [0.0, 10.0])
+def test_combined_metrics_preserve_best_epoch_and_history(pos_mode, threshold):
+    def validation(params):
+        return (params - 0.2) ** 2
+
+    def positivity(params):
+        return {
+            "pass": jnp.array(True),
+            "fail": jnp.array(False),
+            "late": params < 0.3,
+            "early": params > 0.3,
+        }[pos_mode]
+
+    def run(combined):
+        return run_gradient_descent(
+            initial_parameters=jnp.array(1.0),
+            training_loss_fn=lambda p, batch: p**2,
+            validation_loss_fn=(
+                (lambda p: (validation(p), positivity(p))) if combined else validation
+            ),
+            optimizer=optax.sgd(learning_rate=0.25),
+            early_stopper=EarlyStopping(min_delta=0.0, patience=2),
+            max_epochs=20,
+            record_every=1,
+            threshold_chi2=threshold,
+            validation_ndata=2,
+        )
+
+    separate, combined = run(False), run(True)
+    assert separate.specs == combined.specs
+    assert jnp.array_equal(separate.training_loss, combined.training_loss)
+    assert jnp.array_equal(separate.validation_loss, combined.validation_loss)
+    # SGD halves the parameter each epoch. Select the expected checkpoint
+    # independently using the original threshold and strict-improvement rules.
+    candidates = [
+        epoch
+        for epoch, loss in enumerate(separate.validation_loss)
+        if loss / 2 < threshold and positivity(0.5 ** (epoch + 1))
+    ]
+    expected_epoch = (
+        min(candidates, key=lambda epoch: float(separate.validation_loss[epoch]))
+        if candidates
+        else len(separate.validation_loss) - 1
+    )
+    assert combined.best_epoch["epoch"] == expected_epoch
+    assert combined.optimized_parameters == 0.5 ** (expected_epoch + 1)
+    assert (
+        combined.best_epoch["best_val_loss"] == separate.validation_loss[expected_epoch]
+    )
+    assert (
+        combined.best_epoch["best_train_loss"] == separate.training_loss[expected_epoch]
+    )
 
 
 def test_run_gradient_descent_no_batch_converges_and_early_stop():
@@ -131,3 +187,57 @@ def test_run_gradient_descent_record_every_behavior():
     assert result.validation_loss.size == 3
     # Monotonic non-increasing validation loss across recorded epochs
     assert jnp.all(result.validation_loss[1:] <= result.validation_loss[:-1] + 1e-10)
+
+
+def test_epoch_zero_can_be_selected_as_best_epoch():
+    """An optimum reached at epoch zero must not trigger last-epoch fallback."""
+
+    def training_loss_fn(params, _batch):
+        return params**2
+
+    # Deliberately worsens as training moves toward its own optimum.
+    def validation_loss_fn(params):
+        return (params - 2.0) ** 2
+
+    result = run_gradient_descent(
+        initial_parameters=jnp.array(1.0),
+        training_loss_fn=training_loss_fn,
+        validation_loss_fn=validation_loss_fn,
+        optimizer=optax.sgd(learning_rate=0.25),
+        early_stopper=EarlyStopping(min_delta=0.0, patience=100),
+        max_epochs=3,
+        data_batch=None,
+        record_every=1,
+        threshold_chi2=10.0,
+    )
+
+    assert result.best_epoch["epoch"] == 0
+    assert jnp.allclose(result.optimized_parameters, 0.5)
+
+
+def test_threshold_uses_chi2_per_data_point_but_improvement_uses_total_loss():
+    """The threshold follows n3fit's normalized-chi2 selection logic."""
+
+    def training_loss_fn(params, _batch):
+        return params**2
+
+    def validation_loss_fn(params):
+        # After epoch zero params=0.5, giving total chi2=20.25. This fails a
+        # raw threshold of 3.5 but passes 20.25 / 10 < 3.5.
+        return (params + 4.0) ** 2
+
+    result = run_gradient_descent(
+        initial_parameters=jnp.array(1.0),
+        training_loss_fn=training_loss_fn,
+        validation_loss_fn=validation_loss_fn,
+        optimizer=optax.sgd(learning_rate=0.25),
+        early_stopper=EarlyStopping(min_delta=0.0, patience=100),
+        max_epochs=1,
+        data_batch=None,
+        record_every=1,
+        threshold_chi2=3.5,
+        validation_ndata=10,
+    )
+
+    assert result.best_epoch["epoch"] == 0
+    assert jnp.allclose(result.best_epoch["best_val_loss"], 20.25)

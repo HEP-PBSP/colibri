@@ -63,11 +63,10 @@ def early_stopper(
 ):
     """
     Define the early stopping criteria.
-    If mc_validation_fraction is zero then patience is the same as max_epochs.
+
+    When ``mc_validation_fraction`` is zero, the full training loss is used as
+    the monitoring loss, as in n3fit.  The configured patience therefore still
+    applies. ``max_epochs`` and ``mc_validation_fraction`` are retained in the
+    signature for runcard compatibility.
     """
-    if not mc_validation_fraction:
-        log.warning(
-            "No validation data provided, patience of early stopping set to max_epochs."
-        )
-        return EarlyStopping(min_delta=min_delta, patience=max_epochs)
     return EarlyStopping(min_delta=min_delta, patience=patience)

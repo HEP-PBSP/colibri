@@ -30,12 +30,16 @@ log = logging.getLogger(__name__)
 def run_gradient_descent(
     initial_parameters: jnp.ndarray,
     training_loss_fn: Callable[[jnp.ndarray, BatchSpec], jnp.ndarray],
-    validation_loss_fn: Callable[[jnp.ndarray], jnp.ndarray],
+    validation_loss_fn: Callable[
+        [jnp.ndarray], jnp.ndarray | tuple[jnp.ndarray, bool | jnp.ndarray]
+    ],
     optimizer: optax.GradientTransformation,
     early_stopper: Any,
     max_epochs: int,
     data_batch: Optional[colibri.DataBatches] = None,
     record_every: int = 50,
+    threshold_chi2: float = 10.0,
+    validation_ndata: int = 1,  # If not defined then original loss will be used - As in Hessian
 ) -> GradientDescentResult:
     """Generic gradient descent loop.
 
@@ -51,8 +55,12 @@ def run_gradient_descent(
 
         Convention: if batch.idx.size == 0, interpret as "full dataset" (no subselect).
 
-    validation_loss_fn : callable -> scalar
-        Validation loss (jit-able). Signature: validation_loss_fn(params) -> scalar
+    validation_loss_fn : callable -> scalar or (scalar, bool)
+        JIT-able evaluation at the updated parameters. Returns either the
+        validation loss alone or (validation loss, positivity pass), allowing
+        both results to share one forward evaluation. A scalar return skips
+        the positivity check. If no epoch qualifies, the last epoch's
+        parameters are returned.
 
     optimizer : optax.GradientTransformation
         Optax optimizer.
@@ -69,12 +77,21 @@ def run_gradient_descent(
 
     record_every : int, default 50
         Record losses every this many epochs.
+
+    threshold_chi2 : float, default 10.0
+        Maximum validation chi2 per data point required before an epoch can be
+        selected as the best epoch.
+
+    validation_ndata : int, default 1
+        Number of points in the dataset used for monitoring. When there is no
+        validation split, this is the number of training points because the
+        full training set is used as the monitoring set.
+
     """
 
     params = initial_parameters
     opt_state = optimizer.init(params)
     loss_and_grad = jax.value_and_grad(training_loss_fn)
-    # JIT the validation loss in case it isn't already
     validation_loss_fn = jax.jit(validation_loss_fn)
 
     # Sentinel for "use full dataset" inside the loss
@@ -89,6 +106,12 @@ def run_gradient_descent(
 
     train_losses = []
     val_losses = []
+
+    best_params = params
+    best_train_loss = jnp.inf
+    best_val_loss = jnp.inf
+    best_epoch_idx = None
+    any_pos_pass = False
 
     if data_batch is None:
         # single fake iterator repeatedly yielding EMPTY_BATCH
@@ -111,13 +134,37 @@ def run_gradient_descent(
             params, opt_state, batch_loss = _step(params, opt_state, batch)
             epoch_train_loss += batch_loss
 
-        epoch_val_loss = validation_loss_fn(params)
+        validation_result = validation_loss_fn(params)
+        if isinstance(validation_result, tuple):
+            epoch_val_loss, pos_pass = validation_result
+        else:
+            epoch_val_loss = validation_result
+            pos_pass = True
         early_stopper = early_stopper.update(epoch_val_loss)
+
+        # Match n3fit: the eligibility threshold is applied to chi2/Ndat,
+        # while improvements are judged using the unnormalised total loss.
+        epoch_val_chi2 = epoch_val_loss / validation_ndata
+        update_best = False
+        meets_threshold = epoch_val_chi2 < threshold_chi2
+        if meets_threshold and pos_pass:
+            if not any_pos_pass:
+                update_best = True
+                any_pos_pass = True
+            elif epoch_val_loss < best_val_loss:
+                update_best = True
+
+        if update_best:
+            best_val_loss = epoch_val_loss
+            best_train_loss = epoch_train_loss
+            best_params = params
+            best_epoch_idx = epoch
 
         if record_every and (epoch % record_every == 0):
             log.info(
                 f"Epoch {epoch}, loss: {epoch_train_loss:.3f}, "
-                f"validation_loss: {epoch_val_loss:.3f}"
+                f"validation_loss: {epoch_val_loss:.3f}, "
+                f"validation_chi2_per_point: {epoch_val_chi2:.3f}"
             )
             log.info(f"    Early_stopper: {early_stopper}")
             train_losses.append(epoch_train_loss)
@@ -127,8 +174,25 @@ def run_gradient_descent(
             log.info(f"Early stopping at epoch {epoch}")
             break
 
+    if best_epoch_idx is None:
+        log.warning(
+            "No epoch passed the selection criteria. Returning last epoch's parameters."
+        )
+        best_epoch_dict = {
+            "epoch": epoch,
+            "best_val_loss": epoch_val_loss,
+            "best_train_loss": epoch_train_loss,
+        }
+        best_params = params
+    else:
+        best_epoch_dict = {
+            "epoch": best_epoch_idx,
+            "best_val_loss": best_val_loss,
+            "best_train_loss": best_train_loss,
+        }
+
     return GradientDescentResult(
-        optimized_parameters=params,
+        optimized_parameters=best_params,
         training_loss=jnp.array(train_losses),
         validation_loss=jnp.array(val_losses),
         specs={
@@ -136,4 +200,5 @@ def run_gradient_descent(
             "batch_size": batch_size,
             "record_every": record_every,
         },
+        best_epoch=best_epoch_dict,
     )
