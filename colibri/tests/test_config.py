@@ -469,6 +469,19 @@ def test_produce_commondata_tuple():
     with pytest.raises(ConfigError):
         BASE_CONFIG.produce_commondata_tuple(closure_test_level)
 
+    # test that use_fitcommondata still returns an explicit node for experimental data
+    explicit_node_fit = BASE_CONFIG.produce_commondata_tuple(
+        False, use_fitcommondata=True
+    )
+    assert type(explicit_node_fit) == reportengine.configparser.ExplicitNode
+
+    # test that ConfigError is raised when use_fitcommondata is combined with a closure test
+    for closure_test_level in (0, 1):
+        with pytest.raises(ConfigError):
+            BASE_CONFIG.produce_commondata_tuple(
+                closure_test_level, use_fitcommondata=True
+            )
+
 
 # -----------------------------
 # parse_hessian_settings tests
