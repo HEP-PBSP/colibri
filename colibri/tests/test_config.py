@@ -483,6 +483,41 @@ def test_produce_commondata_tuple():
             )
 
 
+@patch("colibri.config.Config.produce_dataset")
+def test_produce_dataset_use_fitcommondata(mock_produce_dataset, tmp_path):
+    """
+    Tests that produce_dataset raises a ConfigError when use_fitcommondata is True
+    and the fit has no data for the dataset, and otherwise defers to validphys.
+    """
+    dataset_input = mock.Mock()
+    dataset_input.name = "TEST_DATASET"
+    fit = mock.Mock()
+    fit.name = "test_fit"
+    fit.path = tmp_path
+    kwargs = dict(dataset_input=dataset_input, theoryid=mock.Mock(), cuts=mock.Mock())
+
+    # fit has no data for the dataset
+    with pytest.raises(ConfigError, match="No fit data found for TEST_DATASET"):
+        BASE_CONFIG.produce_dataset(**kwargs, use_fitcommondata=True, fit=fit)
+    mock_produce_dataset.assert_not_called()
+
+    # fit has data for the dataset
+    data_dir = tmp_path / "filter" / "TEST_DATASET"
+    data_dir.mkdir(parents=True)
+    (data_dir / "filtered_data_TEST_DATASET.yaml").touch()
+
+    dataset = BASE_CONFIG.produce_dataset(**kwargs, use_fitcommondata=True, fit=fit)
+    assert dataset == mock_produce_dataset.return_value
+    mock_produce_dataset.assert_called_once_with(
+        **kwargs, use_fitcommondata=True, fit=fit, check_plotting=False
+    )
+
+    # without use_fitcommondata the fit folder is not checked
+    fit.path = tmp_path / "missing"
+    BASE_CONFIG.produce_dataset(**kwargs, fit=fit)
+    assert mock_produce_dataset.call_count == 2
+
+
 # -----------------------------
 # parse_hessian_settings tests
 # -----------------------------
