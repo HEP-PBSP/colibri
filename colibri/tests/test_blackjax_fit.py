@@ -57,6 +57,7 @@ blackjax_settings = {
     "n_posterior_samples": 10,
     "posterior_resampling_seed": 123,
     "log_dir": "test_logs",
+    "sampler_plot": False,
 }
 
 
@@ -206,7 +207,7 @@ def test_run_blackjax_fit(mock_export_bayes, mock_write_replicas, tmp_path):
         "logz": 5.0,
     }
 
-    run_blackjax_fit(mock_fit, tmp_path, MOCK_PDF_MODEL)
+    run_blackjax_fit(mock_fit, blackjax_settings, tmp_path, MOCK_PDF_MODEL)
 
     mock_export_bayes.assert_called_once_with(
         mock_fit,
@@ -218,3 +219,39 @@ def test_run_blackjax_fit(mock_export_bayes, mock_write_replicas, tmp_path):
         tmp_path,
         MOCK_PDF_MODEL,
     )
+
+
+@patch("colibri.blackjax_fit.plot_bayes_plots")
+def test_run_blackjax_fit_with_sampler_plot(mock_plot_bayes_plots, tmp_path):
+    """Test the run_blackjax_fit function with sampler_plot = True to cover the plotting lines."""
+
+    # Create settings with sampler_plot enabled
+    blackjax_settings_with_plot = {
+        "blackjax_seed": 42,
+        "n_live": 50,
+        "delete_fraction": 0.5,
+        "repeats": 2,
+        "log_precision": -1.0,
+        "n_posterior_samples": 10,
+        "posterior_resampling_seed": 123,
+        "log_dir": "test_logs",
+        "sampler_plot": True,  # Enable plotting
+    }
+
+    # Define mock blackjax fit
+
+    mock_fit = Mock(spec=BlackJAXFit)
+    mock_fit.resampled_posterior = jnp.ones((10, 2))
+    mock_fit.param_names = ["param1", "param2"]
+    mock_fit.full_posterior_samples = jnp.ones((100, 2))
+    mock_fit.bayesian_metrics = {
+        "bayes_complexity": 1.0,
+        "avg_chi2": 0.1,
+        "min_chi2": 0.05,
+        "logz": 5.0,
+    }
+
+    # Run the run_blackjax_fit function
+    run_blackjax_fit(mock_fit, blackjax_settings_with_plot, tmp_path, MOCK_PDF_MODEL)
+
+    mock_plot_bayes_plots.assert_called_once_with(mock_fit, tmp_path, "blackjax_logs")

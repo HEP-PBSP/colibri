@@ -20,7 +20,11 @@ import anesthetic
 import pandas as pd
 
 from colibri.core import BlackJAXFit
-from colibri.export_results import export_bayes_results, write_replicas
+from colibri.export_results import (
+    export_bayes_results,
+    write_replicas,
+    plot_bayes_plots,
+)
 from colibri.utils import resample_from_ns_posterior
 
 log = logging.getLogger(__name__)
@@ -199,7 +203,7 @@ def blackjax_fit(
     return fit_result
 
 
-def run_blackjax_fit(blackjax_fit, output_path, pdf_model):
+def run_blackjax_fit(blackjax_fit, blackjax_settings, output_path, pdf_model):
     """
     Export the results of a BlackJAX fit.
 
@@ -207,6 +211,8 @@ def run_blackjax_fit(blackjax_fit, output_path, pdf_model):
     ----------
     blackjax_fit: BlackJAXFit
         The results of the BlackJAX fit.
+    blackjax_settings: dict
+        Settings for the blackjax fit.
     output_path: pathlib.PosixPath
         Path to the output folder.
     pdf_model: pdf_model.PDFModel
@@ -214,5 +220,9 @@ def run_blackjax_fit(blackjax_fit, output_path, pdf_model):
     """
 
     export_bayes_results(blackjax_fit, output_path, "ns_result")
+
+    if blackjax_settings["sampler_plot"]:
+        log.info("Plotting corner plot")
+        plot_bayes_plots(blackjax_fit, output_path, "blackjax_logs")
 
     write_replicas(blackjax_fit, output_path, pdf_model)

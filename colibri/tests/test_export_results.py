@@ -14,6 +14,7 @@ import yaml
 
 from colibri.export_results import (
     export_bayes_results,
+    plot_bayes_plots,
     get_pdfgrid_from_exportgrids,
     read_exportgrid,
     write_exportgrid,
@@ -28,6 +29,8 @@ bayes_fit.resampled_posterior = jax.random.uniform(jax.random.PRNGKey(0), shape=
 bayes_fit.full_posterior_samples = jax.random.uniform(
     jax.random.PRNGKey(0), shape=(100, 2)
 )
+
+
 bayes_fit.bayesian_metrics = {"logz": 1}
 bayes_fit.param_names = ["param1", "param2"]
 
@@ -72,6 +75,33 @@ def test_export_bayes_results(tmp_path):
         content.strip()
         == f"{list(bayes_fit.bayesian_metrics.keys())[0]},{list(bayes_fit.bayesian_metrics.values())[0]}"
     )
+
+
+@patch("colibri.export_results.plt")
+@patch("colibri.export_results.cornerplot")
+def test_plot_bayes_plots(mock_cornerplot, mock_plt, tmp_path):
+    mock_fig = Mock()
+    mock_cornerplot.return_value = mock_fig
+
+    plot_bayes_plots(bayes_fit, tmp_path, "bayes_fit_logs")
+
+    # check cornerplot inputs
+    call_kwargs = mock_cornerplot.call_args
+    results_arg = call_kwargs.args[0]
+    assert results_arg["paramnames"] == ["param1", "param2"]
+    np.testing.assert_array_equal(
+        results_arg["weighted_samples"]["points"], bayes_fit.full_posterior_samples
+    )
+    np.testing.assert_allclose(
+        results_arg["weighted_samples"]["weights"], np.full(100, 0.01)
+    )
+    assert call_kwargs.kwargs["min_weight"] == 0.0
+
+    # check directory + save
+    plot_dir = tmp_path / "bayes_fit_logs" / "plots"
+    assert plot_dir.is_dir()
+    mock_fig.savefig.assert_called_once_with(plot_dir / "corner.pdf")
+    mock_plt.close.assert_called_once_with(mock_fig)
 
 
 def test_write_exportgrid():

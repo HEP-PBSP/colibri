@@ -47,14 +47,16 @@ and the evidence.
 The ``full_posterior_sample.csv`` file contains the full posterior sample of the fit
 (whose size is specified in the runcard). 
 
-Depending on the type of Bayesian fit, other files may be present. For example for a Bayesian fit
-using UltraNest, the following files will be present if ``sampler_plot`` is set to ``true``:
+If you set ``sampler_plot`` to ``true``, the following directory will also be created,
+containing some bayesian analysis plots.
 
 .. code-block:: text
 
-   ultranest_colibri_fit/
-   ├── ultranest_logs/
-   ├── ns_result.csv
+   bayesian_fit/
+   ├── bayesian_fit_logs/
+      ├── plots/
+
+
 
 While a fit done using the ``analytic_fit`` module will contain the following extra file:
 
