@@ -11,6 +11,7 @@ import jax.numpy as jnp
 
 from colibri.theory_predictions import make_pred_dataset
 from colibri.core import CentralCovmatIndex
+from reportengine.configparser import ConfigError
 
 from validphys.loader import Loader
 
