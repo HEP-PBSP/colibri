@@ -153,7 +153,7 @@ def hessian_fit(
     cov_params = tolerance**2 * jnp.linalg.inv(hessian)
 
     t1 = time.time()
-    log.info("HESSIAN RUNNING TIME: %f" % (t1 - t0))
+    log.info("HESSIAN RUNNING TIME: %f s" % (t1 - t0))
 
     log.info("Using hessian method for error propagation.")
     eigvec_to_use = hessian_settings["n_eigvec"]

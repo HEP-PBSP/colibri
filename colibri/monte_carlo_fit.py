@@ -91,7 +91,7 @@ def monte_carlo_fit(
     )
 
     t1 = time.time()
-    log.info("MONTE CARLO RUNNING TIME: %f" % (t1 - t0))
+    log.info("MONTE CARLO RUNNING TIME: %f s" % (t1 - t0))
 
     return MonteCarloFit(
         monte_carlo_specs={
