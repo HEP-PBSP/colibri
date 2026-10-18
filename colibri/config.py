@@ -620,6 +620,8 @@ class colibriConfig(Config):
             "sampling_seed",
             "full_sample_size",
             "sampler_plot",
+            "tsvd_n_components",
+            "l2_lambda",
         }
 
         kdiff = settings.keys() - known_keys
@@ -645,6 +647,20 @@ class colibriConfig(Config):
 
         # Set whether to generate a corner plot
         analytic_settings["sampler_plot"] = settings.get("sampler_plot", True)
+        # Optional TSVD regularisation: number of singular values/vectors of
+        # the whitened design matrix to keep in the analytic solve. None
+        # (default) means no truncation, i.e. the original exact QR solve.
+        analytic_settings["tsvd_n_components"] = settings.get(
+            "tsvd_n_components", None
+        )
+
+        # Optional L2/second-order Tikhonov regularisation strength lambda,
+        # applied on top of the TSVD truncation above (independently of
+        # it). None (default) means no L2 regularisation, i.e. the original
+        # exact QR solve (if tsvd_n_components is also None) or the
+        # TSVD-only solve (if it is set). See compute_lcurve to choose a
+        # value via the L-curve criterion first.
+        analytic_settings["l2_lambda"] = settings.get("l2_lambda", None)
 
         return analytic_settings
 
