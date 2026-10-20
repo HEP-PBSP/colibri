@@ -318,6 +318,72 @@ class colibriConfig(Config):
 
         return blackjax_settings
 
+    def parse_nuts_settings(self, settings, output_path):
+        """
+        Parse settings for a BlackJAX NUTS fit.
+
+        Parameters
+        ----------
+        settings: dict
+            The nuts_settings namespace from the runcard.
+        output_path: pathlib.Path
+            Fit output directory.
+
+        Returns
+        -------
+        dict
+            Validated settings with defaults.
+        """
+        from colibri.nuts_fit import (
+            _NUTS_DEFAULTS,
+            _validate_nuts_settings,
+        )
+
+        if not isinstance(settings, dict):
+            raise ConfigError(
+                "nuts_settings must be a mapping.",
+                "nuts_settings",
+            )
+
+        defaults = {
+            **_NUTS_DEFAULTS,
+            "log_dir": str(output_path / "nuts_logs"),
+        }
+        known_keys = set(defaults)
+
+        for key in settings.keys() - known_keys:
+            log.warning(
+                ConfigError(
+                    f"Key '{key}' in nuts_settings not known.",
+                    key,
+                    known_keys,
+                )
+            )
+
+        parsed = {
+            name: settings.get(name, default) for name, default in defaults.items()
+        }
+
+        try:
+            _validate_nuts_settings(parsed)
+        except ValueError as error:
+            raise ConfigError(
+                str(error),
+                "nuts_settings",
+            ) from error
+
+        if not isinstance(parsed["log_dir"], (str, os.PathLike)):
+            raise ConfigError(
+                "log_dir must be a filesystem path.",
+                "log_dir",
+            )
+
+        parsed["log_dir"] = os.fspath(parsed["log_dir"])
+        if not parsed["log_dir"]:
+            raise ConfigError("log_dir cannot be empty.", "log_dir")
+
+        return parsed
+
     def parse_positivity_penalty_settings(self, settings):
         """
         Parses the positivity_penalty_settings namespace from the runcard,

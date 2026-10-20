@@ -137,6 +137,23 @@ class BlackJAXFit(BayesianFit):
 
 
 @dataclass(frozen=True)
+class NUTSFit(BayesianFit):
+    """
+    Results and settings of a BlackJAX NUTS fit.
+
+    Attributes
+    ----------
+    nuts_specs: dict
+        Settings used for the NUTS fit.
+    nuts_result: dict
+        Chain samples, transition information and convergence diagnostics.
+    """
+
+    nuts_specs: dict
+    nuts_result: dict
+
+
+@dataclass(frozen=True)
 class HessianFit:
     """
     Dataclass containing the results and specs of a Hessian fit.
@@ -273,6 +290,16 @@ class CentralCovmatIndex:
 
 @dataclass(frozen=True)
 class BayesianPrior:
+    """
+    Prior functions used by the Bayesian fitting routines.
+
+    The optional unconstrained functions are required by NUTS.
+    ``log_prob_unconstrained`` includes the transformation Jacobian.
+    """
+
     prior_transform: Callable
     log_prob: Callable
     sample: Callable
+    from_unconstrained: Optional[Callable] = None
+    log_prob_unconstrained: Optional[Callable] = None
+    sample_unconstrained: Optional[Callable] = None
