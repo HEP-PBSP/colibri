@@ -110,7 +110,7 @@ def blackjax_fit(
             pbar.update(n_delete)
     t1 = time.time()
 
-    log.info("BLACKJAX RUNNING TIME: %f" % (t1 - t0))
+    log.info("BLACKJAX RUNNING TIME: %f s" % (t1 - t0))
 
     final_states = finalise(state, dead)
     rng_key, ess_key, weights_key, sample_key = jax.random.split(rng_key, 4)
