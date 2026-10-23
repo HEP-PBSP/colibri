@@ -144,7 +144,6 @@ def run_monte_carlo_fit(monte_carlo_fit, forward_map, output_path, replica_index
         os.mkdir(replicas_path)
 
     # Finish by writing the export grid, ready for evolution
-    log.info(f"Writing exportgrid for replica {replica_index}")
     write_exportgrid_mc(
         jnp.array(df.iloc[0, :].tolist()),
         forward_map.pdf_model,

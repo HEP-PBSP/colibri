@@ -690,3 +690,28 @@ def test_parse_smeft_settings_invalid(update, match):
         settings.pop("order", None)
     with pytest.raises(ConfigError, match=match):
         BASE_CONFIG.parse_smeft_settings(settings)
+
+
+# -----------------------------
+#   fixed PDF
+# -----------------------------
+
+
+def test_produce_pdf_model_selects_provider():
+    from colibri import pdf_model
+
+    assert BASE_CONFIG.produce_pdf_model().value is pdf_model.no_pdf_model
+    assert BASE_CONFIG.produce_pdf_model(fixed_pdf="a pdf").value is (
+        pdf_model.fixed_pdf_model
+    )
+
+
+@pytest.mark.parametrize("member", [0, 3, "replica"])
+def test_parse_fixed_pdf_member(member):
+    assert BASE_CONFIG.parse_fixed_pdf_member(member) == member
+
+
+@pytest.mark.parametrize("member", [-1, 1.5, "central", True])
+def test_parse_fixed_pdf_member_invalid(member):
+    with pytest.raises(ConfigError):
+        BASE_CONFIG.parse_fixed_pdf_member(member)

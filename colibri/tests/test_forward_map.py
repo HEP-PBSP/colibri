@@ -11,9 +11,11 @@ import jax.numpy as jnp
 from unittest.mock import Mock
 from numpy.testing import assert_array_almost_equal
 
+from colibri.checks import check_pdf_model_is_linear
 from colibri.forward_map import (
     ForwardMap,
     FKTableForwardMap,
+    FixedPDFSMEFTForwardMap,
     SMEFTForwardMap,
     fktable_forward_map,
     smeft_forward_map,
@@ -528,6 +530,7 @@ def test_smeft_forward_map_provider():
         pdf_model=MOCK_PDF_MODEL,
         FIT_XGRID=TEST_XGRID,
         smeft_corrections=_smeft_corrections(linear, names=["OtG"]),
+        fast_kernel_arrays=TEST_FK_ARRAYS,
     )
     assert isinstance(fm, SMEFTForwardMap)
     assert fm.param_names == MOCK_PDF_MODEL.param_names + ["OtG"]
@@ -535,3 +538,78 @@ def test_smeft_forward_map_provider():
     predictions, pdf = fm(TEST_FK_ARRAYS, jnp.array([1.0, 2.0, 0.0]))
     assert predictions.shape == (TEST_N_DATA,)
     assert pdf.shape == (TEST_N_FL, TEST_N_XGRID)
+
+
+# ---------------------------------------------------------------------------
+# FixedPDFSMEFTForwardMap
+# ---------------------------------------------------------------------------
+
+
+def _fixed_smeft_fm(corrections):
+    return FixedPDFSMEFTForwardMap(
+        pdf_model=_mock_pdf_model([]),
+        sm_predictions=_sm_predictions(),
+        pdf_grid=TEST_PDF_GRID,
+        smeft_corrections=corrections,
+    )
+
+
+def test_fixed_pdf_smeft_forward_map_matches_smeft_forward_map():
+    """With a constant PDF the fixed-PDF map equals the general SMEFT map."""
+    rng = np.random.default_rng(4)
+    corrections = _smeft_corrections(
+        rng.normal(size=(2, TEST_N_DATA)),
+        scales=[2.0, 5.0],
+        quadratic=rng.normal(size=(2, 2, TEST_N_DATA)),
+    )
+    fixed = _fixed_smeft_fm(corrections)
+    general = _smeft_fm(corrections, pdf_param_names=())
+    params = jnp.array([0.4, -1.3])
+
+    assert fixed.param_names == ["c0", "c1"]
+    assert fixed.n_pdf_params == 0
+    preds_fixed, pdf_fixed = fixed(TEST_FK_ARRAYS, params)
+    preds_general, _ = general(TEST_FK_ARRAYS, params)
+
+    np.testing.assert_allclose(preds_fixed, preds_general, rtol=1e-6)
+    assert_array_almost_equal(pdf_fixed, TEST_PDF_GRID)
+
+
+def test_fixed_pdf_smeft_forward_map_ignores_fk_tables():
+    fm = _fixed_smeft_fm(_smeft_corrections(np.ones((1, TEST_N_DATA))))
+    params = jnp.array([0.5])
+    np.testing.assert_allclose(
+        fm(None, params)[0], fm(TEST_FK_ARRAYS, params)[0], rtol=1e-12
+    )
+
+
+def test_fixed_pdf_smeft_forward_map_rejects_pdf_parameters():
+    with pytest.raises(ValueError, match="without parameters"):
+        FixedPDFSMEFTForwardMap(
+            pdf_model=_mock_pdf_model(["a"]),
+            sm_predictions=_sm_predictions(),
+            pdf_grid=TEST_PDF_GRID,
+            smeft_corrections=_smeft_corrections(np.ones((1, TEST_N_DATA))),
+        )
+
+
+def test_fixed_pdf_smeft_forward_map_is_linear():
+    """Linear-only K-factors with a fixed PDF pass the analytic-fit linearity check."""
+    rng = np.random.default_rng(5)
+    fm = _fixed_smeft_fm(_smeft_corrections(rng.normal(size=(2, TEST_N_DATA))))
+    check_pdf_model_is_linear(fm, TEST_FK_ARRAYS)
+
+
+def test_smeft_forward_map_provider_fixed_pdf():
+    """A PDF model without parameters gives the fixed-PDF map with precomputed SM."""
+    model = _mock_pdf_model([])
+    model.grid_values_func = lambda xgrid: _make_pdf_grid_func(TEST_PDF_GRID)
+    fm = smeft_forward_map(
+        _pred_data=_simple_pred_func,
+        pdf_model=model,
+        FIT_XGRID=TEST_XGRID,
+        smeft_corrections=_smeft_corrections(np.zeros((1, TEST_N_DATA))),
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+    )
+    assert isinstance(fm, FixedPDFSMEFTForwardMap)
+    assert_array_almost_equal(fm.sm_predictions, _sm_predictions())

@@ -84,8 +84,47 @@ points (before cuts):
 
 .. note::
 
-    The forward map is non-linear in the parameters (PDF times Wilson
-    coefficients), so the analytic fit cannot be used with ``forward_map_type: smeft``.
+    When fitting the PDF too, the forward map is non-linear in the parameters
+    (PDF times Wilson coefficients), so the analytic fit cannot be used. With a
+    fixed PDF and linear K-factors it can, see below.
+
+SMEFT-only fits with a fixed PDF
+--------------------------------
+
+To fit only the Wilson coefficients, fix the PDF to any LHAPDF set with the
+``fixed_pdf`` key and run the plain ``colibri`` executable:
+
+.. code-block:: yaml
+
+    fixed_pdf: NNPDF40_nnlo_as_01180
+    fixed_pdf_member: 0          # default; an integer or "replica"
+
+    forward_map_type: smeft
+    smeft_settings: {...}
+
+    prior_settings:
+      prior_distribution: uniform_parameter_prior
+      prior_distribution_specs: {min_val: -5, max_val: 5}
+
+    actions_:
+    - run_analytic_fit           # or run_ultranest_fit, run_monte_carlo_fit, ...
+
+- The PDF model then has no parameters: the fit parameters are only the
+  Wilson coefficients, and the SM predictions are computed once at the start
+  instead of at every likelihood evaluation.
+- With linear K-factors (all SIMUnet ones) the predictions are linear in the
+  coefficients, so ``run_analytic_fit`` gives the exact Gaussian posterior.
+- ``fixed_pdf_member`` chooses the member of the set (0 is the central value).
+  With ``fixed_pdf_member: replica``, a Monte Carlo fit run with ``-rep N``
+  uses replica ``N`` of the set (which must be a Monte Carlo set), so that the
+  PDF uncertainty is propagated to the coefficients across replicas.
+- No PDF replicas or exportgrids are written, and there is nothing to run
+  ``evolve_fit`` on. ``mc_postfit`` and the resampling scripts still work on
+  the coefficients.
+- Positivity and integrability penalties are constant with a fixed PDF; a
+  warning is printed if they are switched on.
+- ``fixed_pdf`` is read by the base colibri config; PDF model apps define their
+  own ``produce_pdf_model`` and ignore it.
 
 .. note::
 

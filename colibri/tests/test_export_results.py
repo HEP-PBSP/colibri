@@ -164,6 +164,17 @@ def test_write_replicas(mock_log_info, mock_write_exportgrid, tmp_path):
     assert mock_log_info.call_count == bayes_fit.resampled_posterior.shape[0]
 
 
+@patch("colibri.export_results.write_exportgrid")
+def test_write_replicas_skips_fixed_pdf(mock_write_exportgrid, tmp_path):
+    """Nothing is written for a PDF model without parameters."""
+    fixed_model = Mock()
+    fixed_model.param_names = []
+    write_replicas(bayes_fit, str(tmp_path), fixed_model)
+
+    mock_write_exportgrid.assert_not_called()
+    assert not (tmp_path / "replicas").exists()
+
+
 def test_read_exportgrid():
     """
     Test the read_exportgrid function to ensure it correctly reads and processes

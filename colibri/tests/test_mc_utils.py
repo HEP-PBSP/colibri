@@ -4,7 +4,7 @@ colibri.tests.test_mc_utils
 Tests for the Monte Carlo utilities in the colibri package.
 """
 
-from unittest.mock import mock_open, patch
+from unittest.mock import Mock, mock_open, patch
 
 import pandas as pd
 from numpy.testing import assert_allclose
@@ -172,3 +172,16 @@ def test_training_indices_with_empty_training():
 
     assert isinstance(out, jax.Array)
     assert out.size == 0
+
+
+@patch("colibri.mc_utils.write_exportgrid")
+def test_write_exportgrid_mc_skips_fixed_pdf(mock_write_exportgrid, tmp_path):
+    """For a PDF model without parameters only the replica folder is created."""
+    (tmp_path / "fit_replicas").mkdir()
+    fixed_model = Mock()
+    fixed_model.param_names = []
+
+    write_exportgrid_mc(parameters, fixed_model, replica_index, tmp_path)
+
+    mock_write_exportgrid.assert_not_called()
+    assert (tmp_path / "fit_replicas" / f"replica_{replica_index}").is_dir()
