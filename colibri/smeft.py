@@ -206,7 +206,7 @@ def register_smeft_backend(name: str):
 class SIMUnetBackend(SMEFTBackend):
     """
     K-factors from the SIMU-factor files of SIMUnet
-    (https://github.com/HEP-PBSP/SIMUnet).
+    (https://github.com/scarlehoff/SIMUnet).
 
     SIMUnet locates its ``simudata`` folder relative to its source tree, so
     it must be installed from a source checkout (``pip install -e .``).
@@ -219,7 +219,7 @@ class SIMUnetBackend(SMEFTBackend):
         except ImportError as e:
             raise ImportError(
                 "The 'simunet' SMEFT backend requires SIMUnet. Install it from a "
-                "source checkout of https://github.com/HEP-PBSP/SIMUnet with "
+                "source checkout of https://github.com/scarlehoff/SIMUnet with "
                 "`pip install -e .`"
             ) from e
 

@@ -64,7 +64,7 @@ Cuts, data ordering, scales and the forward map itself do not depend on the
 backend.
 
 - ``simunet``: reads the SIMU-factor files of
-  `SIMUnet <https://github.com/HEP-PBSP/SIMUnet>`_. SIMUnet locates its
+  `SIMUnet <https://github.com/scarlehoff/SIMUnet>`_. SIMUnet locates its
   ``simudata`` folder from its source tree, so it must be installed from a
   source checkout with ``pip install -e .``.
 
