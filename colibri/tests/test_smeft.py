@@ -11,15 +11,19 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
+from validphys.core import DataSetInput
+
 from colibri.smeft import (
     SMEFT_BACKENDS,
     DatasetResponses,
     SIMUnetBackend,
     SMEFTBackend,
+    SMEFTDataSetInput,
     SMEFTParameter,
     SMEFTSettings,
     register_smeft_backend,
     smeft_corrections,
+    smeft_orders,
 )
 
 # ---------------------------------------------------------------------------
@@ -70,12 +74,30 @@ def fake_backends(monkeypatch):
     monkeypatch.setitem(SMEFT_BACKENDS, "fake_quad", FakeQuadraticBackend)
 
 
-def _settings(backend="fake", datasets=None, parameters=None):
+def _settings(backend="fake", parameters=None):
     return SMEFTSettings(
         backend=backend,
         parameters=parameters
         or (SMEFTParameter("OtG", scale=50.0), SMEFTParameter("Y")),
-        datasets={"SMEFT_DS": "EFT_NLO"} if datasets is None else datasets,
+    )
+
+
+def _dataset_inputs(*names, orders=None):
+    """dataset_inputs for ``names``; ``orders`` maps names to their smeft_order."""
+    orders = {"SMEFT_DS": "EFT_NLO"} if orders is None else orders
+    return [
+        (
+            SMEFTDataSetInput.from_dataset_input(_plain_input(name), orders[name])
+            if name in orders
+            else _plain_input(name)
+        )
+        for name in names
+    ]
+
+
+def _plain_input(name):
+    return DataSetInput(
+        name=name, cfac=(), frac=1, weight=1, custom_group="unset", variant=None
     )
 
 
@@ -94,6 +116,28 @@ def test_smeft_settings_names_and_scales():
     settings = _settings()
     assert settings.parameter_names == ("OtG", "Y")
     np.testing.assert_array_equal(settings.scales, [50.0, 1.0])
+
+
+def test_smeft_dataset_input_keeps_dataset_and_adds_order():
+    plain = DataSetInput(
+        name="DS", cfac=("QCD",), frac=1, weight=2, custom_group="g", variant="legacy"
+    )
+    smeft = SMEFTDataSetInput.from_dataset_input(plain, "EFT_LO")
+
+    assert isinstance(smeft, DataSetInput)
+    assert smeft.smeft_order == "EFT_LO"
+    assert (smeft.name, smeft.cfac, smeft.weight, smeft.variant) == (
+        "DS",
+        ("QCD",),
+        2,
+        ("legacy",),
+    )
+    assert smeft == plain
+
+
+def test_smeft_orders():
+    inputs = _dataset_inputs("A", "B", "C", orders={"A": "EFT_LO", "C": "EFT_NLO"})
+    assert smeft_orders(inputs) == {"A": "EFT_LO", "C": "EFT_NLO"}
 
 
 # ---------------------------------------------------------------------------
@@ -132,14 +176,14 @@ def test_register_smeft_backend_rejects_non_backends():
 def test_smeft_corrections_applies_cuts_and_zero_fills(fake_backends):
     """
     Responses follow the order of data.datasets, cuts are applied and datasets
-    not listed in the settings get zero response.
+    without a smeft_order get zero response.
     """
     data = _mock_data(
         _mock_dataset("SM_DS", ndata=3),
         _mock_dataset("SMEFT_DS", ndata=4, cuts=[0, 2, 3]),
     )
 
-    corr = smeft_corrections(data, _settings())
+    corr = smeft_corrections(data, _dataset_inputs("SM_DS", "SMEFT_DS"), _settings())
 
     assert corr.parameter_names == ("OtG", "Y")
     np.testing.assert_array_equal(corr.scales, [50.0, 1.0])
@@ -160,17 +204,20 @@ def test_smeft_corrections_quadratic(fake_backends):
         _mock_dataset("SM_DS", ndata=2),
     )
 
-    corr = smeft_corrections(data, _settings(backend="fake_quad"))
+    corr = smeft_corrections(
+        data, _dataset_inputs("SMEFT_DS", "SM_DS"), _settings(backend="fake_quad")
+    )
 
     assert corr.quadratic.shape == (2, 2, 4)
     np.testing.assert_array_equal(corr.quadratic[..., :2], 1.0)
     np.testing.assert_array_equal(corr.quadratic[..., 2:], 0.0)
 
 
-def test_smeft_corrections_unknown_dataset(fake_backends):
+def test_smeft_corrections_without_smeft_datasets(fake_backends):
+    """A SMEFT fit with no dataset carrying a smeft_order is an error."""
     data = _mock_data(_mock_dataset("SM_DS", ndata=3))
-    with pytest.raises(ValueError, match="not part of the fit"):
-        smeft_corrections(data, _settings())
+    with pytest.raises(ValueError, match="smeft_order"):
+        smeft_corrections(data, _dataset_inputs("SM_DS"), _settings())
 
 
 def test_smeft_corrections_wrong_shape(fake_backends, monkeypatch):
@@ -181,7 +228,7 @@ def test_smeft_corrections_wrong_shape(fake_backends, monkeypatch):
     data = _mock_data(_mock_dataset("SMEFT_DS", ndata=3))
 
     with pytest.raises(ValueError, match="expected"):
-        smeft_corrections(data, _settings())
+        smeft_corrections(data, _dataset_inputs("SMEFT_DS"), _settings())
 
 
 # ---------------------------------------------------------------------------
@@ -282,11 +329,14 @@ def test_smeft_corrections_passes_backend_options(monkeypatch):
     settings = SMEFTSettings(
         backend="options",
         parameters=(SMEFTParameter("OtG"),),
-        datasets={"SMEFT_DS": "EFT_LO"},
         backend_options={"path": "somewhere"},
     )
 
-    smeft_corrections(_mock_data(_mock_dataset("SMEFT_DS", ndata=2)), settings)
+    smeft_corrections(
+        _mock_data(_mock_dataset("SMEFT_DS", ndata=2)),
+        _dataset_inputs("SMEFT_DS"),
+        settings,
+    )
 
     assert received == {"path": "somewhere"}
 
@@ -308,15 +358,15 @@ def test_smeft_corrections_from_api(fake_backends):
     from colibri.api import API
     from colibri.tests.conftest import TEST_DATASETS
 
-    name = TEST_DATASETS["dataset_inputs"][0]["dataset"]
-    smeft_settings = {
-        "backend": "fake",
-        "order": "EFT_NLO",
-        "parameters": [{"name": "OtG"}],
-        "datasets": [{"dataset": name}],
+    inputs = {
+        **TEST_DATASETS,
+        "dataset_inputs": [
+            {**TEST_DATASETS["dataset_inputs"][0], "smeft_order": "EFT_NLO"}
+        ],
     }
+    smeft_settings = {"backend": "fake", "parameters": [{"name": "OtG"}]}
 
-    corr = API.smeft_corrections(**TEST_DATASETS, smeft_settings=smeft_settings)
+    corr = API.smeft_corrections(**inputs, smeft_settings=smeft_settings)
     fk_arrays = API.fast_kernel_arrays(**TEST_DATASETS)
 
     assert corr.parameter_names == ("OtG",)

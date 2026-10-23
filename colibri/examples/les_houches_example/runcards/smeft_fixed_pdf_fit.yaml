@@ -17,9 +17,10 @@ meta: 'SMEFT-only analytic fit of two Wilson coefficients to experimental data, 
 #######################
 
 dataset_inputs:
-- {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, variant: legacy}       # ttbar: OtG
-- {dataset: ATLAS_TTBAR_8TEV_LJ_DIF_YT-NORM, variant: legacy}   # ttbar: OtG
-- {dataset: ATLAS_Z0_7TEV_49FB_HIMASS, variant: legacy}         # high-mass Drell-Yan: Y
+# smeft_order: datasets with a SMEFT correction, and the order of their K-factors.
+- {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, variant: legacy, smeft_order: EFT_NLO}      # ttbar: OtG
+- {dataset: ATLAS_TTBAR_8TEV_LJ_DIF_YT-NORM, variant: legacy, smeft_order: EFT_NLO}  # ttbar: OtG
+- {dataset: ATLAS_Z0_7TEV_49FB_HIMASS, variant: legacy, smeft_order: EFT_LO}         # Drell-Yan: Y (LO only)
 
 theoryid: 40000000                     # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
@@ -51,15 +52,10 @@ smeft_settings:
   # and uncomment the two lines below.
   # backend_options:
   #   simudata_path: /path/to/SIMUnet/simudata
-  order: EFT_NLO                       # Default K-factor order for the datasets below.
   parameters:
   - {name: OtG}
   - name: Y
     linear_combination: {Olq1: 1.51606, Oed: -6.0606, Oeu: 12.1394, Olu: 6.0606, Old: -3.0394, Oqe: 3.0394}
-  datasets:
-  - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC}
-  - {dataset: ATLAS_TTBAR_8TEV_LJ_DIF_YT-NORM}
-  - {dataset: ATLAS_Z0_7TEV_49FB_HIMASS, order: EFT_LO}     # Only LO K-factors available.
 
 #####################
 # Loss function specs

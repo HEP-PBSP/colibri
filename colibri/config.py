@@ -11,6 +11,7 @@ import inspect
 import logging
 import os
 import shutil
+from collections.abc import Mapping
 
 import jax
 import jax.numpy as jnp
@@ -20,9 +21,15 @@ from colibri import forward_map as colibri_forward_map
 from colibri import pdf_model as colibri_pdf_model
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
-from colibri.smeft import SMEFT_BACKENDS, SMEFTParameter, SMEFTSettings
+from colibri.smeft import (
+    SMEFT_BACKENDS,
+    SMEFTDataSetInput,
+    SMEFTParameter,
+    SMEFTSettings,
+    smeft_orders,
+)
 from mpi4py import MPI
-from reportengine.configparser import ConfigError, explicit_node
+from reportengine.configparser import ConfigError, element_of, explicit_node
 from validphys import covmats
 from validphys.config import Config, Environment
 from validphys.fkparser import load_fktable
@@ -604,6 +611,8 @@ class colibriConfig(Config):
         """
         Parses the smeft_settings namespace from the runcard into a
         colibri.smeft.SMEFTSettings. Only used with ``forward_map_type: smeft``.
+        The datasets receiving a SMEFT correction are selected with the
+        ``smeft_order`` key in ``dataset_inputs`` (see parse_dataset_input).
 
         Example
         -------
@@ -613,16 +622,20 @@ class colibriConfig(Config):
               backend: simunet          # source of the K-factors (default: simunet)
               backend_options:          # keyword arguments of the backend (optional)
                 simudata_path: ~/SIMUnet/simudata
-              order: EFT_NLO            # default order for the datasets below
               parameters:
                 - {name: OtG, scale: 50.0}
                 - name: Y
                   linear_combination: {Olq1: 1.51606, Oed: -6.0606}
-              datasets:
-                - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, order: EFT_LO}
-                - {dataset: ATLAS_Z0_7TEV_49FB_HIMASS}
         """
-        known_keys = {"backend", "backend_options", "order", "parameters", "datasets"}
+        moved_keys = {"order", "datasets"} & settings.keys()
+        if moved_keys:
+            raise ConfigError(
+                f"{sorted(moved_keys)} are no longer part of smeft_settings: add "
+                "`smeft_order: <order>` to the dataset_inputs entries that receive a "
+                "SMEFT correction instead."
+            )
+
+        known_keys = {"backend", "backend_options", "parameters"}
         kdiff = settings.keys() - known_keys
         for k in kdiff:
             log.warning(
@@ -693,38 +706,45 @@ class colibriConfig(Config):
         if duplicates:
             raise ConfigError(f"Duplicate SMEFT parameter names: {sorted(duplicates)}")
 
-        # Datasets receiving a SMEFT correction
-        default_order = settings.get("order")
-        raw_datasets = settings.get("datasets")
-        if not raw_datasets:
-            raise ConfigError("smeft_settings must define a non-empty 'datasets' list.")
-
-        datasets = {}
-        for entry in raw_datasets:
-            if not isinstance(entry, dict) or "dataset" not in entry:
-                raise ConfigError(
-                    f"Each entry of smeft_settings 'datasets' must be a mapping with a 'dataset', got {entry}."
-                )
-            name = entry["dataset"]
-            order = entry.get("order", default_order)
-            if order is None:
-                raise ConfigError(
-                    f"No 'order' given for SMEFT dataset '{name}' and no default "
-                    "'order' set in smeft_settings."
-                )
-            if name in datasets:
-                raise ConfigError(f"Dataset '{name}' listed twice in smeft_settings.")
-            datasets[name] = str(order)
-
         return SMEFTSettings(
             backend=backend,
             parameters=tuple(parameters),
-            datasets=datasets,
             backend_options=backend_options,
         )
 
+    @element_of("dataset_inputs")
+    def parse_dataset_input(self, dataset: Mapping, allow_legacy_names: bool = True):
+        """
+        As validphys' parse_dataset_input, plus the optional ``smeft_order`` key:
+        the perturbative order of the SMEFT K-factors (e.g. ``EFT_LO`` or
+        ``EFT_NLO`` for SIMUnet). Datasets with the key receive a SMEFT
+        correction when ``forward_map_type: smeft``; the others are SM only.
+
+        Example
+        -------
+        ::
+
+            dataset_inputs:
+            - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, variant: legacy, smeft_order: EFT_NLO}
+            - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+        """
+        if not isinstance(dataset, Mapping) or "smeft_order" not in dataset:
+            return super().parse_dataset_input(dataset, allow_legacy_names)
+
+        dataset = dict(dataset)
+        smeft_order = dataset.pop("smeft_order")
+        if not isinstance(smeft_order, str):
+            raise ConfigError(
+                f"'smeft_order' must be a string (e.g. EFT_NLO), got {smeft_order!r} "
+                f"({dataset.get('dataset')})."
+            )
+        dataset_input = super().parse_dataset_input(dataset, allow_legacy_names)
+        return SMEFTDataSetInput.from_dataset_input(dataset_input, smeft_order)
+
     @explicit_node
-    def produce_forward_map(self, forward_map_type: str = "fktable"):
+    def produce_forward_map(
+        self, forward_map_type: str = "fktable", dataset_inputs=None
+    ):
         """
         Produces the forward_map node in the reportengine dag, according to
         the ``forward_map_type`` runcard key:
@@ -732,6 +752,12 @@ class colibriConfig(Config):
         - ``fktable`` (default): colibri.forward_map.fktable_forward_map
         - ``smeft``: colibri.forward_map.smeft_forward_map, requires ``smeft_settings``
         """
+        if forward_map_type != "smeft" and smeft_orders(dataset_inputs or []):
+            log.warning(
+                "Some dataset_inputs have a smeft_order, but forward_map_type is not "
+                "smeft: no SMEFT correction is applied."
+            )
+
         if forward_map_type == "fktable":
             return colibri_forward_map.fktable_forward_map
         elif forward_map_type == "smeft":

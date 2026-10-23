@@ -627,14 +627,9 @@ def test_produce_forward_map_selects_provider():
 # -----------------------------
 
 SMEFT_SETTINGS = {
-    "order": "EFT_NLO",
     "parameters": [
         {"name": "OtG", "scale": 50.0},
         {"name": "Y", "linear_combination": {"Olq1": 1.5, "Oed": -6}, "scale": 200},
-    ],
-    "datasets": [
-        {"dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC", "order": "EFT_LO"},
-        {"dataset": "ATLAS_Z0_7TEV_49FB_HIMASS"},
     ],
 }
 
@@ -650,10 +645,6 @@ def test_parse_smeft_settings():
         SMEFTParameter("OtG", {"OtG": 1.0}, 50.0),
         SMEFTParameter("Y", {"Olq1": 1.5, "Oed": -6.0}, 200.0),
     )
-    assert res.datasets == {
-        "ATLAS_TTBAR_13TEV_TOT_X-SEC": "EFT_LO",
-        "ATLAS_Z0_7TEV_49FB_HIMASS": "EFT_NLO",
-    }
     assert res.backend_options == {}
 
 
@@ -685,19 +676,12 @@ def test_parse_smeft_settings_unknown_key_warns(mock_warning):
             "must be a mapping",
         ),
         ({"parameters": [{"name": "OtG"}, {"name": "OtG"}]}, "Duplicate"),
-        ({"datasets": []}, "non-empty 'datasets'"),
-        ({"datasets": ["ATLAS"]}, "with a 'dataset'"),
-        ({"order": None}, "No 'order' given"),
-        (
-            {"datasets": [{"dataset": "A", "order": "LO"}, {"dataset": "A"}]},
-            "listed twice",
-        ),
+        ({"datasets": [{"dataset": "A"}]}, "smeft_order"),
+        ({"order": "EFT_NLO"}, "smeft_order"),
     ],
 )
 def test_parse_smeft_settings_invalid(update, match):
     settings = {**SMEFT_SETTINGS, **update}
-    if settings.get("order") is None:
-        settings.pop("order", None)
     with pytest.raises(ConfigError, match=match):
         BASE_CONFIG.parse_smeft_settings(settings)
 
@@ -725,3 +709,62 @@ def test_parse_fixed_pdf_member(member):
 def test_parse_fixed_pdf_member_invalid(member):
     with pytest.raises(ConfigError):
         BASE_CONFIG.parse_fixed_pdf_member(member)
+
+
+# -----------------------------
+#   smeft_order in dataset_inputs
+# -----------------------------
+
+
+@patch("validphys.config.log.warning")
+def test_parse_dataset_input_smeft_order(mock_warning):
+    from colibri.smeft import SMEFTDataSetInput
+
+    res = BASE_CONFIG.parse_dataset_input(
+        {
+            "dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC",
+            "variant": "legacy",
+            "smeft_order": "EFT_NLO",
+        }
+    )
+
+    assert isinstance(res, SMEFTDataSetInput)
+    assert res.name == "ATLAS_TTBAR_13TEV_TOT_X-SEC"
+    assert res.variant == ("legacy",)
+    assert res.smeft_order == "EFT_NLO"
+    # smeft_order is not reported as an unknown dataset key
+    mock_warning.assert_not_called()
+
+
+def test_parse_dataset_input_without_smeft_order():
+    from colibri.smeft import SMEFTDataSetInput
+
+    res = BASE_CONFIG.parse_dataset_input(
+        {"dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC", "variant": "legacy"}
+    )
+    assert not isinstance(res, SMEFTDataSetInput)
+    assert not hasattr(res, "smeft_order")
+
+
+def test_parse_dataset_input_invalid_smeft_order():
+    with pytest.raises(ConfigError, match="smeft_order"):
+        BASE_CONFIG.parse_dataset_input(
+            {"dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC", "smeft_order": 1}
+        )
+
+
+@patch("colibri.config.log.warning")
+def test_produce_forward_map_warns_on_unused_smeft_order(mock_warning):
+    from colibri.smeft import SMEFTDataSetInput
+    from validphys.core import DataSetInput
+
+    plain = DataSetInput(
+        name="DS", cfac=(), frac=1, weight=1, custom_group="unset", variant=None
+    )
+    inputs = [SMEFTDataSetInput.from_dataset_input(plain, "EFT_LO")]
+
+    BASE_CONFIG.produce_forward_map("smeft", dataset_inputs=inputs)
+    mock_warning.assert_not_called()
+
+    BASE_CONFIG.produce_forward_map("fktable", dataset_inputs=inputs)
+    mock_warning.assert_called_once()

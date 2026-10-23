@@ -18,6 +18,9 @@ SMEFT responses normalised to the SM prediction they were computed with.
 Where the responses come from is delegated to an :class:`SMEFTBackend`.
 Backends are registered by name with :func:`register_smeft_backend` and
 selected in the runcard with ``smeft_settings: {backend: <name>}``.
+Which datasets get a correction, and at which order, is set per dataset
+with the ``smeft_order`` key in ``dataset_inputs``.
+
 Everything downstream of the backend (cuts, ordering of the data points,
 fit-parameter scales, the forward map itself) is backend independent, so
 adding a new source of K-factors (e.g. SMEFiT) only requires implementing
@@ -35,6 +38,7 @@ from dataclasses import dataclass, field
 from typing import NamedTuple, Optional
 
 import numpy as np
+from validphys.core import DataSetInput
 
 log = logging.getLogger(__name__)
 
@@ -87,12 +91,6 @@ class SMEFTSettings:
         SMEFT fit parameters, in the order they are appended to the PDF
         parameters.
 
-    datasets: dict
-        Mapping ``{dataset_name: order}`` of the datasets receiving a SMEFT
-        correction, and the perturbative order of the K-factors to use
-        (e.g. ``EFT_LO`` or ``EFT_NLO`` for SIMUnet). All other datasets are
-        treated as SM only.
-
     backend_options: dict
         Keyword arguments passed to the backend constructor, e.g.
         ``{simudata_path: ...}`` for SIMUnet.
@@ -100,7 +98,6 @@ class SMEFTSettings:
 
     backend: str
     parameters: tuple
-    datasets: dict
     backend_options: dict = field(default_factory=dict)
 
     @property
@@ -110,6 +107,43 @@ class SMEFTSettings:
     @property
     def scales(self) -> np.ndarray:
         return np.array([p.scale for p in self.parameters], dtype=float)
+
+
+class SMEFTDataSetInput(DataSetInput):
+    """
+    A ``dataset_inputs`` entry with the ``smeft_order`` key, i.e. a dataset
+    receiving a SMEFT correction. ``smeft_order`` is the perturbative order of
+    the K-factors to use, as named by the backend (e.g. ``EFT_LO`` or
+    ``EFT_NLO`` for SIMUnet).
+
+    The dataset itself is unchanged, so it compares equal to the plain
+    validphys ``DataSetInput`` it is built from.
+    """
+
+    def __init__(self, *, smeft_order, **kwargs):
+        super().__init__(**kwargs)
+        self.smeft_order = smeft_order
+
+    @classmethod
+    def from_dataset_input(cls, dataset_input, smeft_order):
+        return cls(
+            name=dataset_input.name,
+            cfac=dataset_input.cfac,
+            frac=dataset_input.frac,
+            weight=dataset_input.weight,
+            custom_group=dataset_input.custom_group,
+            variant=dataset_input.variant,
+            smeft_order=smeft_order,
+        )
+
+
+def smeft_orders(dataset_inputs) -> dict:
+    """``{dataset_name: smeft_order}`` for the datasets with a SMEFT correction."""
+    return {
+        dsinput.name: dsinput.smeft_order
+        for dsinput in dataset_inputs
+        if getattr(dsinput, "smeft_order", None) is not None
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -275,15 +309,20 @@ class SIMUnetBackend(SMEFTBackend):
 # ---------------------------------------------------------------------------
 
 
-def smeft_corrections(data, smeft_settings: SMEFTSettings) -> SMEFTCorrections:
+def smeft_corrections(
+    data, dataset_inputs, smeft_settings: SMEFTSettings
+) -> SMEFTCorrections:
     """
     Collects the SMEFT responses of every dataset in ``data`` from the
-    backend selected in ``smeft_settings``, applying the cuts. Datasets not
-    listed in ``smeft_settings.datasets`` get zero response (SM only).
+    backend selected in ``smeft_settings``, applying the cuts. Only the
+    datasets with a ``smeft_order`` key in ``dataset_inputs`` are corrected;
+    the others get zero response (SM only).
 
     Parameters
     ----------
     data: validphys.core.DataGroupSpec
+
+    dataset_inputs: list[validphys.core.DataSetInput]
 
     smeft_settings: SMEFTSettings
 
@@ -291,12 +330,11 @@ def smeft_corrections(data, smeft_settings: SMEFTSettings) -> SMEFTCorrections:
     -------
     SMEFTCorrections
     """
-    dataset_names = [ds.name for ds in data.datasets]
-    unknown = set(smeft_settings.datasets) - set(dataset_names)
-    if unknown:
+    orders = smeft_orders(dataset_inputs)
+    if not orders:
         raise ValueError(
-            f"Datasets {sorted(unknown)} in smeft_settings are not part of the fit. "
-            f"Fitted datasets: {dataset_names}"
+            "forward_map_type is smeft, but no dataset has a SMEFT correction. "
+            "Add e.g. `smeft_order: EFT_NLO` to the relevant dataset_inputs entries."
         )
 
     backend = SMEFT_BACKENDS[smeft_settings.backend](**smeft_settings.backend_options)
@@ -309,12 +347,12 @@ def smeft_corrections(data, smeft_settings: SMEFTSettings) -> SMEFTCorrections:
         cuts = ds.cuts.load() if ds.cuts is not None else None
         idx = np.arange(ndata) if cuts is None else np.asarray(cuts, dtype=int)
 
-        if ds.name not in smeft_settings.datasets:
+        if ds.name not in orders:
             linear_blocks.append(np.zeros((n_params, len(idx))))
             quadratic_blocks.append(None)
             continue
 
-        order = smeft_settings.datasets[ds.name]
+        order = orders[ds.name]
         log.info(f"Loading SMEFT {order} responses for {ds.name}")
         responses = backend.dataset_responses(ds, order, parameters)
 

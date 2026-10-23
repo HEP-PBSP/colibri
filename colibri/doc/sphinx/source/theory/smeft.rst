@@ -28,34 +28,35 @@ The forward map is selected with the ``forward_map_type`` key:
 
 - ``fktable`` (default): plain FK-table predictions.
 - ``smeft``: FK-table predictions times SMEFT K-factors, configured with
-  ``smeft_settings``.
+  ``smeft_settings`` and the ``smeft_order`` key of ``dataset_inputs``.
 
 .. code-block:: yaml
+
+    dataset_inputs:
+    - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}    # SM only
+    - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, variant: legacy, smeft_order: EFT_NLO}
+    - {dataset: ATLAS_Z0_7TEV_49FB_HIMASS, variant: legacy, smeft_order: EFT_LO}
 
     forward_map_type: smeft
 
     smeft_settings:
       backend: simunet        # source of the K-factors (default: simunet)
       # backend_options: {simudata_path: /path/to/SIMUnet/simudata}  # only if needed, see below
-      order: EFT_NLO          # default K-factor order for the datasets below
       parameters:
         - {name: OtG, scale: 50.0}
         - name: Y
           linear_combination: {Olq1: 1.51606, Oed: -6.0606, Oeu: 12.1394,
                                Olu: 6.0606, Old: -3.0394, Oqe: 3.0394}
           scale: 200.0
-      datasets:
-        - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, order: EFT_LO}
-        - {dataset: ATLAS_Z0_7TEV_49FB_HIMASS}
 
+- ``smeft_order`` (in ``dataset_inputs``): marks the datasets receiving a
+  SMEFT correction, and the perturbative order of their K-factors, as named
+  by the backend (``EFT_LO`` or ``EFT_NLO`` for SIMUnet). Datasets without it
+  are SM only. It is ignored, with a warning, unless ``forward_map_type: smeft``.
 - ``parameters``: the SMEFT fit parameters. A parameter is a single operator
   (by default, the one with the same name) or a ``linear_combination`` of
   operators. The fitted value is ``scale * c``, with ``c`` the physical Wilson
   coefficient; ``scale`` defaults to 1.
-- ``datasets``: the datasets receiving a SMEFT correction, each with the
-  perturbative ``order`` of its K-factors (falling back to the top-level
-  ``order``). All other datasets are SM only. Every dataset listed here must
-  also appear in ``dataset_inputs``.
 
 Since the fit parameters include the Wilson coefficients, per-parameter prior
 bounds or initialiser bounds must list them too, e.g.
