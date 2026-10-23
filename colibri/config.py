@@ -607,18 +607,20 @@ class colibriConfig(Config):
 
         Example
         -------
-        smeft_settings:
-          backend: simunet          # source of the K-factors (default: simunet)
-          backend_options:          # keyword arguments of the backend (optional)
-            simudata_path: ~/SIMUnet/simudata
-          order: EFT_NLO            # default order for the datasets below
-          parameters:
-            - {name: OtG, scale: 50.0}
-            - name: Y
-              linear_combination: {Olq1: 1.51606, Oed: -6.0606}
-          datasets:
-            - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, order: EFT_LO}
-            - {dataset: ATLAS_Z0_7TEV_49FB_HIMASS}
+        ::
+
+            smeft_settings:
+              backend: simunet          # source of the K-factors (default: simunet)
+              backend_options:          # keyword arguments of the backend (optional)
+                simudata_path: ~/SIMUnet/simudata
+              order: EFT_NLO            # default order for the datasets below
+              parameters:
+                - {name: OtG, scale: 50.0}
+                - name: Y
+                  linear_combination: {Olq1: 1.51606, Oed: -6.0606}
+              datasets:
+                - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, order: EFT_LO}
+                - {dataset: ATLAS_Z0_7TEV_49FB_HIMASS}
         """
         known_keys = {"backend", "backend_options", "order", "parameters", "datasets"}
         kdiff = settings.keys() - known_keys
