@@ -654,6 +654,14 @@ def test_parse_smeft_settings():
         "ATLAS_TTBAR_13TEV_TOT_X-SEC": "EFT_LO",
         "ATLAS_Z0_7TEV_49FB_HIMASS": "EFT_NLO",
     }
+    assert res.backend_options == {}
+
+
+def test_parse_smeft_settings_backend_options():
+    res = BASE_CONFIG.parse_smeft_settings(
+        {**SMEFT_SETTINGS, "backend_options": {"simudata_path": "/some/simudata"}}
+    )
+    assert res.backend_options == {"simudata_path": "/some/simudata"}
 
 
 @patch("colibri.config.log.warning")
@@ -667,6 +675,8 @@ def test_parse_smeft_settings_unknown_key_warns(mock_warning):
     "update, match",
     [
         ({"backend": "nope"}, "Unknown SMEFT backend"),
+        ({"backend_options": ["a"]}, "must be a mapping"),
+        ({"backend_options": {"unknown_option": 1}}, "Invalid backend_options"),
         ({"parameters": []}, "non-empty 'parameters'"),
         ({"parameters": [{"scale": 1.0}]}, "with a 'name'"),
         ({"parameters": [{"name": "OtG", "scale": 0}]}, "must be > 0"),

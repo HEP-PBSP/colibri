@@ -38,6 +38,9 @@ tfp-nightly = { extras = ["jax"], version = "*" }
 tf-keras = "*"
 blackjax = "*"
 
+# SMEFT K-factors (forward_map_type: smeft, backend: simunet), see the `smeft` extra
+simunet = { git = "https://github.com/scarlehoff/SIMUnet", optional = true }
+
 
 [tool.poetry.extras]
 test = [
@@ -45,6 +48,7 @@ test = [
     "hypothesis",
 ]
 doc = ["sphinxcontrib-bibtex", "sphinx-rtd-theme", "sphinx", "tabulate", "sphinx-copybutton"]
+smeft = ["simunet"]
 
 [tool.poetry.scripts]
 colibri = "colibri.app:main"

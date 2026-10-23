@@ -30,6 +30,7 @@ Currently available backends:
 
 import logging
 from abc import ABC, abstractmethod
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import NamedTuple, Optional
 
@@ -91,11 +92,16 @@ class SMEFTSettings:
         correction, and the perturbative order of the K-factors to use
         (e.g. ``EFT_LO`` or ``EFT_NLO`` for SIMUnet). All other datasets are
         treated as SM only.
+
+    backend_options: dict
+        Keyword arguments passed to the backend constructor, e.g.
+        ``{simudata_path: ...}`` for SIMUnet.
     """
 
     backend: str
     parameters: tuple
     datasets: dict
+    backend_options: dict = field(default_factory=dict)
 
     @property
     def parameter_names(self) -> tuple:
@@ -208,22 +214,43 @@ class SIMUnetBackend(SMEFTBackend):
     K-factors from the SIMU-factor files of SIMUnet
     (https://github.com/scarlehoff/SIMUnet).
 
-    SIMUnet locates its ``simudata`` folder relative to its source tree, so
-    it must be installed from a source checkout (``pip install -e .``).
+    Install it with ``pip install colibri[smeft]``. The SIMU-factor files live
+    in the ``simudata`` folder of the SIMUnet repository, which a regular
+    install does not include: SIMUnet only finds it by itself when installed
+    from a source checkout (``pip install -e .``). Otherwise, point to the
+    ``simudata`` folder of a SIMUnet checkout with ``simudata_path``.
+
+    Parameters
+    ----------
+    simudata_path: str or pathlib.Path, optional
+        Path to a SIMUnet ``simudata`` folder (containing ``simu_factors``).
+        Defaults to the one SIMUnet finds next to its source tree.
     """
 
-    def __init__(self):
+    def __init__(self, simudata_path=None):
         try:
             from simunet.loader import SIMUnetLoader
             from simunet.smeft import parameter_responses
         except ImportError as e:
             raise ImportError(
-                "The 'simunet' SMEFT backend requires SIMUnet. Install it from a "
-                "source checkout of https://github.com/scarlehoff/SIMUnet with "
-                "`pip install -e .`"
+                "The 'simunet' SMEFT backend requires SIMUnet. Install it with "
+                "`pip install colibri[smeft]` (or from "
+                "https://github.com/scarlehoff/SIMUnet)."
             ) from e
 
         self._loader = SIMUnetLoader()
+        if simudata_path is not None:
+            self._loader.simudata_path = Path(simudata_path).expanduser().resolve()
+
+        simu_factors = Path(self._loader.simudata_path) / "simu_factors"
+        if not simu_factors.is_dir():
+            raise FileNotFoundError(
+                f"SIMU factor folder not found at {simu_factors}. SIMUnet only finds "
+                "its simudata folder when installed from a source checkout "
+                "(`pip install -e .`). Otherwise clone "
+                "https://github.com/scarlehoff/SIMUnet and set "
+                "smeft_settings: {backend_options: {simudata_path: <clone>/simudata}}."
+            )
         self._parameter_responses = parameter_responses
 
     def dataset_responses(self, dataset, order, parameters):
@@ -272,7 +299,7 @@ def smeft_corrections(data, smeft_settings: SMEFTSettings) -> SMEFTCorrections:
             f"Fitted datasets: {dataset_names}"
         )
 
-    backend = SMEFT_BACKENDS[smeft_settings.backend]()
+    backend = SMEFT_BACKENDS[smeft_settings.backend](**smeft_settings.backend_options)
     parameters = smeft_settings.parameters
     n_params = len(parameters)
 

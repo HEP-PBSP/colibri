@@ -7,6 +7,7 @@ Note: several functions are taken from validphys.config
 """
 
 import hashlib
+import inspect
 import logging
 import os
 import shutil
@@ -608,6 +609,8 @@ class colibriConfig(Config):
         -------
         smeft_settings:
           backend: simunet          # source of the K-factors (default: simunet)
+          backend_options:          # keyword arguments of the backend (optional)
+            simudata_path: ~/SIMUnet/simudata
           order: EFT_NLO            # default order for the datasets below
           parameters:
             - {name: OtG, scale: 50.0}
@@ -617,7 +620,7 @@ class colibriConfig(Config):
             - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, order: EFT_LO}
             - {dataset: ATLAS_Z0_7TEV_49FB_HIMASS}
         """
-        known_keys = {"backend", "order", "parameters", "datasets"}
+        known_keys = {"backend", "backend_options", "order", "parameters", "datasets"}
         kdiff = settings.keys() - known_keys
         for k in kdiff:
             log.warning(
@@ -629,6 +632,16 @@ class colibriConfig(Config):
             raise ConfigError(
                 f"Unknown SMEFT backend '{backend}'.", backend, SMEFT_BACKENDS.keys()
             )
+
+        backend_options = settings.get("backend_options", {}) or {}
+        if not isinstance(backend_options, dict):
+            raise ConfigError("'backend_options' in smeft_settings must be a mapping.")
+        try:
+            inspect.signature(SMEFT_BACKENDS[backend]).bind(**backend_options)
+        except TypeError as e:
+            raise ConfigError(
+                f"Invalid backend_options for SMEFT backend '{backend}': {e}"
+            ) from e
 
         # Fit parameters
         raw_parameters = settings.get("parameters")
@@ -702,7 +715,10 @@ class colibriConfig(Config):
             datasets[name] = str(order)
 
         return SMEFTSettings(
-            backend=backend, parameters=tuple(parameters), datasets=datasets
+            backend=backend,
+            parameters=tuple(parameters),
+            datasets=datasets,
+            backend_options=backend_options,
         )
 
     @explicit_node

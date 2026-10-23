@@ -31,6 +31,7 @@ The forward map is selected with the ``forward_map_type`` key:
 
     smeft_settings:
       backend: simunet        # source of the K-factors (default: simunet)
+      backend_options: {simudata_path: /path/to/SIMUnet/simudata}  # see below
       order: EFT_NLO          # default K-factor order for the datasets below
       parameters:
         - {name: OtG, scale: 50.0}
@@ -64,9 +65,25 @@ Cuts, data ordering, scales and the forward map itself do not depend on the
 backend.
 
 - ``simunet``: reads the SIMU-factor files of
-  `SIMUnet <https://github.com/scarlehoff/SIMUnet>`_. SIMUnet locates its
-  ``simudata`` folder from its source tree, so it must be installed from a
-  source checkout with ``pip install -e .``.
+  `SIMUnet <https://github.com/scarlehoff/SIMUnet>`_. Install it with the
+  ``smeft`` extra::
+
+      pip install "colibri[smeft]"
+
+  The SIMU-factor files are in the ``simudata`` folder of the SIMUnet
+  repository, which a regular install does not include. Either install
+  SIMUnet from a source checkout (``pip install -e .``), in which case it finds
+  ``simudata`` by itself, or clone the repository and point to the folder:
+
+  .. code-block:: yaml
+
+      smeft_settings:
+        backend: simunet
+        backend_options:
+          simudata_path: /path/to/SIMUnet/simudata
+
+``backend_options`` are passed to the backend constructor, so each backend can
+take its own options.
 
 A new backend only has to return the responses of one dataset, for all its
 points (before cuts):
