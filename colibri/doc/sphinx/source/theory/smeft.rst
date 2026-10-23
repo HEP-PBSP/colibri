@@ -19,6 +19,11 @@ priors, initialisation and fit outputs under the names given in the runcard.
 Choosing the forward map
 ------------------------
 
+Template runcards are in ``colibri/examples/les_houches_example/runcards``:
+``lh_smeft_fit_closure_test.yaml`` (Les Houches PDF and Wilson coefficients
+fitted together) and ``smeft_fixed_pdf_fit.yaml`` (SMEFT-only fit with a fixed
+PDF).
+
 The forward map is selected with the ``forward_map_type`` key:
 
 - ``fktable`` (default): plain FK-table predictions.
@@ -31,7 +36,7 @@ The forward map is selected with the ``forward_map_type`` key:
 
     smeft_settings:
       backend: simunet        # source of the K-factors (default: simunet)
-      backend_options: {simudata_path: /path/to/SIMUnet/simudata}  # see below
+      # backend_options: {simudata_path: /path/to/SIMUnet/simudata}  # only if needed, see below
       order: EFT_NLO          # default K-factor order for the datasets below
       parameters:
         - {name: OtG, scale: 50.0}
@@ -70,17 +75,27 @@ backend.
 
       pip install "colibri[smeft]"
 
-  The SIMU-factor files are in the ``simudata`` folder of the SIMUnet
-  repository, which a regular install does not include. Either install
-  SIMUnet from a source checkout (``pip install -e .``), in which case it finds
-  ``simudata`` by itself, or clone the repository and point to the folder:
+  The K-factor files are not part of the SIMUnet Python package: they live in
+  the ``simudata`` folder at the top of the SIMUnet repository, and SIMUnet
+  looks for them two levels above its installed package. Hence:
 
-  .. code-block:: yaml
+  - SIMUnet installed from a clone with ``pip install -e .``: the package is
+    ``<clone>/src/simunet``, so SIMUnet finds ``<clone>/simudata`` by itself.
+    Nothing to set.
+  - SIMUnet installed with ``pip install "colibri[smeft]"`` (or any
+    non-editable install): the package is copied to ``site-packages`` without
+    the K-factor files. Clone the repository and point to its ``simudata``
+    folder:
 
-      smeft_settings:
-        backend: simunet
-        backend_options:
-          simudata_path: /path/to/SIMUnet/simudata
+    .. code-block:: yaml
+
+        smeft_settings:
+          backend: simunet
+          backend_options:
+            simudata_path: /path/to/SIMUnet/simudata
+
+  If the files cannot be found, the fit stops at the start with an error
+  saying so.
 
 ``backend_options`` are passed to the backend constructor, so each backend can
 take its own options.

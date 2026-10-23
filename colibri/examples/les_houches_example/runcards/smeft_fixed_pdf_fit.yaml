@@ -1,0 +1,101 @@
+################################################################################
+# SMEFT-only fit with the PDF fixed to an LHAPDF set (analytic fit)
+#
+# Requires SIMUnet for the SMEFT K-factors (see smeft_settings below).
+#
+# Run with the base colibri executable (PDF model apps such as les_houches_exe
+# ignore fixed_pdf):
+#                colibri runcards/smeft_fixed_pdf_fit.yaml
+# Output folder (created in the current directory): smeft_fixed_pdf_fit/
+# The PDF is not fitted, so there is nothing to evolve.
+################################################################################
+
+meta: 'SMEFT-only analytic fit of two Wilson coefficients to experimental data, PDF fixed to NNPDF4.0.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:
+- {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, variant: legacy}       # ttbar: OtG
+- {dataset: ATLAS_TTBAR_8TEV_LJ_DIF_YT-NORM, variant: legacy}   # ttbar: OtG
+- {dataset: ATLAS_Z0_7TEV_49FB_HIMASS, variant: legacy}         # high-mass Drell-Yan: Y
+
+theoryid: 40000000                     # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: false              # Fit the experimental data.
+
+###########
+# Fixed PDF
+###########
+
+fixed_pdf: NNPDF40_nnlo_as_01180       # Any LHAPDF set. Only the Wilson coefficients are fitted,
+                                       # and the SM predictions are computed once.
+fixed_pdf_member: 0                    # Member of the set (0 = central value). With "replica", a
+                                       # Monte Carlo fit run with -rep N uses replica N of the set,
+                                       # propagating the PDF uncertainty to the coefficients.
+
+################
+# SMEFT settings
+################
+
+forward_map_type: smeft
+
+smeft_settings:
+  backend: simunet                     # Source of the K-factors.
+  # The K-factor files are in the simudata/ folder of a SIMUnet clone
+  # (https://github.com/scarlehoff/SIMUnet). If SIMUnet was installed from that
+  # clone with `pip install -e .`, it finds them by itself. If it was installed
+  # with `pip install colibri[smeft]`, the files are not included: clone SIMUnet
+  # and uncomment the two lines below.
+  # backend_options:
+  #   simudata_path: /path/to/SIMUnet/simudata
+  order: EFT_NLO                       # Default K-factor order for the datasets below.
+  parameters:
+  - {name: OtG}
+  - name: Y
+    linear_combination: {Olq1: 1.51606, Oed: -6.0606, Oeu: 12.1394, Olu: 6.0606, Old: -3.0394, Oqe: 3.0394}
+  datasets:
+  - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC}
+  - {dataset: ATLAS_TTBAR_8TEV_LJ_DIF_YT-NORM}
+  - {dataset: ATLAS_Z0_7TEV_49FB_HIMASS, order: EFT_LO}     # Only LO K-factors available.
+
+#####################
+# Loss function specs
+#####################
+
+# Required by the likelihood, but constant with a fixed PDF: keep them switched off.
+positivity:
+  posdatasets:
+  - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
+
+positivity_penalty_settings:
+  positivity_penalty: false
+
+integrability_settings:
+  integrability: false
+
+use_t0_covmat: true                    # Use the t0 covariance matrix in the chi2.
+t0pdfset: NNPDF40_nnlo_as_01180        # The PDF used to build the t0 covariance matrix.
+
+###################
+# Methodology specs
+###################
+
+prior_settings:
+  prior_distribution: uniform_parameter_prior
+  prior_distribution_specs:            # The analytic fit needs global bounds. The samplers also
+    min_val: -2                        # accept per-parameter bounds:
+    max_val: 2                         #   bounds: {OtG: [-2, 2], Y: [-0.2, 0.2]}
+
+# With linear K-factors and a fixed PDF the predictions are linear in the
+# coefficients, so the analytic fit gives the exact Gaussian posterior.
+analytic_settings:
+  sampling_seed: 123456
+  n_posterior_samples: 1000            # Number of posterior samples written out.
+  full_sample_size: 100000             # Samples drawn from the Gaussian posterior.
+  sampler_plot: true
+
+actions_:
+- run_analytic_fit                     # Or run_ultranest_fit, run_monte_carlo_fit, ...
