@@ -32,6 +32,15 @@ By convention:
 ``pdf_grid_func``; any remaining entries are "extra" parameters interpreted by
 the chosen ``ForwardMap`` implementation.
 
+Choosing the forward map
+------------------------
+The ``forward_map`` resource is produced by ``colibriConfig.produce_forward_map``
+according to the ``forward_map_type`` runcard key:
+
+* ``fktable`` (default): :func:`fktable_forward_map`, plain FK-table convolution.
+* ``smeft``: :func:`smeft_forward_map`, FK-table convolution times SMEFT
+  K-factors, configured with ``smeft_settings`` (see :mod:`colibri.smeft`).
+
 Example - fitting a normalisation factor on top of the PDF
 ----------------------------------------------------------
 ::
@@ -159,8 +168,11 @@ class FKTableForwardMap(ForwardMap):
         return self._pred_func(pdf, fk_tables), pdf
 
 
-def forward_map(_pred_data, pdf_model, FIT_XGRID, extra_param_names=[]):
+def fktable_forward_map(_pred_data, pdf_model, FIT_XGRID, extra_param_names=[]):
     """Reportengine provider that builds the default FK-table forward map.
+
+    Selected with ``forward_map_type: fktable`` (the default), see
+    ``colibriConfig.produce_forward_map``.
 
     Parameters
     ----------
@@ -180,4 +192,77 @@ def forward_map(_pred_data, pdf_model, FIT_XGRID, extra_param_names=[]):
         pdf_model=pdf_model,
         pdf_grid_func=pdf_grid_func,
         extra_param_names=extra_param_names,
+    )
+
+
+class SMEFTForwardMap(FKTableForwardMap):
+    """FK-table forward map with SMEFT K-factors on top of the SM predictions.
+
+    The extra fit parameters are the SMEFT parameters ``w = scale * c``, with
+    ``c`` the physical Wilson coefficients, and predictions are::
+
+        T = T_SM * (1 + c @ L + c @ Q @ c)
+
+    with ``L`` (``Q``) the linear (quadratic) responses held by
+    :class:`colibri.smeft.SMEFTCorrections`. Where the responses come from is
+    irrelevant here, see :mod:`colibri.smeft`.
+    """
+
+    def __init__(
+        self,
+        pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
+        pdf_model,
+        pdf_grid_func: Callable[[jnp.ndarray], jnp.ndarray],
+        smeft_corrections,
+    ):
+        super().__init__(
+            pred_func,
+            pdf_model,
+            pdf_grid_func,
+            extra_param_names=list(smeft_corrections.parameter_names),
+        )
+        self.scales = jnp.asarray(smeft_corrections.scales)
+        self._linear = jnp.asarray(smeft_corrections.linear)
+        self._quadratic = (
+            None
+            if smeft_corrections.quadratic is None
+            else jnp.asarray(smeft_corrections.quadratic)
+        )
+
+    def physical_coefficients(self, params):
+        """Physical Wilson coefficients ``c`` from the full parameter vector."""
+        return params[self.n_pdf_params :] / self.scales
+
+    def __call__(self, fk_tables, params):
+        sm_predictions, pdf = super().__call__(fk_tables, params)
+        c = self.physical_coefficients(params)
+        kfactor = 1.0 + c @ self._linear
+        if self._quadratic is not None:
+            kfactor = kfactor + jnp.einsum("i,j,ijn->n", c, c, self._quadratic)
+        return sm_predictions * kfactor, pdf
+
+
+def smeft_forward_map(_pred_data, pdf_model, FIT_XGRID, smeft_corrections):
+    """Reportengine provider that builds the SMEFT forward map.
+
+    Selected with ``forward_map_type: smeft``, see
+    ``colibriConfig.produce_forward_map``. The K-factors are configured with
+    the ``smeft_settings`` runcard key.
+
+    Parameters
+    ----------
+    _pred_data : callable
+        Prediction function of the form ``pred_func(pdf, fk_tables) -> predictions``.
+    pdf_model : object
+        The PDF model object; must expose ``param_names`` and ``grid_values_func``.
+    FIT_XGRID : array-like
+        The x-grid on which the PDF is evaluated.
+    smeft_corrections : colibri.smeft.SMEFTCorrections
+        SMEFT responses for the fitted data.
+    """
+    return SMEFTForwardMap(
+        pred_func=_pred_data,
+        pdf_model=pdf_model,
+        pdf_grid_func=pdf_model.grid_values_func(FIT_XGRID),
+        smeft_corrections=smeft_corrections,
     )

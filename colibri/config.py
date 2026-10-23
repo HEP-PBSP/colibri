@@ -15,8 +15,10 @@ import jax
 import jax.numpy as jnp
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
+from colibri import forward_map as colibri_forward_map
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
+from colibri.smeft import SMEFT_BACKENDS, SMEFTParameter, SMEFTSettings
 from mpi4py import MPI
 from reportengine.configparser import ConfigError, explicit_node
 from validphys import covmats
@@ -595,6 +597,131 @@ class colibriConfig(Config):
         optimizer_settings["scheduler"] = settings.get("scheduler", None)
 
         return optimizer_settings
+
+    def parse_smeft_settings(self, settings):
+        """
+        Parses the smeft_settings namespace from the runcard into a
+        colibri.smeft.SMEFTSettings. Only used with ``forward_map_type: smeft``.
+
+        Example
+        -------
+        smeft_settings:
+          backend: simunet          # source of the K-factors (default: simunet)
+          order: EFT_NLO            # default order for the datasets below
+          parameters:
+            - {name: OtG, scale: 50.0}
+            - name: Y
+              linear_combination: {Olq1: 1.51606, Oed: -6.0606}
+          datasets:
+            - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, order: EFT_LO}
+            - {dataset: ATLAS_Z0_7TEV_49FB_HIMASS}
+        """
+        known_keys = {"backend", "order", "parameters", "datasets"}
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in smeft_settings not known.", k, known_keys)
+            )
+
+        backend = settings.get("backend", "simunet")
+        if backend not in SMEFT_BACKENDS:
+            raise ConfigError(
+                f"Unknown SMEFT backend '{backend}'.", backend, SMEFT_BACKENDS.keys()
+            )
+
+        # Fit parameters
+        raw_parameters = settings.get("parameters")
+        if not raw_parameters:
+            raise ConfigError(
+                "smeft_settings must define a non-empty 'parameters' list."
+            )
+
+        parameters = []
+        for par in raw_parameters:
+            if not isinstance(par, dict) or "name" not in par:
+                raise ConfigError(
+                    f"Each entry of smeft_settings 'parameters' must be a mapping with a 'name', got {par}."
+                )
+            par_keys = {"name", "linear_combination", "scale"}
+            for k in par.keys() - par_keys:
+                log.warning(
+                    ConfigError(
+                        f"Key '{k}' in smeft_settings parameter '{par['name']}' not known.",
+                        k,
+                        par_keys,
+                    )
+                )
+            scale = float(par.get("scale", 1.0))
+            if scale <= 0:
+                raise ConfigError(
+                    f"'scale' of SMEFT parameter '{par['name']}' must be > 0."
+                )
+            linear_combination = par.get("linear_combination", {})
+            if not isinstance(linear_combination, dict):
+                raise ConfigError(
+                    f"'linear_combination' of SMEFT parameter '{par['name']}' must be a mapping."
+                )
+            parameters.append(
+                SMEFTParameter(
+                    name=str(par["name"]),
+                    linear_combination={
+                        str(op): float(coeff)
+                        for op, coeff in linear_combination.items()
+                    },
+                    scale=scale,
+                )
+            )
+
+        names = [p.name for p in parameters]
+        duplicates = {n for n in names if names.count(n) > 1}
+        if duplicates:
+            raise ConfigError(f"Duplicate SMEFT parameter names: {sorted(duplicates)}")
+
+        # Datasets receiving a SMEFT correction
+        default_order = settings.get("order")
+        raw_datasets = settings.get("datasets")
+        if not raw_datasets:
+            raise ConfigError("smeft_settings must define a non-empty 'datasets' list.")
+
+        datasets = {}
+        for entry in raw_datasets:
+            if not isinstance(entry, dict) or "dataset" not in entry:
+                raise ConfigError(
+                    f"Each entry of smeft_settings 'datasets' must be a mapping with a 'dataset', got {entry}."
+                )
+            name = entry["dataset"]
+            order = entry.get("order", default_order)
+            if order is None:
+                raise ConfigError(
+                    f"No 'order' given for SMEFT dataset '{name}' and no default "
+                    "'order' set in smeft_settings."
+                )
+            if name in datasets:
+                raise ConfigError(f"Dataset '{name}' listed twice in smeft_settings.")
+            datasets[name] = str(order)
+
+        return SMEFTSettings(
+            backend=backend, parameters=tuple(parameters), datasets=datasets
+        )
+
+    @explicit_node
+    def produce_forward_map(self, forward_map_type: str = "fktable"):
+        """
+        Produces the forward_map node in the reportengine dag, according to
+        the ``forward_map_type`` runcard key:
+
+        - ``fktable`` (default): colibri.forward_map.fktable_forward_map
+        - ``smeft``: colibri.forward_map.smeft_forward_map, requires ``smeft_settings``
+        """
+        if forward_map_type == "fktable":
+            return colibri_forward_map.fktable_forward_map
+        elif forward_map_type == "smeft":
+            return colibri_forward_map.smeft_forward_map
+        raise ConfigError(
+            f"Unknown forward_map_type: {forward_map_type}",
+            forward_map_type,
+            ["fktable", "smeft"],
+        )
 
     @explicit_node
     def produce_commondata_tuple(self, closure_test_level=False):

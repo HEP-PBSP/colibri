@@ -596,3 +596,97 @@ def test_parse_blackjax_settings_with_unknown_keys(mock_warning, mock_exists, tm
 
     assert blackjax_settings == expected_settings
     assert mock_warning.called
+
+
+# -----------------------------
+#   forward map selection
+# -----------------------------
+
+
+def test_produce_forward_map():
+    """produce_forward_map returns an explicit node for every known type."""
+    for forward_map_type in ("fktable", "smeft"):
+        node = BASE_CONFIG.produce_forward_map(forward_map_type)
+        assert type(node) == reportengine.configparser.ExplicitNode
+
+    with pytest.raises(ConfigError):
+        BASE_CONFIG.produce_forward_map("unknown")
+
+
+def test_produce_forward_map_selects_provider():
+    from colibri import forward_map
+
+    assert BASE_CONFIG.produce_forward_map().value is forward_map.fktable_forward_map
+    assert (
+        BASE_CONFIG.produce_forward_map("smeft").value is forward_map.smeft_forward_map
+    )
+
+
+# -----------------------------
+#   parse_smeft_settings
+# -----------------------------
+
+SMEFT_SETTINGS = {
+    "order": "EFT_NLO",
+    "parameters": [
+        {"name": "OtG", "scale": 50.0},
+        {"name": "Y", "linear_combination": {"Olq1": 1.5, "Oed": -6}, "scale": 200},
+    ],
+    "datasets": [
+        {"dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC", "order": "EFT_LO"},
+        {"dataset": "ATLAS_Z0_7TEV_49FB_HIMASS"},
+    ],
+}
+
+
+def test_parse_smeft_settings():
+    from colibri.smeft import SMEFTParameter, SMEFTSettings
+
+    res = BASE_CONFIG.parse_smeft_settings(SMEFT_SETTINGS)
+
+    assert isinstance(res, SMEFTSettings)
+    assert res.backend == "simunet"
+    assert res.parameters == (
+        SMEFTParameter("OtG", {"OtG": 1.0}, 50.0),
+        SMEFTParameter("Y", {"Olq1": 1.5, "Oed": -6.0}, 200.0),
+    )
+    assert res.datasets == {
+        "ATLAS_TTBAR_13TEV_TOT_X-SEC": "EFT_LO",
+        "ATLAS_Z0_7TEV_49FB_HIMASS": "EFT_NLO",
+    }
+
+
+@patch("colibri.config.log.warning")
+def test_parse_smeft_settings_unknown_key_warns(mock_warning):
+    BASE_CONFIG.parse_smeft_settings({**SMEFT_SETTINGS, "unknown": 1})
+    args, _ = mock_warning.call_args
+    assert isinstance(args[0], ConfigError)
+
+
+@pytest.mark.parametrize(
+    "update, match",
+    [
+        ({"backend": "nope"}, "Unknown SMEFT backend"),
+        ({"parameters": []}, "non-empty 'parameters'"),
+        ({"parameters": [{"scale": 1.0}]}, "with a 'name'"),
+        ({"parameters": [{"name": "OtG", "scale": 0}]}, "must be > 0"),
+        (
+            {"parameters": [{"name": "Y", "linear_combination": [1, 2]}]},
+            "must be a mapping",
+        ),
+        ({"parameters": [{"name": "OtG"}, {"name": "OtG"}]}, "Duplicate"),
+        ({"datasets": []}, "non-empty 'datasets'"),
+        ({"datasets": ["ATLAS"]}, "with a 'dataset'"),
+        ({"order": None}, "No 'order' given"),
+        (
+            {"datasets": [{"dataset": "A", "order": "LO"}, {"dataset": "A"}]},
+            "listed twice",
+        ),
+    ],
+)
+def test_parse_smeft_settings_invalid(update, match):
+    settings = {**SMEFT_SETTINGS, **update}
+    if settings.get("order") is None:
+        settings.pop("order", None)
+    with pytest.raises(ConfigError, match=match):
+        BASE_CONFIG.parse_smeft_settings(settings)
