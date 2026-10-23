@@ -82,7 +82,7 @@ fit the weight minimisation (``wmin``) model presented in Ref.
     #####################
     # Loss function specs
     #####################
-    use_fit_t0: true                    # Whether the t0 covariance is used in the chi2 loss
+    use_t0_covmat: true                 # Whether the t0 covariance is used in the chi2 loss
     t0pdfset: 240701-02-rs-nnpdf40-baseline         # The t0 PDF used to build the t0 covariance matrix
 
     #############

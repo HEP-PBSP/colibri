@@ -1,11 +1,19 @@
-meta: 'An example fit using Colibri, reduced DIS dataset.'
+################################################################################
+# Les Houches model: Bayesian fit with UltraNest (closure test)
+#
+# Run with:      les_houches_exe runcards/lh_fit_closure_test.yaml
+# Output folder (created in the current directory): lh_fit_closure_test/
+# Evolve with:   evolve_fit lh_fit_closure_test
+################################################################################
+
+meta: 'Les Houches model: UltraNest nested sampling fit, level 0 closure test on a reduced DIS dataset.'
 
 #######################
 # Data and theory specs
 #######################
 
-dataset_inputs:    
-  # DIS          
+dataset_inputs:
+# DIS
 - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
 - {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
 - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
@@ -26,18 +34,15 @@ dataset_inputs:
 # - {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}
 # - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
 
-
-
 theoryid: 40000000                     # The theory from which the predictions are drawn.
 use_cuts: internal                     # The kinematic cuts to be applied to the data.
 
-closure_test_level: 0                  # The closure test level: False for experimental, level 0
-                                       # for pseudodata with no noise, level 1 for pseudodata with
-                                       # noise.
+closure_test_level: 0                  # False: experimental data; 0: pseudodata without noise;
+                                       # 1: pseudodata with noise.
+closure_test_pdf: LH_PARAM_20250519    # PDF used to generate the pseudodata (ignored if
+                                       # closure_test_level is False).
 
-closure_test_pdf: LH_PARAM_20250519  # The closure test PDF used if closure_test_level is not False
-
-#flavour_mapping: ["\\Sigma", "g", "V", "V3"]  # Masks other flavours, such that closure tests can be run on desired flavours only. 
+# flavour_mapping: ["\\Sigma", "g", "V", "V3"]  # Restrict the fit to these evolution-basis flavours.
 
 #####################
 # Loss function specs
@@ -49,20 +54,19 @@ positivity:                            # Positivity datasets, used in the positi
 
 positivity_penalty_settings:
   positivity_penalty: false
-  alpha: 1e-7                           
-  lambda_positivity: 0                 
+  alpha: 1e-7
+  lambda_positivity: 0
 
-# Integrability Settings
 integrability_settings:
-  integrability: False            
+  integrability: false
 
-use_t0_covmat: True                       # Whether the t0 covariance is used in the chi2 loss.
-t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
-  
+use_t0_covmat: true                    # Use the t0 covariance matrix in the chi2.
+t0pdfset: NNPDF40_nnlo_as_01180        # The PDF used to build the t0 covariance matrix.
 
 ###################
 # Methodology specs
 ###################
+
 prior_settings:
   prior_distribution: uniform_parameter_prior
   prior_distribution_specs:
@@ -81,21 +85,20 @@ prior_settings:
       alpha_sigma: [-0.2, 0.1]
       beta_sigma: [1.2, 3]
 
-
-# Nested Sampling settings
 ultranest_settings:
+  ultranest_seed: 123456
   sampler_plot: true
-  n_posterior_samples: 100      # Number of posterior samples generated.
-  ReactiveNS_settings:
-    vectorized: False
-    ndraw_max: 500              # Maximum number of points to simultaneously propose.
-  Run_settings:
-    min_num_live_points: 200    # Minimum number of live points throughout the run.
-    min_ess: 50                 # Target number of effective posterior samples.
-    frac_remain: 0.3            # Integrate until this fraction of the integral is left in the remainder. 
+  n_posterior_samples: 100             # Number of posterior samples (replicas) written out.
+  posterior_resampling_seed: 123456
+  ReactiveNS_settings:                 # Any ultranest.ReactiveNestedSampler option.
+    vectorized: false
+    ndraw_max: 500                     # Maximum number of points to propose at once.
+  Run_settings:                        # Any ReactiveNestedSampler.run option.
+    min_num_live_points: 200           # Minimum number of live points throughout the run.
+    min_ess: 50                        # Target number of effective posterior samples.
+    frac_remain: 0.3                   # Stop when this fraction of the integral is left.
   SliceSampler_settings:
-    nsteps: 106                 # number of accepted steps until the sample is considered independent.
-
+    nsteps: 106                        # Accepted steps before a sample counts as independent.
 
 actions_:
-- run_ultranest_fit                      # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- run_ultranest_fit
