@@ -587,6 +587,7 @@ def analytic_fit(
         "Assuming that the prior is wide enough to fully cover the gaussian likelihood."
     )
 
+    central_values = central_covmat_index.central_values
     covmat = central_covmat_index.covmat
 
     X_tilde, Y_tilde, parameters, B, n_fl, n_x = _build_whitened_linear_system(
