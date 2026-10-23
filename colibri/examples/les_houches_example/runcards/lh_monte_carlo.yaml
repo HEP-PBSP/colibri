@@ -1,0 +1,121 @@
+################################################################################
+# Les Houches model: Monte Carlo replica fit (closure test)
+#
+# Each run fits one replica, selected with -rep:
+#   les_houches_exe runcards/lh_monte_carlo.yaml -rep 1
+# Loop over -rep (or submit to a batch system) to get more replicas.
+#
+# Output folder (created in the current directory): lh_monte_carlo/  (replicas in lh_monte_carlo/fit_replicas/)
+# Then run mc_postfit on the folder and evolve the fit.
+################################################################################
+
+meta: 'Les Houches model: Monte Carlo replica fit, level 0 closure test on a reduced DIS dataset.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:
+# DIS
+- {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+- {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+# - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
+# - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
+# - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
+# - {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw}
+# - {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy}
+# - {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
+# - {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}
+# - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
+
+theoryid: 40000000                     # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0                  # False: experimental data; 0: pseudodata without noise;
+                                       # 1: pseudodata with noise.
+closure_test_pdf: LH_PARAM_20250519    # PDF used to generate the pseudodata (ignored if
+                                       # closure_test_level is False).
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
+
+positivity_penalty_settings:
+  positivity_penalty: false
+  alpha: 1e-7
+  lambda_positivity: 0
+
+integrability_settings:
+  integrability: false
+
+use_t0_covmat: true                    # Use the t0 covariance matrix in the chi2 and to
+                                       # generate the MC pseudodata.
+t0pdfset: NNPDF40_nnlo_as_01180        # The PDF used to build the t0 covariance matrix.
+
+###################
+# Methodology specs
+###################
+
+# Pseudodata generation
+mcseed: 519562661                      # Base seed for the replica pseudodata.
+positive_pseudodata: false             # Resample until all pseudodata points are positive.
+mc_validation_fraction: 0.2            # Fraction of data held out for validation. With 0.0
+                                       # the training loss is used for early stopping.
+
+# Optimiser
+optimizer_settings:
+  optimizer: adam                      # Any optax optimizer.
+  optimizer_hyperparams:               # Keyword arguments of the optax optimizer.
+    learning_rate: 0.01
+  # clipnorm: 1.0                      # Gradient clipping by global norm.
+  # scheduler:                         # Any optax schedule; overrides learning_rate.
+  #   name: linear_schedule
+  #   params:
+  #     init_value: 1e-2
+  #     end_value: 1e-5
+  #     transition_begin: 1000
+  #     transition_steps: 4000
+
+# Training
+max_epochs: 5000                       # Maximum number of training epochs.
+patience: 500                          # Epochs without validation improvement before stopping.
+# min_delta: 1e-5                      # Minimum change counted as an improvement.
+
+# Data batching (optional). Without batch_size the full training set is used each epoch.
+# batch_size: 128
+# batch_seed: 1
+# shuffle_each_epoch: false
+
+param_initialiser_settings:            # Starting point of each replica (types: uniform,
+  type: uniform                        # normal, zeros).
+  # random_seed: 0                     # Added to the replica index.
+  bounds:
+    alpha_gluon: [-0.1, 1]
+    beta_gluon: [9, 13]
+    alpha_up: [0.4, 0.9]
+    beta_up: [3, 4.5]
+    epsilon_up: [-3, 3]
+    gamma_up: [1, 6]
+    alpha_down: [1, 2]
+    beta_down: [8, 12]
+    epsilon_down: [-4.5, -3]
+    gamma_down: [3.8, 5.8]
+    norm_sigma: [0.1, 0.5]
+    alpha_sigma: [-0.2, 0.1]
+    beta_sigma: [1.2, 3]
+
+actions_:
+- run_monte_carlo_fit
