@@ -239,6 +239,19 @@ def get_pdf_model(colibri_fit):
     return pdf_model
 
 
+def fit_has_fixed_pdf(fit_path):
+    """
+    True if the fit in ``fit_path`` was run with a PDF model without
+    parameters (e.g. ``fixed_pdf``), i.e. there are no PDF replicas to evolve.
+    """
+    pdf_model_path = pathlib.Path(fit_path) / "pdf_model.pkl"
+    if not pdf_model_path.exists():
+        return False
+    with open(pdf_model_path, "rb") as file:
+        pdf_model = dill.load(file)
+    return len(pdf_model.param_names) == 0
+
+
 def pdf_models_equal(pdf_model_1, pdf_model_2):
     """
     Checks if two pdf models are equal.
@@ -464,6 +477,11 @@ def write_resampled_bayesian_fit(
 
     if not os.path.exists(new_rep_path):
         os.mkdir(new_rep_path)
+
+    if not pdf_model.param_names:
+        log.info("The PDF is fixed: no PDF replicas to write.")
+        log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
+        return
 
     # Finish by writing the replicas to export grids, ready for evolution
     for i, parameters in enumerate(resampled_posterior):

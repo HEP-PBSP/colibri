@@ -1,0 +1,121 @@
+################################################################################
+# Les Houches model + SMEFT: simultaneous PDF and Wilson coefficient fit with
+# UltraNest (closure test)
+#
+# Requires SIMUnet for the SMEFT K-factors (see smeft_settings below).
+#
+# Run with:      les_houches_exe runcards/lh_smeft_fit_closure_test.yaml
+# Output folder (created in the current directory): lh_smeft_fit_closure_test/
+# Evolve with:   evolve_fit lh_smeft_fit_closure_test
+#
+# The pseudodata are SM predictions, so the Wilson coefficients should come out
+# compatible with zero.
+################################################################################
+
+meta: 'Les Houches model + SMEFT: UltraNest fit of the PDF and two Wilson coefficients, level 0 closure test.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:
+# DIS (SM only)
+- {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+- {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+# SMEFT-sensitive data
+# smeft_order: datasets with a SMEFT correction, and the order of their K-factors.
+- {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, variant: legacy, smeft_order: EFT_NLO}      # ttbar: OtG
+- {dataset: ATLAS_TTBAR_8TEV_LJ_DIF_YT-NORM, variant: legacy, smeft_order: EFT_NLO}  # ttbar: OtG
+- {dataset: ATLAS_Z0_7TEV_49FB_HIMASS, variant: legacy, smeft_order: EFT_LO}         # Drell-Yan: Y (LO only)
+
+theoryid: 40000000                     # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0                  # False: experimental data; 0: pseudodata without noise;
+                                       # 1: pseudodata with noise.
+closure_test_pdf: LH_PARAM_20250519    # PDF used to generate the pseudodata (ignored if
+                                       # closure_test_level is False).
+
+################
+# SMEFT settings
+################
+
+forward_map_type: smeft                # Default: fktable (SM predictions only).
+
+smeft_settings:
+  backend: simunet                     # Source of the K-factors.
+  # The K-factor files are in the simudata/ folder of a SIMUnet clone
+  # (https://github.com/scarlehoff/SIMUnet). If SIMUnet was installed from that
+  # clone with `pip install -e .`, it finds them by itself. If it was installed
+  # with `pip install colibri[smeft]`, the files are not included: clone SIMUnet
+  # and uncomment the two lines below.
+  # backend_options:
+  #   simudata_path: /path/to/SIMUnet/simudata
+  parameters:                          # Fit parameters, appended to the PDF parameters.
+  - {name: OtG}                        # A single operator.
+  - name: Y                            # A linear combination of operators.
+    linear_combination: {Olq1: 1.51606, Oed: -6.0606, Oeu: 12.1394, Olu: 6.0606, Old: -3.0394, Oqe: 3.0394}
+    # scale: 1.0                       # Optional: the fitted value is scale * c.
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
+
+positivity_penalty_settings:
+  positivity_penalty: false
+  alpha: 1e-7
+  lambda_positivity: 0
+
+integrability_settings:
+  integrability: false
+
+use_t0_covmat: true                    # Use the t0 covariance matrix in the chi2.
+t0pdfset: NNPDF40_nnlo_as_01180        # The PDF used to build the t0 covariance matrix.
+
+###################
+# Methodology specs
+###################
+
+prior_settings:
+  prior_distribution: uniform_parameter_prior
+  prior_distribution_specs:
+    bounds:                            # One entry per fit parameter, Wilson coefficients included.
+      alpha_gluon: [-0.1, 1]
+      beta_gluon: [9, 13]
+      alpha_up: [0.4, 0.9]
+      beta_up: [3, 4.5]
+      epsilon_up: [-3, 3]
+      gamma_up: [1, 6]
+      alpha_down: [1, 2]
+      beta_down: [8, 12]
+      epsilon_down: [-4.5, -3]
+      gamma_down: [3.8, 5.8]
+      norm_sigma: [0.1, 0.5]
+      alpha_sigma: [-0.2, 0.1]
+      beta_sigma: [1.2, 3]
+      OtG: [-2, 2]
+      Y: [-0.2, 0.2]
+
+ultranest_settings:
+  ultranest_seed: 123456
+  sampler_plot: true
+  n_posterior_samples: 100             # Number of posterior samples (replicas) written out.
+  posterior_resampling_seed: 123456
+  ReactiveNS_settings:                 # Any ultranest.ReactiveNestedSampler option.
+    vectorized: false
+    ndraw_max: 500                     # Maximum number of points to propose at once.
+  Run_settings:                        # Any ReactiveNestedSampler.run option.
+    min_num_live_points: 200           # Minimum number of live points throughout the run.
+    min_ess: 50                        # Target number of effective posterior samples.
+    frac_remain: 0.3                   # Stop when this fraction of the integral is left.
+  SliceSampler_settings:
+    nsteps: 106                        # Accepted steps before a sample counts as independent.
+
+actions_:
+- run_ultranest_fit

@@ -15,6 +15,8 @@ This section discusses some relevant theoretical background to Colibri.
    
    ./theory_predictions.rst
 
+   ./smeft.rst
+
    ./prior_distributions.rst
 
    ./inference_methods.rst

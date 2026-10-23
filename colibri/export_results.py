@@ -282,6 +282,10 @@ def write_replicas(
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
     """
+    if not pdf_model.param_names:
+        log.info("The PDF is fixed: no PDF replicas to write.")
+        return
+
     if rank == 0:
         # create replicas folder if it does not exist
         replicas_path = Path(output_path) / "replicas"

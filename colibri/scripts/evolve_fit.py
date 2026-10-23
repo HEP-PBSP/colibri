@@ -21,6 +21,8 @@ from validphys import lhio
 from validphys.core import PDF
 from validphys.scripts.postfit import PostfitError, relative_symlink, set_lhapdf_info
 
+from colibri.utils import fit_has_fixed_pdf
+
 # Clear any existing handlers from root logger
 root_logger = logging.getLogger()
 root_logger.handlers.clear()
@@ -173,6 +175,12 @@ def main():
 
     replicas_path = os.path.join(FIT_DIR, "replicas")
     symlink_path = os.path.join(FIT_DIR, "nnfit")
+
+    if fit_has_fixed_pdf(FIT_PATH):
+        raise ValueError(
+            f"The fit {FIT_DIR} was run with a fixed PDF (fixed_pdf): there are no "
+            "PDF replicas to evolve."
+        )
 
     if not os.path.exists(replicas_path):
         raise FileNotFoundError(f"Error: replicas folder not found at {replicas_path}")

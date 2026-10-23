@@ -36,6 +36,7 @@ from colibri.utils import (
     cast_to_numpy,
     closest_indices,
     compute_determinants_of_principal_minors,
+    fit_has_fixed_pdf,
     full_posterior_sample_fit_resampler,
     get_fit_path,
     get_full_posterior,
@@ -896,3 +897,28 @@ def test_pdf_model_from_colibri_model_incorrect_inputs(
     ):
         with pytest.raises(ValueError):
             pdf_model_from_colibri_model(model_settings)
+
+
+def _dump_pdf_model(model, path):
+    import dill
+
+    with open(path / "pdf_model.pkl", "wb") as f:
+        dill.dump(model, f)
+
+
+def test_fit_has_fixed_pdf(tmp_path):
+    from colibri.pdf_model import FixedPDFModel
+
+    _dump_pdf_model(FixedPDFModel("NNPDF40_nlo_as_01180", 1.65), tmp_path)
+    assert fit_has_fixed_pdf(tmp_path)
+
+
+def test_fit_has_fixed_pdf_false_for_fitted_pdf(tmp_path):
+    from colibri.tests.conftest import TestPDFModel
+
+    _dump_pdf_model(TestPDFModel(n_parameters=2), tmp_path)
+    assert not fit_has_fixed_pdf(tmp_path)
+
+
+def test_fit_has_fixed_pdf_false_without_model(tmp_path):
+    assert not fit_has_fixed_pdf(tmp_path)
