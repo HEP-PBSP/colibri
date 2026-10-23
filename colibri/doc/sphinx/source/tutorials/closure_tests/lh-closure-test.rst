@@ -15,7 +15,7 @@ In the ``colibri/examples/les_houches_example/runcards`` directory you will find
 an example runcard called ``lh_fit_closure_test.yaml``, which looks like this:
 
 .. literalinclude:: ../../../../../examples/les_houches_example/runcards/lh_fit_closure_test.yaml
-    :language: python
+    :language: yaml
 
 :underline:`Points to note:`
 

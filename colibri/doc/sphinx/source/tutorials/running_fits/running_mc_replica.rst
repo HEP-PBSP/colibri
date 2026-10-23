@@ -30,113 +30,12 @@ models for each pseudodata instance approximates a posterior sample.
 Runcard
 -------
 
-Here is an example runcard to perform a fit using the Monte Carlo replica
-method. Note that the dependence on the model will come from the model-specific
-executable. 
+The runcard ``runcards/lh_monte_carlo.yaml`` in the ``examples/les_houches_example``
+directory performs a Monte Carlo replica fit of the Les Houches model. Note that the
+dependence on the model comes from the model-specific executable.
 
-.. code-block:: bash
-
-    meta: 'An example fit using Colibri, reduced DIS dataset.'
-
-    #######################
-    # Data and theory specs
-    #######################
-
-    dataset_inputs:    
-    # DIS          
-    - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
-    - {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
-    - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
-    - {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
-    # - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
-    # - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
-    # - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
-    # - {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw}
-    # - {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy}
-    # - {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
-    # - {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}
-    # - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
-
-    theoryid: 40000000                     # The theory from which the predictions are drawn.
-    use_cuts: internal                     # The kinematic cuts to be applied to the data.
-
-    #####################
-    # Loss function specs
-    #####################
-
-    positivity:                            # Positivity datasets, used in the positivity penalty.
-    posdatasets:
-    - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
-
-    positivity_penalty_settings:
-      positivity_penalty: false
-    #   alpha: 1e-7                           
-    #   lambda_positivity: 0                 
-
-    use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
-    t0pdfset: NNPDF40_nnlo_as_01180        # The t0 PDF used to build the t0 covariance matrix.
-    
-
-    ###################
-    # Methodology specs
-    ###################
-
-    # Integrability Settings
-    integrability_settings:
-      integrability: False
-    
-    optimizer_settings:
-        optimizer: adam # Any of the optax optimizers can be used.
-        #clipnorm: 1.0 # Gradient clipping norm value. Set to 'null' to disable or omit.
-        optimizer_hyperparams:
-            learning_rate: 0.001
-            # any hyperparameters specific to the chosen optimizer can be set here
-        # Optional learning rate scheduler
-        # scheduler:
-        #     name: linear_schedule
-        #     params:
-        #         end_value:  1e-6
-        #         init_value: 1e-3
-        #         transition_begin: 3000
-        #         transition_steps: 10000
-
-    # Training settings
-    max_epochs: 300                        # The max number of epochs in Monte Carlo training.
-    patience: 1000  # The number of epochs to wait for an improvement in the validation loss before stopping the training
-
-    # Monte Carlo settings
-    use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
-    positive_pseudodata: False             # If set to True, the pseudodata will be resampled until all pseudodata points are positive
-    mcseed: 519562661                      # Seed used for the production of pseudodata
-
-    mc_validation_fraction: 0.2            # The fraction of the data used for validation in Monte Carlo training.
-
-    param_initialiser_settings:               # The initialiser for Monte Carlo training.
-        type: uniform
-        bounds:
-            alpha_gluon: [-0.1, 1]
-            beta_gluon: [9, 13]
-            alpha_up: [0.4, 0.9]
-            beta_up: [3, 4.5]
-            epsilon_up: [-3, 3]
-            gamma_up: [1, 6]
-            alpha_down: [1, 2]
-            beta_down: [8, 12]
-            epsilon_down: [-4.5, -3]
-            gamma_down: [3.8, 5.8]
-            norm_sigma: [0.1, 0.5]
-            alpha_sigma: [-0.2, 0.1]
-            beta_sigma: [1.2, 3]
-
-    actions_:
-    - run_monte_carlo_fit
+.. literalinclude:: ../../../../../examples/les_houches_example/runcards/lh_monte_carlo.yaml
+    :language: yaml
 
 ``optimizer_settings``
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -235,11 +134,11 @@ To perform a Monte Carlo fit for the Les Houches model
 
 from the ``examples/les_houches_example`` directory.
 
-Then, you can use the above runcard with the following command:
+Then, from the same directory, you can run the above runcard with the following command:
 
 .. code-block:: bash
 
-    les_houches_exe monte_carlo_runcard.yml -rep N
+    les_houches_exe runcards/lh_monte_carlo.yaml -rep N
 
 Note that this command will generate one single replica, namely replica number
 ``N``. For a fit with more than one replica, you should iterate the above or 

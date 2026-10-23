@@ -1,0 +1,113 @@
+################################################################################
+# Les Houches model: Hessian fit (closure test)
+#
+# Run with:      les_houches_exe runcards/lh_hessian.yaml
+# Output folder (created in the current directory): lh_hessian/
+# Evolve with:   evolve_fit lh_hessian --hessian_fit True
+################################################################################
+
+meta: 'Les Houches model: Hessian fit, level 0 closure test on the full DIS dataset.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:
+# DIS. The full set is used here: with fewer datasets some parameter directions
+# are unconstrained and the Hessian is not positive definite.
+- {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+- {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+- {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
+- {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
+- {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
+- {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw}
+- {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy}
+- {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
+- {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
+- {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}
+- {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
+
+theoryid: 40000000                     # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0                  # False: experimental data; 0: pseudodata without noise;
+                                       # 1: pseudodata with noise.
+closure_test_pdf: LH_PARAM_20250519    # PDF used to generate the pseudodata (ignored if
+                                       # closure_test_level is False).
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
+
+positivity_penalty_settings:
+  positivity_penalty: false
+  alpha: 1e-7
+  lambda_positivity: 0
+
+integrability_settings:
+  integrability: false
+
+use_t0_covmat: true                    # Use the t0 covariance matrix in the chi2.
+t0pdfset: NNPDF40_nnlo_as_01180        # The PDF used to build the t0 covariance matrix.
+
+###################
+# Methodology specs
+###################
+
+hessian_settings:
+  tolerance: 1.0                       # Uncertainties are scaled by this factor (covmat by T^2).
+  n_eigvec: 13                         # Number of eigenvectors kept (one per parameter here).
+  iter_init: 1                         # Number of random starting points; the lowest chi2 is kept.
+  rng_seed: 123456
+  # grad_tol: 1e-6                     # Gradient-norm threshold of the local-minimum check.
+  # min_hessian_eigval: 1e-12          # Smallest Hessian eigenvalue accepted as positive.
+  # require_local_min: false           # Fail if the local-minimum checks do not pass.
+
+# Gradient descent to the minimum (no early stopping: runs for max_epochs)
+optimizer_settings:
+  optimizer: adam                      # Any optax optimizer.
+  optimizer_hyperparams:               # Keyword arguments of the optax optimizer.
+    learning_rate: 0.01
+  # clipnorm: 1.0                      # Gradient clipping by global norm.
+  # scheduler:                         # Any optax schedule; overrides learning_rate.
+  #   name: linear_schedule
+  #   params:
+  #     init_value: 1e-2
+  #     end_value: 1e-5
+  #     transition_begin: 1000
+  #     transition_steps: 4000
+
+max_epochs: 10000                      # Number of gradient descent epochs.
+record_every: 50                       # Log the loss every this many epochs.
+
+param_initialiser_settings:            # Starting point of the minimisation (types: uniform,
+  type: uniform                        # normal, zeros).
+  bounds:
+    alpha_gluon: [-0.1, 1]
+    beta_gluon: [9, 13]
+    alpha_up: [0.4, 0.9]
+    beta_up: [3, 4.5]
+    epsilon_up: [-3, 3]
+    gamma_up: [1, 6]
+    alpha_down: [1, 2]
+    beta_down: [8, 12]
+    epsilon_down: [-4.5, -3]
+    gamma_down: [3.8, 5.8]
+    norm_sigma: [0.1, 0.5]
+    alpha_sigma: [-0.2, 0.1]
+    beta_sigma: [1.2, 3]
+
+actions_:
+- run_hessian_fit
