@@ -197,20 +197,36 @@ def fktable_forward_map(_pred_data, pdf_model, FIT_XGRID, extra_param_names=[]):
     )
 
 
-class _SMEFTCorrectionMixin:
-    """K-factor logic shared by the SMEFT forward maps.
+class SMEFTForwardMap(FKTableForwardMap):
+    """FK-table forward map with SMEFT K-factors on top of the SM predictions::
+
+        T = T_SM(pdf) * (1 + c @ L + c @ Q @ c)
 
     The extra fit parameters are the SMEFT parameters ``w = scale * c``, with
-    ``c`` the physical Wilson coefficients, and the K-factor is::
+    ``c`` the physical Wilson coefficients and ``L`` (``Q``) the linear
+    (quadratic) responses held by :class:`colibri.smeft.SMEFTCorrections`.
 
-        K = 1 + c @ L + c @ Q @ c
-
-    with ``L`` (``Q``) the linear (quadratic) responses held by
-    :class:`colibri.smeft.SMEFTCorrections`. Where the responses come from is
-    irrelevant here, see :mod:`colibri.smeft`.
+    If the PDF model has no parameters (e.g. ``fixed_pdf``), ``T_SM`` does not
+    depend on the fit parameters: it is computed once here from ``fk_tables``,
+    and the FK tables passed at call time are ignored. Without quadratic
+    responses the predictions are then linear in the Wilson coefficients, so
+    the analytic fit can be used.
     """
 
-    def _set_smeft_corrections(self, smeft_corrections):
+    def __init__(
+        self,
+        pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
+        pdf_model,
+        pdf_grid_func: Callable[[jnp.ndarray], jnp.ndarray],
+        smeft_corrections,
+        fk_tables: Any = None,
+    ):
+        super().__init__(
+            pred_func,
+            pdf_model,
+            pdf_grid_func,
+            extra_param_names=list(smeft_corrections.parameter_names),
+        )
         self.scales = jnp.asarray(smeft_corrections.scales)
         self._linear = jnp.asarray(smeft_corrections.linear)
         self._quadratic = (
@@ -218,6 +234,18 @@ class _SMEFTCorrectionMixin:
             if smeft_corrections.quadratic is None
             else jnp.asarray(smeft_corrections.quadratic)
         )
+
+        # SM predictions and PDF grid, precomputed when the PDF is fixed
+        self.sm_predictions = None
+        self.pdf_grid = None
+        if self.n_pdf_params == 0:
+            if fk_tables is None:
+                raise ValueError(
+                    "SMEFTForwardMap needs fk_tables when the PDF model has no "
+                    "parameters, to compute the SM predictions once."
+                )
+            self.pdf_grid = jnp.asarray(pdf_grid_func(jnp.array([])))
+            self.sm_predictions = jnp.asarray(pred_func(self.pdf_grid, fk_tables))
 
     def physical_coefficients(self, params):
         """Physical Wilson coefficients ``c`` from the full parameter vector."""
@@ -231,61 +259,12 @@ class _SMEFTCorrectionMixin:
             kfactor = kfactor + jnp.einsum("i,j,ijn->n", c, c, self._quadratic)
         return kfactor
 
-
-class SMEFTForwardMap(_SMEFTCorrectionMixin, FKTableForwardMap):
-    """FK-table forward map with SMEFT K-factors on top of the SM predictions::
-
-    T = T_SM(pdf) * (1 + c @ L + c @ Q @ c)
-    """
-
-    def __init__(
-        self,
-        pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
-        pdf_model,
-        pdf_grid_func: Callable[[jnp.ndarray], jnp.ndarray],
-        smeft_corrections,
-    ):
-        super().__init__(
-            pred_func,
-            pdf_model,
-            pdf_grid_func,
-            extra_param_names=list(smeft_corrections.parameter_names),
-        )
-        self._set_smeft_corrections(smeft_corrections)
-
     def __call__(self, fk_tables, params):
-        sm_predictions, pdf = super().__call__(fk_tables, params)
+        if self.sm_predictions is not None:
+            sm_predictions, pdf = self.sm_predictions, self.pdf_grid
+        else:
+            sm_predictions, pdf = super().__call__(fk_tables, params)
         return sm_predictions * self.smeft_kfactor(params), pdf
-
-
-class FixedPDFSMEFTForwardMap(_SMEFTCorrectionMixin, ForwardMap):
-    """SMEFT forward map for a PDF model without parameters (fixed PDF).
-
-    The SM predictions do not depend on the fit parameters, so they are
-    computed once at construction and the FK tables passed at call time are
-    ignored::
-
-        T = T_SM * (1 + c @ L + c @ Q @ c)
-
-    Without quadratic responses this is linear in the Wilson coefficients, so
-    the analytic fit can be used.
-    """
-
-    def __init__(self, pdf_model, sm_predictions, pdf_grid, smeft_corrections):
-        super().__init__(
-            pdf_model, extra_param_names=list(smeft_corrections.parameter_names)
-        )
-        if self.n_pdf_params != 0:
-            raise ValueError(
-                "FixedPDFSMEFTForwardMap needs a PDF model without parameters, "
-                f"got {self.n_pdf_params}."
-            )
-        self.sm_predictions = jnp.asarray(sm_predictions)
-        self.pdf_grid = jnp.asarray(pdf_grid)
-        self._set_smeft_corrections(smeft_corrections)
-
-    def __call__(self, fk_tables, params):
-        return self.sm_predictions * self.smeft_kfactor(params), self.pdf_grid
 
 
 def smeft_forward_map(
@@ -296,10 +275,6 @@ def smeft_forward_map(
     Selected with ``forward_map_type: smeft``, see
     ``colibriConfig.produce_forward_map``. The K-factors are configured with
     the ``smeft_settings`` runcard key.
-
-    If the PDF model has no parameters (e.g. ``fixed_pdf``), a
-    :class:`FixedPDFSMEFTForwardMap` is returned, with the SM predictions
-    computed once here.
 
     Parameters
     ----------
@@ -312,22 +287,13 @@ def smeft_forward_map(
     smeft_corrections : colibri.smeft.SMEFTCorrections
         SMEFT responses for the fitted data.
     fast_kernel_arrays : tuple
-        FK arrays, only used to precompute the SM predictions for a fixed PDF.
+        FK arrays, only used to precompute the SM predictions when the PDF
+        model has no parameters (e.g. ``fixed_pdf``).
     """
-    pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)
-
-    if len(pdf_model.param_names) == 0:
-        pdf_grid = pdf_grid_func(jnp.array([]))
-        return FixedPDFSMEFTForwardMap(
-            pdf_model=pdf_model,
-            sm_predictions=_pred_data(pdf_grid, fast_kernel_arrays),
-            pdf_grid=pdf_grid,
-            smeft_corrections=smeft_corrections,
-        )
-
     return SMEFTForwardMap(
         pred_func=_pred_data,
         pdf_model=pdf_model,
-        pdf_grid_func=pdf_grid_func,
+        pdf_grid_func=pdf_model.grid_values_func(FIT_XGRID),
         smeft_corrections=smeft_corrections,
+        fk_tables=fast_kernel_arrays,
     )
