@@ -248,7 +248,7 @@ def fit_prior(forward_map, bayesian_prior, extra_parameters_prior):
         )
 
     return BayesianPrior(
-        prior_transform=cast_to_numpy(prior_transform),
+        prior_transform=prior_transform,
         log_prob=log_prob,
         sample=sample,
     )
