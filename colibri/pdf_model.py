@@ -10,7 +10,6 @@ from abc import ABC, abstractmethod
 from typing import Callable
 
 import jax.numpy as jnp
-import numpy as np
 from jax.typing import ArrayLike
 
 log = logging.getLogger(__name__)
@@ -71,39 +70,6 @@ class PDFModel(ABC):
         pass
 
 
-def lhapdf_member_grid(pdf_name: str, member: int, xgrid: ArrayLike, Q: float):
-    """
-    Evaluates a single member of an LHAPDF set on ``xgrid`` at scale ``Q``,
-    in the evolution basis used by the FK tables.
-
-    Only the requested member is loaded, which matters for large Monte Carlo
-    sets where validphys would otherwise load every replica.
-
-    Returns
-    -------
-    np.ndarray
-        Array of shape (N_fl, N_x) with the values of x*f(x).
-    """
-    from validphys import convolution
-    from validphys.lhapdf_compatibility import make_pdf
-
-    (lpdf,) = make_pdf(pdf_name, member)
-
-    def flavour_basis_values(flmat, xmat, qmat):
-        # Same layout as validphys.lhapdfset.LHAPDFSet.grid_values, for one member
-        flmat = np.atleast_1d(np.asanyarray(flmat))
-        xmat = np.atleast_1d(np.asarray(xmat))
-        qmat = np.atleast_1d(np.asarray(qmat))
-        xarr, qarr = (g.ravel() for g in np.meshgrid(xmat, qmat))
-        raw = np.array([lpdf.xfxQ(flmat, xarr, qarr)]).swapaxes(1, 2)
-        return raw.reshape(1, len(flmat), len(xmat), len(qmat))
-
-    grid = convolution.evolution.apply_grid_values(
-        flavour_basis_values, convolution.FK_FLAVOURS, np.asarray(xgrid), [Q]
-    )
-    return grid[0, :, :, 0]
-
-
 class FixedPDFModel(PDFModel):
     """
     A PDF model with no free parameters: one member of an LHAPDF set,
@@ -142,9 +108,11 @@ class FixedPDFModel(PDFModel):
 
     def grid_values_func(self, xgrid: ArrayLike) -> Callable[[jnp.array], jnp.ndarray]:
         """The grid is computed once here; the returned function ignores params."""
-        grid = jnp.asarray(
-            lhapdf_member_grid(self.pdf_name, self.member, xgrid, self.Q0)
-        )
+        from validphys.core import PDF
+
+        from colibri.utils import lhapdf_grid_values
+
+        grid = lhapdf_grid_values(PDF(self.pdf_name), xgrid, self.Q0)[self.member]
 
         def pdf_func(params):
             return grid

@@ -59,44 +59,28 @@ from colibri.core import IntegrabilitySettings
 from colibri.pdf_model import (
     FixedPDFModel,
     fixed_pdf_model,
-    lhapdf_member_grid,
     no_pdf_model,
 )
 
 FIXED_PDF_NAME = "NNPDF40_nlo_as_01180"
 
 
-@pytest.mark.parametrize("member", [0, 2])
-def test_lhapdf_member_grid_matches_validphys(member):
-    """A single member evaluated on its own equals validphys' full-set evaluation."""
-    from validphys import convolution
-    from validphys.api import API
-
-    pdf = API.pdf(pdf=FIXED_PDF_NAME)
-    xgrid = np.geomspace(1e-4, 0.8, 20)
-    expected = convolution.evolution.grid_values(
-        pdf, convolution.FK_FLAVOURS, xgrid, [1.65]
-    ).squeeze(-1)[member]
-
-    grid = lhapdf_member_grid(FIXED_PDF_NAME, member, xgrid, 1.65)
-
-    assert grid.shape == (len(convolution.FK_FLAVOURS), len(xgrid))
-    np.testing.assert_allclose(grid, expected)
-
-
-@patch("colibri.pdf_model.lhapdf_member_grid")
+@patch("colibri.utils.lhapdf_grid_values")
 def test_fixed_pdf_model(mock_grid):
-    mock_grid.return_value = np.ones((14, 3))
+    # 6 members; member m is filled with the value m
+    mock_grid.return_value = jnp.arange(6.0)[:, None, None] * jnp.ones((6, 14, 3))
     model = FixedPDFModel(FIXED_PDF_NAME, Q0=1.65, member=4)
 
     assert model.param_names == []
     assert model.n_parameters == 0
 
     func = model.grid_values_func(TEST_XGRID)
-    mock_grid.assert_called_once_with(FIXED_PDF_NAME, 4, TEST_XGRID, 1.65)
-    # Computed once, params ignored
-    assert_array_equal(func(jnp.array([])), np.ones((14, 3)))
-    assert_array_equal(func(jnp.array([1.0, 2.0])), np.ones((14, 3)))
+    (pdf, xgrid, Q0), _ = mock_grid.call_args
+    assert (pdf.name, Q0) == (FIXED_PDF_NAME, 1.65)
+    assert xgrid is TEST_XGRID
+    # Member 4 is selected, computed once, params ignored
+    assert_array_equal(func(jnp.array([])), 4 * np.ones((14, 3)))
+    assert_array_equal(func(jnp.array([1.0, 2.0])), 4 * np.ones((14, 3)))
     assert mock_grid.call_count == 1
 
 
