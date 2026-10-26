@@ -20,8 +20,7 @@ runcard with ``smeft_settings: {backend: <name>}`` among the classes in
 :data:`SMEFT_BACKENDS`. Which datasets get a correction, and at which order,
 is set per dataset with the ``smeft_order`` key in ``dataset_inputs``.
 
-A backend is a class whose constructor takes the ``backend_options`` of the
-runcard, with one method::
+A backend is a class, constructed without arguments, with one method::
 
     dataset_responses(dataset, order, parameters) -> (linear, quadratic)
 
@@ -43,7 +42,6 @@ Currently available backends:
 
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -106,20 +104,10 @@ class SIMUnetBackend:
     K-factors from the SIMU-factor files of SIMUnet
     (https://github.com/scarlehoff/SIMUnet).
 
-    Install it with ``pip install colibri[smeft]``. The SIMU-factor files live
-    in the ``simudata`` folder of the SIMUnet repository, which a regular
-    install does not include: SIMUnet only finds it by itself when installed
-    from a source checkout (``pip install -e .``). Otherwise, point to the
-    ``simudata`` folder of a SIMUnet checkout with ``simudata_path``.
-
-    Parameters
-    ----------
-    simudata_path: str or pathlib.Path, optional
-        Path to a SIMUnet ``simudata`` folder (containing ``simu_factors``).
-        Defaults to the one SIMUnet finds next to its source tree.
+    Install it with ``pip install colibri[smeft]``.
     """
 
-    def __init__(self, simudata_path=None):
+    def __init__(self):
         try:
             from simunet.loader import SIMUnetLoader
             from simunet.smeft import parameter_responses
@@ -131,18 +119,6 @@ class SIMUnetBackend:
             ) from e
 
         self._loader = SIMUnetLoader()
-        if simudata_path is not None:
-            self._loader.simudata_path = Path(simudata_path).expanduser().resolve()
-
-        simu_factors = Path(self._loader.simudata_path) / "simu_factors"
-        if not simu_factors.is_dir():
-            raise FileNotFoundError(
-                f"SIMU factor folder not found at {simu_factors}. SIMUnet only finds "
-                "its simudata folder when installed from a source checkout "
-                "(`pip install -e .`). Otherwise clone "
-                "https://github.com/scarlehoff/SIMUnet and set "
-                "smeft_settings: {backend_options: {simudata_path: <clone>/simudata}}."
-            )
         self._parameter_responses = parameter_responses
 
     def dataset_responses(self, dataset, order, parameters):
@@ -193,9 +169,7 @@ def smeft_corrections(data, dataset_inputs, smeft_settings) -> SMEFTCorrections:
             "Add e.g. `smeft_order: EFT_NLO` to the relevant dataset_inputs entries."
         )
 
-    backend = SMEFT_BACKENDS[smeft_settings["backend"]](
-        **smeft_settings["backend_options"]
-    )
+    backend = SMEFT_BACKENDS[smeft_settings["backend"]]()
     parameters = smeft_settings["parameters"]
     n_params = len(parameters)
 

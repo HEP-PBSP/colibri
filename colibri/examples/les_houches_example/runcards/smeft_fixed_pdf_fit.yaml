@@ -44,13 +44,6 @@ forward_map_type: smeft
 
 smeft_settings:
   backend: simunet                     # Source of the K-factors.
-  # The K-factor files are in the simudata/ folder of a SIMUnet clone
-  # (https://github.com/scarlehoff/SIMUnet). If SIMUnet was installed from that
-  # clone with `pip install -e .`, it finds them by itself. If it was installed
-  # with `pip install colibri[smeft]`, the files are not included: clone SIMUnet
-  # and uncomment the two lines below.
-  # backend_options:
-  #   simudata_path: /path/to/SIMUnet/simudata
   parameters:
   - {name: OtG}
   - name: Y

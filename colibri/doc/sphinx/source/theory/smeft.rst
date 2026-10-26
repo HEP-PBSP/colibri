@@ -41,7 +41,6 @@ The forward map is selected with the ``forward_map_type`` key:
 
     smeft_settings:
       backend: simunet        # source of the K-factors (default: simunet)
-      # backend_options: {simudata_path: /path/to/SIMUnet/simudata}  # only if needed, see below
       parameters:
         - {name: OtG}
         - name: Y
@@ -76,40 +75,13 @@ backend.
 
       pip install "colibri[smeft]"
 
-  The K-factor files are not part of the SIMUnet Python package: they live in
-  the ``simudata`` folder at the top of the SIMUnet repository, and SIMUnet
-  looks for them two levels above its installed package. Hence:
-
-  - SIMUnet installed from a clone with ``pip install -e .``: the package is
-    ``<clone>/src/simunet``, so SIMUnet finds ``<clone>/simudata`` by itself.
-    Nothing to set.
-  - SIMUnet installed with ``pip install "colibri[smeft]"`` (or any
-    non-editable install): the package is copied to ``site-packages`` without
-    the K-factor files. Clone the repository and point to its ``simudata``
-    folder:
-
-    .. code-block:: yaml
-
-        smeft_settings:
-          backend: simunet
-          backend_options:
-            simudata_path: /path/to/SIMUnet/simudata
-
-  If the files cannot be found, the fit stops at the start with an error
-  saying so.
-
-``backend_options`` are passed to the backend constructor, so each backend can
-take its own options.
-
-A new backend is a class that returns the responses of one dataset, for all
-its points (before cuts), added to ``SMEFT_BACKENDS``:
+A new backend is a class, constructed without arguments, that returns the
+responses of one dataset, for all its points (before cuts), added to
+``SMEFT_BACKENDS``:
 
 .. code-block:: python
 
     class SMEFiTBackend:
-        def __init__(self, **backend_options):
-            ...
-
         def dataset_responses(self, dataset, order, parameters):
             # parameters: [{"name": ..., "linear_combination": {operator: coeff}}]
             # linear: (n_params, n_points)

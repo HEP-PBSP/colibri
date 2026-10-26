@@ -639,19 +639,11 @@ def test_parse_smeft_settings():
 
     assert res == {
         "backend": "simunet",
-        "backend_options": {},
         "parameters": [
             {"name": "OtG", "linear_combination": {"OtG": 1.0}},
             {"name": "Y", "linear_combination": {"Olq1": 1.5, "Oed": -6.0}},
         ],
     }
-
-
-def test_parse_smeft_settings_backend_options():
-    res = BASE_CONFIG.parse_smeft_settings(
-        {**SMEFT_SETTINGS, "backend_options": {"simudata_path": "/some/simudata"}}
-    )
-    assert res["backend_options"] == {"simudata_path": "/some/simudata"}
 
 
 @patch("colibri.config.log.warning")
@@ -665,8 +657,6 @@ def test_parse_smeft_settings_unknown_key_warns(mock_warning):
     "update, match",
     [
         ({"backend": "nope"}, "Unknown SMEFT backend"),
-        ({"backend_options": ["a"]}, "must be a mapping"),
-        ({"backend_options": {"unknown_option": 1}}, "Invalid backend_options"),
         ({"parameters": []}, "non-empty 'parameters'"),
         ({"parameters": [{"linear_combination": {"OtG": 1.0}}]}, "with a 'name'"),
         (

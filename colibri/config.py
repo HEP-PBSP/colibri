@@ -7,7 +7,6 @@ Note: several functions are taken from validphys.config
 """
 
 import hashlib
-import inspect
 import logging
 import os
 import shutil
@@ -607,7 +606,7 @@ class colibriConfig(Config):
     def parse_smeft_settings(self, settings):
         """
         Parses the smeft_settings namespace from the runcard into a dict with
-        keys ``backend``, ``backend_options`` and ``parameters``. Each parameter
+        keys ``backend`` and ``parameters``. Each parameter
         is ``{"name": str, "linear_combination": {operator: coefficient}}``,
         with ``linear_combination`` defaulting to ``{name: 1.0}``. Only used
         with ``forward_map_type: smeft``.
@@ -620,14 +619,12 @@ class colibriConfig(Config):
 
             smeft_settings:
               backend: simunet          # source of the K-factors (default: simunet)
-              backend_options:          # keyword arguments of the backend (optional)
-                simudata_path: ~/SIMUnet/simudata
               parameters:
                 - {name: OtG}
                 - name: Y
                   linear_combination: {Olq1: 1.51606, Oed: -6.0606}
         """
-        known_keys = {"backend", "backend_options", "parameters"}
+        known_keys = {"backend", "parameters"}
         kdiff = settings.keys() - known_keys
         for k in kdiff:
             log.warning(
@@ -640,15 +637,6 @@ class colibriConfig(Config):
                 f"Unknown SMEFT backend '{backend}'.", backend, SMEFT_BACKENDS.keys()
             )
 
-        backend_options = settings.get("backend_options", {}) or {}
-        if not isinstance(backend_options, dict):
-            raise ConfigError("'backend_options' in smeft_settings must be a mapping.")
-        try:
-            inspect.signature(SMEFT_BACKENDS[backend]).bind(**backend_options)
-        except TypeError as e:
-            raise ConfigError(
-                f"Invalid backend_options for SMEFT backend '{backend}': {e}"
-            ) from e
 
         # Fit parameters
         raw_parameters = settings.get("parameters")
@@ -695,7 +683,6 @@ class colibriConfig(Config):
 
         return {
             "backend": backend,
-            "backend_options": backend_options,
             "parameters": parameters,
         }
 

@@ -72,10 +72,9 @@ def _param(name, linear_combination=None):
     return {"name": name, "linear_combination": linear_combination or {name: 1.0}}
 
 
-def _settings(backend="fake", parameters=None, backend_options=None):
+def _settings(backend="fake", parameters=None):
     return {
         "backend": backend,
-        "backend_options": backend_options or {},
         "parameters": parameters or [_param("OtG"), _param("Y")],
     }
 
@@ -180,13 +179,8 @@ def test_smeft_corrections_wrong_shape(fake_backends, monkeypatch):
 
 
 @pytest.fixture
-def fake_simunet(monkeypatch, tmp_path):
-    """
-    Install a minimal stand-in for the simunet package. Its loader looks for
-    the SIMU factors in ``tmp_path/default_simudata`` (as a source install would).
-    """
-    default_simudata = tmp_path / "default_simudata"
-    (default_simudata / "simu_factors").mkdir(parents=True)
+def fake_simunet(monkeypatch):
+    """Install a minimal stand-in for the simunet package."""
     factors = {
         "metadata": {},
         "SM_fixed": [1.0, 1.0],
@@ -194,9 +188,6 @@ def fake_simunet(monkeypatch, tmp_path):
     }
 
     class FakeLoader:
-        def __init__(self):
-            self.simudata_path = default_simudata
-
         def get_simu_parameters_name_dict(self, setname, names):
             return {n: f"SIMU_{setname}.yaml" for n in names}
 
@@ -239,46 +230,6 @@ def test_simunet_backend_missing_order(fake_simunet):
     backend = SIMUnetBackend()
     with pytest.raises(KeyError, match="EFT_NLO"):
         backend.dataset_responses(Mock(), "EFT_NLO", [_param("OtG")])
-
-
-def test_simunet_backend_simudata_path(fake_simunet, tmp_path):
-    """simudata_path overrides the folder SIMUnet would use by itself."""
-    custom = tmp_path / "custom_simudata"
-    (custom / "simu_factors").mkdir(parents=True)
-
-    backend = SIMUnetBackend(simudata_path=str(custom))
-
-    assert backend._loader.simudata_path == custom.resolve()
-
-
-def test_simunet_backend_missing_simudata(fake_simunet, tmp_path):
-    """A clear error when the SIMU factors cannot be found (plain install)."""
-    with pytest.raises(FileNotFoundError, match="simudata_path"):
-        SIMUnetBackend(simudata_path=tmp_path / "nowhere")
-
-
-def test_smeft_corrections_passes_backend_options(monkeypatch):
-    """backend_options are passed to the backend constructor."""
-    received = {}
-
-    class OptionsBackend(FakeBackend):
-        def __init__(self, path=None):
-            received["path"] = path
-
-    monkeypatch.setitem(SMEFT_BACKENDS, "options", OptionsBackend)
-    settings = _settings(
-        backend="options",
-        parameters=[_param("OtG")],
-        backend_options={"path": "somewhere"},
-    )
-
-    smeft_corrections(
-        _mock_data(_mock_dataset("SMEFT_DS", ndata=2)),
-        _dataset_inputs("SMEFT_DS"),
-        settings,
-    )
-
-    assert received == {"path": "somewhere"}
 
 
 def test_simunet_backend_missing_package(monkeypatch):

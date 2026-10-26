@@ -46,13 +46,6 @@ forward_map_type: smeft                # Default: fktable (SM predictions only).
 
 smeft_settings:
   backend: simunet                     # Source of the K-factors.
-  # The K-factor files are in the simudata/ folder of a SIMUnet clone
-  # (https://github.com/scarlehoff/SIMUnet). If SIMUnet was installed from that
-  # clone with `pip install -e .`, it finds them by itself. If it was installed
-  # with `pip install colibri[smeft]`, the files are not included: clone SIMUnet
-  # and uncomment the two lines below.
-  # backend_options:
-  #   simudata_path: /path/to/SIMUnet/simudata
   parameters:                          # Fit parameters, appended to the PDF parameters.
   - {name: OtG}                        # A single operator.
   - name: Y                            # A linear combination of operators.
