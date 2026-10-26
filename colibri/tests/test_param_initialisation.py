@@ -441,6 +441,12 @@ def test_initial_parameters_rejects_pdf_part_of_wrong_size():
         initial_parameters(fm, jnp.zeros(3), jnp.zeros(1))
 
 
+def test_initial_parameters_rejects_extra_part_of_wrong_size():
+    fm = _fm_with_extras()
+    with pytest.raises(ValueError, match="initial values for 1 extra parameters"):
+        initial_parameters(fm, jnp.zeros(2), jnp.zeros(2))
+
+
 def test_all_initial_parameters():
     fm = _fm_with_extras()
     result = all_initial_parameters(

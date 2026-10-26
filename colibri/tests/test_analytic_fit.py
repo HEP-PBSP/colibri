@@ -164,6 +164,26 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
         PRIOR_SETTINGS2,
         TEST_FK_ARRAYS,
     )
+    assert isinstance(result, AnalyticFit)
+
+    PRIOR_SETTINGS3 = PriorSettings(
+        **{
+            "prior_distribution": "min_max_prior",
+            "prior_distribution_specs": {},
+        }
+    )
+
+    # Run the analytic fit with min-max prior
+    with caplog.at_level(logging.INFO):
+        result = analytic_fit(
+            MOCK_CENTRAL_COVMAT_INDEX,
+            forward_map,
+            analytic_settings,
+            PRIOR_SETTINGS3,
+            TEST_FK_ARRAYS,
+        )
+    assert isinstance(result, AnalyticFit)
+    assert "Using min-max prior" in caplog.text
 
 
 @patch("colibri.export_results.write_exportgrid")
