@@ -637,7 +637,6 @@ class colibriConfig(Config):
                 f"Unknown SMEFT backend '{backend}'.", backend, SMEFT_BACKENDS.keys()
             )
 
-
         # Fit parameters
         raw_parameters = settings.get("parameters")
         if not raw_parameters:
