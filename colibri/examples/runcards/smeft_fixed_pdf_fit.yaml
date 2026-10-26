@@ -3,9 +3,9 @@
 #
 # Requires SIMUnet for the SMEFT K-factors (see smeft_settings below).
 #
-# Run with the base colibri executable (PDF model apps such as les_houches_exe
-# ignore fixed_pdf):
-#                colibri runcards/smeft_fixed_pdf_fit.yaml
+# Run with the base colibri executable, not a PDF model app such as
+# les_houches_exe: model apps ignore fixed_pdf and fit their own PDF.
+#                colibri smeft_fixed_pdf_fit.yaml
 # Output folder (created in the current directory): smeft_fixed_pdf_fit/
 # The PDF is not fitted, so there is nothing to evolve.
 ################################################################################

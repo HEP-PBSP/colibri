@@ -19,10 +19,11 @@ priors, initialisation and fit outputs under the names given in the runcard.
 Choosing the forward map
 ------------------------
 
-Template runcards are in ``colibri/examples/les_houches_example/runcards``:
-``lh_smeft_fit_closure_test.yaml`` (Les Houches PDF and Wilson coefficients
-fitted together) and ``smeft_fixed_pdf_fit.yaml`` (SMEFT-only fit with a fixed
-PDF).
+Template runcards:
+``colibri/examples/les_houches_example/runcards/lh_smeft_fit_closure_test.yaml``
+(Les Houches PDF and Wilson coefficients fitted together, run with
+``les_houches_exe``) and ``colibri/examples/runcards/smeft_fixed_pdf_fit.yaml``
+(SMEFT-only fit with a fixed PDF, run with ``colibri``).
 
 The forward map is selected with the ``forward_map_type`` key:
 
