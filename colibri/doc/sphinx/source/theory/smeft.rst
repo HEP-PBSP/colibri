@@ -16,8 +16,8 @@ normalised to the SM prediction they were computed with. The Wilson
 coefficients are appended to the PDF parameters, so they appear in the
 priors, initialisation and fit outputs under the names given in the runcard.
 
-Choosing the forward map
-------------------------
+Setting up a SMEFT fit
+----------------------
 
 Template runcards:
 ``colibri/examples/les_houches_example/runcards/lh_smeft_fit_closure_test.yaml``
@@ -25,11 +25,9 @@ Template runcards:
 ``les_houches_exe``) and ``colibri/examples/runcards/smeft_fixed_pdf_fit.yaml``
 (SMEFT-only fit with a fixed PDF, run with ``colibri``).
 
-The forward map is selected with the ``forward_map_type`` key:
-
-- ``fktable`` (default): plain FK-table predictions.
-- ``smeft``: FK-table predictions times SMEFT K-factors, configured with
-  ``smeft_settings`` and the ``smeft_order`` key of ``dataset_inputs``.
+The SMEFT forward map (see :ref:`forward_map`) is selected with
+``forward_map_type: smeft``, and configured with ``smeft_settings`` and the
+``smeft_order`` key of ``dataset_inputs``:
 
 .. code-block:: yaml
 
@@ -133,10 +131,3 @@ To fit only the Wilson coefficients, fix the PDF to any LHAPDF set with the
   warning is printed if they are switched on.
 - ``fixed_pdf`` is read by the base colibri config; PDF model apps define their
   own ``produce_pdf_model`` and ignore it.
-
-.. note::
-
-    The ``forward_map`` resource is now produced by the config
-    (``colibriConfig.produce_forward_map``). Models that used to override the
-    ``forward_map`` provider should instead override ``produce_forward_map`` in
-    their config class.
