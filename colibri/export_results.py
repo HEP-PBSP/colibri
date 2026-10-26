@@ -282,8 +282,11 @@ def write_replicas(
     pdf_model: pdf_model.PDFModel
         The PDF model used in the fit.
     """
-    if not pdf_model.param_names:
-        log.info("The PDF is fixed: no PDF replicas to write.")
+    if not getattr(pdf_model, "export_grids", True):
+        log.info(
+            f"PDF model '{pdf_model.name}' has export_grids=False: "
+            "no PDF replicas written."
+        )
         return
 
     if rank == 0:

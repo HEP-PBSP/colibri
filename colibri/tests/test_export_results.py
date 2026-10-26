@@ -169,10 +169,21 @@ def test_write_replicas_skips_fixed_pdf(mock_write_exportgrid, tmp_path):
     """Nothing is written for a PDF model without parameters."""
     fixed_model = Mock()
     fixed_model.param_names = []
+    fixed_model.export_grids = False
     write_replicas(bayes_fit, str(tmp_path), fixed_model)
 
     mock_write_exportgrid.assert_not_called()
     assert not (tmp_path / "replicas").exists()
+
+
+@patch("colibri.export_results.write_exportgrid")
+def test_write_replicas_zero_parameter_model(mock_write_exportgrid, tmp_path):
+    """A model without fitted parameters still writes one grid per sample."""
+    from colibri.tests.conftest import TestPDFModel
+
+    write_replicas(bayes_fit, str(tmp_path), TestPDFModel(n_parameters=0))
+
+    assert mock_write_exportgrid.call_count == bayes_fit.resampled_posterior.shape[0]
 
 
 def test_read_exportgrid():

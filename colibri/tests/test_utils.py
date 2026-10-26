@@ -36,7 +36,7 @@ from colibri.utils import (
     cast_to_numpy,
     closest_indices,
     compute_determinants_of_principal_minors,
-    fit_has_fixed_pdf,
+    fit_has_exportgrids,
     full_posterior_sample_fit_resampler,
     get_fit_path,
     get_full_posterior,
@@ -569,6 +569,38 @@ def test_creates_replicas_dir_when_missing(tmp_path):
         mock_mkdir.assert_called_once_with(new_rep_dir)
 
 
+def test_write_resampled_bayesian_fit_skips_export_grids_false(tmp_path):
+    """No exportgrid is written for a model with export_grids=False."""
+    fit_path = tmp_path / "fit"
+    fit_path.mkdir()
+    (fit_path / "pdf_model.pkl").write_bytes(b"")
+
+    fake_model = mock.Mock()
+    fake_model.param_names = []
+    fake_model.export_grids = False
+    # os.system (cp) is mocked, so create the resampled fit folder by hand
+    (tmp_path / "resampled").mkdir()
+
+    with mock.patch("colibri.utils.dill.load", return_value=fake_model), mock.patch(
+        "colibri.utils.os.system"
+    ), mock.patch("colibri.utils.pd.DataFrame.to_csv"), mock.patch(
+        "colibri.utils.write_exportgrid"
+    ) as mock_we, mock.patch(
+        "colibri.utils.pd.read_csv",
+        return_value=pd.DataFrame(columns=["c1"]),
+    ):
+        write_resampled_bayesian_fit(
+            resampled_posterior=np.zeros((3, 1)),
+            fit_path=fit_path,
+            resampled_fit_path=tmp_path / "resampled",
+            resampled_fit_name="resampled",
+            parametrisation_scale=1.0,
+            csv_results_name="results",
+        )
+
+    mock_we.assert_not_called()
+
+
 def test_creates_each_replica_dir_when_missing(tmp_path):
     # --- Setup fake fit and resampled dirs
     fit_path = tmp_path / "fit"
@@ -899,26 +931,18 @@ def test_pdf_model_from_colibri_model_incorrect_inputs(
             pdf_model_from_colibri_model(model_settings)
 
 
-def _dump_pdf_model(model, path):
-    import dill
-
-    with open(path / "pdf_model.pkl", "wb") as f:
-        dill.dump(model, f)
-
-
-def test_fit_has_fixed_pdf(tmp_path):
-    from colibri.pdf_model import FixedPDFModel
-
-    _dump_pdf_model(FixedPDFModel("NNPDF40_nlo_as_01180", 1.65), tmp_path)
-    assert fit_has_fixed_pdf(tmp_path)
+def test_fit_has_exportgrids(tmp_path):
+    rep = tmp_path / "replicas" / "replica_1"
+    rep.mkdir(parents=True)
+    (rep / "fit.exportgrid").touch()
+    assert fit_has_exportgrids(tmp_path)
 
 
-def test_fit_has_fixed_pdf_false_for_fitted_pdf(tmp_path):
-    from colibri.tests.conftest import TestPDFModel
+def test_fit_has_exportgrids_false_for_empty_replicas(tmp_path):
+    # e.g. a Monte Carlo fixed_pdf fit: replica folders but no exportgrids
+    (tmp_path / "replicas" / "replica_1").mkdir(parents=True)
+    assert not fit_has_exportgrids(tmp_path)
 
-    _dump_pdf_model(TestPDFModel(n_parameters=2), tmp_path)
-    assert not fit_has_fixed_pdf(tmp_path)
 
-
-def test_fit_has_fixed_pdf_false_without_model(tmp_path):
-    assert not fit_has_fixed_pdf(tmp_path)
+def test_fit_has_exportgrids_false_without_replicas(tmp_path):
+    assert not fit_has_exportgrids(tmp_path)

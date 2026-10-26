@@ -21,6 +21,11 @@ class PDFModel(ABC):
 
     name = "Abstract PDFModel"
 
+    #: Whether the fit writes the PDF to exportgrids, which evolve_fit turns
+    #: into an LHAPDF set. Subclasses set it to False to skip this, e.g.
+    #: FixedPDFModel, whose PDF is already an LHAPDF set.
+    export_grids = True
+
     @property
     @abstractmethod
     def param_names(self) -> list:
@@ -121,6 +126,9 @@ class FixedPDFModel(PDFModel):
     """
 
     name = "Fixed PDF model"
+
+    # The PDF is already an LHAPDF set: there is nothing to export or evolve
+    export_grids = False
 
     def __init__(self, pdf_name: str, Q0: float, member: int = 0):
         # Only plain data is stored so that the model can be pickled with dill

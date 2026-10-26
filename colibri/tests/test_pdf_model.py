@@ -100,6 +100,13 @@ def test_fixed_pdf_model(mock_grid):
     assert mock_grid.call_count == 1
 
 
+def test_export_grids_flag():
+    from colibri.tests.conftest import TestPDFModel
+
+    assert FixedPDFModel(FIXED_PDF_NAME, Q0=1.65).export_grids is False
+    assert TestPDFModel(n_parameters=0).export_grids is True
+
+
 def test_fixed_pdf_model_pickles():
     model = FixedPDFModel(FIXED_PDF_NAME, Q0=1.65, member=3)
     loaded = dill.loads(dill.dumps(model))

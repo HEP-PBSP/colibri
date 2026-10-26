@@ -239,17 +239,17 @@ def get_pdf_model(colibri_fit):
     return pdf_model
 
 
-def fit_has_fixed_pdf(fit_path):
+def fit_has_exportgrids(fit_path):
     """
-    True if the fit in ``fit_path`` was run with a PDF model without
-    parameters (e.g. ``fixed_pdf``), i.e. there are no PDF replicas to evolve.
+    True if the fit in ``fit_path`` has PDF replicas to evolve, i.e. at least
+    one ``replicas/replica_*/*.exportgrid`` file.
+
+    Fits whose PDF model has ``export_grids = False`` (e.g. ``fixed_pdf``)
+    have none. The check only looks at files, so the PDF model does not need
+    to be unpickled (its package may not be installed).
     """
-    pdf_model_path = pathlib.Path(fit_path) / "pdf_model.pkl"
-    if not pdf_model_path.exists():
-        return False
-    with open(pdf_model_path, "rb") as file:
-        pdf_model = dill.load(file)
-    return len(pdf_model.param_names) == 0
+    replicas_path = pathlib.Path(fit_path) / "replicas"
+    return any(replicas_path.glob("replica_*/*.exportgrid"))
 
 
 def pdf_models_equal(pdf_model_1, pdf_model_2):
@@ -478,8 +478,11 @@ def write_resampled_bayesian_fit(
     if not os.path.exists(new_rep_path):
         os.mkdir(new_rep_path)
 
-    if not pdf_model.param_names:
-        log.info("The PDF is fixed: no PDF replicas to write.")
+    if not getattr(pdf_model, "export_grids", True):
+        log.info(
+            f"PDF model '{pdf_model.name}' has export_grids=False: "
+            "no PDF replicas written."
+        )
         log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
         return
 
