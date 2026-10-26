@@ -130,7 +130,6 @@ To fit only the Wilson coefficients, fix the PDF to any LHAPDF set with the
 .. code-block:: yaml
 
     fixed_pdf: NNPDF40_nnlo_as_01180
-    fixed_pdf_member: 0          # default; an integer or "replica"
 
     forward_map_type: smeft
     smeft_settings: {...}
@@ -147,10 +146,9 @@ To fit only the Wilson coefficients, fix the PDF to any LHAPDF set with the
   instead of at every likelihood evaluation.
 - With linear K-factors (all SIMUnet ones) the predictions are linear in the
   coefficients, so ``run_analytic_fit`` gives the exact Gaussian posterior.
-- ``fixed_pdf_member`` chooses the member of the set (0 is the central value).
-  With ``fixed_pdf_member: replica``, a Monte Carlo fit run with ``-rep N``
-  uses replica ``N`` of the set (which must be a Monte Carlo set), so that the
-  PDF uncertainty is propagated to the coefficients across replicas.
+- The central member of the set is used. A Monte Carlo fit run with ``-rep N``
+  uses replica ``N`` instead (the set must then be a Monte Carlo set), so that
+  the PDF uncertainty is propagated to the coefficients across replicas.
 - No PDF replicas or exportgrids are written, and there is nothing to run
   ``evolve_fit`` on. ``mc_postfit`` and the resampling scripts still work on
   the coefficients.

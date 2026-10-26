@@ -32,10 +32,9 @@ closure_test_level: false              # Fit the experimental data.
 ###########
 
 fixed_pdf: NNPDF40_nnlo_as_01180       # Any LHAPDF set. Only the Wilson coefficients are fitted,
-                                       # and the SM predictions are computed once.
-fixed_pdf_member: 0                    # Member of the set (0 = central value). With "replica", a
-                                       # Monte Carlo fit run with -rep N uses replica N of the set,
-                                       # propagating the PDF uncertainty to the coefficients.
+                                       # and the SM predictions are computed once. The central
+                                       # member is used; a Monte Carlo fit run with -rep N uses
+                                       # replica N instead, propagating the PDF uncertainty.
 
 ################
 # SMEFT settings

@@ -700,17 +700,6 @@ def test_produce_pdf_model_selects_provider():
     )
 
 
-@pytest.mark.parametrize("member", [0, 3, "replica"])
-def test_parse_fixed_pdf_member(member):
-    assert BASE_CONFIG.parse_fixed_pdf_member(member) == member
-
-
-@pytest.mark.parametrize("member", [-1, 1.5, "central", True])
-def test_parse_fixed_pdf_member_invalid(member):
-    with pytest.raises(ConfigError):
-        BASE_CONFIG.parse_fixed_pdf_member(member)
-
-
 # -----------------------------
 #   smeft_order in dataset_inputs
 # -----------------------------

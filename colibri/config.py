@@ -832,23 +832,13 @@ class colibriConfig(Config):
         """LHAPDF set used as a fixed PDF (see produce_pdf_model)."""
         return self.parse_pdf(name)
 
-    def parse_fixed_pdf_member(self, member):
-        """Member of fixed_pdf to use: a non-negative integer or 'replica'."""
-        if member == "replica":
-            return member
-        if isinstance(member, bool) or not isinstance(member, int) or member < 0:
-            raise ConfigError(
-                f"fixed_pdf_member must be a non-negative integer or 'replica', got {member!r}."
-            )
-        return member
-
     @explicit_node
     def produce_pdf_model(self, fixed_pdf=None):
         """
         Produces the pdf_model node. Base colibri has no PDF model of its own:
 
-        - if ``fixed_pdf`` is given, the PDF is fixed to (a member of) that
-          LHAPDF set, see colibri.pdf_model.fixed_pdf_model. Combined with
+        - if ``fixed_pdf`` is given, the PDF is fixed to that LHAPDF set (the
+          central member, or replica N when run with ``-rep N``), see colibri.pdf_model.fixed_pdf_model. Combined with
           ``forward_map_type: smeft`` this gives a SMEFT-only fit.
         - otherwise None. PDF models override this method in their config.
         """

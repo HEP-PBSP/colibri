@@ -129,7 +129,6 @@ def fixed_pdf_model(
     fixed_pdf,
     Q0,
     output_path,
-    fixed_pdf_member=0,
     replica_index=None,
     positivity_penalty_settings=None,
     integrability_settings=None,
@@ -147,13 +146,10 @@ def fixed_pdf_model(
     output_path: pathlib.Path
         The model is dumped here as ``pdf_model.pkl`` (needed by the scripts).
 
-    fixed_pdf_member: int or "replica", default 0
-        Member of the set to use. ``"replica"`` uses the MC replica index of the
-        run (``-rep``), so that a set of Monte Carlo fits propagates the PDF
-        uncertainty. Requires a Monte Carlo PDF set.
-
     replica_index: int, optional
-        MC replica index from the command line.
+        MC replica index from the command line (``-rep N``). If given, replica
+        N of the set is used; this requires a Monte Carlo PDF set. Otherwise the
+        central member (0) is used.
 
     positivity_penalty_settings, integrability_settings: optional
         Only used to warn that the penalties are constant with a fixed PDF.
@@ -162,19 +158,16 @@ def fixed_pdf_model(
     """
     n_members = int(fixed_pdf.info["NumMembers"])
 
-    if fixed_pdf_member == "replica":
-        if fixed_pdf.error_type != "replicas":
-            raise ValueError(
-                f"fixed_pdf_member: replica needs a Monte Carlo PDF set, but "
-                f"{fixed_pdf.name} has error type '{fixed_pdf.error_type}'."
-            )
-        if replica_index is None:
-            raise ValueError(
-                "fixed_pdf_member: replica needs a replica index (run with -rep N)."
-            )
-        member = int(replica_index)
+    if replica_index is None:
+        member = 0
+    elif fixed_pdf.error_type != "replicas":
+        raise ValueError(
+            f"Running with -rep {replica_index} uses replica {replica_index} of "
+            f"fixed_pdf, but {fixed_pdf.name} is not a Monte Carlo set (error type "
+            f"'{fixed_pdf.error_type}')."
+        )
     else:
-        member = int(fixed_pdf_member)
+        member = int(replica_index)
 
     if not 0 <= member < n_members:
         raise ValueError(

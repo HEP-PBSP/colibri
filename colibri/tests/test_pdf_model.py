@@ -109,37 +109,26 @@ def _mock_pdf(error_type="replicas", n_members=101):
     return pdf
 
 
-def test_fixed_pdf_model_provider_member(tmp_path):
-    model = fixed_pdf_model(_mock_pdf(), 1.65, tmp_path, fixed_pdf_member=5)
+def test_fixed_pdf_model_provider_central(tmp_path):
+    """Without -rep the central member is used, for any error type."""
+    model = fixed_pdf_model(_mock_pdf("hessian"), 1.65, tmp_path)
 
     assert isinstance(model, FixedPDFModel)
-    assert (model.pdf_name, model.Q0, model.member) == (FIXED_PDF_NAME, 1.65, 5)
+    assert (model.pdf_name, model.Q0, model.member) == (FIXED_PDF_NAME, 1.65, 0)
     with open(tmp_path / "pdf_model.pkl", "rb") as f:
         assert vars(dill.load(f)) == vars(model)
 
 
 def test_fixed_pdf_model_provider_replica(tmp_path):
-    model = fixed_pdf_model(
-        _mock_pdf(), 1.65, tmp_path, fixed_pdf_member="replica", replica_index=7
-    )
+    model = fixed_pdf_model(_mock_pdf(), 1.65, tmp_path, replica_index=7)
     assert model.member == 7
 
 
 @pytest.mark.parametrize(
     "pdf, kwargs, match",
     [
-        (
-            _mock_pdf("hessian"),
-            {"fixed_pdf_member": "replica", "replica_index": 1},
-            "Monte Carlo",
-        ),
-        (_mock_pdf(), {"fixed_pdf_member": "replica"}, "-rep"),
-        (_mock_pdf(n_members=11), {"fixed_pdf_member": 11}, "not available"),
-        (
-            _mock_pdf(n_members=11),
-            {"fixed_pdf_member": "replica", "replica_index": 20},
-            "not available",
-        ),
+        (_mock_pdf("hessian"), {"replica_index": 1}, "Monte Carlo"),
+        (_mock_pdf(n_members=11), {"replica_index": 20}, "not available"),
     ],
 )
 def test_fixed_pdf_model_provider_errors(pdf, kwargs, match):
