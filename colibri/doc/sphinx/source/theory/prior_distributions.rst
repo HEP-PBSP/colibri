@@ -27,32 +27,38 @@ of the PDF one:
 
 - ``prior_settings`` sets the prior of the PDF parameters only. PDF model
   apps can replace it with their own prior (the ``bayesian_prior`` provider).
-- ``extra_parameters_settings`` sets a uniform prior for the extra
-  parameters, with per-parameter ``bounds`` or a global ``min_val`` and
+- ``extra_prior_settings`` sets the prior of the extra parameters. It has the
+  same structure as ``prior_settings``, but only ``uniform_parameter_prior``
+  is supported, with per-parameter ``bounds`` or a global ``min_val`` and
   ``max_val``. It is required as soon as the forward map has extra parameters.
 
 .. code-block:: yaml
 
-    prior_settings:
+    prior_settings:                     # PDF parameters
       prior_distribution: uniform_parameter_prior
-      prior_distribution_specs: {min_val: -1, max_val: 1}   # PDF parameters
+      prior_distribution_specs: {min_val: -1, max_val: 1}
 
-    extra_parameters_settings:
-      prior:
+    extra_prior_settings:               # extra parameters
+      prior_distribution: uniform_parameter_prior
+      prior_distribution_specs:
         bounds: {norm: [0.5, 1.5]}      # or: {min_val: ..., max_val: ...}
-      initialiser:                      # Monte Carlo and Hessian fits (default: zeros)
-        type: uniform
-        min_val: 0.9
-        max_val: 1.1
 
 The fit uses the product of the two priors, so any PDF prior, including the
 one of a PDF model app, can be combined with any extra parameters. The
 analytic fit takes its uniform prior bounds from the same two places.
 
-Likewise, for the fits that need a starting point, ``param_initialiser_settings``
-initialises the PDF parameters, and the ``initialiser`` of
-``extra_parameters_settings`` the extra ones, with the same options as
-``param_initialiser_settings`` (``zeros``, ``uniform``, ``normal``).
+Likewise, for the fits that need a starting point (Monte Carlo and Hessian),
+``param_initialiser_settings`` initialises the PDF parameters, and
+``extra_param_initialiser_settings`` the extra ones, with the same options
+(``zeros``, ``uniform``, ``normal``). The default for the extra parameters is
+``zeros``:
+
+.. code-block:: yaml
+
+    extra_param_initialiser_settings:
+      type: uniform
+      min_val: 0.9
+      max_val: 1.1
 
 In the next section we outline the basic idea and domain of validity of this
 posterior-factorisation approach. 

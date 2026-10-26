@@ -10,8 +10,8 @@ initialised separately:
 
 - ``pdf_initial_parameters``: the PDF parameters, from
   ``param_initialiser_settings``. PDF model apps can override this provider.
-- ``extra_initial_parameters``: the extra parameters, from the ``initialiser``
-  of ``extra_parameters_settings`` (zeros by default).
+- ``extra_initial_parameters``: the extra parameters, from
+  ``extra_param_initialiser_settings`` (zeros by default).
 
 ``initial_parameters`` joins them, and is what the fits use.
 """
@@ -172,12 +172,12 @@ def pdf_initial_parameters(forward_map, param_initialiser_settings, replica_inde
 
 
 def extra_initial_parameters(
-    forward_map, extra_parameters_settings=None, replica_index=-1
+    forward_map, extra_param_initialiser_settings=None, replica_index=-1
 ):
     """
     Initial values of the extra parameters of the forward map
-    (``forward_map.extra_param_names``), from the ``initialiser`` of
-    ``extra_parameters_settings``. The options are those of
+    (``forward_map.extra_param_names``), from
+    ``extra_param_initialiser_settings``. The options are those of
     ``param_initialiser_settings``; the default is zeros.
 
     The random key differs from the one of the PDF parameters, so that the
@@ -187,8 +187,8 @@ def extra_initial_parameters(
     ----------
     forward_map: forward_map.ForwardMap
 
-    extra_parameters_settings: dict, optional
-        Parsed ``extra_parameters_settings`` (see colibriConfig).
+    extra_param_initialiser_settings: dict, optional
+        Parsed ``extra_param_initialiser_settings`` (see colibriConfig).
 
     replica_index: int
         The index of the replica.
@@ -202,8 +202,7 @@ def extra_initial_parameters(
     if not extra_param_names:
         return jnp.array([])
 
-    settings = dict((extra_parameters_settings or {}).get("initialiser") or {})
-    settings.setdefault("type", "zeros")
+    settings = {"type": "zeros", **(extra_param_initialiser_settings or {})}
 
     def key_fn(seed):
         key = jax.random.PRNGKey((seed or 0) + replica_index)
@@ -254,7 +253,7 @@ def initial_parameters(forward_map, pdf_initial_parameters, extra_initial_parame
 def all_initial_parameters(
     forward_map,
     param_initialiser_settings,
-    extra_parameters_settings=None,
+    extra_param_initialiser_settings=None,
     replica_index=-1,
 ):
     """
@@ -264,5 +263,7 @@ def all_initial_parameters(
     return _join_initial_parameters(
         forward_map,
         pdf_initial_parameters(forward_map, param_initialiser_settings, replica_index),
-        extra_initial_parameters(forward_map, extra_parameters_settings, replica_index),
+        extra_initial_parameters(
+            forward_map, extra_param_initialiser_settings, replica_index
+        ),
     )

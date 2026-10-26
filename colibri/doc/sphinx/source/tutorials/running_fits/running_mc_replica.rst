@@ -107,8 +107,8 @@ can do so:
 .. note::
     ``param_initialiser_settings`` covers the PDF parameters only. If the
     forward map has extra parameters (e.g. SMEFT Wilson coefficients), they
-    are initialised by the ``initialiser`` of ``extra_parameters_settings``,
-    to zero by default. See :ref:`extra_parameters_prior`.
+    are initialised by ``extra_param_initialiser_settings``, with the same
+    options, and to zero by default. See :ref:`extra_parameters_prior`.
 
 
 Using data batching

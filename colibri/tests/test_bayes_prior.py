@@ -188,7 +188,10 @@ UNIFORM_PDF_PRIOR = PriorSettings(
     prior_distribution="uniform_parameter_prior",
     prior_distribution_specs={"min_val": -1.0, "max_val": 1.0},
 )
-EXTRA_SETTINGS = {"prior": {"bounds": {"c1": [10.0, 12.0], "c2": [-4.0, -2.0]}}}
+EXTRA_SETTINGS = PriorSettings(
+    prior_distribution="uniform_parameter_prior",
+    prior_distribution_specs={"bounds": {"c1": [10.0, 12.0], "c2": [-4.0, -2.0]}},
+)
 
 
 def _fm_with_extras(pdf_names=("param1", "param2"), extra_names=("c1", "c2")):
@@ -212,7 +215,7 @@ def test_bayesian_prior_rejects_extra_bounds_in_prior_settings():
             "bounds": {"param1": [0, 1], "param2": [0, 1], "c1": [0, 1]}
         },
     )
-    with pytest.raises(ValueError, match="extra_parameters_settings"):
+    with pytest.raises(ValueError, match="extra_prior_settings"):
         bayesian_prior(settings, _fm_with_extras())
 
 
@@ -243,7 +246,11 @@ def test_extra_parameters_prior_requires_settings():
 
 def test_extra_parameters_prior_global_bounds():
     prior = extra_parameters_prior(
-        _fm_with_extras(), {"prior": {"min_val": -5, "max_val": 5}}
+        _fm_with_extras(),
+        PriorSettings(
+            prior_distribution="uniform_parameter_prior",
+            prior_distribution_specs={"min_val": -5, "max_val": 5},
+        ),
     )
     np.testing.assert_allclose(prior.prior_transform(jnp.array([0.0, 1.0])), [-5, 5])
 

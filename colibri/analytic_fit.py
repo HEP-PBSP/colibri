@@ -93,7 +93,7 @@ def analytic_fit(
     analytic_settings,
     prior_settings,
     fast_kernel_arrays,
-    extra_parameters_settings=None,
+    extra_prior_settings=None,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -121,9 +121,8 @@ def analytic_fit(
     fast_kernel_arrays: tuple
         Tuple containing the fast kernel arrays.
 
-    extra_parameters_settings: dict, optional
-        Settings for the extra parameters of the forward map; their uniform
-        prior is its ``prior``.
+    extra_prior_settings: PriorSettings, optional
+        Uniform prior of the extra parameters of the forward map.
     """
     # Ensure that the PDF model is linear before running the fit.
     log.info("Checking that the PDF model is linear...")
@@ -217,10 +216,10 @@ def analytic_fit(
             forward_map.pdf_param_names, prior_settings.prior_distribution_specs
         )
 
-    # Bounds of the extra parameters, from extra_parameters_settings
+    # Bounds of the extra parameters, from extra_prior_settings
     if forward_map.extra_param_names:
         extra_lower, extra_upper = extra_parameters_bounds(
-            forward_map, extra_parameters_settings
+            forward_map, extra_prior_settings
         )
         prior_lower = jnp.concatenate([jnp.asarray(prior_lower), extra_lower])
         prior_upper = jnp.concatenate([jnp.asarray(prior_upper), extra_upper])

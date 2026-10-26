@@ -398,7 +398,7 @@ def test_extra_initial_parameters_default_zeros():
     fm = _fm_with_extras(extra_names=("c1", "c2"))
     np.testing.assert_array_equal(extra_initial_parameters(fm), jnp.zeros(2))
     np.testing.assert_array_equal(
-        extra_initial_parameters(fm, {"prior": None, "initialiser": {"type": "zeros"}}),
+        extra_initial_parameters(fm, {"type": "zeros"}),
         jnp.zeros(2),
     )
 
@@ -410,11 +410,9 @@ def test_extra_initial_parameters_empty_without_extras():
 def test_extra_initial_parameters_uniform_bounds():
     fm = _fm_with_extras(extra_names=("c1", "c2"))
     settings = {
-        "initialiser": {
-            "type": "uniform",
-            "random_seed": 1,
-            "bounds": {"c1": (10.0, 11.0), "c2": (-3.0, -2.0)},
-        }
+        "type": "uniform",
+        "random_seed": 1,
+        "bounds": {"c1": (10.0, 11.0), "c2": (-3.0, -2.0)},
     }
     values = extra_initial_parameters(fm, settings, replica_index=2)
     assert 10.0 <= values[0] <= 11.0
@@ -448,7 +446,7 @@ def test_all_initial_parameters():
     result = all_initial_parameters(
         fm,
         {"type": "uniform", "random_seed": 0, "min_val": -1.0, "max_val": 1.0},
-        {"initialiser": {"type": "uniform", "min_val": 5.0, "max_val": 6.0}},
+        {"type": "uniform", "min_val": 5.0, "max_val": 6.0},
         replica_index=1,
     )
     assert result.shape == (3,)

@@ -270,7 +270,14 @@ class _LinearForwardMapWithExtra(ForwardMap):
         return jnp.array([params[0], params[1]]), jnp.zeros((1, 1))
 
 
-def _analytic_fit_with_extra(extra_parameters_settings):
+def _norm_prior(low, high):
+    return PriorSettings(
+        prior_distribution="uniform_parameter_prior",
+        prior_distribution_specs={"bounds": {"norm": [low, high]}},
+    )
+
+
+def _analytic_fit_with_extra(extra_prior_settings):
     return analytic_fit(
         MOCK_CENTRAL_COVMAT_INDEX,
         _LinearForwardMapWithExtra(),
@@ -280,17 +287,17 @@ def _analytic_fit_with_extra(extra_parameters_settings):
             prior_distribution_specs={"min_val": -10.0, "max_val": 10.0},
         ),
         TEST_FK_ARRAYS,
-        extra_parameters_settings=extra_parameters_settings,
+        extra_prior_settings=extra_prior_settings,
     )
 
 
 def test_analytic_fit_extra_parameters_prior():
-    """The prior of the extra parameters comes from extra_parameters_settings."""
-    result = _analytic_fit_with_extra({"prior": {"bounds": {"norm": [-10.0, 10.0]}}})
+    """The prior of the extra parameters comes from extra_prior_settings."""
+    result = _analytic_fit_with_extra(_norm_prior(-10.0, 10.0))
     assert result.param_names == ["a", "norm"]
 
     # Doubling the width of the prior of norm costs log(2) of evidence
-    wider = _analytic_fit_with_extra({"prior": {"bounds": {"norm": [-20.0, 20.0]}}})
+    wider = _analytic_fit_with_extra(_norm_prior(-20.0, 20.0))
     np.testing.assert_allclose(
         result.bayesian_metrics["logz"] - wider.bayesian_metrics["logz"],
         np.log(2),
@@ -299,5 +306,5 @@ def test_analytic_fit_extra_parameters_prior():
 
 
 def test_analytic_fit_extra_parameters_need_prior():
-    with pytest.raises(ValueError, match="extra_parameters_settings"):
+    with pytest.raises(ValueError, match="extra_prior_settings"):
         _analytic_fit_with_extra(None)

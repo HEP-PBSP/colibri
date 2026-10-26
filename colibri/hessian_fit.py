@@ -21,7 +21,7 @@ def hessian_fit(
     max_epochs,
     hessian_settings,
     param_initialiser_settings,
-    extra_parameters_settings=None,
+    extra_param_initialiser_settings=None,
     record_every=50,
     threshold_chi2=10.0,
 ):
@@ -42,9 +42,8 @@ def hessian_fit(
         Dictionary containing the settings for the Hessian fit.
     param_initialiser_settings: dict
         Dictionary containing the settings for the parameter initialisation.
-    extra_parameters_settings: dict, optional
-        Settings for the extra parameters of the forward map; its
-        ``initialiser`` initialises them (zeros by default).
+    extra_param_initialiser_settings: dict, optional
+        Initialiser of the extra parameters of the forward map (zeros by default).
     record_every: int, default = 50
         Frequency of recording the training loss during the gradient descent.
     threshold_chi2: float, default = 10.0
@@ -85,7 +84,7 @@ def hessian_fit(
         initial_parameters = all_initial_parameters(
             forward_map,
             param_initialiser_settings,
-            extra_parameters_settings,
+            extra_param_initialiser_settings,
             rng_seed + i,
         )
 

@@ -9,8 +9,8 @@ independent priors:
 
 - ``bayesian_prior``: prior of the PDF parameters, from ``prior_settings``.
   PDF model apps can override this provider.
-- ``extra_parameters_prior``: uniform prior of the extra parameters, from the
-  ``prior`` of ``extra_parameters_settings``.
+- ``extra_parameters_prior``: uniform prior of the extra parameters, from
+  ``extra_prior_settings``.
 
 ``fit_prior`` joins them, and is what the samplers use.
 """
@@ -110,8 +110,8 @@ def bayesian_prior(prior_settings, forward_map):
         if extra_in_bounds:
             raise ValueError(
                 f"The bounds of {sorted(extra_in_bounds)} go in "
-                "extra_parameters_settings: {prior: {bounds: ...}}, not in "
-                "prior_settings, which is for the PDF parameters only."
+                "extra_prior_settings, not in prior_settings, which is for the "
+                "PDF parameters only."
             )
         mins, maxs = uniform_prior_bounds(pdf_param_names, prior_specs)
         return uniform_prior(mins, maxs)
@@ -154,25 +154,26 @@ def bayesian_prior(prior_settings, forward_map):
     raise ValueError("Invalid prior type.")
 
 
-def extra_parameters_bounds(forward_map, extra_parameters_settings=None):
+def extra_parameters_bounds(forward_map, extra_prior_settings=None):
     """
     Lower and upper bounds of the uniform prior of the extra parameters of the
-    forward map, from the ``prior`` of ``extra_parameters_settings``.
+    forward map, from ``extra_prior_settings``.
     """
     extra_param_names = list(forward_map.extra_param_names)
-    prior_specs = (extra_parameters_settings or {}).get("prior")
-    if prior_specs is None:
+    if extra_prior_settings is None:
         raise ValueError(
             f"The forward map has extra parameters {extra_param_names}: set their "
-            "prior with extra_parameters_settings: {prior: {bounds: {...}}} (or "
-            "{prior: {min_val: ..., max_val: ...}})."
+            "prior with extra_prior_settings (prior_distribution_specs with "
+            "'bounds' or 'min_val' and 'max_val')."
         )
     return uniform_prior_bounds(
-        extra_param_names, prior_specs, settings_name="extra_parameters_settings prior"
+        extra_param_names,
+        extra_prior_settings.prior_distribution_specs,
+        settings_name="extra_prior_settings prior_distribution_specs",
     )
 
 
-def extra_parameters_prior(forward_map, extra_parameters_settings=None):
+def extra_parameters_prior(forward_map, extra_prior_settings=None):
     """
     Uniform prior of the extra parameters of the forward map
     (``forward_map.extra_param_names``), or None if there are none.
@@ -181,8 +182,8 @@ def extra_parameters_prior(forward_map, extra_parameters_settings=None):
     ----------
     forward_map: ForwardMap
 
-    extra_parameters_settings: dict, optional
-        Parsed ``extra_parameters_settings`` (see colibriConfig).
+    extra_prior_settings: PriorSettings, optional
+        Parsed ``extra_prior_settings`` (see colibriConfig).
 
     Returns
     -------
@@ -190,9 +191,7 @@ def extra_parameters_prior(forward_map, extra_parameters_settings=None):
     """
     if not forward_map.extra_param_names:
         return None
-    return uniform_prior(
-        *extra_parameters_bounds(forward_map, extra_parameters_settings)
-    )
+    return uniform_prior(*extra_parameters_bounds(forward_map, extra_prior_settings))
 
 
 def fit_prior(forward_map, bayesian_prior, extra_parameters_prior):

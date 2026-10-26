@@ -599,43 +599,49 @@ def test_parse_blackjax_settings_with_unknown_keys(mock_warning, mock_exists, tm
 
 
 # -----------------------------
-#   parse_extra_parameters_settings
+#   extra_prior_settings / extra_param_initialiser_settings
 # -----------------------------
 
 
-def test_parse_extra_parameters_settings():
-    settings = {
-        "prior": {"bounds": {"norm": [0.5, 1.5]}},
-        "initialiser": {"type": "uniform", "min_val": 0.9, "max_val": 1.1},
-    }
-    assert BASE_CONFIG.parse_extra_parameters_settings(settings) == settings
+def test_parse_extra_prior_settings():
+    from colibri.core import PriorSettings
 
-
-def test_parse_extra_parameters_settings_defaults():
-    res = BASE_CONFIG.parse_extra_parameters_settings({})
-    assert res == {"prior": None, "initialiser": {"type": "zeros"}}
-
-    res = BASE_CONFIG.parse_extra_parameters_settings(
-        {"initialiser": {"min_val": 0, "max_val": 1}}
-    )
-    assert res["initialiser"]["type"] == "zeros"
+    specs = {"bounds": {"norm": [0.5, 1.5]}}
+    res = BASE_CONFIG.parse_extra_prior_settings({"prior_distribution_specs": specs})
+    assert res == PriorSettings("uniform_parameter_prior", specs)
 
 
 @pytest.mark.parametrize(
     "settings, match",
     [
-        ({"prior": {"min_val": -1}}, "'bounds' or 'min_val' and 'max_val'"),
-        ({"prior": [-1, 1]}, "'bounds' or 'min_val' and 'max_val'"),
-        ({"initialiser": "zeros"}, "must be a mapping"),
+        ({}, "'bounds' or 'min_val' and 'max_val'"),
+        ({"prior_distribution_specs": {"min_val": -1}}, "'bounds' or 'min_val'"),
+        (
+            {
+                "prior_distribution": "prior_from_gauss_posterior",
+                "prior_distribution_specs": {"prior_fit": "fit"},
+            },
+            "not supported",
+        ),
     ],
 )
-def test_parse_extra_parameters_settings_errors(settings, match):
+def test_parse_extra_prior_settings_errors(settings, match):
     with pytest.raises(ConfigError, match=match):
-        BASE_CONFIG.parse_extra_parameters_settings(settings)
+        BASE_CONFIG.parse_extra_prior_settings(settings)
 
 
 @patch("colibri.config.log.warning")
-def test_parse_extra_parameters_settings_unknown_key_warns(mock_warning):
-    BASE_CONFIG.parse_extra_parameters_settings({"unknown": 1})
+def test_parse_extra_prior_settings_unknown_key_warns(mock_warning):
+    BASE_CONFIG.parse_extra_prior_settings(
+        {"prior_distribution_specs": {"min_val": 0, "max_val": 1}, "unknown": 1}
+    )
     args, _ = mock_warning.call_args
     assert isinstance(args[0], ConfigError)
+
+
+def test_parse_extra_param_initialiser_settings():
+    assert BASE_CONFIG.parse_extra_param_initialiser_settings({}) == {"type": "zeros"}
+    settings = {"type": "uniform", "min_val": 0.9, "max_val": 1.1}
+    assert BASE_CONFIG.parse_extra_param_initialiser_settings(settings) == settings
+    with pytest.raises(ConfigError, match="must be a mapping"):
+        BASE_CONFIG.parse_extra_param_initialiser_settings("zeros")
