@@ -124,7 +124,7 @@ def write_exportgrid_mc(
 
     if not getattr(pdf_model, "export_grids", True):
         log.info(
-            f"PDF model '{pdf_model.name}' has export_grids=False: "
+            f"PDF model {type(pdf_model).__name__} has export_grids=False: "
             "no exportgrid written."
         )
         return

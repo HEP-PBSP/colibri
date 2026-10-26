@@ -480,7 +480,7 @@ def write_resampled_bayesian_fit(
 
     if not getattr(pdf_model, "export_grids", True):
         log.info(
-            f"PDF model '{pdf_model.name}' has export_grids=False: "
+            f"PDF model {type(pdf_model).__name__} has export_grids=False: "
             "no PDF replicas written."
         )
         log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
