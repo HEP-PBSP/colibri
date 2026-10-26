@@ -47,7 +47,6 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
-from validphys.core import DataSetInput
 
 log = logging.getLogger(__name__)
 
@@ -57,36 +56,14 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-class SMEFTDataSetInput(DataSetInput):
-    """
-    A ``dataset_inputs`` entry with the ``smeft_order`` key, i.e. a dataset
-    receiving a SMEFT correction. ``smeft_order`` is the perturbative order of
-    the K-factors to use, as named by the backend (e.g. ``EFT_LO`` or
-    ``EFT_NLO`` for SIMUnet).
-
-    The dataset itself is unchanged, so it compares equal to the plain
-    validphys ``DataSetInput`` it is built from.
-    """
-
-    def __init__(self, *, smeft_order, **kwargs):
-        super().__init__(**kwargs)
-        self.smeft_order = smeft_order
-
-    @classmethod
-    def from_dataset_input(cls, dataset_input, smeft_order):
-        return cls(
-            name=dataset_input.name,
-            cfac=dataset_input.cfac,
-            frac=dataset_input.frac,
-            weight=dataset_input.weight,
-            custom_group=dataset_input.custom_group,
-            variant=dataset_input.variant,
-            smeft_order=smeft_order,
-        )
-
-
 def smeft_orders(dataset_inputs) -> dict:
-    """``{dataset_name: smeft_order}`` for the datasets with a SMEFT correction."""
+    """
+    ``{dataset_name: smeft_order}`` for the datasets with a SMEFT correction.
+
+    ``smeft_order`` is set as an attribute on the validphys ``DataSetInput``
+    by ``colibriConfig.parse_dataset_input`` when the runcard entry has the
+    ``smeft_order`` key.
+    """
     return {
         dsinput.name: dsinput.smeft_order
         for dsinput in dataset_inputs

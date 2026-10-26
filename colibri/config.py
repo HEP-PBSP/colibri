@@ -23,7 +23,6 @@ from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
 from colibri.smeft import (
     SMEFT_BACKENDS,
-    SMEFTDataSetInput,
     smeft_orders,
 )
 from mpi4py import MPI
@@ -727,7 +726,9 @@ class colibriConfig(Config):
                 f"({dataset.get('dataset')})."
             )
         dataset_input = super().parse_dataset_input(dataset, allow_legacy_names)
-        return SMEFTDataSetInput.from_dataset_input(dataset_input, smeft_order)
+        # validphys' DataSetInput has no field for it: attach it as an attribute
+        dataset_input.smeft_order = smeft_order
+        return dataset_input
 
     @explicit_node
     def produce_forward_map(

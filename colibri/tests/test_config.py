@@ -703,7 +703,7 @@ def test_produce_pdf_model_selects_provider():
 
 @patch("validphys.config.log.warning")
 def test_parse_dataset_input_smeft_order(mock_warning):
-    from colibri.smeft import SMEFTDataSetInput
+    from validphys.core import DataSetInput
 
     res = BASE_CONFIG.parse_dataset_input(
         {
@@ -713,7 +713,7 @@ def test_parse_dataset_input_smeft_order(mock_warning):
         }
     )
 
-    assert isinstance(res, SMEFTDataSetInput)
+    assert type(res) is DataSetInput
     assert res.name == "ATLAS_TTBAR_13TEV_TOT_X-SEC"
     assert res.variant == ("legacy",)
     assert res.smeft_order == "EFT_NLO"
@@ -722,12 +722,9 @@ def test_parse_dataset_input_smeft_order(mock_warning):
 
 
 def test_parse_dataset_input_without_smeft_order():
-    from colibri.smeft import SMEFTDataSetInput
-
     res = BASE_CONFIG.parse_dataset_input(
         {"dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC", "variant": "legacy"}
     )
-    assert not isinstance(res, SMEFTDataSetInput)
     assert not hasattr(res, "smeft_order")
 
 
@@ -740,13 +737,13 @@ def test_parse_dataset_input_invalid_smeft_order():
 
 @patch("colibri.config.log.warning")
 def test_produce_forward_map_warns_on_unused_smeft_order(mock_warning):
-    from colibri.smeft import SMEFTDataSetInput
     from validphys.core import DataSetInput
 
-    plain = DataSetInput(
+    dsinput = DataSetInput(
         name="DS", cfac=(), frac=1, weight=1, custom_group="unset", variant=None
     )
-    inputs = [SMEFTDataSetInput.from_dataset_input(plain, "EFT_LO")]
+    dsinput.smeft_order = "EFT_LO"
+    inputs = [dsinput]
 
     BASE_CONFIG.produce_forward_map("smeft", dataset_inputs=inputs)
     mock_warning.assert_not_called()

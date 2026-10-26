@@ -16,7 +16,6 @@ from validphys.core import DataSetInput
 from colibri.smeft import (
     SMEFT_BACKENDS,
     SIMUnetBackend,
-    SMEFTDataSetInput,
     smeft_corrections,
     smeft_orders,
 )
@@ -84,14 +83,13 @@ def _settings(backend="fake", parameters=None, backend_options=None):
 def _dataset_inputs(*names, orders=None):
     """dataset_inputs for ``names``; ``orders`` maps names to their smeft_order."""
     orders = {"SMEFT_DS": "EFT_NLO"} if orders is None else orders
-    return [
-        (
-            SMEFTDataSetInput.from_dataset_input(_plain_input(name), orders[name])
-            if name in orders
-            else _plain_input(name)
-        )
-        for name in names
-    ]
+    inputs = []
+    for name in names:
+        dsinput = _plain_input(name)
+        if name in orders:
+            dsinput.smeft_order = orders[name]
+        inputs.append(dsinput)
+    return inputs
 
 
 def _plain_input(name):
@@ -103,23 +101,6 @@ def _plain_input(name):
 # ---------------------------------------------------------------------------
 # Datasets with a SMEFT correction
 # ---------------------------------------------------------------------------
-
-
-def test_smeft_dataset_input_keeps_dataset_and_adds_order():
-    plain = DataSetInput(
-        name="DS", cfac=("QCD",), frac=1, weight=2, custom_group="g", variant="legacy"
-    )
-    smeft = SMEFTDataSetInput.from_dataset_input(plain, "EFT_LO")
-
-    assert isinstance(smeft, DataSetInput)
-    assert smeft.smeft_order == "EFT_LO"
-    assert (smeft.name, smeft.cfac, smeft.weight, smeft.variant) == (
-        "DS",
-        ("QCD",),
-        2,
-        ("legacy",),
-    )
-    assert smeft == plain
 
 
 def test_smeft_orders():
