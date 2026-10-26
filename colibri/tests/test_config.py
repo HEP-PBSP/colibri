@@ -596,3 +596,46 @@ def test_parse_blackjax_settings_with_unknown_keys(mock_warning, mock_exists, tm
 
     assert blackjax_settings == expected_settings
     assert mock_warning.called
+
+
+# -----------------------------
+#   parse_extra_parameters_settings
+# -----------------------------
+
+
+def test_parse_extra_parameters_settings():
+    settings = {
+        "prior": {"bounds": {"norm": [0.5, 1.5]}},
+        "initialiser": {"type": "uniform", "min_val": 0.9, "max_val": 1.1},
+    }
+    assert BASE_CONFIG.parse_extra_parameters_settings(settings) == settings
+
+
+def test_parse_extra_parameters_settings_defaults():
+    res = BASE_CONFIG.parse_extra_parameters_settings({})
+    assert res == {"prior": None, "initialiser": {"type": "zeros"}}
+
+    res = BASE_CONFIG.parse_extra_parameters_settings(
+        {"initialiser": {"min_val": 0, "max_val": 1}}
+    )
+    assert res["initialiser"]["type"] == "zeros"
+
+
+@pytest.mark.parametrize(
+    "settings, match",
+    [
+        ({"prior": {"min_val": -1}}, "'bounds' or 'min_val' and 'max_val'"),
+        ({"prior": [-1, 1]}, "'bounds' or 'min_val' and 'max_val'"),
+        ({"initialiser": "zeros"}, "must be a mapping"),
+    ],
+)
+def test_parse_extra_parameters_settings_errors(settings, match):
+    with pytest.raises(ConfigError, match=match):
+        BASE_CONFIG.parse_extra_parameters_settings(settings)
+
+
+@patch("colibri.config.log.warning")
+def test_parse_extra_parameters_settings_unknown_key_warns(mock_warning):
+    BASE_CONFIG.parse_extra_parameters_settings({"unknown": 1})
+    args, _ = mock_warning.call_args
+    assert isinstance(args[0], ConfigError)

@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 
 import jax.numpy as jnp
 import jax.random
+import numpy as np
 import pytest
 
 from colibri.analytic_fit import AnalyticFit, analytic_fit, run_analytic_fit
@@ -248,3 +249,55 @@ def test_run_analytic_fit_with_sampler_plot(mock_plot_bayes_plots, tmp_path):
     mock_plot_bayes_plots.assert_called_once_with(
         mock_analytic_fit, tmp_path, "analytic_logs"
     )
+
+
+# ---------------------------------------------------------------------------
+# Forward map with extra parameters
+# ---------------------------------------------------------------------------
+
+from colibri.forward_map import ForwardMap
+
+
+class _LinearForwardMapWithExtra(ForwardMap):
+    """Predictions (a, norm): one PDF parameter and one extra parameter."""
+
+    def __init__(self):
+        pdf_model = Mock()
+        pdf_model.param_names = ["a"]
+        super().__init__(pdf_model, extra_param_names=["norm"])
+
+    def __call__(self, fk_tables, params):
+        return jnp.array([params[0], params[1]]), jnp.zeros((1, 1))
+
+
+def _analytic_fit_with_extra(extra_parameters_settings):
+    return analytic_fit(
+        MOCK_CENTRAL_COVMAT_INDEX,
+        _LinearForwardMapWithExtra(),
+        {**analytic_settings, "full_sample_size": 1000},
+        PriorSettings(
+            prior_distribution="uniform_parameter_prior",
+            prior_distribution_specs={"min_val": -10.0, "max_val": 10.0},
+        ),
+        TEST_FK_ARRAYS,
+        extra_parameters_settings=extra_parameters_settings,
+    )
+
+
+def test_analytic_fit_extra_parameters_prior():
+    """The prior of the extra parameters comes from extra_parameters_settings."""
+    result = _analytic_fit_with_extra({"prior": {"bounds": {"norm": [-10.0, 10.0]}}})
+    assert result.param_names == ["a", "norm"]
+
+    # Doubling the width of the prior of norm costs log(2) of evidence
+    wider = _analytic_fit_with_extra({"prior": {"bounds": {"norm": [-20.0, 20.0]}}})
+    np.testing.assert_allclose(
+        result.bayesian_metrics["logz"] - wider.bayesian_metrics["logz"],
+        np.log(2),
+        rtol=1e-6,
+    )
+
+
+def test_analytic_fit_extra_parameters_need_prior():
+    with pytest.raises(ValueError, match="extra_parameters_settings"):
+        _analytic_fit_with_extra(None)

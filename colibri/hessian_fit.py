@@ -6,7 +6,7 @@ import logging
 import time
 import jax
 from colibri.gradient_descent import run_gradient_descent
-from colibri.param_initialisation import pdf_initial_parameters
+from colibri.param_initialisation import all_initial_parameters
 from colibri.export_results import export_hessian_results
 from colibri.core import HessianFit
 from flax.training.early_stopping import EarlyStopping
@@ -21,6 +21,7 @@ def hessian_fit(
     max_epochs,
     hessian_settings,
     param_initialiser_settings,
+    extra_parameters_settings=None,
     record_every=50,
     threshold_chi2=10.0,
 ):
@@ -41,6 +42,9 @@ def hessian_fit(
         Dictionary containing the settings for the Hessian fit.
     param_initialiser_settings: dict
         Dictionary containing the settings for the parameter initialisation.
+    extra_parameters_settings: dict, optional
+        Settings for the extra parameters of the forward map; its
+        ``initialiser`` initialises them (zeros by default).
     record_every: int, default = 50
         Frequency of recording the training loss during the gradient descent.
     threshold_chi2: float, default = 10.0
@@ -78,8 +82,11 @@ def hessian_fit(
     for i in range(iter_init):
         log.info(f"Hessian fit initialization iteration {i+1}")
         # Generate random initial parameters
-        initial_parameters = pdf_initial_parameters(
-            forward_map, param_initialiser_settings, rng_seed + i
+        initial_parameters = all_initial_parameters(
+            forward_map,
+            param_initialiser_settings,
+            extra_parameters_settings,
+            rng_seed + i,
         )
 
         # Delegate to generic gradient descent

@@ -18,9 +18,12 @@ from colibri.param_initialisation import pdf_initial_parameters
 
 logging.basicConfig(level=logging.DEBUG)
 
-# Mock forward map (3 params: 2 PDF + 1 extra, but treated uniformly here)
+# Mock forward map with 3 PDF parameters and no extra parameters
 forward_map = MagicMock()
 forward_map.param_names = ["param1", "param2", "param3"]
+forward_map.pdf_param_names = ["param1", "param2", "param3"]
+forward_map.extra_param_names = []
+forward_map.n_pdf_params = 3
 
 
 def test_zeros_initializer():
@@ -354,43 +357,100 @@ def test_invalid_initializer_type():
     np.testing.assert_array_equal(result, expected_result)
 
 
-def test_extra_params_included_in_initialization():
-    """When forward_map has extra_param_names, initialization covers all params."""
-    fm_with_extras = MagicMock()
-    fm_with_extras.param_names = ["pdf_p1", "pdf_p2", "norm"]
+# ---------------------------------------------------------------------------
+# Extra parameters of the forward map
+# ---------------------------------------------------------------------------
 
-    # zeros mode: all three params initialized to zero
-    result = pdf_initial_parameters(fm_with_extras, {"type": "zeros"})
-    assert len(result) == 3
-    np.testing.assert_array_equal(result, jnp.zeros(3))
+from colibri.param_initialisation import (
+    all_initial_parameters,
+    extra_initial_parameters,
+    initial_parameters,
+)
 
-    # uniform mode with global bounds: length matches all three params
+
+def _fm_with_extras(pdf_names=("pdf_p1", "pdf_p2"), extra_names=("norm",)):
+    fm = MagicMock()
+    fm.pdf_param_names = list(pdf_names)
+    fm.extra_param_names = list(extra_names)
+    fm.param_names = list(pdf_names) + list(extra_names)
+    fm.n_pdf_params = len(pdf_names)
+    return fm
+
+
+def test_pdf_initial_parameters_covers_pdf_parameters_only():
+    fm = _fm_with_extras()
+    bounds = {"pdf_p1": (-1.0, 1.0), "pdf_p2": (-1.0, 1.0)}  # no bound for "norm"
     result = pdf_initial_parameters(
-        fm_with_extras,
+        fm, {"type": "uniform", "random_seed": 0, "bounds": bounds}, replica_index=0
+    )
+    assert result.shape == (2,)
+
+
+def test_pdf_initial_parameters_unchanged_by_extra_parameters():
+    """Adding extra parameters does not change the PDF initial values."""
+    settings = {"type": "normal", "random_seed": 3}
+    with_extras = pdf_initial_parameters(_fm_with_extras(), dict(settings), 5)
+    without = pdf_initial_parameters(_fm_with_extras(extra_names=()), dict(settings), 5)
+    np.testing.assert_array_equal(with_extras, without)
+
+
+def test_extra_initial_parameters_default_zeros():
+    fm = _fm_with_extras(extra_names=("c1", "c2"))
+    np.testing.assert_array_equal(extra_initial_parameters(fm), jnp.zeros(2))
+    np.testing.assert_array_equal(
+        extra_initial_parameters(fm, {"prior": None, "initialiser": {"type": "zeros"}}),
+        jnp.zeros(2),
+    )
+
+
+def test_extra_initial_parameters_empty_without_extras():
+    assert extra_initial_parameters(_fm_with_extras(extra_names=())).shape == (0,)
+
+
+def test_extra_initial_parameters_uniform_bounds():
+    fm = _fm_with_extras(extra_names=("c1", "c2"))
+    settings = {
+        "initialiser": {
+            "type": "uniform",
+            "random_seed": 1,
+            "bounds": {"c1": (10.0, 11.0), "c2": (-3.0, -2.0)},
+        }
+    }
+    values = extra_initial_parameters(fm, settings, replica_index=2)
+    assert 10.0 <= values[0] <= 11.0
+    assert -3.0 <= values[1] <= -2.0
+    # Different replicas get different values
+    other = extra_initial_parameters(fm, settings, replica_index=3)
+    assert not np.allclose(values, other)
+
+
+def test_initial_parameters_joins_pdf_and_extra():
+    fm = _fm_with_extras()
+    result = initial_parameters(fm, jnp.array([1.0, 2.0]), jnp.array([3.0]))
+    np.testing.assert_array_equal(result, jnp.array([1.0, 2.0, 3.0]))
+
+
+def test_initial_parameters_without_extras_is_pdf_part():
+    fm = _fm_with_extras(extra_names=())
+    pdf = jnp.array([1.0, 2.0])
+    np.testing.assert_array_equal(initial_parameters(fm, pdf, jnp.array([])), pdf)
+
+
+def test_initial_parameters_rejects_pdf_part_of_wrong_size():
+    """A PDF initialiser covering all parameters is caught with a clear error."""
+    fm = _fm_with_extras()
+    with pytest.raises(ValueError, match="PDF parameters only"):
+        initial_parameters(fm, jnp.zeros(3), jnp.zeros(1))
+
+
+def test_all_initial_parameters():
+    fm = _fm_with_extras()
+    result = all_initial_parameters(
+        fm,
         {"type": "uniform", "random_seed": 0, "min_val": -1.0, "max_val": 1.0},
-        replica_index=0,
+        {"initialiser": {"type": "uniform", "min_val": 5.0, "max_val": 6.0}},
+        replica_index=1,
     )
-    assert len(result) == 3
-
-    # normal mode with scalar means/stds: length matches all three params
-    result = pdf_initial_parameters(
-        fm_with_extras,
-        {"type": "normal", "means": 0.0, "stds": 1.0, "random_seed": 0},
-        replica_index=0,
-    )
-    assert len(result) == 3
-
-    # uniform mode with per-parameter bounds including the extra param
-    bounds = {"pdf_p1": (-1.0, 1.0), "pdf_p2": (-1.0, 1.0), "norm": (0.5, 1.5)}
-    result = pdf_initial_parameters(
-        fm_with_extras,
-        {"type": "uniform", "random_seed": 0, "bounds": bounds},
-        replica_index=0,
-    )
-    assert len(result) == 3
-
-    # backward compatibility: no extra params -> length matches pdf params only
-    fm_no_extras = MagicMock()
-    fm_no_extras.param_names = ["pdf_p1", "pdf_p2"]
-    result = pdf_initial_parameters(fm_no_extras, {"type": "zeros"})
-    assert len(result) == 2
+    assert result.shape == (3,)
+    assert jnp.all(jnp.abs(result[:2]) <= 1.0)
+    assert 5.0 <= result[2] <= 6.0

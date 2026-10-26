@@ -469,6 +469,57 @@ class colibriConfig(Config):
 
         return PriorSettings(**prior_settings)
 
+    def parse_extra_parameters_settings(self, settings):
+        """
+        Parses the extra_parameters_settings namespace: prior and initialiser of
+        the extra parameters of the forward map (e.g. SMEFT Wilson
+        coefficients), which ``prior_settings`` and
+        ``param_initialiser_settings`` do not cover.
+
+        Example
+        -------
+        ::
+
+            extra_parameters_settings:
+              prior:                    # uniform; Bayesian and analytic fits
+                bounds: {norm: [0.5, 1.5]}      # or min_val / max_val
+              initialiser:              # Monte Carlo and Hessian fits (default: zeros)
+                type: uniform
+                min_val: 0.9
+                max_val: 1.1
+
+        Returns
+        -------
+        dict
+            With keys ``prior`` (dict or None) and ``initialiser`` (dict).
+        """
+        known_keys = {"prior", "initialiser"}
+        for k in settings.keys() - known_keys:
+            log.warning(
+                ConfigError(
+                    f"Key '{k}' in extra_parameters_settings not known.", k, known_keys
+                )
+            )
+
+        prior = settings.get("prior")
+        if prior is not None:
+            if not isinstance(prior, dict) or not (
+                "bounds" in prior or {"min_val", "max_val"} <= prior.keys()
+            ):
+                raise ConfigError(
+                    "The prior in extra_parameters_settings must define either "
+                    "'bounds' or 'min_val' and 'max_val'."
+                )
+
+        initialiser = settings.get("initialiser") or {"type": "zeros"}
+        if not isinstance(initialiser, dict):
+            raise ConfigError(
+                "The initialiser in extra_parameters_settings must be a mapping."
+            )
+        initialiser = {"type": "zeros", **initialiser}
+
+        return {"prior": prior, "initialiser": initialiser}
+
     def parse_analytic_settings(
         self,
         settings,

@@ -42,7 +42,7 @@ ultranest_logger.addHandler(handler)
 
 def ultranest_fit(
     forward_map,
-    bayesian_prior,
+    fit_prior,
     ultranest_settings,
     log_likelihood,
 ):
@@ -54,8 +54,9 @@ def ultranest_fit(
     forward_map: ForwardMap
         The forward map whose ``param_names`` enumerate all fit parameters.
 
-    bayesian_prior: BayesianPrior
-        The prior object containing prior_transform, log_prob, and sample functions.
+    fit_prior: BayesianPrior
+        Prior of all the fit parameters (PDF and extra parameters), see
+        colibri.bayes_prior.fit_prior.
 
     ultranest_settings: dict
         Settings for the Nested Sampling fit.
@@ -80,8 +81,7 @@ def ultranest_fit(
         log.info("Vectorized likelihood for ultranest fit.")
         log_likelihood = jax.vmap(log_likelihood, in_axes=(0,), out_axes=0)
 
-    # Call bayesian_prior to get the prior_transform function
-    prior_transform = bayesian_prior.prior_transform
+    prior_transform = fit_prior.prior_transform
 
     sampler = ultranest.ReactiveNestedSampler(
         parameters,

@@ -21,6 +21,7 @@ from colibri.export_results import (
     export_bayes_results,
     plot_bayes_plots,
 )
+from colibri.bayes_prior import extra_parameters_bounds, uniform_prior_bounds
 from colibri.checks import check_pdf_model_is_linear
 from colibri.utils import compute_determinants_of_principal_minors
 
@@ -92,6 +93,7 @@ def analytic_fit(
     analytic_settings,
     prior_settings,
     fast_kernel_arrays,
+    extra_parameters_settings=None,
 ):
     """
     Analytic fits, for any *linear* PDF model.
@@ -114,10 +116,14 @@ def analytic_fit(
         Settings for the analytic fit.
 
     prior_settings: PriorSettings
-        Settings for the prior.
+        Settings for the prior of the PDF parameters.
 
     fast_kernel_arrays: tuple
         Tuple containing the fast kernel arrays.
+
+    extra_parameters_settings: dict, optional
+        Settings for the extra parameters of the forward map; their uniform
+        prior is its ``prior``.
     """
     # Ensure that the PDF model is linear before running the fit.
     log.info("Checking that the PDF model is linear...")
@@ -185,14 +191,16 @@ def analytic_fit(
     # over the prior. The prior is uniform with width prior_width.
     log.info("Computing the evidence...")
 
+    # Bounds of the PDF parameters, from prior_settings
+    n_pdf = forward_map.n_pdf_params
     if prior_settings.prior_distribution == "n_sigma_prior":
         nsigma = prior_settings.prior_distribution_specs["n_sigma_value"]
 
         log.info(f"Using +- {nsigma} sigma of covmat")
         diags = np.sqrt(np.diag(sol_covmat))
 
-        prior_lower = sol_mean - nsigma * diags
-        prior_upper = sol_mean + nsigma * diags
+        prior_lower = (sol_mean - nsigma * diags)[:n_pdf]
+        prior_upper = (sol_mean + nsigma * diags)[:n_pdf]
 
     elif prior_settings.prior_distribution == "custom_uniform_parameter_prior":
         log.info("Using custom uniform prior")
@@ -201,17 +209,21 @@ def analytic_fit(
 
     elif prior_settings.prior_distribution == "min_max_prior":
         log.info("Using min-max prior")
-        prior_lower = full_samples.min(axis=0)
-        prior_upper = full_samples.max(axis=0)
+        prior_lower = full_samples.min(axis=0)[:n_pdf]
+        prior_upper = full_samples.max(axis=0)[:n_pdf]
 
     else:
-        # Extract lower and upper bounds of the prior
-        prior_lower = prior_settings.prior_distribution_specs["min_val"] * jnp.ones(
-            len(parameters)
+        prior_lower, prior_upper = uniform_prior_bounds(
+            forward_map.pdf_param_names, prior_settings.prior_distribution_specs
         )
-        prior_upper = prior_settings.prior_distribution_specs["max_val"] * jnp.ones(
-            len(parameters)
+
+    # Bounds of the extra parameters, from extra_parameters_settings
+    if forward_map.extra_param_names:
+        extra_lower, extra_upper = extra_parameters_bounds(
+            forward_map, extra_parameters_settings
         )
+        prior_lower = jnp.concatenate([jnp.asarray(prior_lower), extra_lower])
+        prior_upper = jnp.concatenate([jnp.asarray(prior_upper), extra_upper])
 
     prior_width = prior_upper - prior_lower
 
