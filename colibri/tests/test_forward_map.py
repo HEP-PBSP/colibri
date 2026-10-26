@@ -160,18 +160,22 @@ def test_fktable_forward_map_stores_pdf_param_names():
     assert fm.n_pdf_params == 3
 
 
-def test_fktable_forward_map_extra_param_names():
-    """FKTableForwardMap must accept and store extra_param_names."""
-    pdf_grid_func = _make_pdf_grid_func(TEST_PDF_GRID)
+def test_fktable_forward_map_has_no_extra_params():
+    """The default forward map fits the PDF parameters only."""
     fm = FKTableForwardMap(
         pred_func=_simple_pred_func,
         pdf_model=_mock_pdf_model(["a", "b"]),
-        pdf_grid_func=pdf_grid_func,
-        extra_param_names=["norm"],
+        pdf_grid_func=_make_pdf_grid_func(TEST_PDF_GRID),
     )
-    assert fm.param_names == ["a", "b", "norm"]
-    assert fm.n_pdf_params == 2
-    assert list(fm.extra_param_names) == ["norm"]
+    assert fm.param_names == ["a", "b"]
+    assert list(fm.extra_param_names) == []
+    with pytest.raises(TypeError):
+        FKTableForwardMap(
+            pred_func=_simple_pred_func,
+            pdf_model=_mock_pdf_model(["a"]),
+            pdf_grid_func=_make_pdf_grid_func(TEST_PDF_GRID),
+            extra_param_names=["norm"],
+        )
 
 
 def test_fktable_forward_map_stores_pred_func():
@@ -390,22 +394,6 @@ def test_forward_map_provider_with_different_param_counts():
         )
         assert fm.pdf_param_names == mock_model.param_names
         assert fm.n_pdf_params == n
-
-
-def test_forward_map_provider_with_extra_param_names():
-    """
-    fktable_forward_map() must forward extra_param_names to FKTableForwardMap
-    and expose them via param_names.
-    """
-    extra = ["norm", "scale"]
-    fm = fktable_forward_map(
-        _pred_data=_simple_pred_func,
-        pdf_model=MOCK_PDF_MODEL,
-        FIT_XGRID=TEST_XGRID,
-        extra_param_names=extra,
-    )
-    assert fm.param_names == MOCK_PDF_MODEL.param_names + extra
-    assert list(fm.extra_param_names) == extra
 
 
 # ---------------------------------------------------------------------------

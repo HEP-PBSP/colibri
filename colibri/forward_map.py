@@ -150,7 +150,8 @@ class ForwardMap(ABC):
 class FKTableForwardMap(ForwardMap):
     """Default forward map: params → PDF → FK-table convolution.
 
-    This is the standard pipeline used in colibri PDF fits.
+    This is the standard pipeline used in colibri PDF fits. The fit
+    parameters are the PDF parameters only.
     """
 
     def __init__(
@@ -158,9 +159,8 @@ class FKTableForwardMap(ForwardMap):
         pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
         pdf_model,
         pdf_grid_func: Callable[[jnp.ndarray], jnp.ndarray],
-        extra_param_names: list[str] = [],
     ):
-        super().__init__(pdf_model, extra_param_names=extra_param_names)
+        super().__init__(pdf_model)
         self._pred_func = pred_func
         self._pdf_grid_func = pdf_grid_func
 
@@ -170,7 +170,7 @@ class FKTableForwardMap(ForwardMap):
         return self._pred_func(pdf, fk_tables), pdf
 
 
-def fktable_forward_map(_pred_data, pdf_model, FIT_XGRID, extra_param_names=[]):
+def fktable_forward_map(_pred_data, pdf_model, FIT_XGRID):
     """Reportengine provider that builds the default FK-table forward map.
 
     Selected with ``forward_map_type: fktable`` (the default), see
@@ -184,20 +184,15 @@ def fktable_forward_map(_pred_data, pdf_model, FIT_XGRID, extra_param_names=[]):
         The PDF model object; must expose ``param_names`` and ``grid_values_func``.
     FIT_XGRID : array-like
         The x-grid on which the PDF is evaluated.
-    extra_param_names : list[str], optional
-        Names of any additional fit parameters beyond the PDF parameters.
-
     """
-    pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)
     return FKTableForwardMap(
         pred_func=_pred_data,
         pdf_model=pdf_model,
-        pdf_grid_func=pdf_grid_func,
-        extra_param_names=extra_param_names,
+        pdf_grid_func=pdf_model.grid_values_func(FIT_XGRID),
     )
 
 
-class SMEFTForwardMap(FKTableForwardMap):
+class SMEFTForwardMap(ForwardMap):
     """FK-table forward map with SMEFT K-factors on top of the SM predictions::
 
         T = T_SM(pdf) * (1 + c @ L + c @ Q @ c)
@@ -222,11 +217,10 @@ class SMEFTForwardMap(FKTableForwardMap):
         fk_tables: Any = None,
     ):
         super().__init__(
-            pred_func,
-            pdf_model,
-            pdf_grid_func,
-            extra_param_names=list(smeft_corrections.parameter_names),
+            pdf_model, extra_param_names=list(smeft_corrections.parameter_names)
         )
+        self._pred_func = pred_func
+        self._pdf_grid_func = pdf_grid_func
         self._linear = jnp.asarray(smeft_corrections.linear)
         self._quadratic = (
             None
@@ -258,7 +252,8 @@ class SMEFTForwardMap(FKTableForwardMap):
         if self.sm_predictions is not None:
             sm_predictions, pdf = self.sm_predictions, self.pdf_grid
         else:
-            sm_predictions, pdf = super().__call__(fk_tables, params)
+            pdf = self._pdf_grid_func(params[: self.n_pdf_params])
+            sm_predictions = self._pred_func(pdf, fk_tables)
         return sm_predictions * self.smeft_kfactor(params), pdf
 
 
