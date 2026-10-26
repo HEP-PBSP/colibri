@@ -623,7 +623,7 @@ class colibriConfig(Config):
               backend_options:          # keyword arguments of the backend (optional)
                 simudata_path: ~/SIMUnet/simudata
               parameters:
-                - {name: OtG, scale: 50.0}
+                - {name: OtG}
                 - name: Y
                   linear_combination: {Olq1: 1.51606, Oed: -6.0606}
         """
@@ -671,7 +671,14 @@ class colibriConfig(Config):
                 raise ConfigError(
                     f"Each entry of smeft_settings 'parameters' must be a mapping with a 'name', got {par}."
                 )
-            par_keys = {"name", "linear_combination", "scale"}
+            if "scale" in par:
+                raise ConfigError(
+                    f"'scale' of SMEFT parameter '{par['name']}' is no longer "
+                    "supported: the fitted value is the Wilson coefficient itself. "
+                    "To rescale a parameter, use linear_combination, e.g. "
+                    "{OtG: 0.02} instead of scale: 50."
+                )
+            par_keys = {"name", "linear_combination"}
             for k in par.keys() - par_keys:
                 log.warning(
                     ConfigError(
@@ -679,11 +686,6 @@ class colibriConfig(Config):
                         k,
                         par_keys,
                     )
-                )
-            scale = float(par.get("scale", 1.0))
-            if scale <= 0:
-                raise ConfigError(
-                    f"'scale' of SMEFT parameter '{par['name']}' must be > 0."
                 )
             linear_combination = par.get("linear_combination", {})
             if not isinstance(linear_combination, dict):
@@ -697,7 +699,6 @@ class colibriConfig(Config):
                         str(op): float(coeff)
                         for op, coeff in linear_combination.items()
                     },
-                    scale=scale,
                 )
             )
 

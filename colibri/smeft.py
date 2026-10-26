@@ -22,7 +22,7 @@ Which datasets get a correction, and at which order, is set per dataset
 with the ``smeft_order`` key in ``dataset_inputs``.
 
 Everything downstream of the backend (cuts, ordering of the data points,
-fit-parameter scales, the forward map itself) is backend independent, so
+the forward map itself) is backend independent, so
 adding a new source of K-factors (e.g. SMEFiT) only requires implementing
 :meth:`SMEFTBackend.dataset_responses`.
 
@@ -62,15 +62,10 @@ class SMEFTParameter:
         Mapping ``{operator: coefficient}`` defining the parameter as a linear
         combination of the operators known to the backend. Defaults to
         ``{name: 1.0}``, i.e. the parameter is a single operator.
-
-    scale: float
-        The fitted parameter is ``scale * c``, with ``c`` the physical
-        Wilson coefficient. Useful to bring all parameters to O(1).
     """
 
     name: str
     linear_combination: dict = field(default_factory=dict)
-    scale: float = 1.0
 
     def __post_init__(self):
         if not self.linear_combination:
@@ -103,10 +98,6 @@ class SMEFTSettings:
     @property
     def parameter_names(self) -> tuple:
         return tuple(p.name for p in self.parameters)
-
-    @property
-    def scales(self) -> np.ndarray:
-        return np.array([p.scale for p in self.parameters], dtype=float)
 
 
 class SMEFTDataSetInput(DataSetInput):
@@ -176,16 +167,12 @@ class SMEFTCorrections:
     ----------
     parameter_names: tuple[str]
 
-    scales: np.ndarray, shape (n_params,)
-        Fit parameters are ``scales * c`` (see :class:`SMEFTParameter`).
-
     linear: np.ndarray, shape (n_params, n_data)
 
     quadratic: np.ndarray, shape (n_params, n_params, n_data), optional
     """
 
     parameter_names: tuple
-    scales: np.ndarray
     linear: np.ndarray
     quadratic: Optional[np.ndarray] = None
 
@@ -200,8 +187,8 @@ class SMEFTBackend(ABC):
     Source of SMEFT K-factors.
 
     A backend only needs to know how to produce the responses of one dataset
-    for a given list of fit parameters. Cuts, ordering of the data and scales
-    are handled by colibri.
+    for a given list of fit parameters. Cuts and ordering of the data are
+    handled by colibri.
     """
 
     @abstractmethod
@@ -295,7 +282,6 @@ class SIMUnetBackend(SMEFTBackend):
                 f"Order '{order}' not found in the SIMU factor file of "
                 f"{dataset.name} ({path}). Available keys: {list(factors)}"
             )
-        # Scales are applied by colibri, so pass physical coefficients only.
         specs = [
             {"name": p.name, "linear_combination": dict(p.linear_combination)}
             for p in parameters
@@ -390,7 +376,6 @@ def smeft_corrections(
 
     return SMEFTCorrections(
         parameter_names=smeft_settings.parameter_names,
-        scales=smeft_settings.scales,
         linear=linear,
         quadratic=quadratic,
     )

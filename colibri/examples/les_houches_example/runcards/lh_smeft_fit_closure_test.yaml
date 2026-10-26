@@ -57,7 +57,6 @@ smeft_settings:
   - {name: OtG}                        # A single operator.
   - name: Y                            # A linear combination of operators.
     linear_combination: {Olq1: 1.51606, Oed: -6.0606, Oeu: 12.1394, Olu: 6.0606, Old: -3.0394, Oqe: 3.0394}
-    # scale: 1.0                       # Optional: the fitted value is scale * c.
 
 #####################
 # Loss function specs

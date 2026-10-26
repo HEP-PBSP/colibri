@@ -628,8 +628,8 @@ def test_produce_forward_map_selects_provider():
 
 SMEFT_SETTINGS = {
     "parameters": [
-        {"name": "OtG", "scale": 50.0},
-        {"name": "Y", "linear_combination": {"Olq1": 1.5, "Oed": -6}, "scale": 200},
+        {"name": "OtG"},
+        {"name": "Y", "linear_combination": {"Olq1": 1.5, "Oed": -6}},
     ],
 }
 
@@ -642,8 +642,8 @@ def test_parse_smeft_settings():
     assert isinstance(res, SMEFTSettings)
     assert res.backend == "simunet"
     assert res.parameters == (
-        SMEFTParameter("OtG", {"OtG": 1.0}, 50.0),
-        SMEFTParameter("Y", {"Olq1": 1.5, "Oed": -6.0}, 200.0),
+        SMEFTParameter("OtG", {"OtG": 1.0}),
+        SMEFTParameter("Y", {"Olq1": 1.5, "Oed": -6.0}),
     )
     assert res.backend_options == {}
 
@@ -669,8 +669,8 @@ def test_parse_smeft_settings_unknown_key_warns(mock_warning):
         ({"backend_options": ["a"]}, "must be a mapping"),
         ({"backend_options": {"unknown_option": 1}}, "Invalid backend_options"),
         ({"parameters": []}, "non-empty 'parameters'"),
-        ({"parameters": [{"scale": 1.0}]}, "with a 'name'"),
-        ({"parameters": [{"name": "OtG", "scale": 0}]}, "must be > 0"),
+        ({"parameters": [{"linear_combination": {"OtG": 1.0}}]}, "with a 'name'"),
+        ({"parameters": [{"name": "OtG", "scale": 50}]}, "no longer supported"),
         (
             {"parameters": [{"name": "Y", "linear_combination": [1, 2]}]},
             "must be a mapping",

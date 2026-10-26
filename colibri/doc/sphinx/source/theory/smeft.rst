@@ -43,11 +43,10 @@ The forward map is selected with the ``forward_map_type`` key:
       backend: simunet        # source of the K-factors (default: simunet)
       # backend_options: {simudata_path: /path/to/SIMUnet/simudata}  # only if needed, see below
       parameters:
-        - {name: OtG, scale: 50.0}
+        - {name: OtG}
         - name: Y
           linear_combination: {Olq1: 1.51606, Oed: -6.0606, Oeu: 12.1394,
                                Olu: 6.0606, Old: -3.0394, Oqe: 3.0394}
-          scale: 200.0
 
 - ``smeft_order`` (in ``dataset_inputs``): marks the datasets receiving a
   SMEFT correction, and the perturbative order of their K-factors, as named
@@ -55,8 +54,8 @@ The forward map is selected with the ``forward_map_type`` key:
   are SM only. It is ignored, with a warning, unless ``forward_map_type: smeft``.
 - ``parameters``: the SMEFT fit parameters. A parameter is a single operator
   (by default, the one with the same name) or a ``linear_combination`` of
-  operators. The fitted value is ``scale * c``, with ``c`` the physical Wilson
-  coefficient; ``scale`` defaults to 1.
+  operators. The fitted value is the coefficient of that operator or
+  combination; a parameter is rescaled through its ``linear_combination``.
 
 Since the fit parameters include the Wilson coefficients, per-parameter prior
 bounds or initialiser bounds must list them too, e.g.
@@ -67,7 +66,7 @@ K-factor backends
 
 Where the K-factors come from is delegated to a backend
 (:class:`colibri.smeft.SMEFTBackend`), selected with ``smeft_settings: {backend: ...}``.
-Cuts, data ordering, scales and the forward map itself do not depend on the
+Cuts, data ordering and the forward map itself do not depend on the
 backend.
 
 - ``simunet``: reads the SIMU-factor files of

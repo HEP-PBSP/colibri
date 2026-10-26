@@ -413,12 +413,11 @@ def test_forward_map_provider_with_extra_param_names():
 # ---------------------------------------------------------------------------
 
 
-def _smeft_corrections(linear, scales=None, quadratic=None, names=None):
+def _smeft_corrections(linear, quadratic=None, names=None):
     linear = np.asarray(linear, dtype=float)
     n_params = linear.shape[0]
     return SMEFTCorrections(
         parameter_names=tuple(names or [f"c{i}" for i in range(n_params)]),
-        scales=np.ones(n_params) if scales is None else np.asarray(scales),
         linear=linear,
         quadratic=quadratic,
     )
@@ -487,30 +486,6 @@ def test_smeft_forward_map_quadratic_correction():
     np.testing.assert_allclose(predictions, expected, rtol=1e-6)
 
 
-def test_smeft_forward_map_scales():
-    """Fit parameters are scale * c: dividing by the scale recovers the physics."""
-    rng = np.random.default_rng(3)
-    linear = rng.normal(size=(2, TEST_N_DATA))
-    scales = np.array([50.0, 200.0])
-    c = np.array([0.01, -0.002])
-
-    fm_scaled = _smeft_fm(_smeft_corrections(linear, scales=scales))
-    fm_unscaled = _smeft_fm(_smeft_corrections(linear))
-    pdf_params = jnp.array([1.0, 2.0])
-
-    preds_scaled, _ = fm_scaled(
-        TEST_FK_ARRAYS, jnp.concatenate([pdf_params, scales * c])
-    )
-    preds_unscaled, _ = fm_unscaled(TEST_FK_ARRAYS, jnp.concatenate([pdf_params, c]))
-
-    np.testing.assert_allclose(preds_scaled, preds_unscaled, rtol=1e-6)
-    np.testing.assert_allclose(
-        fm_scaled.physical_coefficients(jnp.concatenate([pdf_params, scales * c])),
-        c,
-        rtol=1e-6,
-    )
-
-
 def test_smeft_forward_map_is_jittable():
     """The SMEFT forward map can be traced by jax.jit with dynamic FK tables."""
     linear = np.ones((1, TEST_N_DATA))
@@ -577,15 +552,12 @@ def test_fixed_pdf_smeft_forward_map_predictions():
     rng = np.random.default_rng(4)
     linear = rng.normal(size=(2, TEST_N_DATA))
     quadratic = rng.normal(size=(2, 2, TEST_N_DATA))
-    scales = np.array([2.0, 5.0])
-    fixed = _fixed_smeft_fm(
-        _smeft_corrections(linear, scales=scales, quadratic=quadratic)
-    )
+    fixed = _fixed_smeft_fm(_smeft_corrections(linear, quadratic=quadratic))
     params = np.array([0.4, -1.3])
 
     preds_fixed, pdf_fixed = fixed(TEST_FK_ARRAYS, jnp.array(params))
 
-    c = params / scales
+    c = params
     quad = np.einsum("i,j,ijn->n", c, c, quadratic)
     expected = _sm_predictions() * (1 + c @ linear + quad)
     np.testing.assert_allclose(preds_fixed, expected, rtol=1e-6)

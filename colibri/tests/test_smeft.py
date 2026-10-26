@@ -78,7 +78,7 @@ def _settings(backend="fake", parameters=None):
     return SMEFTSettings(
         backend=backend,
         parameters=parameters
-        or (SMEFTParameter("OtG", scale=50.0), SMEFTParameter("Y")),
+        or (SMEFTParameter("OtG"), SMEFTParameter("Y")),
     )
 
 
@@ -112,10 +112,8 @@ def test_smeft_parameter_default_linear_combination():
     assert SMEFTParameter("Y", {"Olq1": 2.0}).linear_combination == {"Olq1": 2.0}
 
 
-def test_smeft_settings_names_and_scales():
-    settings = _settings()
-    assert settings.parameter_names == ("OtG", "Y")
-    np.testing.assert_array_equal(settings.scales, [50.0, 1.0])
+def test_smeft_settings_names():
+    assert _settings().parameter_names == ("OtG", "Y")
 
 
 def test_smeft_dataset_input_keeps_dataset_and_adds_order():
@@ -186,7 +184,6 @@ def test_smeft_corrections_applies_cuts_and_zero_fills(fake_backends):
     corr = smeft_corrections(data, _dataset_inputs("SM_DS", "SMEFT_DS"), _settings())
 
     assert corr.parameter_names == ("OtG", "Y")
-    np.testing.assert_array_equal(corr.scales, [50.0, 1.0])
     expected = np.array(
         [
             [0, 0, 0, 0.0, 2.0, 3.0],
@@ -268,7 +265,7 @@ def fake_simunet(monkeypatch, tmp_path):
             resp = np.zeros_like(sm)
             for op, coeff in p.get("linear_combination", {p["name"]: 1.0}).items():
                 resp += np.asarray(cfactors.get(op, 0.0)) / sm * coeff
-            out.append(resp / p.get("scale", 1.0))
+            out.append(resp)
         return out
 
     simunet = types.ModuleType("simunet")
@@ -282,11 +279,11 @@ def fake_simunet(monkeypatch, tmp_path):
 
 
 def test_simunet_backend_responses(fake_simunet):
-    """Responses are K-factor / SM, combined linearly, without the scale."""
+    """Responses are K-factor / SM, combined linearly."""
     backend = SIMUnetBackend()
     parameters = (
-        SMEFTParameter("OtG", scale=50.0),
-        SMEFTParameter("Y", {"Olq1": 0.5, "OtG": 1.0}, scale=200.0),
+        SMEFTParameter("OtG"),
+        SMEFTParameter("Y", {"Olq1": 0.5, "OtG": 1.0}),
     )
 
     responses = backend.dataset_responses(Mock(name="ds"), "EFT_LO", parameters)

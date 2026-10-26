@@ -202,9 +202,9 @@ class SMEFTForwardMap(FKTableForwardMap):
 
         T = T_SM(pdf) * (1 + c @ L + c @ Q @ c)
 
-    The extra fit parameters are the SMEFT parameters ``w = scale * c``, with
-    ``c`` the physical Wilson coefficients and ``L`` (``Q``) the linear
-    (quadratic) responses held by :class:`colibri.smeft.SMEFTCorrections`.
+    The extra fit parameters are the Wilson coefficients ``c`` (or linear
+    combinations of them), and ``L`` (``Q``) are the linear (quadratic)
+    responses held by :class:`colibri.smeft.SMEFTCorrections`.
 
     If the PDF model has no parameters (e.g. ``fixed_pdf``), ``T_SM`` does not
     depend on the fit parameters: it is computed once here from ``fk_tables``,
@@ -227,7 +227,6 @@ class SMEFTForwardMap(FKTableForwardMap):
             pdf_grid_func,
             extra_param_names=list(smeft_corrections.parameter_names),
         )
-        self.scales = jnp.asarray(smeft_corrections.scales)
         self._linear = jnp.asarray(smeft_corrections.linear)
         self._quadratic = (
             None
@@ -247,13 +246,9 @@ class SMEFTForwardMap(FKTableForwardMap):
             self.pdf_grid = jnp.asarray(pdf_grid_func(jnp.array([])))
             self.sm_predictions = jnp.asarray(pred_func(self.pdf_grid, fk_tables))
 
-    def physical_coefficients(self, params):
-        """Physical Wilson coefficients ``c`` from the full parameter vector."""
-        return params[self.n_pdf_params :] / self.scales
-
     def smeft_kfactor(self, params):
         """K-factor multiplying the SM predictions, one entry per data point."""
-        c = self.physical_coefficients(params)
+        c = params[self.n_pdf_params :]
         kfactor = 1.0 + c @ self._linear
         if self._quadratic is not None:
             kfactor = kfactor + jnp.einsum("i,j,ijn->n", c, c, self._quadratic)
