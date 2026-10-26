@@ -24,8 +24,6 @@ from colibri.core import IntegrabilitySettings, PriorSettings
 from colibri.smeft import (
     SMEFT_BACKENDS,
     SMEFTDataSetInput,
-    SMEFTParameter,
-    SMEFTSettings,
     smeft_orders,
 )
 from mpi4py import MPI
@@ -609,8 +607,11 @@ class colibriConfig(Config):
 
     def parse_smeft_settings(self, settings):
         """
-        Parses the smeft_settings namespace from the runcard into a
-        colibri.smeft.SMEFTSettings. Only used with ``forward_map_type: smeft``.
+        Parses the smeft_settings namespace from the runcard into a dict with
+        keys ``backend``, ``backend_options`` and ``parameters``. Each parameter
+        is ``{"name": str, "linear_combination": {operator: coefficient}}``,
+        with ``linear_combination`` defaulting to ``{name: 1.0}``. Only used
+        with ``forward_map_type: smeft``.
         The datasets receiving a SMEFT correction are selected with the
         ``smeft_order`` key in ``dataset_inputs`` (see parse_dataset_input).
 
@@ -627,14 +628,6 @@ class colibriConfig(Config):
                 - name: Y
                   linear_combination: {Olq1: 1.51606, Oed: -6.0606}
         """
-        moved_keys = {"order", "datasets"} & settings.keys()
-        if moved_keys:
-            raise ConfigError(
-                f"{sorted(moved_keys)} are no longer part of smeft_settings: add "
-                "`smeft_order: <order>` to the dataset_inputs entries that receive a "
-                "SMEFT correction instead."
-            )
-
         known_keys = {"backend", "backend_options", "parameters"}
         kdiff = settings.keys() - known_keys
         for k in kdiff:
@@ -671,13 +664,6 @@ class colibriConfig(Config):
                 raise ConfigError(
                     f"Each entry of smeft_settings 'parameters' must be a mapping with a 'name', got {par}."
                 )
-            if "scale" in par:
-                raise ConfigError(
-                    f"'scale' of SMEFT parameter '{par['name']}' is no longer "
-                    "supported: the fitted value is the Wilson coefficient itself. "
-                    "To rescale a parameter, use linear_combination, e.g. "
-                    "{OtG: 0.02} instead of scale: 50."
-                )
             par_keys = {"name", "linear_combination"}
             for k in par.keys() - par_keys:
                 log.warning(
@@ -692,26 +678,27 @@ class colibriConfig(Config):
                 raise ConfigError(
                     f"'linear_combination' of SMEFT parameter '{par['name']}' must be a mapping."
                 )
+            name = str(par["name"])
             parameters.append(
-                SMEFTParameter(
-                    name=str(par["name"]),
-                    linear_combination={
+                {
+                    "name": name,
+                    "linear_combination": {
                         str(op): float(coeff)
-                        for op, coeff in linear_combination.items()
+                        for op, coeff in (linear_combination or {name: 1.0}).items()
                     },
-                )
+                }
             )
 
-        names = [p.name for p in parameters]
+        names = [p["name"] for p in parameters]
         duplicates = {n for n in names if names.count(n) > 1}
         if duplicates:
             raise ConfigError(f"Duplicate SMEFT parameter names: {sorted(duplicates)}")
 
-        return SMEFTSettings(
-            backend=backend,
-            parameters=tuple(parameters),
-            backend_options=backend_options,
-        )
+        return {
+            "backend": backend,
+            "backend_options": backend_options,
+            "parameters": parameters,
+        }
 
     @element_of("dataset_inputs")
     def parse_dataset_input(self, dataset: Mapping, allow_legacy_names: bool = True):

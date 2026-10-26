@@ -635,24 +635,23 @@ SMEFT_SETTINGS = {
 
 
 def test_parse_smeft_settings():
-    from colibri.smeft import SMEFTParameter, SMEFTSettings
-
     res = BASE_CONFIG.parse_smeft_settings(SMEFT_SETTINGS)
 
-    assert isinstance(res, SMEFTSettings)
-    assert res.backend == "simunet"
-    assert res.parameters == (
-        SMEFTParameter("OtG", {"OtG": 1.0}),
-        SMEFTParameter("Y", {"Olq1": 1.5, "Oed": -6.0}),
-    )
-    assert res.backend_options == {}
+    assert res == {
+        "backend": "simunet",
+        "backend_options": {},
+        "parameters": [
+            {"name": "OtG", "linear_combination": {"OtG": 1.0}},
+            {"name": "Y", "linear_combination": {"Olq1": 1.5, "Oed": -6.0}},
+        ],
+    }
 
 
 def test_parse_smeft_settings_backend_options():
     res = BASE_CONFIG.parse_smeft_settings(
         {**SMEFT_SETTINGS, "backend_options": {"simudata_path": "/some/simudata"}}
     )
-    assert res.backend_options == {"simudata_path": "/some/simudata"}
+    assert res["backend_options"] == {"simudata_path": "/some/simudata"}
 
 
 @patch("colibri.config.log.warning")
@@ -670,14 +669,11 @@ def test_parse_smeft_settings_unknown_key_warns(mock_warning):
         ({"backend_options": {"unknown_option": 1}}, "Invalid backend_options"),
         ({"parameters": []}, "non-empty 'parameters'"),
         ({"parameters": [{"linear_combination": {"OtG": 1.0}}]}, "with a 'name'"),
-        ({"parameters": [{"name": "OtG", "scale": 50}]}, "no longer supported"),
         (
             {"parameters": [{"name": "Y", "linear_combination": [1, 2]}]},
             "must be a mapping",
         ),
         ({"parameters": [{"name": "OtG"}, {"name": "OtG"}]}, "Duplicate"),
-        ({"datasets": [{"dataset": "A"}]}, "smeft_order"),
-        ({"order": "EFT_NLO"}, "smeft_order"),
     ],
 )
 def test_parse_smeft_settings_invalid(update, match):

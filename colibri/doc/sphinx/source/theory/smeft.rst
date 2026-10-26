@@ -64,8 +64,9 @@ bounds or initialiser bounds must list them too, e.g.
 K-factor backends
 -----------------
 
-Where the K-factors come from is delegated to a backend
-(:class:`colibri.smeft.SMEFTBackend`), selected with ``smeft_settings: {backend: ...}``.
+Where the K-factors come from is delegated to a backend, selected with
+``smeft_settings: {backend: ...}`` among those in
+:data:`colibri.smeft.SMEFT_BACKENDS`.
 Cuts, data ordering and the forward map itself do not depend on the
 backend.
 
@@ -100,19 +101,23 @@ backend.
 ``backend_options`` are passed to the backend constructor, so each backend can
 take its own options.
 
-A new backend only has to return the responses of one dataset, for all its
-points (before cuts):
+A new backend is a class that returns the responses of one dataset, for all
+its points (before cuts), added to ``SMEFT_BACKENDS``:
 
 .. code-block:: python
 
-    from colibri.smeft import DatasetResponses, SMEFTBackend, register_smeft_backend
-
-    @register_smeft_backend("smefit")
-    class SMEFiTBackend(SMEFTBackend):
-        def dataset_responses(self, dataset, order, parameters):
-            # linear: (n_params, n_points), quadratic: (n_params, n_params, n_points)
+    class SMEFiTBackend:
+        def __init__(self, **backend_options):
             ...
-            return DatasetResponses(linear=linear, quadratic=quadratic)
+
+        def dataset_responses(self, dataset, order, parameters):
+            # parameters: [{"name": ..., "linear_combination": {operator: coeff}}]
+            # linear: (n_params, n_points)
+            # quadratic: (n_params, n_params, n_points), or None
+            ...
+            return linear, quadratic
+
+    SMEFT_BACKENDS["smefit"] = SMEFiTBackend
 
 .. note::
 

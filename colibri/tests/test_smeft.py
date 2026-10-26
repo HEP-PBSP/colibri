@@ -15,13 +15,8 @@ from validphys.core import DataSetInput
 
 from colibri.smeft import (
     SMEFT_BACKENDS,
-    DatasetResponses,
     SIMUnetBackend,
-    SMEFTBackend,
     SMEFTDataSetInput,
-    SMEFTParameter,
-    SMEFTSettings,
-    register_smeft_backend,
     smeft_corrections,
     smeft_orders,
 )
@@ -48,7 +43,7 @@ def _mock_data(*datasets):
     return data
 
 
-class FakeBackend(SMEFTBackend):
+class FakeBackend:
     """Linear response of parameter i on point k of a dataset is 10*i + k."""
 
     quadratic = False
@@ -61,7 +56,7 @@ class FakeBackend(SMEFTBackend):
         quadratic = None
         if self.quadratic:
             quadratic = np.ones((len(parameters), len(parameters), n))
-        return DatasetResponses(linear=linear, quadratic=quadratic)
+        return linear, quadratic
 
 
 class FakeQuadraticBackend(FakeBackend):
@@ -74,12 +69,16 @@ def fake_backends(monkeypatch):
     monkeypatch.setitem(SMEFT_BACKENDS, "fake_quad", FakeQuadraticBackend)
 
 
-def _settings(backend="fake", parameters=None):
-    return SMEFTSettings(
-        backend=backend,
-        parameters=parameters
-        or (SMEFTParameter("OtG"), SMEFTParameter("Y")),
-    )
+def _param(name, linear_combination=None):
+    return {"name": name, "linear_combination": linear_combination or {name: 1.0}}
+
+
+def _settings(backend="fake", parameters=None, backend_options=None):
+    return {
+        "backend": backend,
+        "backend_options": backend_options or {},
+        "parameters": parameters or [_param("OtG"), _param("Y")],
+    }
 
 
 def _dataset_inputs(*names, orders=None):
@@ -102,18 +101,8 @@ def _plain_input(name):
 
 
 # ---------------------------------------------------------------------------
-# Settings dataclasses
+# Datasets with a SMEFT correction
 # ---------------------------------------------------------------------------
-
-
-def test_smeft_parameter_default_linear_combination():
-    """A parameter without a linear combination is the operator with its name."""
-    assert SMEFTParameter("OtG").linear_combination == {"OtG": 1.0}
-    assert SMEFTParameter("Y", {"Olq1": 2.0}).linear_combination == {"Olq1": 2.0}
-
-
-def test_smeft_settings_names():
-    assert _settings().parameter_names == ("OtG", "Y")
 
 
 def test_smeft_dataset_input_keeps_dataset_and_adds_order():
@@ -138,32 +127,8 @@ def test_smeft_orders():
     assert smeft_orders(inputs) == {"A": "EFT_LO", "C": "EFT_NLO"}
 
 
-# ---------------------------------------------------------------------------
-# Backend registry
-# ---------------------------------------------------------------------------
-
-
-def test_simunet_backend_is_registered():
+def test_simunet_backend_is_available():
     assert SMEFT_BACKENDS["simunet"] is SIMUnetBackend
-
-
-def test_register_smeft_backend(monkeypatch):
-    monkeypatch.setattr("colibri.smeft.SMEFT_BACKENDS", dict(SMEFT_BACKENDS))
-    from colibri import smeft
-
-    @register_smeft_backend("my_backend")
-    class MyBackend(FakeBackend):
-        pass
-
-    assert smeft.SMEFT_BACKENDS["my_backend"] is MyBackend
-
-
-def test_register_smeft_backend_rejects_non_backends():
-    with pytest.raises(TypeError):
-
-        @register_smeft_backend("not_a_backend")
-        class NotABackend:
-            pass
 
 
 # ---------------------------------------------------------------------------
@@ -219,7 +184,7 @@ def test_smeft_corrections_without_smeft_datasets(fake_backends):
 
 def test_smeft_corrections_wrong_shape(fake_backends, monkeypatch):
     def bad_responses(self, dataset, order, parameters):
-        return DatasetResponses(linear=np.zeros((len(parameters), 1)))
+        return np.zeros((len(parameters), 1)), None
 
     monkeypatch.setattr(FakeBackend, "dataset_responses", bad_responses)
     data = _mock_data(_mock_dataset("SMEFT_DS", ndata=3))
@@ -281,21 +246,18 @@ def fake_simunet(monkeypatch, tmp_path):
 def test_simunet_backend_responses(fake_simunet):
     """Responses are K-factor / SM, combined linearly."""
     backend = SIMUnetBackend()
-    parameters = (
-        SMEFTParameter("OtG"),
-        SMEFTParameter("Y", {"Olq1": 0.5, "OtG": 1.0}),
-    )
+    parameters = [_param("OtG"), _param("Y", {"Olq1": 0.5, "OtG": 1.0})]
 
-    responses = backend.dataset_responses(Mock(name="ds"), "EFT_LO", parameters)
+    linear, quadratic = backend.dataset_responses(Mock(name="ds"), "EFT_LO", parameters)
 
-    np.testing.assert_allclose(responses.linear, [[0.5, 0.5], [1.5, 1.0]])
-    assert responses.quadratic is None
+    np.testing.assert_allclose(linear, [[0.5, 0.5], [1.5, 1.0]])
+    assert quadratic is None
 
 
 def test_simunet_backend_missing_order(fake_simunet):
     backend = SIMUnetBackend()
     with pytest.raises(KeyError, match="EFT_NLO"):
-        backend.dataset_responses(Mock(), "EFT_NLO", (SMEFTParameter("OtG"),))
+        backend.dataset_responses(Mock(), "EFT_NLO", [_param("OtG")])
 
 
 def test_simunet_backend_simudata_path(fake_simunet, tmp_path):
@@ -323,9 +285,9 @@ def test_smeft_corrections_passes_backend_options(monkeypatch):
             received["path"] = path
 
     monkeypatch.setitem(SMEFT_BACKENDS, "options", OptionsBackend)
-    settings = SMEFTSettings(
+    settings = _settings(
         backend="options",
-        parameters=(SMEFTParameter("OtG"),),
+        parameters=[_param("OtG")],
         backend_options={"path": "somewhere"},
     )
 

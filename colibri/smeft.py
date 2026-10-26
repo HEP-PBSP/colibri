@@ -15,16 +15,26 @@ K-factor that depends on the Wilson coefficients :math:`c_i`:
 where :math:`L_i` (linear) and :math:`Q_{ij}` (quadratic, optional) are the
 SMEFT responses normalised to the SM prediction they were computed with.
 
-Where the responses come from is delegated to an :class:`SMEFTBackend`.
-Backends are registered by name with :func:`register_smeft_backend` and
-selected in the runcard with ``smeft_settings: {backend: <name>}``.
-Which datasets get a correction, and at which order, is set per dataset
-with the ``smeft_order`` key in ``dataset_inputs``.
+Where the responses come from is delegated to a backend, selected in the
+runcard with ``smeft_settings: {backend: <name>}`` among the classes in
+:data:`SMEFT_BACKENDS`. Which datasets get a correction, and at which order,
+is set per dataset with the ``smeft_order`` key in ``dataset_inputs``.
 
-Everything downstream of the backend (cuts, ordering of the data points,
-the forward map itself) is backend independent, so
-adding a new source of K-factors (e.g. SMEFiT) only requires implementing
-:meth:`SMEFTBackend.dataset_responses`.
+A backend is a class whose constructor takes the ``backend_options`` of the
+runcard, with one method::
+
+    dataset_responses(dataset, order, parameters) -> (linear, quadratic)
+
+- ``dataset``: ``validphys.core.DataSetSpec``.
+- ``order``: perturbative order of the K-factors, as given in the runcard.
+- ``parameters``: list of ``{"name": str, "linear_combination": {operator: coeff}}``.
+- ``linear``: array of shape ``(n_params, n_points)``; ``quadratic``: array of
+  shape ``(n_params, n_params, n_points)``, or None. Both over *all* the points
+  of the dataset (no cuts) and relative to the SM.
+
+Everything downstream of the backend (cuts, ordering of the data points, the
+forward map) is backend independent, so adding a new source of K-factors
+(e.g. SMEFiT) only requires such a class and an entry in :data:`SMEFT_BACKENDS`.
 
 Currently available backends:
 
@@ -32,10 +42,9 @@ Currently available backends:
 """
 
 import logging
-from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
-from dataclasses import dataclass, field
-from typing import NamedTuple, Optional
+from typing import Optional
 
 import numpy as np
 from validphys.core import DataSetInput
@@ -44,60 +53,8 @@ log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Settings
+# Datasets with a SMEFT correction
 # ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class SMEFTParameter:
-    """
-    A SMEFT fit parameter.
-
-    Attributes
-    ----------
-    name: str
-        Name of the fit parameter, as it appears in ``forward_map.param_names``.
-
-    linear_combination: dict
-        Mapping ``{operator: coefficient}`` defining the parameter as a linear
-        combination of the operators known to the backend. Defaults to
-        ``{name: 1.0}``, i.e. the parameter is a single operator.
-    """
-
-    name: str
-    linear_combination: dict = field(default_factory=dict)
-
-    def __post_init__(self):
-        if not self.linear_combination:
-            object.__setattr__(self, "linear_combination", {self.name: 1.0})
-
-
-@dataclass(frozen=True)
-class SMEFTSettings:
-    """
-    Parsed ``smeft_settings`` runcard namespace.
-
-    Attributes
-    ----------
-    backend: str
-        Name of the registered :class:`SMEFTBackend` providing the K-factors.
-
-    parameters: tuple[SMEFTParameter]
-        SMEFT fit parameters, in the order they are appended to the PDF
-        parameters.
-
-    backend_options: dict
-        Keyword arguments passed to the backend constructor, e.g.
-        ``{simudata_path: ...}`` for SIMUnet.
-    """
-
-    backend: str
-    parameters: tuple
-    backend_options: dict = field(default_factory=dict)
-
-    @property
-    def parameter_names(self) -> tuple:
-        return tuple(p.name for p in self.parameters)
 
 
 class SMEFTDataSetInput(DataSetInput):
@@ -142,21 +99,6 @@ def smeft_orders(dataset_inputs) -> dict:
 # ---------------------------------------------------------------------------
 
 
-class DatasetResponses(NamedTuple):
-    """
-    SMEFT responses of a single dataset, as returned by a backend.
-
-    Both arrays run over *all* the points of the dataset (no cuts applied)
-    and are relative to the SM, for unit physical Wilson coefficients.
-
-    linear: np.ndarray, shape (n_params, n_points)
-    quadratic: np.ndarray, shape (n_params, n_params, n_points), optional
-    """
-
-    linear: np.ndarray
-    quadratic: Optional[np.ndarray] = None
-
-
 @dataclass(frozen=True)
 class SMEFTCorrections:
     """
@@ -182,55 +124,7 @@ class SMEFTCorrections:
 # ---------------------------------------------------------------------------
 
 
-class SMEFTBackend(ABC):
-    """
-    Source of SMEFT K-factors.
-
-    A backend only needs to know how to produce the responses of one dataset
-    for a given list of fit parameters. Cuts and ordering of the data are
-    handled by colibri.
-    """
-
-    @abstractmethod
-    def dataset_responses(
-        self, dataset, order: str, parameters: tuple
-    ) -> DatasetResponses:
-        """
-        Parameters
-        ----------
-        dataset: validphys.core.DataSetSpec
-
-        order: str
-            Perturbative order of the K-factors, as given in the runcard.
-
-        parameters: tuple[SMEFTParameter]
-
-        Returns
-        -------
-        DatasetResponses
-            Responses for all the (uncut) points of the dataset.
-        """
-        raise NotImplementedError
-
-
-SMEFT_BACKENDS: dict = {}
-"""Registry of available SMEFT backends, ``{name: SMEFTBackend subclass}``."""
-
-
-def register_smeft_backend(name: str):
-    """Class decorator registering an :class:`SMEFTBackend` under ``name``."""
-
-    def decorator(cls):
-        if not issubclass(cls, SMEFTBackend):
-            raise TypeError(f"{cls.__name__} must be a subclass of SMEFTBackend")
-        SMEFT_BACKENDS[name] = cls
-        return cls
-
-    return decorator
-
-
-@register_smeft_backend("simunet")
-class SIMUnetBackend(SMEFTBackend):
+class SIMUnetBackend:
     """
     K-factors from the SIMU-factor files of SIMUnet
     (https://github.com/scarlehoff/SIMUnet).
@@ -282,12 +176,12 @@ class SIMUnetBackend(SMEFTBackend):
                 f"Order '{order}' not found in the SIMU factor file of "
                 f"{dataset.name} ({path}). Available keys: {list(factors)}"
             )
-        specs = [
-            {"name": p.name, "linear_combination": dict(p.linear_combination)}
-            for p in parameters
-        ]
-        linear = self._parameter_responses(specs, factors[order])
-        return DatasetResponses(linear=np.asarray(linear, dtype=float))
+        linear = self._parameter_responses(list(parameters), factors[order])
+        return np.asarray(linear, dtype=float), None
+
+
+SMEFT_BACKENDS = {"simunet": SIMUnetBackend}
+"""Available SMEFT backends, ``{name: backend class}`` (see the module docstring)."""
 
 
 # ---------------------------------------------------------------------------
@@ -295,9 +189,7 @@ class SIMUnetBackend(SMEFTBackend):
 # ---------------------------------------------------------------------------
 
 
-def smeft_corrections(
-    data, dataset_inputs, smeft_settings: SMEFTSettings
-) -> SMEFTCorrections:
+def smeft_corrections(data, dataset_inputs, smeft_settings) -> SMEFTCorrections:
     """
     Collects the SMEFT responses of every dataset in ``data`` from the
     backend selected in ``smeft_settings``, applying the cuts. Only the
@@ -310,7 +202,8 @@ def smeft_corrections(
 
     dataset_inputs: list[validphys.core.DataSetInput]
 
-    smeft_settings: SMEFTSettings
+    smeft_settings: dict
+        Parsed ``smeft_settings``, see ``colibriConfig.parse_smeft_settings``.
 
     Returns
     -------
@@ -323,8 +216,10 @@ def smeft_corrections(
             "Add e.g. `smeft_order: EFT_NLO` to the relevant dataset_inputs entries."
         )
 
-    backend = SMEFT_BACKENDS[smeft_settings.backend](**smeft_settings.backend_options)
-    parameters = smeft_settings.parameters
+    backend = SMEFT_BACKENDS[smeft_settings["backend"]](
+        **smeft_settings["backend_options"]
+    )
+    parameters = smeft_settings["parameters"]
     n_params = len(parameters)
 
     linear_blocks, quadratic_blocks = [], []
@@ -340,9 +235,9 @@ def smeft_corrections(
 
         order = orders[ds.name]
         log.info(f"Loading SMEFT {order} responses for {ds.name}")
-        responses = backend.dataset_responses(ds, order, parameters)
+        linear, quadratic = backend.dataset_responses(ds, order, parameters)
 
-        linear = np.asarray(responses.linear, dtype=float)
+        linear = np.asarray(linear, dtype=float)
         if linear.shape != (n_params, ndata):
             raise ValueError(
                 f"Linear SMEFT responses for {ds.name} have shape {linear.shape}, "
@@ -350,10 +245,10 @@ def smeft_corrections(
             )
         linear_blocks.append(linear[:, idx])
 
-        if responses.quadratic is None:
+        if quadratic is None:
             quadratic_blocks.append(None)
         else:
-            quadratic = np.asarray(responses.quadratic, dtype=float)
+            quadratic = np.asarray(quadratic, dtype=float)
             if quadratic.shape != (n_params, n_params, ndata):
                 raise ValueError(
                     f"Quadratic SMEFT responses for {ds.name} have shape "
@@ -375,7 +270,7 @@ def smeft_corrections(
         )
 
     return SMEFTCorrections(
-        parameter_names=smeft_settings.parameter_names,
+        parameter_names=tuple(p["name"] for p in parameters),
         linear=linear,
         quadratic=quadratic,
     )
