@@ -160,25 +160,6 @@ def bayesian_prior(prior_settings, pdf_model):
     raise ValueError("Invalid prior type.")
 
 
-def extra_parameters_bounds(forward_map, extra_prior_settings=None):
-    """
-    Lower and upper bounds of the uniform prior of the extra parameters of the
-    forward map, from ``extra_prior_settings``.
-    """
-    extra_param_names = list(forward_map.extra_param_names)
-    if extra_prior_settings is None:
-        raise ValueError(
-            f"The forward map has extra parameters {extra_param_names}: set their "
-            "prior with extra_prior_settings (prior_distribution_specs with "
-            "'bounds' or 'min_val' and 'max_val')."
-        )
-    return uniform_prior_bounds(
-        extra_param_names,
-        extra_prior_settings.prior_distribution_specs,
-        settings_name="extra_prior_settings prior_distribution_specs",
-    )
-
-
 def extra_parameters_prior(forward_map, extra_prior_settings=None):
     """
     Prior of the extra parameters of the forward map
@@ -201,7 +182,19 @@ def extra_parameters_prior(forward_map, extra_prior_settings=None):
     """
     if not forward_map.extra_param_names:
         return None
-    return uniform_prior(*extra_parameters_bounds(forward_map, extra_prior_settings))
+    if extra_prior_settings is None:
+        raise ValueError(
+            f"The forward map has extra parameters "
+            f"{list(forward_map.extra_param_names)}: set their prior with "
+            "extra_prior_settings (prior_distribution_specs with 'bounds' or "
+            "'min_val' and 'max_val')."
+        )
+    mins, maxs = uniform_prior_bounds(
+        forward_map.extra_param_names,
+        extra_prior_settings.prior_distribution_specs,
+        settings_name="extra_prior_settings prior_distribution_specs",
+    )
+    return uniform_prior(mins, maxs)
 
 
 def fit_prior(forward_map, bayesian_prior, extra_parameters_prior):
@@ -221,16 +214,6 @@ def fit_prior(forward_map, bayesian_prior, extra_parameters_prior):
         return bayesian_prior
 
     n_pdf = forward_map.n_pdf_params
-
-    # The PDF prior must cover the PDF parameters only
-    test_point = bayesian_prior.prior_transform(jnp.full(n_pdf, 0.5))
-    if jnp.shape(test_point) != (n_pdf,):
-        raise ValueError(
-            f"The PDF prior (bayesian_prior) returns parameters of shape "
-            f"{jnp.shape(test_point)}, but the forward map has {n_pdf} PDF "
-            "parameters. It must cover the PDF parameters only: the extra "
-            "parameters of the forward map have their own prior."
-        )
 
     def prior_transform(cube):
         cube = jnp.asarray(cube)

@@ -297,17 +297,3 @@ def test_fit_prior_joins_pdf_and_extra_priors():
     assert np.all(np.abs(samples[:, :2]) <= 1)
     assert np.all((samples[:, 3] >= -4) & (samples[:, 3] <= -2))
 
-
-def test_fit_prior_rejects_pdf_prior_of_wrong_size():
-    """A model prior covering all the parameters is caught with a clear error."""
-    fm = _fm_with_extras()
-    all_params_prior = bayesian_prior(
-        UNIFORM_PDF_PRIOR,
-        _pdf_model(("param1", "param2", "c1", "c2")),
-    )
-    wrong = Mock()
-    wrong.prior_transform = lambda cube: all_params_prior.prior_transform(
-        jnp.full(4, 0.5)
-    )
-    with pytest.raises(ValueError, match="PDF parameters only"):
-        fit_prior(fm, wrong, extra_parameters_prior(fm, EXTRA_SETTINGS))

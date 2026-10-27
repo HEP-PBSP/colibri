@@ -21,7 +21,7 @@ from colibri.export_results import (
     export_bayes_results,
     plot_bayes_plots,
 )
-from colibri.bayes_prior import extra_parameters_bounds, uniform_prior_bounds
+from colibri.bayes_prior import uniform_prior_bounds
 from colibri.checks import check_pdf_model_is_linear
 from colibri.utils import compute_determinants_of_principal_minors
 
@@ -218,8 +218,17 @@ def analytic_fit(
 
     # Bounds of the extra parameters, from extra_prior_settings
     if forward_map.extra_param_names:
-        extra_lower, extra_upper = extra_parameters_bounds(
-            forward_map, extra_prior_settings
+        if extra_prior_settings is None:
+            raise ValueError(
+                f"The forward map has extra parameters "
+                f"{list(forward_map.extra_param_names)}: set their prior with "
+                "extra_prior_settings (prior_distribution_specs with 'bounds' or "
+                "'min_val' and 'max_val')."
+            )
+        extra_lower, extra_upper = uniform_prior_bounds(
+            forward_map.extra_param_names,
+            extra_prior_settings.prior_distribution_specs,
+            settings_name="extra_prior_settings prior_distribution_specs",
         )
         prior_lower = jnp.concatenate([jnp.asarray(prior_lower), extra_lower])
         prior_upper = jnp.concatenate([jnp.asarray(prior_upper), extra_upper])
