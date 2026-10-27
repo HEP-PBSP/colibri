@@ -296,4 +296,3 @@ def test_fit_prior_joins_pdf_and_extra_priors():
     assert samples.shape == (50, 4)
     assert np.all(np.abs(samples[:, :2]) <= 1)
     assert np.all((samples[:, 3] >= -4) & (samples[:, 3] <= -2))
-
