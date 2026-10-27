@@ -444,7 +444,7 @@ def test_initial_parameters_rejects_pdf_part_of_wrong_size():
 
 def test_initial_parameters_rejects_extra_part_of_wrong_size():
     fm = _fm_with_extras()
-    with pytest.raises(ValueError, match="initial values for 1 extra parameters"):
+    with pytest.raises(ValueError, match="the forward map has 1 extra parameters"):
         initial_parameters(fm, jnp.zeros(2), jnp.zeros(2))
 
 

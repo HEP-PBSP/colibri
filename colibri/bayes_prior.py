@@ -5,15 +5,16 @@ Priors of the Bayesian fits.
 
 The fit parameters are the PDF parameters followed by the extra parameters of
 the forward map (see ``forward_map.ForwardMap``). The two parts have
-independent priors:
+independent priors, each given by its own provider:
 
-- ``bayesian_prior``: prior of the PDF parameters of ``pdf_model``, from
-  ``prior_settings``.
-  PDF model apps can override this provider.
-- ``extra_parameters_prior``: uniform prior of the extra parameters, from
-  ``extra_prior_settings``.
+- ``bayesian_prior``: prior of the PDF parameters of ``pdf_model``. By
+  default, built from ``prior_settings``.
+- ``extra_parameters_prior``: prior of the extra parameters of the forward
+  map. By default, uniform with bounds from ``extra_prior_settings``.
 
-``fit_prior`` joins them, and is what the samplers use.
+Apps can override either provider with any ``BayesianPrior``, as long as it
+covers only its own part of the parameters. ``fit_prior`` joins them, and is
+what the samplers use.
 """
 
 import logging
@@ -90,8 +91,8 @@ def bayesian_prior(prior_settings, pdf_model):
     """
     Prior of the PDF parameters (``pdf_model.param_names``).
 
-    PDF model apps can override this provider; the extra parameters of the
-    forward map have their own prior (see ``extra_parameters_prior``).
+    Apps can override this provider; the extra parameters of the forward map
+    have their own prior (see ``extra_parameters_prior``).
 
     Parameters
     ----------
@@ -180,8 +181,12 @@ def extra_parameters_bounds(forward_map, extra_prior_settings=None):
 
 def extra_parameters_prior(forward_map, extra_prior_settings=None):
     """
-    Uniform prior of the extra parameters of the forward map
+    Prior of the extra parameters of the forward map
     (``forward_map.extra_param_names``), or None if there are none.
+
+    The default is a uniform prior with bounds from ``extra_prior_settings``.
+    Apps can override this provider with any prior on the extra parameters;
+    the PDF parameters have their own prior (see ``bayesian_prior``).
 
     Parameters
     ----------
@@ -202,9 +207,9 @@ def extra_parameters_prior(forward_map, extra_prior_settings=None):
 def fit_prior(forward_map, bayesian_prior, extra_parameters_prior):
     """
     Prior of all the fit parameters, in the order of ``forward_map.param_names``:
-    ``bayesian_prior`` (PDF parameters, which PDF model apps may override) and
-    ``extra_parameters_prior`` (extra parameters of the forward map), taken as
-    independent.
+    ``bayesian_prior`` (PDF parameters) and ``extra_parameters_prior`` (extra
+    parameters of the forward map), taken as independent. Either may be
+    overridden by apps.
 
     Without extra parameters this is ``bayesian_prior`` itself.
 

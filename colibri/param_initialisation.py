@@ -6,14 +6,16 @@ Initial values of the fit parameters, for the fits that need a starting point
 
 The fit parameters are the PDF parameters followed by the extra parameters of
 the forward map (see ``forward_map.ForwardMap``). The two parts are
-initialised separately:
+initialised separately, each by its own provider:
 
-- ``pdf_initial_parameters``: the PDF parameters of ``pdf_model``, from
-  ``param_initialiser_settings``. PDF model apps can override this provider.
-- ``extra_initial_parameters``: the extra parameters, from
-  ``extra_param_initialiser_settings`` (zeros by default).
+- ``pdf_initial_parameters``: the PDF parameters of ``pdf_model``. By
+  default, from ``param_initialiser_settings``.
+- ``extra_initial_parameters``: the extra parameters of the forward map. By
+  default, from ``extra_param_initialiser_settings`` (zeros if not set).
 
-``initial_parameters`` joins them, and is what the fits use.
+Apps can override either provider, as long as it returns values for its own
+part of the parameters only. ``initial_parameters`` joins them, and is what
+the fits use.
 """
 
 import logging
@@ -178,7 +180,8 @@ def extra_initial_parameters(
     Initial values of the extra parameters of the forward map
     (``forward_map.extra_param_names``), from
     ``extra_param_initialiser_settings``. The options are those of
-    ``param_initialiser_settings``; the default is zeros.
+    ``param_initialiser_settings``; the default is zeros. Apps can override
+    this provider.
 
     The random key differs from the one of the PDF parameters, so that the
     two are independent.
@@ -224,11 +227,12 @@ def _join_initial_parameters(forward_map, pdf_parameters, extra_parameters):
             f"pdf_initial_parameters returned {pdf_parameters.shape[0]} values, but "
             f"the forward map has {forward_map.n_pdf_params} PDF parameters. The "
             "PDF initialiser must cover the PDF parameters only: the extra "
-            "parameters of the forward map are initialised by colibri."
+            "parameters of the forward map are initialised separately."
         )
     if extra_parameters.shape != (len(forward_map.extra_param_names),):
         raise ValueError(
-            f"Got {extra_parameters.shape[0]} initial values for "
+            f"extra_initial_parameters returned {extra_parameters.shape[0]} "
+            f"values, but the forward map has "
             f"{len(forward_map.extra_param_names)} extra parameters."
         )
 
@@ -242,8 +246,8 @@ def _join_initial_parameters(forward_map, pdf_parameters, extra_parameters):
 def initial_parameters(forward_map, pdf_initial_parameters, extra_initial_parameters):
     """
     Initial values of all the fit parameters, in the order of
-    ``forward_map.param_names``: the PDF parameters (``pdf_initial_parameters``,
-    which PDF model apps may override) followed by the extra parameters.
+    ``forward_map.param_names``: the PDF parameters (``pdf_initial_parameters``)
+    followed by the extra parameters (``extra_initial_parameters``).
     """
     return _join_initial_parameters(
         forward_map, pdf_initial_parameters, extra_initial_parameters
