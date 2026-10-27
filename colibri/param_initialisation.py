@@ -39,7 +39,7 @@ def _initial_values(param_names, param_initialiser_settings, key_fn):
 
     if param_initialiser_settings["type"] not in INITIALISER_TYPES:
         log.warning(
-            f"MC initialiser type {param_initialiser_settings['type']} not recognised, using default: 'zeros' instead."
+            f"Initialiser type {param_initialiser_settings['type']} not recognised, using default: 'zeros' instead."
         )
 
         param_initialiser_settings["type"] = "zeros"
