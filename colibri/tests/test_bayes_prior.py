@@ -19,18 +19,12 @@ from colibri.core import PriorSettings
 from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_PRIOR_SETTINGS_UNIFORM
 from unittest.mock import Mock
 
-# Create a mock forward_map that exposes param_names matching MOCK_PDF_MODEL
-MOCK_FORWARD_MAP = Mock()
-MOCK_FORWARD_MAP.param_names = MOCK_PDF_MODEL.param_names
-MOCK_FORWARD_MAP.pdf_param_names = MOCK_PDF_MODEL.param_names
-MOCK_FORWARD_MAP.extra_param_names = []
-
 
 def test_uniform_prior():
     """
     Test the transformation of a uniform prior distribution.
     """
-    prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_FORWARD_MAP)
+    prior_transform = bayesian_prior(TEST_PRIOR_SETTINGS_UNIFORM, MOCK_PDF_MODEL)
     MOCK_PDF_MODEL.n_parameters = 2
 
     key = random.PRNGKey(0)
@@ -75,7 +69,7 @@ def test_uniform_prior():
         }
     )
 
-    prior_transform_bounds = bayesian_prior(prior_settings_bounds, MOCK_FORWARD_MAP)
+    prior_transform_bounds = bayesian_prior(prior_settings_bounds, MOCK_PDF_MODEL)
 
     cube_bounds = random.uniform(key, shape=(2,))
     expected_bounds = jnp.array(
@@ -105,7 +99,7 @@ def test_uniform_prior():
     )
 
     with pytest.raises(ValueError, match="Missing bounds for parameters"):
-        bayesian_prior(prior_settings_missing_bounds, MOCK_FORWARD_MAP)
+        bayesian_prior(prior_settings_missing_bounds, MOCK_PDF_MODEL)
 
     # ---- Test missing min_val/max_val and bounds ----
     prior_settings_invalid = PriorSettings(
@@ -116,7 +110,7 @@ def test_uniform_prior():
     )
 
     with pytest.raises(ValueError, match="prior_distribution_specs must define either"):
-        bayesian_prior(prior_settings_invalid, MOCK_FORWARD_MAP)
+        bayesian_prior(prior_settings_invalid, MOCK_PDF_MODEL)
 
 
 def _posterior_with(mean, cov, columns):
@@ -138,7 +132,7 @@ def test_gaussian_prior(mock_get_full_posterior):
 
     # Posterior samples with exactly this mean and covariance
     mock_get_full_posterior.return_value = _posterior_with(
-        mean, cov, MOCK_FORWARD_MAP.pdf_param_names
+        mean, cov, MOCK_PDF_MODEL.param_names
     )
 
     prior_settings = PriorSettings(
@@ -148,7 +142,7 @@ def test_gaussian_prior(mock_get_full_posterior):
         }
     )
 
-    prior_transform = bayesian_prior(prior_settings, MOCK_FORWARD_MAP)
+    prior_transform = bayesian_prior(prior_settings, MOCK_PDF_MODEL)
 
     key = random.PRNGKey(0)
     cube = random.uniform(key, shape=(10, 2))
@@ -175,7 +169,7 @@ def test_invalid_prior_type():
     )
 
     with pytest.raises(ValueError) as e:
-        bayesian_prior(prior_settings, MOCK_FORWARD_MAP)
+        bayesian_prior(prior_settings, MOCK_PDF_MODEL)
 
 
 # ---------------------------------------------------------------------------
@@ -203,20 +197,34 @@ def _fm_with_extras(pdf_names=("param1", "param2"), extra_names=("c1", "c2")):
     return fm
 
 
+def _pdf_model(names=("param1", "param2")):
+    pdf_model = Mock()
+    pdf_model.param_names = list(names)
+    return pdf_model
+
+
 def test_bayesian_prior_covers_pdf_parameters_only():
-    prior = bayesian_prior(UNIFORM_PDF_PRIOR, _fm_with_extras())
+    prior = bayesian_prior(UNIFORM_PDF_PRIOR, _pdf_model())
     assert prior.prior_transform(jnp.full(2, 0.5)).shape == (2,)
 
 
-def test_bayesian_prior_rejects_extra_bounds_in_prior_settings():
+def test_bayesian_prior_without_pdf_model_is_empty():
+    prior = bayesian_prior(UNIFORM_PDF_PRIOR, None)
+    assert prior.prior_transform(jnp.zeros(0)).shape == (0,)
+
+
+def test_bayesian_prior_warns_about_bounds_of_non_pdf_parameters(caplog):
     settings = PriorSettings(
         prior_distribution="uniform_parameter_prior",
         prior_distribution_specs={
             "bounds": {"param1": [0, 1], "param2": [0, 1], "c1": [0, 1]}
         },
     )
-    with pytest.raises(ValueError, match="extra_prior_settings"):
-        bayesian_prior(settings, _fm_with_extras())
+    with caplog.at_level("WARNING", logger="colibri.bayes_prior"):
+        prior = bayesian_prior(settings, _pdf_model())
+    assert "['c1']" in caplog.text
+    assert "extra_prior_settings" in caplog.text
+    assert prior.prior_transform(jnp.full(2, 0.5)).shape == (2,)
 
 
 @patch("colibri.bayes_prior.get_full_posterior")
@@ -231,7 +239,7 @@ def test_gaussian_prior_uses_pdf_columns_only(mock_get_full_posterior):
         prior_distribution="prior_from_gauss_posterior",
         prior_distribution_specs={"prior_fit": "fit"},
     )
-    prior = bayesian_prior(settings, _fm_with_extras(extra_names=("c1",)))
+    prior = bayesian_prior(settings, _pdf_model())
     np.testing.assert_allclose(prior.prior_transform(jnp.full(2, 0.5)), mean[:2])
 
 
@@ -257,7 +265,7 @@ def test_extra_parameters_prior_global_bounds():
 
 def test_fit_prior_without_extras_is_pdf_prior():
     fm = _fm_with_extras(extra_names=())
-    pdf_prior = bayesian_prior(UNIFORM_PDF_PRIOR, fm)
+    pdf_prior = bayesian_prior(UNIFORM_PDF_PRIOR, _pdf_model())
     assert fit_prior(fm, pdf_prior, None) is pdf_prior
 
 
@@ -265,7 +273,7 @@ def test_fit_prior_joins_pdf_and_extra_priors():
     fm = _fm_with_extras()
     prior = fit_prior(
         fm,
-        bayesian_prior(UNIFORM_PDF_PRIOR, fm),
+        bayesian_prior(UNIFORM_PDF_PRIOR, _pdf_model()),
         extra_parameters_prior(fm, EXTRA_SETTINGS),
     )
 
@@ -295,7 +303,7 @@ def test_fit_prior_rejects_pdf_prior_of_wrong_size():
     fm = _fm_with_extras()
     all_params_prior = bayesian_prior(
         UNIFORM_PDF_PRIOR,
-        _fm_with_extras(pdf_names=("param1", "param2", "c1", "c2"), extra_names=()),
+        _pdf_model(("param1", "param2", "c1", "c2")),
     )
     wrong = Mock()
     wrong.prior_transform = lambda cube: all_params_prior.prior_transform(

@@ -26,7 +26,9 @@ e.g. a normalisation or SMEFT Wilson coefficients. Their prior is independent
 of the PDF one:
 
 - ``prior_settings`` sets the prior of the PDF parameters only. PDF model
-  apps can replace it with their own prior (the ``bayesian_prior`` provider).
+  apps can replace it with their own prior (the ``bayesian_prior`` provider,
+  which takes the ``pdf_model``). Bounds for parameters that are not in the
+  PDF model are ignored, with a warning.
 - ``extra_prior_settings`` sets the prior of the extra parameters. It has the
   same structure as ``prior_settings``, but only ``uniform_parameter_prior``
   is supported, with per-parameter ``bounds`` or a global ``min_val`` and

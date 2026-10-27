@@ -7,7 +7,8 @@ The fit parameters are the PDF parameters followed by the extra parameters of
 the forward map (see ``forward_map.ForwardMap``). The two parts have
 independent priors:
 
-- ``bayesian_prior``: prior of the PDF parameters, from ``prior_settings``.
+- ``bayesian_prior``: prior of the PDF parameters of ``pdf_model``, from
+  ``prior_settings``.
   PDF model apps can override this provider.
 - ``extra_parameters_prior``: uniform prior of the extra parameters, from
   ``extra_prior_settings``.
@@ -15,12 +16,16 @@ independent priors:
 ``fit_prior`` joins them, and is what the samplers use.
 """
 
+import logging
+
 import jax
 import jax.numpy as jnp
 import tensorflow_probability.substrates.jax as tfp
 
 from colibri.core import BayesianPrior
 from colibri.utils import cast_to_numpy, get_full_posterior
+
+log = logging.getLogger(__name__)
 
 tfd = tfp.distributions
 
@@ -81,9 +86,9 @@ def uniform_prior(mins, maxs):
     )
 
 
-def bayesian_prior(prior_settings, forward_map):
+def bayesian_prior(prior_settings, pdf_model):
     """
-    Prior of the PDF parameters (``forward_map.pdf_param_names``).
+    Prior of the PDF parameters (``pdf_model.param_names``).
 
     PDF model apps can override this provider; the extra parameters of the
     forward map have their own prior (see ``extra_parameters_prior``).
@@ -93,25 +98,25 @@ def bayesian_prior(prior_settings, forward_map):
     prior_settings: PriorSettings
         The settings for the prior.
 
-    forward_map: ForwardMap
-        The forward map of the problem, used to determine parameter names and ordering.
+    pdf_model: pdf_model.PDFModel or None
+        The PDF model, used to determine parameter names and ordering. None
+        means there are no PDF parameters.
 
     Returns
     -------
     BayesianPrior
     """
-    pdf_param_names = list(forward_map.pdf_param_names)
+    pdf_param_names = list(pdf_model.param_names) if pdf_model is not None else []
 
     if prior_settings.prior_distribution == "uniform_parameter_prior":
         prior_specs = prior_settings.prior_distribution_specs
-        extra_in_bounds = set(prior_specs.get("bounds", {})) & set(
-            forward_map.extra_param_names
-        )
-        if extra_in_bounds:
-            raise ValueError(
-                f"The bounds of {sorted(extra_in_bounds)} go in "
-                "extra_prior_settings, not in prior_settings, which is for the "
-                "PDF parameters only."
+        unused = sorted(set(prior_specs.get("bounds", {})) - set(pdf_param_names))
+        if unused:
+            log.warning(
+                f"prior_settings has bounds for {unused}, which are not "
+                "parameters of the PDF model: they are ignored. The bounds of "
+                "the extra parameters of the forward map go in "
+                "extra_prior_settings."
             )
         mins, maxs = uniform_prior_bounds(pdf_param_names, prior_specs)
         return uniform_prior(mins, maxs)

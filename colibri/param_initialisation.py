@@ -8,7 +8,7 @@ The fit parameters are the PDF parameters followed by the extra parameters of
 the forward map (see ``forward_map.ForwardMap``). The two parts are
 initialised separately:
 
-- ``pdf_initial_parameters``: the PDF parameters, from
+- ``pdf_initial_parameters``: the PDF parameters of ``pdf_model``, from
   ``param_initialiser_settings``. PDF model apps can override this provider.
 - ``extra_initial_parameters``: the extra parameters, from
   ``extra_param_initialiser_settings`` (zeros by default).
@@ -137,16 +137,17 @@ def _initial_values(param_names, param_initialiser_settings, key_fn):
         return initial_values
 
 
-def pdf_initial_parameters(forward_map, param_initialiser_settings, replica_index=-1):
+def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=-1):
     """
-    Initial values of the PDF parameters (``forward_map.pdf_param_names``).
+    Initial values of the PDF parameters (``pdf_model.param_names``).
 
     PDF model apps can override this provider; the extra parameters of the
     forward map are initialised separately (see ``extra_initial_parameters``).
 
     Parameters
     ----------
-    forward_map: forward_map.ForwardMap
+    pdf_model: pdf_model.PDFModel or None
+        The PDF model. None means there are no PDF parameters.
 
     param_initialiser_settings: dict
         The settings for the initialiser.
@@ -166,9 +167,8 @@ def pdf_initial_parameters(forward_map, param_initialiser_settings, replica_inde
             return jax.random.PRNGKey(replica_index)
         return jax.random.PRNGKey(seed + replica_index)
 
-    return _initial_values(
-        forward_map.pdf_param_names, param_initialiser_settings, key_fn
-    )
+    pdf_param_names = pdf_model.param_names if pdf_model is not None else []
+    return _initial_values(pdf_param_names, param_initialiser_settings, key_fn)
 
 
 def extra_initial_parameters(
@@ -258,11 +258,14 @@ def all_initial_parameters(
 ):
     """
     As ``initial_parameters``, for code that needs several initialisations
-    (e.g. one per Hessian fit iteration). Uses colibri's PDF initialiser.
+    (e.g. one per Hessian fit iteration). Uses colibri's PDF initialiser, on
+    the PDF model of the forward map.
     """
     return _join_initial_parameters(
         forward_map,
-        pdf_initial_parameters(forward_map, param_initialiser_settings, replica_index),
+        pdf_initial_parameters(
+            forward_map.pdf_model, param_initialiser_settings, replica_index
+        ),
         extra_initial_parameters(
             forward_map, extra_param_initialiser_settings, replica_index
         ),
