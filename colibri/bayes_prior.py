@@ -69,7 +69,36 @@ def bayesian_prior(prior_settings, forward_map):
         def prior_transform(cube):
             return cube * (maxs - mins) + mins
 
+        @jax.jit
+        def from_unconstrained(position):
+            return mins + (maxs - mins) * jax.nn.sigmoid(position)
+
+        @jax.jit
+        def log_prob_unconstrained(position):
+            # For a uniform prior, its normalization cancels the
+            # interval-width contribution to the Jacobian.
+            return jnp.sum(
+                jax.nn.log_sigmoid(position) + jax.nn.log_sigmoid(-position),
+                axis=-1,
+            )
+
+        def sample_unconstrained(rng_key, n_samples):
+            dtype = jnp.asarray(0.0).dtype
+            eps = jnp.finfo(dtype).eps
+            cube = jax.random.uniform(
+                rng_key,
+                shape=(n_samples, mins.shape[0]),
+                dtype=dtype,
+                minval=eps,
+                maxval=1 - eps,
+            )
+            return jnp.log(cube) - jnp.log1p(-cube)
+
     elif prior_settings.prior_distribution == "prior_from_gauss_posterior":
+        from_unconstrained = None
+        log_prob_unconstrained = None
+        sample_unconstrained = None
+
         prior_fit = prior_settings.prior_distribution_specs["prior_fit"]
 
         df_fit = get_full_posterior(prior_fit)
@@ -104,4 +133,7 @@ def bayesian_prior(prior_settings, forward_map):
         prior_transform=prior_transform,
         log_prob=log_prob,
         sample=sample,
+        from_unconstrained=from_unconstrained,
+        log_prob_unconstrained=log_prob_unconstrained,
+        sample_unconstrained=sample_unconstrained,
     )
