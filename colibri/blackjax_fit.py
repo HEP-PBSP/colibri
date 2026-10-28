@@ -1,44 +1,28 @@
-"""
-colibri.blackjax_fit.py
-
-This module contains the BlackJAX Bayesian fitting routine of Colibri.
-
-"""
+"""Shared interface for BlackJAX Bayesian fits."""
 
 import logging
-import sys
-import time
-import os
+from pathlib import Path
 
 import jax
 import jax.numpy as jnp
-import blackjax
-from blackjax.ns.utils import finalise, sample, log_weights, ess
-from jax.scipy.special import logsumexp
-import tqdm
-import anesthetic
 import pandas as pd
+from mpi4py import MPI
 
+from colibri.blackjax_samplers import get_sampler
+from colibri.blackjax_samplers._common import (
+    COMMON_SETTINGS,
+    validate_common_settings,
+)
 from colibri.core import BlackJAXFit
 from colibri.export_results import (
     export_bayes_results,
-    write_replicas,
     plot_bayes_plots,
+    write_replicas,
 )
 from colibri.utils import resample_from_ns_posterior
 
 log = logging.getLogger(__name__)
-
-# Check if --debug flag is present
-debug_flag = "--debug" in sys.argv
-
-# Set the BlackJAX logging level based on the presence of --debug flag
-blackjax_logger = logging.getLogger("blackjax")
-blackjax_logger.setLevel(logging.DEBUG if debug_flag else logging.INFO)
-
-# Configure the handler and formatter
-handler = logging.StreamHandler(sys.stdout)
-blackjax_logger.addHandler(handler)
+rank = MPI.COMM_WORLD.Get_rank()
 
 
 def blackjax_fit(
@@ -47,182 +31,173 @@ def blackjax_fit(
     blackjax_settings,
     log_likelihood,
 ):
-    """
-    The complete Nested Sampling fitting routine using BlackJAX, for any PDF model.
-
-    Parameters
-    ----------
-    forward_map: ForwardMap
-        The forward map whose ``param_names`` enumerate all fit parameters.
-
-    bayesian_prior: BayesianPrior, @jax.jit CompiledFunction
-        The prior function for the model.
-
-    blackjax_settings: dict
-        Settings for the BlackJAX Nested Sampling fit.
-
-    log_likelihood: Callable
-        The log likelihood function for the model.
-
-    Returns
-    -------
-    BlackJAXFit
-        Dataclass containing the results and specs of a BlackJAX fit.
-    """
-
-    log.info(f"Running fit with backend: {jax.default_backend()}")
-
-    # set the BlackJAX seed
-    rng_key = jax.random.PRNGKey(blackjax_settings["blackjax_seed"])
-    log.info(f"BlackJAX initialisation seed: {rng_key}")
-    n_dims = len(forward_map.param_names)
-    n_live = blackjax_settings["n_live"]
-    n_delete = int(blackjax_settings["delete_fraction"] * n_live)
-
-    inital_particles = bayesian_prior.sample(rng_key, n_live)
-
-    algo = blackjax.nss(
-        logprior_fn=bayesian_prior.log_prob,
-        loglikelihood_fn=log_likelihood,
-        num_delete=n_delete,
-        num_inner_steps=int(blackjax_settings["repeats"] * n_dims),
+    """Run the selected sampler and construct a common fit result."""
+    algorithm = blackjax_settings.get(
+        "algorithm",
+        "nested_sampling",
     )
+    sampler = get_sampler(algorithm)
 
-    @jax.jit
-    def one_step(carry, xs):
-        state, k = carry
-        k, subk = jax.random.split(k, 2)
-        state, dead_point = algo.step(subk, state)
-        return (state, k), dead_point
+    # Defaults also support direct calls to this provider.
+    settings = {
+        **COMMON_SETTINGS,
+        **sampler.SETTINGS,
+        **blackjax_settings,
+        "algorithm": algorithm,
+    }
 
-    state = algo.init(inital_particles)
+    validate_common_settings(settings)
+    sampler.validate(settings)
 
-    dead = []
-
-    t0 = time.time()
-    with tqdm.tqdm(desc="Dead points", unit=" dead points") as pbar:
-        while (
-            not state.integrator.logZ_live - state.integrator.logZ
-            < blackjax_settings["log_precision"]
-        ):
-            (state, rng_key), dead_info = one_step((state, rng_key), None)
-            dead.append(dead_info)
-            pbar.update(n_delete)
-    t1 = time.time()
-
-    log.info("BLACKJAX RUNNING TIME: %f s" % (t1 - t0))
-
-    final_states = finalise(state, dead)
-    rng_key, ess_key, weights_key, sample_key = jax.random.split(rng_key, 4)
-
-    # Initialize fit_result to avoid UnboundLocalError
-    fit_result = None
-
-    ess_value = int(ess(ess_key, final_states))
-    logw = log_weights(rng_key, final_states)
-    logzs = logsumexp(logw, axis=0)
-    full_samples = sample(sample_key, final_states, ess_value).position
-
-    # Get number of posterior samples to resample
-    n_posterior_samples = blackjax_settings["n_posterior_samples"]
-
-    # Check if we have enough samples
-    if n_posterior_samples > full_samples.shape[0]:
-        n_posterior_samples = full_samples.shape[0]
-        log.warning(
-            f"The chosen number of posterior samples exceeds the number of posterior "
-            f"samples computed by BlackJAX. Setting the number of resampled posterior "
-            f"samples to {n_posterior_samples}"
-        )
-
-    # Resample the posterior
-    posterior_resampling_seed = blackjax_settings["posterior_resampling_seed"]
-    log.info(f"Resampling posterior with seed: {posterior_resampling_seed}")
-    resampled_posterior = resample_from_ns_posterior(
-        full_samples,
-        n_posterior_samples,
-        posterior_resampling_seed,
-    )
-
-    # write out an anesthetic dataframe
-    nested_samples = anesthetic.NestedSamples(
-        data=final_states.particles.position,
-        logL=final_states.particles.loglikelihood,
-        logL_birth=final_states.particles.loglikelihood_birth,
-        columns=forward_map.param_names,
-    )
-    # write nested_samples.csv to blackjax_logs
-    log_dir = blackjax_settings["log_dir"]
-    os.makedirs(log_dir, exist_ok=True)  # Create directory if it doesn't exist
-    nested_samples.to_csv(log_dir + "/nested_samples.csv")
-
-    # Export resampled posterior samples
-    posterior_df = pd.DataFrame(resampled_posterior, columns=forward_map.param_names)
-    posterior_df.to_csv(os.path.join(log_dir, "posterior_samples.csv"), index=False)
-
-    # Compute bayesian metrics (similar to UltraNest)
-    # Find maximum likelihood point
-    max_ll_idx = jnp.argmax(final_states.particles.loglikelihood)
-    min_chi2 = -2 * final_states.particles.loglikelihood[max_ll_idx]
-
-    # Compute average chi2 over full samples
-    avg_chi2 = jnp.array(
-        [-2 * log_likelihood(jnp.array(sample)).item() for sample in full_samples]
-    ).mean()
-
-    Cb = avg_chi2 - min_chi2
-
-    # number of data points
+    param_names = list(forward_map.param_names)
     ndata = log_likelihood.ndata
 
-    # reduced chi2
-    avg_chi2_red = avg_chi2 / ndata
-    min_chi2_red = min_chi2 / ndata
+    if not param_names:
+        raise ValueError("BlackJAX requires at least one fit parameter.")
 
-    fit_result = BlackJAXFit(
-        blackjax_specs=blackjax_settings,
+    if ndata <= 0:
+        raise ValueError("The likelihood must contain at least one datapoint.")
+
+    log.info(
+        "Running BlackJAX %s with backend: %s",
+        algorithm,
+        jax.default_backend(),
+    )
+    log.info(
+        "BlackJAX initialization seed: %d",
+        settings["blackjax_seed"],
+    )
+
+    output = sampler.run(
+        jax.random.PRNGKey(settings["blackjax_seed"]),
+        bayesian_prior,
+        log_likelihood,
+        settings,
+        param_names=param_names,
+    )
+
+    samples = jnp.asarray(output.samples)
+    log_likelihoods = jnp.asarray(output.log_likelihoods)
+    max_loglikelihood = jnp.asarray(output.max_loglikelihood)
+
+    if samples.ndim != 2 or samples.shape[1] != len(param_names) or len(samples) == 0:
+        raise RuntimeError("Sampler returned invalid posterior sample dimensions.")
+
+    if log_likelihoods.shape != (len(samples),):
+        raise RuntimeError("Sampler log likelihoods do not match posterior samples.")
+
+    if max_loglikelihood.shape != ():
+        raise RuntimeError("Sampler maximum log likelihood must be a scalar.")
+
+    if not bool(
+        jnp.isfinite(samples).all()
+        & jnp.isfinite(log_likelihoods).all()
+        & jnp.isfinite(max_loglikelihood)
+    ):
+        raise RuntimeError("Sampler returned non-finite posterior results.")
+
+    requested = settings["n_posterior_samples"]
+    selected_count = min(
+        requested,
+        len(samples),
+    )
+
+    if selected_count < requested:
+        log.warning(
+            "The chosen number of posterior samples exceeds the "
+            "number of posterior samples computed by BlackJAX. "
+            "Setting the number of resampled posterior samples to %d",
+            selected_count,
+        )
+
+    if output.resampled_posterior is None:
+        selected = resample_from_ns_posterior(
+            samples,
+            selected_count,
+            settings["posterior_resampling_seed"],
+        )
+    else:
+        selected = jnp.asarray(output.resampled_posterior)
+        if selected.shape != (selected_count, len(param_names)):
+            raise RuntimeError("Sampler-selected replicas have invalid dimensions.")
+        if not bool(jnp.isfinite(selected).all()):
+            raise RuntimeError("Sampler-selected replicas are non-finite.")
+
+    min_chi2 = -2 * max_loglikelihood
+    avg_chi2 = -2 * jnp.mean(log_likelihoods)
+
+    return BlackJAXFit(
+        blackjax_specs=settings,
         blackjax_result={
-            "logZ": logzs.mean(),
-            "logZ_err": logzs.std(),
-            "ess": ess_value,
+            **output.result,
+            "algorithm": algorithm,
+            "max_loglikelihood": max_loglikelihood,
+            "logZ": output.logz,
+            "logZ_err": output.logz_err,
         },
-        param_names=forward_map.param_names,
-        resampled_posterior=resampled_posterior,
-        full_posterior_samples=full_samples,
+        param_names=param_names,
+        full_posterior_samples=samples,
+        resampled_posterior=selected,
         ndata=ndata,
         bayesian_metrics={
-            "bayes_complexity": Cb,
-            "avg_chi2": avg_chi2,
-            "avg_chi2_reduced": avg_chi2_red,
             "min_chi2": min_chi2,
-            "min_chi2_reduced": min_chi2_red,
-            "logz": logzs.mean(),
+            "min_chi2_reduced": min_chi2 / ndata,
+            "avg_chi2": avg_chi2,
+            "avg_chi2_reduced": avg_chi2 / ndata,
+            "bayes_complexity": avg_chi2 - min_chi2,
+            "logz": output.logz,
         },
     )
 
-    return fit_result
 
+def run_blackjax_fit(
+    blackjax_fit,
+    blackjax_settings,
+    output_path,
+    pdf_model,
+):
+    """Export results on rank zero and write replicas across ranks."""
+    fit = blackjax_fit
+    settings = fit.blackjax_specs
 
-def run_blackjax_fit(blackjax_fit, blackjax_settings, output_path, pdf_model):
-    """
-    Export the results of a BlackJAX fit.
+    sampler = get_sampler(settings["algorithm"])
 
-    Parameters
-    ----------
-    blackjax_fit: BlackJAXFit
-        The results of the BlackJAX fit.
-    blackjax_settings: dict
-        Settings for the blackjax fit.
-    output_path: pathlib.PosixPath
-        Path to the output folder.
-    pdf_model: pdf_model.PDFModel
-        The PDF model used in the fit.
-    """
+    if rank == 0:
+        log_dir = Path(settings["log_dir"])
+        log_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
-    export_bayes_results(blackjax_fit, output_path, "ns_result")
+        sampler.export_logs(
+            fit,
+            log_dir,
+        )
 
-    if blackjax_settings["sampler_plot"]:
-        log.info("Plotting corner plot")
-        plot_bayes_plots(blackjax_fit, output_path, "blackjax_logs")
+        pd.DataFrame(
+            fit.resampled_posterior,
+            columns=fit.param_names,
+        ).to_csv(
+            log_dir / "posterior_samples.csv",
+            index=False,
+        )
 
-    write_replicas(blackjax_fit, output_path, pdf_model)
+        export_bayes_results(
+            fit,
+            output_path,
+            sampler.RESULT_FILENAME,
+        )
+
+        if settings["sampler_plot"]:
+            plot_bayes_plots(
+                fit,
+                output_path,
+                str(log_dir.resolve()),
+            )
+
+    # All ranks participate in the existing replica-writing routine.
+    write_replicas(
+        fit,
+        output_path,
+        pdf_model,
+    )

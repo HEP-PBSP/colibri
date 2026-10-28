@@ -272,89 +272,42 @@ class colibriConfig(Config):
         return ultranest_settings
 
     def parse_blackjax_settings(self, settings, output_path):
-        """For a BlackJAX fit, parses the blackjax_settings namespace from the runcard,
-        and ensures the choice of settings is valid.
-        """
-
-        # Begin by checking that the user-supplied keys are known; warn the user otherwise.
-        known_keys = {
-            "n_posterior_samples",
-            "n_live",
-            "repeats",
-            "delete_fraction",
-            "log_precision",
-            "posterior_resampling_seed",
-            "blackjax_seed",
-            "sampler_plot",
-        }
-
-        kdiff = settings.keys() - known_keys
-        for k in kdiff:
-            log.warning(
-                ConfigError(f"Key '{k}' in blackjax_settings not known.", k, known_keys)
-            )
-
-        # Now construct the blackjax_settings dictionary
-        blackjax_settings = {}
-
-        # Extract settings and set default values
-        blackjax_settings["n_posterior_samples"] = settings.get(
-            "n_posterior_samples", 1000
-        )
-        blackjax_settings["n_live"] = settings.get("n_live", 500)
-        blackjax_settings["repeats"] = settings.get("repeats", 3)
-        blackjax_settings["delete_fraction"] = settings.get("delete_fraction", 0.5)
-        blackjax_settings["log_precision"] = settings.get("log_precision", -3)
-        blackjax_settings["blackjax_seed"] = settings.get("blackjax_seed", 0)
-        blackjax_settings["posterior_resampling_seed"] = settings.get(
-            "posterior_resampling_seed", 123456
-        )
-        # Set directory where blackjax_logs will be saved
-        blackjax_settings["log_dir"] = settings.get(
-            "log_dir", str(output_path / "blackjax_logs")
-        )
-
-        blackjax_settings["sampler_plot"] = settings.get("sampler_plot", True)
-
-        return blackjax_settings
-
-    def parse_nuts_settings(self, settings, output_path):
-        """
-        Parse settings for a BlackJAX NUTS fit.
-
-        Parameters
-        ----------
-        settings: dict
-            The nuts_settings namespace from the runcard.
-        output_path: pathlib.Path
-            Fit output directory.
-
-        Returns
-        -------
-        dict
-            Validated settings with defaults.
-        """
-        from colibri.nuts_fit import (
-            _NUTS_DEFAULTS,
-            _validate_nuts_settings,
+        """Parse common and algorithm-specific BlackJAX settings."""
+        from colibri.blackjax_samplers import get_sampler
+        from colibri.blackjax_samplers._common import (
+            COMMON_SETTINGS,
+            validate_common_settings,
         )
 
         if not isinstance(settings, dict):
             raise ConfigError(
-                "nuts_settings must be a mapping.",
-                "nuts_settings",
+                "blackjax_settings must be a mapping.",
+                "blackjax_settings",
             )
 
+        algorithm = settings.get("algorithm", "nested_sampling")
+
+        try:
+            sampler = get_sampler(algorithm)
+        except ValueError as error:
+            raise ConfigError(
+                str(error),
+                "algorithm",
+            ) from error
+
         defaults = {
-            **_NUTS_DEFAULTS,
-            "log_dir": str(output_path / "nuts_logs"),
+            **COMMON_SETTINGS,
+            **sampler.SETTINGS,
+            "algorithm": algorithm,
+            "log_dir": str(output_path / "blackjax_logs"),
         }
+
         known_keys = set(defaults)
 
         for key in settings.keys() - known_keys:
             log.warning(
                 ConfigError(
-                    f"Key '{key}' in nuts_settings not known.",
+                    f"Key '{key}' in blackjax_settings " f"not known for {algorithm}.",
                     key,
                     known_keys,
                 )
@@ -365,22 +318,15 @@ class colibriConfig(Config):
         }
 
         try:
-            _validate_nuts_settings(parsed)
+            validate_common_settings(parsed)
+            sampler.validate(parsed)
         except ValueError as error:
             raise ConfigError(
                 str(error),
-                "nuts_settings",
+                "blackjax_settings",
             ) from error
 
-        if not isinstance(parsed["log_dir"], (str, os.PathLike)):
-            raise ConfigError(
-                "log_dir must be a filesystem path.",
-                "log_dir",
-            )
-
         parsed["log_dir"] = os.fspath(parsed["log_dir"])
-        if not parsed["log_dir"]:
-            raise ConfigError("log_dir cannot be empty.", "log_dir")
 
         return parsed
 

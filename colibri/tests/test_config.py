@@ -19,9 +19,11 @@ from colibri.tests.conftest import TEST_PRIOR_SETTINGS_UNIFORM
 BASE_CONFIG = colibriConfig({})
 
 
-def test_parse_nuts_settings_defaults(tmp_path):
-    assert BASE_CONFIG.parse_nuts_settings({}, tmp_path) == {
-        "nuts_seed": 0,
+def test_parse_blackjax_settings_defaults(tmp_path):
+    assert BASE_CONFIG.parse_blackjax_settings({"algorithm": "nuts"}, tmp_path) == {
+        "algorithm": "nuts",
+        "blackjax_seed": 0,
+        "posterior_resampling_seed": 123456,
         "num_chains": 4,
         "num_warmup": 1000,
         "num_samples": 2000,
@@ -29,13 +31,15 @@ def test_parse_nuts_settings_defaults(tmp_path):
         "max_num_doublings": 10,
         "n_posterior_samples": 1000,
         "sampler_plot": True,
-        "log_dir": str(tmp_path / "nuts_logs"),
+        "log_dir": str(tmp_path / "blackjax_logs"),
     }
 
 
-def test_parse_nuts_settings_overrides_and_unknown_key(tmp_path, caplog):
+def test_parse_blackjax_settings_overrides_and_unknown_key(tmp_path, caplog):
     settings = {
-        "nuts_seed": 42,
+        "algorithm": "nuts",
+        "blackjax_seed": 42,
+        "posterior_resampling_seed": 123456,
         "num_chains": 2,
         "num_warmup": 20,
         "num_samples": 10,
@@ -46,18 +50,18 @@ def test_parse_nuts_settings_overrides_and_unknown_key(tmp_path, caplog):
         "log_dir": tmp_path / "custom_logs",
     }
     with caplog.at_level("WARNING", logger="colibri.config"):
-        result = BASE_CONFIG.parse_nuts_settings(
+        result = BASE_CONFIG.parse_blackjax_settings(
             {**settings, "unknown_key": "ignored"}, tmp_path
         )
 
     assert result == {**settings, "log_dir": str(settings["log_dir"])}
-    assert "Key 'unknown_key' in nuts_settings not known" in caplog.text
+    assert "Key 'unknown_key' in blackjax_settings not known" in caplog.text
 
 
 @pytest.mark.parametrize("settings", [None, [], "nuts"])
-def test_parse_nuts_settings_requires_mapping(tmp_path, settings):
-    with pytest.raises(ConfigError, match="nuts_settings must be a mapping"):
-        BASE_CONFIG.parse_nuts_settings(settings, tmp_path)
+def test_parse_blackjax_settings_requires_mapping(tmp_path, settings):
+    with pytest.raises(ConfigError, match="blackjax_settings must be a mapping"):
+        BASE_CONFIG.parse_blackjax_settings(settings, tmp_path)
 
 
 @pytest.mark.parametrize(
@@ -68,9 +72,9 @@ def test_parse_nuts_settings_requires_mapping(tmp_path, settings):
         ({"log_dir": ""}, "log_dir cannot be empty"),
     ],
 )
-def test_parse_nuts_settings_rejects_invalid_values(tmp_path, settings, message):
+def test_parse_blackjax_settings_rejects_invalid_values(tmp_path, settings, message):
     with pytest.raises(ConfigError, match=message):
-        BASE_CONFIG.parse_nuts_settings(settings, tmp_path)
+        BASE_CONFIG.parse_blackjax_settings({"algorithm": "nuts", **settings}, tmp_path)
 
 
 def test_float32_precision_enabled():
@@ -703,6 +707,7 @@ def test_parse_blackjax_settings_full(mock_warning, tmp_path):
         "log_dir": str(tmp_path / "custom_logs"),
         "unknown_key": "oops",  # triggers warning
         "sampler_plot": False,
+        "algorithm": "nested_sampling",
     }
 
     result = BASE_CONFIG.parse_blackjax_settings(settings, tmp_path)
@@ -717,6 +722,7 @@ def test_parse_blackjax_settings_full(mock_warning, tmp_path):
         "posterior_resampling_seed": 999,
         "log_dir": str(tmp_path / "custom_logs"),
         "sampler_plot": False,
+        "algorithm": "nested_sampling",
     }
 
     assert result == expected
@@ -751,7 +757,75 @@ def test_parse_blackjax_settings_with_unknown_keys(mock_warning, mock_exists, tm
         "posterior_resampling_seed": 78910,
         "log_dir": str(tmp_path / "blackjax_logs"),
         "sampler_plot": False,
+        "algorithm": "nested_sampling",
     }
 
     assert blackjax_settings == expected_settings
     assert mock_warning.called
+
+
+def test_parse_blackjax_settings_nuts(tmp_path):
+    result = BASE_CONFIG.parse_blackjax_settings(
+        {
+            "algorithm": "nuts",
+            "blackjax_seed": 42,
+            "num_chains": 2,
+            "num_warmup": 100,
+            "num_samples": 200,
+            "sampler_plot": False,
+        },
+        tmp_path,
+    )
+
+    assert result == {
+        "algorithm": "nuts",
+        "blackjax_seed": 42,
+        "n_posterior_samples": 1000,
+        "posterior_resampling_seed": 123456,
+        "sampler_plot": False,
+        "log_dir": str(tmp_path / "blackjax_logs"),
+        "num_chains": 2,
+        "num_warmup": 100,
+        "num_samples": 200,
+        "target_acceptance_rate": 0.8,
+        "max_num_doublings": 10,
+    }
+
+
+def test_blackjax_settings_exclude_other_algorithm_keys(
+    tmp_path,
+    caplog,
+):
+    result = BASE_CONFIG.parse_blackjax_settings(
+        {
+            "algorithm": "nuts",
+            "n_live": 100,
+        },
+        tmp_path,
+    )
+
+    assert "n_live" not in result
+    assert "n_live" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "settings",
+    [
+        {"algorithm": "unknown"},
+        {"algorithm": ["nuts"]},
+        {"blackjax_seed": -1},
+        {"n_posterior_samples": 0},
+        {"sampler_plot": "true"},
+        {"log_dir": ""},
+        {"n_live": 1},
+        {"delete_fraction": 0},
+        {"algorithm": "nuts", "num_chains": 1},
+        {"algorithm": "nuts", "num_samples": 3},
+    ],
+)
+def test_invalid_blackjax_settings(settings, tmp_path):
+    with pytest.raises(ConfigError):
+        BASE_CONFIG.parse_blackjax_settings(
+            settings,
+            tmp_path,
+        )

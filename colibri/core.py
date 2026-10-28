@@ -137,23 +137,6 @@ class BlackJAXFit(BayesianFit):
 
 
 @dataclass(frozen=True)
-class NUTSFit(BayesianFit):
-    """
-    Results and settings of a BlackJAX NUTS fit.
-
-    Attributes
-    ----------
-    nuts_specs: dict
-        Settings used for the NUTS fit.
-    nuts_result: dict
-        Chain samples, transition information and convergence diagnostics.
-    """
-
-    nuts_specs: dict
-    nuts_result: dict
-
-
-@dataclass(frozen=True)
 class HessianFit:
     """
     Dataclass containing the results and specs of a Hessian fit.

@@ -16,15 +16,9 @@ from scipy.stats import truncnorm
 from colibri.app import colibri_providers
 from colibri.bayes_prior import bayesian_prior
 from colibri.config import colibriConfig
-from colibri.core import BayesianPrior, NUTSFit, PriorSettings
-from colibri.nuts_fit import (
-    _NUTS_DEFAULTS,
-    _named_values,
-    _thin_chains,
-    _validate_nuts_settings,
-    nuts_fit,
-    run_nuts_fit,
-)
+from colibri.core import BayesianPrior, BlackJAXFit, PriorSettings
+from colibri.blackjax_fit import blackjax_fit, run_blackjax_fit
+from colibri.blackjax_samplers.nuts import _thin_chains, _named_values
 
 jax.config.update("jax_enable_x64", True)
 
@@ -39,9 +33,11 @@ def make_prior():
 
 
 def make_settings(tmp_path, **overrides):
-    return colibriConfig({}).parse_nuts_settings(
+    return colibriConfig({}).parse_blackjax_settings(
         {
-            "nuts_seed": 42,
+            "algorithm": "nuts",
+            "blackjax_seed": 42,
+            "posterior_resampling_seed": 12,
             "num_chains": 2,
             "num_warmup": 500,
             "num_samples": 1500,
@@ -78,8 +74,9 @@ def test_thin_chains_selects_spaced_replicas(requested, expected_indices):
     np.testing.assert_array_equal(_thin_chains(chains, requested), result)
 
 
-def test_nuts_provider_registered():
-    assert "colibri.nuts_fit" in colibri_providers
+def test_blackjax_provider_registered():
+    assert "colibri.blackjax_fit" in colibri_providers
+    assert "colibri.nuts_fit" not in colibri_providers
 
 
 def test_uniform_density_includes_jacobian():
@@ -131,7 +128,7 @@ def test_uniform_transforms_follow_forward_map_order():
         ("max_num_doublings", -1),
         ("n_posterior_samples", 0),
         ("target_acceptance_rate", 1.0),
-        ("nuts_seed", -1),
+        ("blackjax_seed", -1),
         ("sampler_plot", "true"),
     ],
 )
@@ -148,7 +145,7 @@ def test_prior_without_unconstrained_functions_is_rejected(tmp_path):
     )
 
     with pytest.raises(ValueError, match="unconstrained prior"):
-        nuts_fit(
+        blackjax_fit(
             SimpleNamespace(param_names=["parameter"]),
             prior,
             make_settings(tmp_path),
@@ -175,7 +172,7 @@ def test_nuts_recovers_truncated_normal(
             return -0.5 * jnp.sum(((parameters - target_mean) / target_sigma) ** 2)
 
     likelihood = Likelihood()
-    result = nuts_fit(
+    result = blackjax_fit(
         forward_map,
         prior,
         settings,
@@ -190,14 +187,20 @@ def test_nuts_recovers_truncated_normal(
     )
     samples = np.asarray(result.full_posterior_samples[:, 0])
 
-    assert isinstance(result, NUTSFit)
+    assert isinstance(result, BlackJAXFit)
     assert result.full_posterior_samples.shape == (3000, 1)
     assert result.resampled_posterior.shape == (100, 1)
-    assert result.nuts_result["chain_samples"].shape == (2, 1500, 1)
+    assert result.blackjax_result["chain_samples"].shape == (2, 1500, 1)
+
+    # Verify that exported replicas are deterministically thinned.
     np.testing.assert_array_equal(
         result.resampled_posterior,
-        result.nuts_result["chain_samples"][:, ::30, :].reshape(100, 1),
+        result.blackjax_result["chain_samples"][:, ::30, :].reshape(100, 1),
     )
+
+    assert result.blackjax_specs["algorithm"] == "nuts"
+    assert result.blackjax_result["logZ"] is None
+    assert result.blackjax_result["logZ_err"] is None
     assert result.bayesian_metrics["logz"] is None
 
     np.testing.assert_allclose(
@@ -222,13 +225,13 @@ def test_nuts_recovers_truncated_normal(
     )
 
     # Fitting itself does not write files.
-    assert not (tmp_path / "nuts_logs").exists()
+    assert not (tmp_path / "blackjax_logs").exists()
 
     with (
-        patch("colibri.nuts_fit.rank", 0),
-        patch("colibri.nuts_fit.write_replicas") as write_replicas,
+        patch("colibri.blackjax_fit.rank", 0),
+        patch("colibri.blackjax_fit.write_replicas") as write_replicas,
     ):
-        run_nuts_fit(
+        run_blackjax_fit(
             result,
             settings,
             tmp_path,
@@ -239,11 +242,11 @@ def test_nuts_recovers_truncated_normal(
     assert (tmp_path / "nuts_result.csv").exists()
     assert (tmp_path / "full_posterior_sample.csv").exists()
 
-    stored = pd.read_csv(tmp_path / "nuts_logs" / "nuts_samples.csv")
+    stored = pd.read_csv(tmp_path / "blackjax_logs" / "nuts_samples.csv")
     assert stored["chain"].nunique() == 2
     assert stored.groupby("chain").size().tolist() == [1500, 1500]
 
-    diagnostics_path = tmp_path / "nuts_logs" / "nuts_diagnostics.json"
+    diagnostics_path = tmp_path / "blackjax_logs" / "nuts_diagnostics.json"
     with diagnostics_path.open() as stream:
         diagnostics = json.load(stream)
     assert diagnostics["algorithm"] == "nuts"
@@ -267,10 +270,10 @@ def test_nuts_recovers_truncated_normal(
         ("num_warmup", 0, "positive integer"),
         ("num_warmup", True, "positive integer"),
         ("num_warmup", 1.5, "positive integer"),
-        ("nuts_seed", -1, "nuts_seed must be an integer"),
-        ("nuts_seed", 2**32, "nuts_seed must be an integer"),
-        ("nuts_seed", True, "nuts_seed must be an integer"),
-        ("nuts_seed", 1.5, "nuts_seed must be an integer"),
+        ("blackjax_seed", -1, "blackjax_seed must be an integer"),
+        ("blackjax_seed", 2**32, "blackjax_seed must be an integer"),
+        ("blackjax_seed", True, "blackjax_seed must be an integer"),
+        ("blackjax_seed", 1.5, "blackjax_seed must be an integer"),
         ("target_acceptance_rate", 1.0, "strictly between"),
         ("target_acceptance_rate", np.nan, "strictly between"),
         ("target_acceptance_rate", True, "strictly between"),
@@ -278,10 +281,16 @@ def test_nuts_recovers_truncated_normal(
         ("sampler_plot", "true", "sampler_plot must be a boolean"),
     ],
 )
-def test_provider_rejects_invalid_settings(key, value, message):
+def test_provider_rejects_invalid_settings(tmp_path, key, value, message):
     # Exercise provider validation directly, without the config parser rejecting first.
     with pytest.raises(ValueError, match=message):
-        _validate_nuts_settings({**_NUTS_DEFAULTS, key: value})
+        forward_map, prior = make_prior()
+        blackjax_fit(
+            forward_map,
+            prior,
+            {**make_settings(tmp_path), key: value},
+            SimpleNamespace(ndata=1),
+        )
 
 
 def test_named_values_rejects_wrong_parameter_count():
@@ -342,7 +351,7 @@ def test_nuts_rejects_invalid_initialization(small_nuts_inputs, invalid_input, m
         )
 
     with pytest.raises(ValueError, match=message):
-        nuts_fit(forward_map, prior, settings, likelihood)
+        blackjax_fit(forward_map, prior, settings, likelihood)
 
 
 @pytest.mark.parametrize(
@@ -400,10 +409,13 @@ def test_nuts_rejects_failed_backend_results(small_nuts_inputs, phase, field):
         else "NUTS produced non-finite sampling results"
     )
     with (
-        patch("colibri.nuts_fit.jax.block_until_ready", side_effect=failed_result),
+        patch(
+            "colibri.blackjax_samplers.nuts.jax.block_until_ready",
+            side_effect=failed_result,
+        ),
         pytest.raises(RuntimeError, match=message),
     ):
-        nuts_fit(*small_nuts_inputs)
+        blackjax_fit(*small_nuts_inputs)
 
 
 def test_nuts_warns_for_insufficient_draws_and_nonconvergence(
@@ -412,12 +424,12 @@ def test_nuts_warns_for_insufficient_draws_and_nonconvergence(
     forward_map, prior, settings, likelihood = small_nuts_inputs
     settings = {**settings, "n_posterior_samples": 9}
 
-    with caplog.at_level("WARNING", logger="colibri.nuts_fit"):
-        result = nuts_fit(forward_map, prior, settings, likelihood)
+    with caplog.at_level("WARNING"):
+        result = blackjax_fit(forward_map, prior, settings, likelihood)
 
     assert "Requested 9 replicas but only 8 draws are available" in caplog.text
     assert "NUTS convergence checks did not pass" in caplog.text
-    assert result.nuts_result["diagnostics"]["converged"] is False
+    assert result.blackjax_result["diagnostics"]["converged"] is False
     np.testing.assert_array_equal(
         result.resampled_posterior, result.full_posterior_samples
     )
@@ -426,18 +438,23 @@ def test_nuts_warns_for_insufficient_draws_and_nonconvergence(
 @pytest.mark.parametrize("rank", [0, 1])
 @pytest.mark.parametrize("sampler_plot", [False, True])
 def test_run_nuts_fit_exports_on_primary_rank(tmp_path, rank, sampler_plot):
-    fit, model = SimpleNamespace(), SimpleNamespace()
+    model = SimpleNamespace()
     log_dir = tmp_path / "nuts_logs"
-    settings = {"log_dir": log_dir, "sampler_plot": sampler_plot}
+    settings = {"algorithm": "nuts", "log_dir": log_dir, "sampler_plot": sampler_plot}
+    fit = SimpleNamespace(
+        blackjax_specs=settings,
+        param_names=["parameter"],
+        resampled_posterior=jnp.ones((2, 1)),
+    )
 
     with (
-        patch("colibri.nuts_fit.rank", rank),
-        patch("colibri.nuts_fit._export_nuts_logs") as export_logs,
-        patch("colibri.nuts_fit.export_bayes_results") as export_results,
-        patch("colibri.nuts_fit.plot_bayes_plots") as plot,
-        patch("colibri.nuts_fit.write_replicas") as write_replicas,
+        patch("colibri.blackjax_fit.rank", rank),
+        patch("colibri.blackjax_samplers.nuts.export_logs") as export_logs,
+        patch("colibri.blackjax_fit.export_bayes_results") as export_results,
+        patch("colibri.blackjax_fit.plot_bayes_plots") as plot,
+        patch("colibri.blackjax_fit.write_replicas") as write_replicas,
     ):
-        run_nuts_fit(fit, settings, tmp_path, model)
+        run_blackjax_fit(fit, settings, tmp_path, model)
 
     if rank == 0:
         export_logs.assert_called_once_with(fit, log_dir)
