@@ -15,6 +15,7 @@ from blackjax.diagnostics import effective_sample_size
 from mpi4py import MPI
 from scipy.stats import norm, rankdata
 
+from colibri.bayes_prior import UNCONSTRAINED_FUNCTIONS, has_unconstrained
 from colibri.core import NUTSFit
 from colibri.export_results import (
     export_bayes_results,
@@ -265,7 +266,7 @@ def _nuts_diagnostics(
 
 def nuts_fit(
     forward_map,
-    bayesian_prior,
+    fit_prior,
     nuts_settings,
     log_likelihood,
 ):
@@ -276,8 +277,10 @@ def nuts_fit(
     ----------
     forward_map: ForwardMap
         Forward map defining all parameter names and their ordering.
-    bayesian_prior: BayesianPrior
-        Prior with unconstrained transformation functions.
+    fit_prior: BayesianPrior
+        Prior of all the fit parameters (PDF and extra parameters), see
+        colibri.bayes_prior.fit_prior. It must provide the unconstrained
+        transformation functions.
     nuts_settings: dict
         Settings for initialization, warmup, sampling and replica selection.
     log_likelihood: Callable
@@ -292,15 +295,12 @@ def nuts_fit(
     settings = {**_NUTS_DEFAULTS, **nuts_settings}
     _validate_nuts_settings(settings)
 
-    required = (
-        "from_unconstrained",
-        "log_prob_unconstrained",
-        "sample_unconstrained",
-    )
-    if any(not callable(getattr(bayesian_prior, name, None)) for name in required):
+    if not has_unconstrained(fit_prior):
         raise ValueError(
-            "NUTS requires an unconstrained prior implementation. "
-            "Currently supported: uniform_parameter_prior."
+            "NUTS requires an unconstrained prior implementation "
+            f"({', '.join(UNCONSTRAINED_FUNCTIONS)}). The built-in priors "
+            "(uniform_parameter_prior, prior_from_gauss_posterior) provide it; "
+            "see the log of fit_prior for the part of the prior that lacks it."
         )
 
     param_names = list(forward_map.param_names)
@@ -320,15 +320,13 @@ def nuts_fit(
 
     @jax.jit
     def logdensity(position):
-        parameters = bayesian_prior.from_unconstrained(position)
-        return bayesian_prior.log_prob_unconstrained(position) + log_likelihood(
-            parameters
-        )
+        parameters = fit_prior.from_unconstrained(position)
+        return fit_prior.log_prob_unconstrained(position) + log_likelihood(parameters)
 
     rng_key = jax.random.PRNGKey(settings["nuts_seed"])
     init_key, warmup_key, sample_key = jax.random.split(rng_key, 3)
 
-    initial_positions = bayesian_prior.sample_unconstrained(init_key, num_chains)
+    initial_positions = fit_prior.sample_unconstrained(init_key, num_chains)
     if initial_positions.shape != (num_chains, num_parameters):
         raise ValueError("Initial prior draws do not match forward_map.param_names.")
 
@@ -434,14 +432,14 @@ def nuts_fit(
 
     flat_unconstrained = unconstrained.reshape(-1, num_parameters)
     full_samples = jax.block_until_ready(
-        jax.vmap(bayesian_prior.from_unconstrained)(flat_unconstrained)
+        jax.vmap(fit_prior.from_unconstrained)(flat_unconstrained)
     )
 
     # Remove the transformed prior, including its Jacobian, to obtain
     # physical log-likelihood values without another forward evaluation.
     log_likelihoods = jax.block_until_ready(
         logdensity_draws.reshape(-1)
-        - jax.vmap(bayesian_prior.log_prob_unconstrained)(flat_unconstrained)
+        - jax.vmap(fit_prior.log_prob_unconstrained)(flat_unconstrained)
     )
 
     if not bool(

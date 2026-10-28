@@ -153,13 +153,26 @@ def test_gaussian_prior(mock_get_full_posterior):
 
     assert np.allclose(transformed, expected), "Gaussian prior transformation failed."
 
-    # ---- Cover sample() ----
-    with pytest.raises(NotImplementedError, match="sample not implemented"):
-        prior_transform.sample(key, 10)
+    # ---- log_prob(): multivariate normal, one point and a batch ----
+    points = jnp.array([[0.0, 0.0], [1.0, -0.5]])
+    expected_log_prob = jax.scipy.stats.multivariate_normal.logpdf(points, mean, cov)
+    np.testing.assert_allclose(prior_transform.log_prob(points), expected_log_prob)
+    np.testing.assert_allclose(
+        prior_transform.log_prob(points[1]), expected_log_prob[1]
+    )
 
-    # ---- Cover log_prob() ----
-    with pytest.raises(NotImplementedError, match="log_prob not implemented"):
-        prior_transform.log_prob(jnp.zeros((10, 2)))
+    # ---- sample(): mean and covariance of the Gaussian ----
+    samples = prior_transform.sample(key, 20000)
+    assert samples.shape == (20000, 2)
+    np.testing.assert_allclose(samples.mean(axis=0), mean, atol=0.03)
+    np.testing.assert_allclose(np.cov(samples.T), cov, atol=0.03)
+
+    # ---- unconstrained parametrisation (NUTS): identity ----
+    np.testing.assert_allclose(prior_transform.from_unconstrained(points), points)
+    np.testing.assert_allclose(
+        prior_transform.log_prob_unconstrained(points), expected_log_prob
+    )
+    assert prior_transform.sample_unconstrained(key, 5).shape == (5, 2)
 
 
 def test_invalid_prior_type():
@@ -296,3 +309,120 @@ def test_fit_prior_joins_pdf_and_extra_priors():
     assert samples.shape == (50, 4)
     assert np.all(np.abs(samples[:, :2]) <= 1)
     assert np.all((samples[:, 3] >= -4) & (samples[:, 3] <= -2))
+
+
+def test_fit_prior_joins_unconstrained_functions():
+    """The joint prior keeps the unconstrained parametrisation used by NUTS."""
+    fm = _fm_with_extras()
+    pdf_prior = bayesian_prior(UNIFORM_PDF_PRIOR, _pdf_model())
+    extra_prior = extra_parameters_prior(fm, EXTRA_SETTINGS)
+    prior = fit_prior(fm, pdf_prior, extra_prior)
+
+    # z = 0 maps to the middle of each interval
+    np.testing.assert_allclose(prior.from_unconstrained(jnp.zeros(4)), [0, 0, 11, -3])
+
+    position = jnp.array([0.3, -1.2, 2.0, -0.5])
+    np.testing.assert_allclose(
+        prior.log_prob_unconstrained(position),
+        pdf_prior.log_prob_unconstrained(position[:2])
+        + extra_prior.log_prob_unconstrained(position[2:]),
+    )
+    # Jacobian is included: log p(x(z)) + log|dx/dz|
+    jacobian = jax.jacfwd(prior.from_unconstrained)(position)
+    np.testing.assert_allclose(
+        prior.log_prob_unconstrained(position),
+        prior.log_prob(prior.from_unconstrained(position))
+        + jnp.linalg.slogdet(jacobian)[1],
+        rtol=1e-6,
+    )
+
+    starts = prior.sample_unconstrained(random.PRNGKey(0), 5)
+    assert starts.shape == (5, 4)
+    points = jax.vmap(prior.from_unconstrained)(starts)
+    assert np.all((points[:, 2] >= 10) & (points[:, 2] <= 12))
+    assert np.all((points[:, 3] >= -4) & (points[:, 3] <= -2))
+
+
+@patch("colibri.bayes_prior.get_full_posterior")
+def test_fit_prior_gaussian_pdf_and_uniform_extras(mock_get_full_posterior):
+    """A Gaussian PDF prior and uniform extras give a joint prior usable by NUTS."""
+    mock_get_full_posterior.return_value = _posterior_with(
+        np.array([1.0, -1.0]), np.eye(2), ["param1", "param2"]
+    )
+    gauss = PriorSettings(
+        prior_distribution="prior_from_gauss_posterior",
+        prior_distribution_specs={"prior_fit": "fit"},
+    )
+    fm = _fm_with_extras()
+    prior = fit_prior(
+        fm,
+        bayesian_prior(gauss, _pdf_model()),
+        extra_parameters_prior(fm, EXTRA_SETTINGS),
+    )
+    # PDF part: identity; extra part: sigmoid onto the bounds
+    np.testing.assert_allclose(
+        prior.from_unconstrained(jnp.array([0.3, -0.2, 0.0, 0.0])),
+        [0.3, -0.2, 11, -3],
+    )
+    position = jnp.array([0.3, -0.2, 1.0, -2.0])
+    jacobian = jax.jacfwd(prior.from_unconstrained)(position)
+    np.testing.assert_allclose(
+        prior.log_prob_unconstrained(position),
+        prior.log_prob(prior.from_unconstrained(position))
+        + jnp.linalg.slogdet(jacobian)[1],
+        rtol=1e-6,
+    )
+    assert prior.sample_unconstrained(random.PRNGKey(0), 3).shape == (3, 4)
+
+
+def test_fit_prior_without_unconstrained_part():
+    """If one part has no unconstrained parametrisation, neither has the joint prior."""
+    from colibri.core import BayesianPrior
+
+    custom = BayesianPrior(
+        prior_transform=lambda cube: cube,
+        log_prob=lambda x: jnp.zeros(x.shape[:-1]),
+        sample=lambda key, n: random.uniform(key, (n, 2)),
+    )
+    fm = _fm_with_extras()
+    prior = fit_prior(fm, bayesian_prior(UNIFORM_PDF_PRIOR, _pdf_model()), custom)
+    assert prior.from_unconstrained is None
+    assert prior.log_prob_unconstrained is None
+    assert prior.sample_unconstrained is None
+
+
+@pytest.mark.parametrize("missing", ["pdf", "extra", "both"])
+def test_fit_prior_logs_part_without_unconstrained(caplog, missing):
+    """fit_prior says which part of the prior cannot be used with NUTS."""
+    from colibri.core import BayesianPrior
+
+    custom = BayesianPrior(
+        prior_transform=lambda cube: cube,
+        log_prob=lambda x: jnp.zeros(x.shape[:-1]),
+        sample=lambda key, n: random.uniform(key, (n, 2)),
+    )
+    fm = _fm_with_extras()
+    uniform_pdf = bayesian_prior(UNIFORM_PDF_PRIOR, _pdf_model())
+    uniform_extra = extra_parameters_prior(fm, EXTRA_SETTINGS)
+
+    with caplog.at_level("INFO", logger="colibri.bayes_prior"):
+        fit_prior(
+            fm,
+            uniform_pdf if missing == "extra" else custom,
+            uniform_extra if missing == "pdf" else custom,
+        )
+
+    assert ("(bayesian_prior)" in caplog.text) == (missing != "extra")
+    assert ("(extra_parameters_prior)" in caplog.text) == (missing != "pdf")
+    assert "NUTS" in caplog.text
+
+
+def test_fit_prior_silent_when_nuts_compatible(caplog):
+    fm = _fm_with_extras()
+    with caplog.at_level("INFO", logger="colibri.bayes_prior"):
+        fit_prior(
+            fm,
+            bayesian_prior(UNIFORM_PDF_PRIOR, _pdf_model()),
+            extra_parameters_prior(fm, EXTRA_SETTINGS),
+        )
+    assert "NUTS" not in caplog.text

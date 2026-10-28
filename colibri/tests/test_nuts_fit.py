@@ -122,6 +122,93 @@ def test_uniform_transforms_follow_forward_map_order():
     assert np.isfinite(starts).all()
 
 
+def test_nuts_fits_pdf_and_extra_parameters(tmp_path):
+    """NUTS samples the joint fit_prior of PDF and extra parameters."""
+    from unittest.mock import Mock
+
+    from colibri.bayes_prior import extra_parameters_prior, fit_prior
+
+    forward_map = Mock()
+    forward_map.param_names = ["pdf_param", "c1"]
+    forward_map.extra_param_names = ["c1"]
+    forward_map.n_pdf_params = 1
+    pdf_model = SimpleNamespace(param_names=["pdf_param"])
+
+    prior = fit_prior(
+        forward_map,
+        bayesian_prior(
+            PriorSettings(
+                prior_distribution="uniform_parameter_prior",
+                prior_distribution_specs={"bounds": {"pdf_param": [-5.0, 5.0]}},
+            ),
+            pdf_model,
+        ),
+        extra_parameters_prior(
+            forward_map,
+            PriorSettings(
+                prior_distribution="uniform_parameter_prior",
+                prior_distribution_specs={"bounds": {"c1": [10.0, 20.0]}},
+            ),
+        ),
+    )
+
+    target = jnp.array([1.0, 14.0])
+    sigma = jnp.array([0.5, 1.0])
+
+    class Likelihood:
+        ndata = 2
+
+        def __call__(self, parameters):
+            return -0.5 * jnp.sum(((parameters - target) / sigma) ** 2)
+
+    result = nuts_fit(forward_map, prior, make_settings(tmp_path), Likelihood())
+
+    samples = np.asarray(result.full_posterior_samples)
+    assert samples.shape == (3000, 2)
+    assert result.param_names == ["pdf_param", "c1"]
+    assert ((samples[:, 0] >= -5) & (samples[:, 0] <= 5)).all()
+    assert ((samples[:, 1] >= 10) & (samples[:, 1] <= 20)).all()
+    np.testing.assert_allclose(samples.mean(axis=0), target, atol=0.15)
+    np.testing.assert_allclose(samples.std(axis=0), sigma, atol=0.15)
+
+
+def test_nuts_fits_gaussian_prior(tmp_path):
+    """NUTS samples a prior_from_gauss_posterior prior (Gaussian x Gaussian)."""
+    pdf_model = SimpleNamespace(param_names=["a", "b"])
+    forward_map = SimpleNamespace(param_names=["a", "b"])
+    prior_mean, prior_sigma = np.array([1.0, -2.0]), np.array([1.0, 0.5])
+    # Four samples whose sample mean and covariance are exactly the prior ones
+    offsets = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]]) * np.sqrt(2)
+    offsets = offsets * np.sqrt(3 / 4)
+    posterior = pd.DataFrame(prior_mean + offsets * prior_sigma, columns=["a", "b"])
+
+    with patch("colibri.bayes_prior.get_full_posterior", return_value=posterior):
+        prior = bayesian_prior(
+            PriorSettings(
+                prior_distribution="prior_from_gauss_posterior",
+                prior_distribution_specs={"prior_fit": "fit"},
+            ),
+            pdf_model,
+        )
+
+    data, data_sigma = np.array([2.0, -1.0]), np.array([1.0, 0.5])
+
+    class Likelihood:
+        ndata = 2
+
+        def __call__(self, parameters):
+            return -0.5 * jnp.sum(((parameters - data) / data_sigma) ** 2)
+
+    result = nuts_fit(forward_map, prior, make_settings(tmp_path), Likelihood())
+
+    # Gaussian prior x Gaussian likelihood: Gaussian posterior
+    precision = 1 / prior_sigma**2 + 1 / data_sigma**2
+    mean = (prior_mean / prior_sigma**2 + data / data_sigma**2) / precision
+    samples = np.asarray(result.full_posterior_samples)
+    np.testing.assert_allclose(samples.mean(axis=0), mean, atol=0.1)
+    np.testing.assert_allclose(samples.std(axis=0), 1 / np.sqrt(precision), atol=0.1)
+
+
 @pytest.mark.parametrize(
     "key,value",
     [
