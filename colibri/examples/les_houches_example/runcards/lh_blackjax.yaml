@@ -1,0 +1,101 @@
+################################################################################
+# Les Houches model: Bayesian fit with BlackJAX nested sampling (closure test)
+#
+# Run with:      les_houches_exe runcards/lh_blackjax.yaml
+# Output folder (created in the current directory): lh_blackjax/
+# Evolve with:   evolve_fit lh_blackjax
+#
+# BlackJAX runs fully in JAX, so it also runs on GPU. On a GPU, n_live can be
+# raised to ~2000-10000.
+################################################################################
+
+meta: 'Les Houches model: BlackJAX nested sampling fit, level 0 closure test on a reduced DIS dataset.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:
+# DIS
+- {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+- {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+- {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+# - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
+# - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
+# - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
+# - {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw}
+# - {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy}
+# - {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
+# - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
+# - {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}
+# - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
+
+theoryid: 40000000                     # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0                  # False: experimental data; 0: pseudodata without noise;
+                                       # 1: pseudodata with noise.
+closure_test_pdf: LH_PARAM_20250519    # PDF used to generate the pseudodata (ignored if
+                                       # closure_test_level is False).
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
+
+positivity_penalty_settings:
+  positivity_penalty: false
+  alpha: 1e-7
+  lambda_positivity: 0
+
+integrability_settings:
+  integrability: false
+
+use_t0_covmat: true                    # Use the t0 covariance matrix in the chi2.
+t0pdfset: NNPDF40_nnlo_as_01180        # The PDF used to build the t0 covariance matrix.
+
+###################
+# Methodology specs
+###################
+
+prior_settings:
+  prior_distribution: uniform_parameter_prior
+  prior_distribution_specs:
+    bounds:
+      alpha_gluon: [-0.1, 1]
+      beta_gluon: [9, 13]
+      alpha_up: [0.4, 0.9]
+      beta_up: [3, 4.5]
+      epsilon_up: [-3, 3]
+      gamma_up: [1, 6]
+      alpha_down: [1, 2]
+      beta_down: [8, 12]
+      epsilon_down: [-4.5, -3]
+      gamma_down: [3.8, 5.8]
+      norm_sigma: [0.1, 0.5]
+      alpha_sigma: [-0.2, 0.1]
+      beta_sigma: [1.2, 3]
+
+blackjax_settings:
+  n_live: 500                          # Number of live points.
+  repeats: 3                           # Slice-sampling steps per update (in units of the
+                                       # number of parameters).
+  delete_fraction: 0.5                 # Fraction of live points replaced at each iteration.
+  log_precision: -3                    # Stop when log(Z_live / Z) < log_precision.
+  n_posterior_samples: 100             # Number of posterior samples (replicas) written out.
+  blackjax_seed: 0
+  posterior_resampling_seed: 123456
+  sampler_plot: true
+
+actions_:
+- run_blackjax_fit

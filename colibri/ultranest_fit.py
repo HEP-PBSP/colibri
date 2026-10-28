@@ -109,7 +109,7 @@ def ultranest_fit(
     t1 = time.time()
 
     if rank == 0:
-        log.info("ULTRANEST RUNNING TIME: %f" % (t1 - t0))
+        log.info("ULTRANEST RUNNING TIME: %f s" % (t1 - t0))
 
     n_posterior_samples = ultranest_settings["n_posterior_samples"]
 

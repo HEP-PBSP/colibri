@@ -10,32 +10,16 @@ do so for the Les Houches parametrisation (implemented :ref:`here <lh_model>`).
 Step 1: runcard
 ---------------
 
-You can adapt the runcard presented :ref:`here <lh-closure-test>` to run a closure
-test so that it includes the following:
+The runcard ``runcards/lh_closure_test_model.yaml`` in the ``examples/les_houches_example``
+directory runs such a closure test. It is the same as the runcard presented
+:ref:`here <lh-closure-test>`, except that ``closure_test_pdf: LH_PARAM_20250519``
+is replaced by the following block:
 
-.. code-block:: bash
-    
-    # MODEL-SPECIFIC CLOSURE TEST:
-    closure_test_pdf: colibri_model
-    closure_test_model_settings:
-        model: les_houches_example
-        # The parameters of the model.
-        parameters:
-            beta_gluon: 10.9      
-            alpha_gluon: 0.356    
-            alpha_up: 0.718       
-            beta_up: 3.81         
-            epsilon_up: -1.56     
-            gamma_up: 3.30        
-            alpha_down: 1.71      
-            beta_down: 10.0       
-            epsilon_down: -3.83  
-            gamma_down: 4.64      
-            norm_sigma: 0.211     
-            alpha_sigma: -0.048   
-            beta_sigma: 2.20      
+.. literalinclude:: ../../../../../examples/les_houches_example/runcards/lh_closure_test_model.yaml
+    :language: yaml
+    :start-at: closure_test_pdf: colibri_model
+    :end-before: ####
 
-And remove or comment out ``closure_test_pdf: LH_PARAM_20250519``.
 Within the ``closure_test_model_settings``, you need to specify any of the hyperparameters
 relevant to build the model instance. The example model shown here doesn't need further
 settings, but other models may need additional hyperparameters to tune.
@@ -48,15 +32,13 @@ Step 2: running the fit
 -----------------------
 
 You can produce the fit by running the following command from the 
-``colibri/les_houches_example`` directory:
+``examples/les_houches_example`` directory:
 
 .. code-block:: bash
 
-    les_houches_exe runcards/lh_fit_closure_test.yaml
+    les_houches_exe runcards/lh_closure_test_model.yaml
 
-where the runcard path or name should be changed as needed.
-
-Running the fit will create a directory called ``lh_fit_closure_test``, 
+Running the fit will create a directory called ``lh_closure_test_model``, 
 where you will find the output of the fit. You can read more about it in
 :ref:`this tutorial <bayes_fit_folders>`.
 

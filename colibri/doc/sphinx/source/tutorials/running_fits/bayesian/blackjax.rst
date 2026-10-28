@@ -19,104 +19,11 @@ We will then look at the command to execute the runcard.
 Runcard
 -------
 
-.. code-block:: bash
+The runcard ``runcards/lh_blackjax.yaml`` in the ``examples/les_houches_example``
+directory runs a BlackJAX fit of the Les Houches model.
 
-    meta: 'An example fit using Colibri, reduced DIS dataset.'
-
-    #######################
-    # Data and theory specs
-    #######################
-
-    dataset_inputs:    
-    # DIS          
-    - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
-    - {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
-    - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
-    - {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
-    # - {dataset: CHORUS_CC_NOTFIXED_PB_NU-SIGMARED, variant: legacy_dw}
-    # - {dataset: CHORUS_CC_NOTFIXED_PB_NB-SIGMARED, variant: legacy_dw}
-    # - {dataset: NUTEV_CC_NOTFIXED_FE_NU-SIGMARED, cfac: [MAS], variant: legacy_dw}
-    # - {dataset: NUTEV_CC_NOTFIXED_FE_NB-SIGMARED, cfac: [MAS], variant: legacy_dw}
-    # - {dataset: HERA_NC_318GEV_EM-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_225GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_251GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_300GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_318GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_CC_318GEV_EM-SIGMARED, variant: legacy}
-    # - {dataset: HERA_CC_318GEV_EP-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_318GEV_EAVG_CHARM-SIGMARED, variant: legacy}
-    # - {dataset: HERA_NC_318GEV_EAVG_BOTTOM-SIGMARED, variant: legacy}
-    # - {dataset: NMC_NC_NOTFIXED_EM-F2, variant: legacy_dw}
-    # - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
-
-
-
-    theoryid: 40000000                     # The theory from which the predictions are drawn.
-    use_cuts: internal                     # The kinematic cuts to be applied to the data.
-
-    closure_test_level: 0                  # The closure test level: False for experimental, level 0
-                                        # for pseudodata with no noise, level 1 for pseudodata with
-                                        # noise.
-
-    closure_test_pdf: LH_PARAM_20250519  # The closure test PDF used if closure_test_level is not False
-
-    #####################
-    # Loss function specs
-    #####################
-
-    positivity:                            # Positivity datasets, used in the positivity penalty.
-        posdatasets:
-        - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
-
-    positivity_penalty_settings:
-        positivity_penalty: false
-        alpha: 1e-7                           
-        lambda_positivity: 0                 
-
-    # Integrability Settings
-    integrability_settings:
-        integrability: False            
-
-    use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
-    t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
-    
-
-    ###################
-    # Methodology specs
-    ###################
-    prior_settings:
-        prior_distribution: uniform_parameter_prior
-        prior_distribution_specs:
-            bounds:
-                alpha_gluon: [-0.1, 1]
-                beta_gluon: [9, 13]
-                alpha_up: [0.4, 0.9]
-                beta_up: [3, 4.5]
-                epsilon_up: [-3, 3]
-                gamma_up: [1, 6]
-                alpha_down: [1, 2]
-                beta_down: [8, 12]
-                epsilon_down: [-4.5, -3]
-                gamma_down: [3.8, 5.8]
-                norm_sigma: [0.1, 0.5]
-                alpha_sigma: [-0.2, 0.1]
-                beta_sigma: [1.2, 3]
-
-
-    # Nested Sampling settings
-    blackjax_settings:
-        n_posterior_samples: 100
-        n_live: 500
-        repeats: 3
-        delete_fraction: 0.5
-        log_precision: -3
-        posterior_resampling_seed: 52
-        blackjax_seed: 0
-
-
-
-    actions_:
-    - run_blackjax_fit                      # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+.. literalinclude:: ../../../../../../examples/les_houches_example/runcards/lh_blackjax.yaml
+    :language: yaml
 
 Note that the ``prior_settings`` are the same as in an :ref:`UltraNest fit <ultranest_fit>`,
 and so all the settings described there can be used (e.g. global bounds).
@@ -126,9 +33,10 @@ and so all the settings described there can be used (e.g. global bounds).
 
 * ``n_posterior_samples``: Number of posterior samples ('replicas') drawn (*resampled*) from the posterior distribution. The default is 1000. See :ref:`this tutorial <resampling_script>` for details on resampling.
 * ``n_live``: Number of live points at any given time. More live points results in a better estimate of the error.
-* ``repeats``: Number of successful Monte Carlo steps required. Should be a multiple of the dimentionality of parameter space. 
-* ``delete_fraction``: Fraction of live points allowed to be deleted. The more deleted points, the higher the risk of getting stuck at a local minimum, but the lower the memory usage. This setting is analogous to ``min_live_points`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``delete_fraction`` of 0.5 is equivalent to 250 ``min_live_points``.
+* ``repeats``: Number of slice-sampling steps per update, in units of the number of parameters (the sampler takes ``repeats`` x ``n_params`` inner steps).
+* ``delete_fraction``: Fraction of live points allowed to be deleted. The more deleted points, the higher the risk of getting stuck at a local minimum, but the lower the memory usage. This setting is analogous to ``min_num_live_points`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``delete_fraction`` of 0.5 is equivalent to 250 ``min_num_live_points``.
 * ``log_precision``: Termination ratio. This setting is analogous to ``frac_remain`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``log_precision`` of -3 would be equivalent to a ``frac_remain`` of 0.001.
+* ``sampler_plot``: ``true`` produces diagnostic plots of the posterior.
 * ``posterior_resampling_seed``: Random seed used when resampling posterior samples. Fixing this seed ensures reproducible posterior replicas for a given nested sampling run.
 * ``blackjax_seed``: Global random seed for the BlackJAX nested sampler. Setting this seed makes the nested sampling reproducible.
 
@@ -165,11 +73,11 @@ example, for the Les Houches parametrisation model presented in
 
 from the ``examples/les_houches_example`` directory.
 
-Then, you can use the above runcard with the following command:
+Then, from the same directory, you can run the above runcard with the following command:
 
 .. code-block:: bash
 
-    les_houches_exe runcard.yaml
+    les_houches_exe runcards/lh_blackjax.yaml
 
 
 Running fits will generate fit folders, the details of which can be found in 

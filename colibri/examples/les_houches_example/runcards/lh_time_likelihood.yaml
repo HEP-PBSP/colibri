@@ -1,0 +1,77 @@
+################################################################################
+# Les Houches model: time the vectorised log-likelihood
+#
+# Evaluates the log-likelihood on batches of random parameter points and
+# records the average time per batch size. Useful to find where a CPU/GPU
+# saturates before choosing e.g. BlackJAX n_live.
+#
+# Run with:      les_houches_exe runcards/lh_time_likelihood.yaml
+# Output (created in the current directory): lh_time_likelihood/log_likelihood_times.csv
+################################################################################
+
+meta: 'Les Houches model: timing of the vectorised log-likelihood.'
+
+#######################
+# Data and theory specs
+#######################
+
+dataset_inputs:
+- {dataset: NMC_NC_NOTFIXED_EM-F2, frac: 0.75, variant: legacy_dw}
+# - {dataset: NMC_NC_NOTFIXED_P_EM-SIGMARED, variant: legacy}
+# - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+# - {dataset: SLAC_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+# - {dataset: BCDMS_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+# - {dataset: BCDMS_NC_NOTFIXED_D_EM-F2, variant: legacy_dw}
+
+theoryid: 40000000                     # The theory from which the predictions are drawn.
+use_cuts: internal                     # The kinematic cuts to be applied to the data.
+
+closure_test_level: 0                  # False: experimental data; 0: pseudodata without noise;
+                                       # 1: pseudodata with noise.
+closure_test_pdf: LH_PARAM_20250519    # PDF used to generate the pseudodata (ignored if
+                                       # closure_test_level is False).
+
+#####################
+# Loss function specs
+#####################
+
+positivity:                            # Positivity datasets, used in the positivity penalty.
+  posdatasets:
+  - {dataset: NNPDF_POS_2P24GEV_F2U, variant: None, maxlambda: 1e6}
+
+positivity_penalty_settings:
+  positivity_penalty: false
+  alpha: 1e-7
+  lambda_positivity: 0
+
+integrability_settings:
+  integrability: false
+
+use_t0_covmat: true                    # Use the t0 covariance matrix in the chi2.
+t0pdfset: NNPDF40_nnlo_as_01180        # The PDF used to build the t0 covariance matrix.
+
+#################
+# Timing settings
+#################
+
+batch_sample_sizes: [1, 10, 100, 1000, 5000]   # Batch sizes to time.
+
+param_initialiser_settings:            # Distribution of the random parameter points.
+  type: uniform
+  bounds:
+    alpha_gluon: [-0.1, 1]
+    beta_gluon: [9, 13]
+    alpha_up: [0.4, 0.9]
+    beta_up: [3, 4.5]
+    epsilon_up: [-3, 3]
+    gamma_up: [1, 6]
+    alpha_down: [1, 2]
+    beta_down: [8, 12]
+    epsilon_down: [-4.5, -3]
+    gamma_down: [3.8, 5.8]
+    norm_sigma: [0.1, 0.5]
+    alpha_sigma: [-0.2, 0.1]
+    beta_sigma: [1.2, 3]
+
+actions_:
+- time_log_likelihood
