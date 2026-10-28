@@ -4,19 +4,78 @@ colibri.tests.test_config.py
 Test module for config.py
 """
 
+import hashlib
+import shutil
 import unittest
 import unittest.mock as mock
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import mock_open, patch
 
 import pytest
+import numpy as np
 import reportengine
 from reportengine.configparser import ConfigError
 
-from colibri.config import Environment, colibriConfig
+from colibri.config import Environment, EnvironmentError_, colibriConfig
+from colibri import covmats as colibri_covmats
 from colibri.tests.conftest import TEST_PRIOR_SETTINGS_UNIFORM
 
 BASE_CONFIG = colibriConfig({})
+
+
+def test_parse_nuts_settings_defaults(tmp_path):
+    assert BASE_CONFIG.parse_nuts_settings({}, tmp_path) == {
+        "nuts_seed": 0,
+        "num_chains": 4,
+        "num_warmup": 1000,
+        "num_samples": 2000,
+        "target_acceptance_rate": 0.8,
+        "max_num_doublings": 10,
+        "n_posterior_samples": 1000,
+        "sampler_plot": True,
+        "log_dir": str(tmp_path / "nuts_logs"),
+    }
+
+
+def test_parse_nuts_settings_overrides_and_unknown_key(tmp_path, caplog):
+    settings = {
+        "nuts_seed": 42,
+        "num_chains": 2,
+        "num_warmup": 20,
+        "num_samples": 10,
+        "target_acceptance_rate": 0.9,
+        "max_num_doublings": 8,
+        "n_posterior_samples": 5,
+        "sampler_plot": False,
+        "log_dir": tmp_path / "custom_logs",
+    }
+    with caplog.at_level("WARNING", logger="colibri.config"):
+        result = BASE_CONFIG.parse_nuts_settings(
+            {**settings, "unknown_key": "ignored"}, tmp_path
+        )
+
+    assert result == {**settings, "log_dir": str(settings["log_dir"])}
+    assert "Key 'unknown_key' in nuts_settings not known" in caplog.text
+
+
+@pytest.mark.parametrize("settings", [None, [], "nuts"])
+def test_parse_nuts_settings_requires_mapping(tmp_path, settings):
+    with pytest.raises(ConfigError, match="nuts_settings must be a mapping"):
+        BASE_CONFIG.parse_nuts_settings(settings, tmp_path)
+
+
+@pytest.mark.parametrize(
+    "settings,message",
+    [
+        ({"num_chains": 1}, "num_chains must be at least two"),
+        ({"log_dir": 123}, "log_dir must be a filesystem path"),
+        ({"log_dir": ""}, "log_dir cannot be empty"),
+    ],
+)
+def test_parse_nuts_settings_rejects_invalid_values(tmp_path, settings, message):
+    with pytest.raises(ConfigError, match=message):
+        BASE_CONFIG.parse_nuts_settings(settings, tmp_path)
 
 
 def test_float32_precision_enabled():
@@ -65,6 +124,111 @@ def test_init_output(mock_copy2, mock_open, mock_md5, tmp_path):
 
     # Check if md5 hash is generated and stored
     mock_open().write.assert_called_once_with("fake_md5_hash")
+
+
+def test_init_output_creates_directory(tmp_path):
+    env = Environment()
+    env.output_path = tmp_path / "new_fit"
+    env.config_yml = None
+
+    with patch("colibri.config.rank", 0):
+        env.init_output()
+
+    for name in ("input", "figures", "tables"):
+        assert (env.output_path / name).is_dir()
+
+
+def test_init_output_reports_directory_error(tmp_path):
+    env = Environment()
+    env.output_path = tmp_path / "missing_parent" / "fit"
+
+    with patch("colibri.config.rank", 0), pytest.raises(EnvironmentError_) as error:
+        env.init_output()
+
+    assert isinstance(error.value.__cause__, OSError)
+
+
+def test_init_output_tolerates_same_config_file(tmp_path):
+    env = Environment()
+    env.output_path = tmp_path
+    env.config_yml = tmp_path / "filter.yml"
+    env.config_yml.write_text("actions: []\n")
+
+    with (
+        patch("colibri.config.rank", 0),
+        patch("colibri.config.shutil.copy2", side_effect=shutil.SameFileError),
+    ):
+        env.init_output()
+
+    expected = hashlib.md5(env.config_yml.read_bytes()).hexdigest()
+    assert (tmp_path / "md5").read_text() == expected
+
+
+def test_produce_q0_uses_first_fktable():
+    data = SimpleNamespace(datasets=[SimpleNamespace(fkspecs=["first", "second"])])
+    with patch(
+        "colibri.config.load_fktable", return_value=SimpleNamespace(Q0="1.65")
+    ) as load:
+        assert BASE_CONFIG.produce_Q0(data) == 1.65
+    load.assert_called_once_with("first")
+
+
+@pytest.mark.parametrize("source", ["data", "positivity", "both"])
+def test_produce_fit_xgrid_merges_and_sorts_points(source):
+    tables = {
+        "first": SimpleNamespace(xgrid=[0.3, 0.1]),
+        "second": SimpleNamespace(xgrid=[0.2, 0.3]),
+        "positive": SimpleNamespace(xgrid=[0.4, 0.2]),
+    }
+    data = SimpleNamespace(datasets=[SimpleNamespace(fkspecs=["first", "second"])])
+    positivity = [SimpleNamespace(fkspecs=["positive"])]
+
+    with patch("colibri.config.load_fktable", side_effect=tables.__getitem__):
+        result = BASE_CONFIG.produce_FIT_XGRID(
+            data=data if source != "positivity" else None,
+            posdatasets=positivity if source != "data" else None,
+        )
+
+    expected = {
+        "data": [0.1, 0.2, 0.3],
+        "positivity": [0.2, 0.4],
+        "both": [0.1, 0.2, 0.3, 0.4],
+    }
+    np.testing.assert_allclose(result, expected[source])
+
+
+@pytest.mark.parametrize("use_t0", [False, True])
+def test_produce_general_covariance_matrix_selects_provider(use_t0):
+    expected = (
+        colibri_covmats.dataset_inputs_t0_covmat_from_systematics
+        if use_t0
+        else colibri_covmats.dataset_inputs_covmat_from_systematics
+    )
+    assert BASE_CONFIG.produce_general_covariance_matrix(use_t0).value is expected
+
+
+def test_parse_closure_test_pdf_delegates_to_pdf_parser():
+    with patch.object(
+        BASE_CONFIG, "parse_pdf", return_value=mock.sentinel.pdf
+    ) as parse:
+        assert BASE_CONFIG.parse_closure_test_pdf("example_pdf") is mock.sentinel.pdf
+    parse.assert_called_once_with("example_pdf")
+
+
+@pytest.mark.parametrize(
+    "flavours,expected", [(None, None), ([], []), (["T8", "T3", "T8"], [10, 9, 10])]
+)
+def test_produce_flavour_indices_preserves_order(flavours, expected):
+    assert BASE_CONFIG.produce_flavour_indices(flavours) == expected
+
+
+def test_produce_flavour_indices_rejects_unknown_flavour():
+    with pytest.raises(KeyError, match="flavour unknown not found"):
+        BASE_CONFIG.produce_flavour_indices(["unknown"])
+
+
+def test_produce_pdf_model_defaults_to_none():
+    assert BASE_CONFIG.produce_pdf_model() is None
 
 
 @patch("colibri.config.log.warning")

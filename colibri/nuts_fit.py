@@ -25,7 +25,6 @@ from colibri.export_results import (
     plot_bayes_plots,
     write_replicas,
 )
-from colibri.utils import resample_from_ns_posterior
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +39,6 @@ _NUTS_DEFAULTS = {
     "target_acceptance_rate": 0.8,
     "max_num_doublings": 10,
     "n_posterior_samples": 1000,
-    "posterior_resampling_seed": 123456,
     "sampler_plot": True,
 }
 
@@ -65,14 +63,13 @@ def _validate_nuts_settings(settings):
     if settings["num_samples"] < 4:
         raise ValueError("num_samples must be at least four per chain.")
 
-    for name in ("nuts_seed", "posterior_resampling_seed"):
-        value = settings[name]
-        if (
-            isinstance(value, bool)
-            or not isinstance(value, Integral)
-            or not 0 <= value < 2**32
-        ):
-            raise ValueError(f"{name} must be an integer in [0, 2**32).")
+    seed = settings["nuts_seed"]
+    if (
+        isinstance(seed, bool)
+        or not isinstance(seed, Integral)
+        or not 0 <= seed < 2**32
+    ):
+        raise ValueError("nuts_seed must be an integer in [0, 2**32).")
 
     target = settings["target_acceptance_rate"]
     if (
@@ -87,6 +84,40 @@ def _validate_nuts_settings(settings):
 
     if not isinstance(settings["sampler_plot"], bool):
         raise ValueError("sampler_plot must be a boolean.")
+
+
+def _thin_chains(chain_samples, n_posterior_samples):
+    """Select evenly spaced replicas from chains of physical parameters.
+
+    Parameters
+    ----------
+    chain_samples: jax.Array
+        Post-warmup draws with shape (chains, draws, parameters).
+    n_posterior_samples: int
+        Positive number of replicas requested, capped at the available draws.
+
+    Returns
+    -------
+    jax.Array
+        Replicas with shape (selected draws, parameters). Chain contributions
+        differ by at most one. Within each chain, successive index gaps also
+        differ by at most one. Selection is deterministic.
+    """
+    num_chains, num_draws, _ = chain_samples.shape
+    selected_count = min(n_posterior_samples, num_chains * num_draws)
+    per_chain, remainder = divmod(selected_count, num_chains)
+    selected_chains = []
+
+    for chain_index in range(num_chains):
+        count = per_chain + int(chain_index < remainder)
+        if count == 0:
+            continue
+
+        # Spread selections over the full chain, even for nonintegral spacing.
+        indices = np.arange(count) * num_draws // count
+        selected_chains.append(chain_samples[chain_index, indices, :])
+
+    return jnp.concatenate(selected_chains, axis=0)
 
 
 def _rank_normalize(chains):
@@ -452,11 +483,7 @@ def nuts_fit(
             selected_count,
         )
 
-    resampled_posterior = resample_from_ns_posterior(
-        full_samples,
-        selected_count,
-        settings["posterior_resampling_seed"],
-    )
+    resampled_posterior = _thin_chains(chain_samples, selected_count)
 
     best_index = jnp.argmax(log_likelihoods)
     min_chi2 = -2 * log_likelihoods[best_index]
@@ -570,5 +597,4 @@ def run_nuts_fit(
                 str(log_dir.resolve()),
             )
 
-    # All MPI ranks participate in the existing replica-writing routine.
     write_replicas(nuts_fit, output_path, pdf_model)
