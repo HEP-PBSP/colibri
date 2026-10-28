@@ -1,8 +1,4 @@
-"""
-colibri.nuts_fit.py
-
-Bayesian fitting with the BlackJAX No-U-Turn sampler.
-"""
+"""Bayesian fitting with the BlackJAX No-U-Turn sampler."""
 
 import json
 import logging
@@ -87,7 +83,8 @@ def _validate_nuts_settings(settings):
 
 
 def _thin_chains(chain_samples, n_posterior_samples):
-    """Select evenly spaced replicas from chains of physical parameters.
+    """
+    Select evenly spaced replicas from chains of physical parameters.
 
     Parameters
     ----------
@@ -102,6 +99,7 @@ def _thin_chains(chain_samples, n_posterior_samples):
         Replicas with shape (selected draws, parameters). Chain contributions
         differ by at most one. Within each chain, successive index gaps also
         differ by at most one. Selection is deterministic.
+
     """
     num_chains, num_draws, _ = chain_samples.shape
     selected_count = min(n_posterior_samples, num_chains * num_draws)
@@ -187,6 +185,7 @@ def _nuts_diagnostics(
     -------
     dict
         JSON-compatible convergence and sampling diagnostics.
+
     """
     positions = np.asarray(positions)
     num_chains, num_draws, _ = positions.shape
@@ -288,6 +287,7 @@ def nuts_fit(
     -------
     NUTSFit
         Full posterior, selected replicas, metrics and diagnostics.
+
     """
     settings = {**_NUTS_DEFAULTS, **nuts_settings}
     _validate_nuts_settings(settings)
@@ -584,6 +584,7 @@ def run_nuts_fit(
         Fit output directory.
     pdf_model: PDFModel
         Model used to write PDF replicas.
+
     """
     if rank == 0:
         log_dir = Path(nuts_settings["log_dir"])

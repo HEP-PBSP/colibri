@@ -86,10 +86,10 @@ class Environment(Environment):
                 except shutil.SameFileError:
                     pass
 
-                # Generate md5 hash of the filter.yml file
+                # Record a compatibility checksum, not a security guarantee.
                 output_filename = self.output_path / "md5"
                 with open(self.output_path / "filter.yml", "rb") as f:
-                    hash_md5 = hashlib.md5(f.read()).hexdigest()
+                    hash_md5 = hashlib.md5(f.read(), usedforsecurity=False).hexdigest()
                 with open(output_filename, "w") as g:
                     g.write(hash_md5)
 

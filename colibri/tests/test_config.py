@@ -1,10 +1,5 @@
-"""
-colibri.tests.test_config.py
+"""Test the configuration module."""
 
-Test module for config.py
-"""
-
-import hashlib
 import shutil
 import unittest
 import unittest.mock as mock
@@ -160,7 +155,7 @@ def test_init_output_tolerates_same_config_file(tmp_path):
     ):
         env.init_output()
 
-    expected = hashlib.md5(env.config_yml.read_bytes()).hexdigest()
+    expected = "9607233f29eb14d7b35dc9e4c35dacc4"
     assert (tmp_path / "md5").read_text() == expected
 
 

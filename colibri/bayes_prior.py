@@ -29,10 +29,6 @@ def bayesian_prior(prior_settings, forward_map):
     prior_transform: @jax.jit CompiledFunction
         The prior transform function.
     """
-    from_unconstrained = None
-    log_prob_unconstrained = None
-    sample_unconstrained = None
-
     if prior_settings.prior_distribution == "uniform_parameter_prior":
         prior_specs = prior_settings.prior_distribution_specs
 
@@ -99,6 +95,10 @@ def bayesian_prior(prior_settings, forward_map):
             return jnp.log(cube) - jnp.log1p(-cube)
 
     elif prior_settings.prior_distribution == "prior_from_gauss_posterior":
+        from_unconstrained = None
+        log_prob_unconstrained = None
+        sample_unconstrained = None
+
         prior_fit = prior_settings.prior_distribution_specs["prior_fit"]
 
         df_fit = get_full_posterior(prior_fit)
