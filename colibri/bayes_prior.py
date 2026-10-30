@@ -118,7 +118,7 @@ def uniform_prior(mins, maxs):
     )
 
 
-def bayesian_prior(prior_settings, pdf_model):
+def bayesian_prior(prior_settings=None, pdf_model=None):
     """
     Prior of the PDF parameters (``pdf_model.param_names``).
 
@@ -127,8 +127,9 @@ def bayesian_prior(prior_settings, pdf_model):
 
     Parameters
     ----------
-    prior_settings: PriorSettings
-        The settings for the prior.
+    prior_settings: PriorSettings, optional
+        The settings for the prior. Only needed if the PDF model has
+        parameters: without them (e.g. ``fixed_pdf``) the prior is empty.
 
     pdf_model: pdf_model.PDFModel or None
         The PDF model, used to determine parameter names and ordering. None
@@ -139,6 +140,14 @@ def bayesian_prior(prior_settings, pdf_model):
     BayesianPrior
     """
     pdf_param_names = list(pdf_model.param_names) if pdf_model is not None else []
+
+    if prior_settings is None:
+        if pdf_param_names:
+            raise ValueError(
+                f"The PDF model has parameters {pdf_param_names}: set their "
+                "prior with prior_settings."
+            )
+        return uniform_prior(jnp.empty(0), jnp.empty(0))
 
     if prior_settings.prior_distribution == "uniform_parameter_prior":
         prior_specs = prior_settings.prior_distribution_specs

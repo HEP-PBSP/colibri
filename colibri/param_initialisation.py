@@ -139,7 +139,9 @@ def _initial_values(param_names, param_initialiser_settings, key_fn):
         return initial_values
 
 
-def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=-1):
+def pdf_initial_parameters(
+    pdf_model, param_initialiser_settings=None, replica_index=-1
+):
     """
     Initial values of the PDF parameters (``pdf_model.param_names``).
 
@@ -151,8 +153,9 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
     pdf_model: pdf_model.PDFModel or None
         The PDF model. None means there are no PDF parameters.
 
-    param_initialiser_settings: dict
-        The settings for the initialiser.
+    param_initialiser_settings: dict, optional
+        The settings for the initialiser. Only needed if the PDF model has
+        parameters (not e.g. with ``fixed_pdf``).
 
     replica_index: int
         The index of the replica.
@@ -170,6 +173,13 @@ def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=
         return jax.random.PRNGKey(seed + replica_index)
 
     pdf_param_names = pdf_model.param_names if pdf_model is not None else []
+    if param_initialiser_settings is None:
+        if pdf_param_names:
+            raise ValueError(
+                f"The PDF model has parameters {list(pdf_param_names)}: set "
+                "their initialisation with param_initialiser_settings."
+            )
+        return jnp.array([])
     return _initial_values(pdf_param_names, param_initialiser_settings, key_fn)
 
 
@@ -258,7 +268,7 @@ def initial_parameters(forward_map, pdf_initial_parameters, extra_initial_parame
 
 def all_initial_parameters(
     forward_map,
-    param_initialiser_settings,
+    param_initialiser_settings=None,
     extra_param_initialiser_settings=None,
     replica_index=-1,
 ):

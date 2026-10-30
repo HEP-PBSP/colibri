@@ -172,6 +172,48 @@ def test_nuts_fits_pdf_and_extra_parameters(tmp_path):
     np.testing.assert_allclose(samples.std(axis=0), sigma, atol=0.15)
 
 
+def test_nuts_fits_extra_parameters_only(tmp_path):
+    """NUTS with no PDF parameters (e.g. fixed_pdf), only extra parameters."""
+    from unittest.mock import Mock
+
+    from colibri.bayes_prior import extra_parameters_prior, fit_prior
+
+    forward_map = Mock()
+    forward_map.param_names = ["c1", "c2"]
+    forward_map.extra_param_names = ["c1", "c2"]
+    forward_map.n_pdf_params = 0
+
+    prior = fit_prior(
+        forward_map,
+        bayesian_prior(None, None),
+        extra_parameters_prior(
+            forward_map,
+            PriorSettings(
+                prior_distribution="uniform_parameter_prior",
+                prior_distribution_specs={"min_val": -5.0, "max_val": 5.0},
+            ),
+        ),
+    )
+
+    target = jnp.array([1.0, -2.0])
+    sigma = jnp.array([0.5, 1.0])
+
+    class Likelihood:
+        ndata = 2
+
+        def __call__(self, parameters):
+            return -0.5 * jnp.sum(((parameters - target) / sigma) ** 2)
+
+    result = nuts_fit(forward_map, prior, make_settings(tmp_path), Likelihood())
+
+    samples = np.asarray(result.full_posterior_samples)
+    assert samples.shape == (3000, 2)
+    assert result.param_names == ["c1", "c2"]
+    assert ((samples >= -5) & (samples <= 5)).all()
+    np.testing.assert_allclose(samples.mean(axis=0), target, atol=0.15)
+    np.testing.assert_allclose(samples.std(axis=0), sigma, atol=0.15)
+
+
 def test_nuts_fits_gaussian_prior(tmp_path):
     """NUTS samples a prior_from_gauss_posterior prior (Gaussian x Gaussian)."""
     pdf_model = SimpleNamespace(param_names=["a", "b"])

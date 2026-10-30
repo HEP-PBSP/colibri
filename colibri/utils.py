@@ -107,6 +107,32 @@ def mask_luminosity_mapping(fktable, flavour_indices=None):
         return lumi_indices
 
 
+def lhapdf_grid_values(pdf, xgrid, Q0=1.65):
+    """
+    Evaluates all members of an LHAPDF set on ``xgrid`` at scale ``Q0``, in the
+    evolution basis used by the FK tables.
+
+    Parameters
+    ----------
+    pdf: validphys.core.PDF
+
+    xgrid: np.ndarray
+
+    Q0: float, default is 1.65
+
+    Returns
+    -------
+    jnp.ndarray
+        Grid of shape N_rep x N_fl x N_x. Index i is LHAPDF member i
+        (0 is the central value).
+    """
+    return jnp.array(
+        convolution.evolution.grid_values(
+            pdf, convolution.FK_FLAVOURS, xgrid, [Q0]
+        ).squeeze(-1)
+    )
+
+
 def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
     """
     Computes the t0 pdf grid in the evolution basis.
@@ -127,12 +153,7 @@ def t0_pdf_grid(t0pdfset, FIT_XGRID, Q0=1.65):
         t0 grid, is N_rep x N_fl x N_x
     """
 
-    t0grid = jnp.array(
-        convolution.evolution.grid_values(
-            t0pdfset, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
-        ).squeeze(-1)
-    )
-    return t0grid
+    return lhapdf_grid_values(t0pdfset, FIT_XGRID, Q0)
 
 
 def resample_from_ns_posterior(
@@ -237,6 +258,19 @@ def get_pdf_model(colibri_fit):
         pdf_model = dill.load(file)
 
     return pdf_model
+
+
+def fit_has_exportgrids(fit_path):
+    """
+    True if the fit in ``fit_path`` has PDF replicas to evolve, i.e. at least
+    one ``replicas/replica_*/*.exportgrid`` file.
+
+    Fits whose PDF model has ``export_grids = False`` (e.g. ``fixed_pdf``)
+    have none. The check only looks at files, so the PDF model does not need
+    to be unpickled (its package may not be installed).
+    """
+    replicas_path = pathlib.Path(fit_path) / "replicas"
+    return any(replicas_path.glob("replica_*/*.exportgrid"))
 
 
 def pdf_models_equal(pdf_model_1, pdf_model_2):
@@ -464,6 +498,14 @@ def write_resampled_bayesian_fit(
 
     if not os.path.exists(new_rep_path):
         os.mkdir(new_rep_path)
+
+    if not getattr(pdf_model, "export_grids", True):
+        log.info(
+            f"PDF model {type(pdf_model).__name__} has export_grids=False: "
+            "no PDF replicas written."
+        )
+        log.info(f"Resampling completed. Resampled fit stored in {resampled_fit_path}")
+        return
 
     # Finish by writing the replicas to export grids, ready for evolution
     for i, parameters in enumerate(resampled_posterior):

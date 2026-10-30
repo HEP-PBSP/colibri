@@ -50,8 +50,8 @@ def test_analytic_fit_flat_direction():
             MOCK_CENTRAL_COVMAT_INDEX,
             forward_map,
             analytic_settings,
-            TEST_PRIOR_SETTINGS_UNIFORM,
             TEST_FK_ARRAYS,
+            TEST_PRIOR_SETTINGS_UNIFORM,
         )
 
 
@@ -76,8 +76,8 @@ def test_analytic_fit(caplog, monkeypatch):
         MOCK_CENTRAL_COVMAT_INDEX,
         forward_map,
         analytic_settings,
-        TEST_PRIOR_SETTINGS_UNIFORM,
         TEST_FK_ARRAYS,
+        TEST_PRIOR_SETTINGS_UNIFORM,
     )
 
     assert isinstance(result, AnalyticFit)
@@ -96,8 +96,8 @@ def test_analytic_fit(caplog, monkeypatch):
             MOCK_CENTRAL_COVMAT_INDEX,
             forward_map,
             analytic_settings,
-            TEST_PRIOR_SETTINGS_UNIFORM,
             TEST_FK_ARRAYS,
+            TEST_PRIOR_SETTINGS_UNIFORM,
         )
 
     # Check that an error message was logged, because the prior was not wide enough
@@ -137,8 +137,8 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
         MOCK_CENTRAL_COVMAT_INDEX,
         forward_map,
         analytic_settings,
-        PRIOR_SETTINGS1,
         TEST_FK_ARRAYS,
+        PRIOR_SETTINGS1,
     )
 
     assert isinstance(result, AnalyticFit)
@@ -161,8 +161,8 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
         MOCK_CENTRAL_COVMAT_INDEX,
         forward_map,
         analytic_settings,
-        PRIOR_SETTINGS2,
         TEST_FK_ARRAYS,
+        PRIOR_SETTINGS2,
     )
     assert isinstance(result, AnalyticFit)
 
@@ -179,8 +179,8 @@ def test_analytic_fit_different_priors(caplog, monkeypatch):
             MOCK_CENTRAL_COVMAT_INDEX,
             forward_map,
             analytic_settings,
-            PRIOR_SETTINGS3,
             TEST_FK_ARRAYS,
+            PRIOR_SETTINGS3,
         )
     assert isinstance(result, AnalyticFit)
     assert "Using min-max prior" in caplog.text
@@ -302,11 +302,11 @@ def _analytic_fit_with_extra(extra_prior_settings):
         MOCK_CENTRAL_COVMAT_INDEX,
         _LinearForwardMapWithExtra(),
         {**analytic_settings, "full_sample_size": 1000},
+        TEST_FK_ARRAYS,
         PriorSettings(
             prior_distribution="uniform_parameter_prior",
             prior_distribution_specs={"min_val": -10.0, "max_val": 10.0},
         ),
-        TEST_FK_ARRAYS,
         extra_prior_settings=extra_prior_settings,
     )
 
@@ -328,3 +328,38 @@ def test_analytic_fit_extra_parameters_prior():
 def test_analytic_fit_extra_parameters_need_prior():
     with pytest.raises(ValueError, match="extra_prior_settings"):
         _analytic_fit_with_extra(None)
+
+
+class _LinearForwardMapExtraOnly(ForwardMap):
+    """No PDF parameters (as with fixed_pdf), two extra parameters."""
+
+    def __init__(self):
+        super().__init__(None, extra_param_names=["c1", "c2"])
+
+    def __call__(self, fk_tables, params):
+        return jnp.array([params[0], params[1]]), jnp.zeros((1, 1))
+
+
+def test_analytic_fit_without_pdf_parameters_needs_no_prior_settings():
+    result = analytic_fit(
+        MOCK_CENTRAL_COVMAT_INDEX,
+        _LinearForwardMapExtraOnly(),
+        {**analytic_settings, "full_sample_size": 1000},
+        TEST_FK_ARRAYS,
+        extra_prior_settings=PriorSettings(
+            prior_distribution="uniform_parameter_prior",
+            prior_distribution_specs={"min_val": -10.0, "max_val": 10.0},
+        ),
+    )
+    assert result.param_names == ["c1", "c2"]
+
+
+def test_analytic_fit_pdf_parameters_need_prior_settings():
+    with pytest.raises(ValueError, match="prior_settings"):
+        analytic_fit(
+            MOCK_CENTRAL_COVMAT_INDEX,
+            _LinearForwardMapWithExtra(),
+            analytic_settings,
+            TEST_FK_ARRAYS,
+            extra_prior_settings=_norm_prior(-10.0, 10.0),
+        )

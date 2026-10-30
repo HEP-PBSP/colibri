@@ -32,6 +32,17 @@ By convention:
 ``pdf_grid_func``; any remaining entries are "extra" parameters interpreted by
 the chosen ``ForwardMap`` implementation.
 
+Choosing the forward map
+------------------------
+The ``forward_map`` resource is produced by ``colibriConfig.produce_forward_map``
+according to the ``forward_map_type`` runcard key:
+
+* ``fktable`` (default): :func:`fktable_forward_map`, plain FK-table convolution.
+* ``smeft``: :func:`smeft_forward_map`, FK-table convolution times SMEFT
+  K-factors, configured with ``smeft_settings`` (see :mod:`colibri.smeft`).
+  With a PDF model without parameters (``fixed_pdf``) the SM predictions are
+  computed once and only the Wilson coefficients are fitted.
+
 Example - fitting a normalisation factor on top of the PDF
 ----------------------------------------------------------
 ::
@@ -139,7 +150,8 @@ class ForwardMap(ABC):
 class FKTableForwardMap(ForwardMap):
     """Default forward map: params → PDF → FK-table convolution.
 
-    This is the standard pipeline used in colibri PDF fits.
+    This is the standard pipeline used in colibri PDF fits. The fit
+    parameters are the PDF parameters only.
     """
 
     def __init__(
@@ -147,9 +159,8 @@ class FKTableForwardMap(ForwardMap):
         pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
         pdf_model,
         pdf_grid_func: Callable[[jnp.ndarray], jnp.ndarray],
-        extra_param_names: list[str] = [],
     ):
-        super().__init__(pdf_model, extra_param_names=extra_param_names)
+        super().__init__(pdf_model)
         self._pred_func = pred_func
         self._pdf_grid_func = pdf_grid_func
 
@@ -159,8 +170,11 @@ class FKTableForwardMap(ForwardMap):
         return self._pred_func(pdf, fk_tables), pdf
 
 
-def forward_map(_pred_data, pdf_model, FIT_XGRID, extra_param_names=[]):
+def fktable_forward_map(_pred_data, pdf_model, FIT_XGRID):
     """Reportengine provider that builds the default FK-table forward map.
+
+    Selected with ``forward_map_type: fktable`` (the default), see
+    ``colibriConfig.produce_forward_map``.
 
     Parameters
     ----------
@@ -170,14 +184,106 @@ def forward_map(_pred_data, pdf_model, FIT_XGRID, extra_param_names=[]):
         The PDF model object; must expose ``param_names`` and ``grid_values_func``.
     FIT_XGRID : array-like
         The x-grid on which the PDF is evaluated.
-    extra_param_names : list[str], optional
-        Names of any additional fit parameters beyond the PDF parameters.
-
     """
-    pdf_grid_func = pdf_model.grid_values_func(FIT_XGRID)
     return FKTableForwardMap(
         pred_func=_pred_data,
         pdf_model=pdf_model,
-        pdf_grid_func=pdf_grid_func,
-        extra_param_names=extra_param_names,
+        pdf_grid_func=pdf_model.grid_values_func(FIT_XGRID),
+    )
+
+
+class SMEFTForwardMap(ForwardMap):
+    """FK-table forward map with SMEFT K-factors on top of the SM predictions::
+
+        T = T_SM(pdf) * (1 + c @ L + c @ Q @ c)
+
+    The extra fit parameters are the Wilson coefficients ``c`` (or linear
+    combinations of them), and ``L`` (``Q``) are the linear (quadratic)
+    responses held by :class:`colibri.smeft.SMEFTCorrections`.
+
+    If the PDF model has no parameters (e.g. ``fixed_pdf``), ``T_SM`` does not
+    depend on the fit parameters: it is computed once here from ``fk_tables``,
+    and the FK tables passed at call time are ignored. Without quadratic
+    responses the predictions are then linear in the Wilson coefficients, so
+    the analytic fit can be used.
+    """
+
+    def __init__(
+        self,
+        pred_func: Callable[[jnp.ndarray, Any], jnp.ndarray],
+        pdf_model,
+        pdf_grid_func: Callable[[jnp.ndarray], jnp.ndarray],
+        smeft_corrections,
+        fk_tables: Any = None,
+    ):
+        super().__init__(
+            pdf_model, extra_param_names=list(smeft_corrections.parameter_names)
+        )
+        self._pred_func = pred_func
+        self._pdf_grid_func = pdf_grid_func
+        self._linear = jnp.asarray(smeft_corrections.linear)
+        self._quadratic = (
+            None
+            if smeft_corrections.quadratic is None
+            else jnp.asarray(smeft_corrections.quadratic)
+        )
+
+        # SM predictions and PDF grid, precomputed when the PDF is fixed
+        self.sm_predictions = None
+        self.pdf_grid = None
+        if self.n_pdf_params == 0:
+            if fk_tables is None:
+                raise ValueError(
+                    "SMEFTForwardMap needs fk_tables when the PDF model has no "
+                    "parameters, to compute the SM predictions once."
+                )
+            self.pdf_grid = jnp.asarray(pdf_grid_func(jnp.array([])))
+            self.sm_predictions = jnp.asarray(pred_func(self.pdf_grid, fk_tables))
+
+    def smeft_kfactor(self, params):
+        """K-factor multiplying the SM predictions, one entry per data point."""
+        c = params[self.n_pdf_params :]
+        kfactor = 1.0 + c @ self._linear
+        if self._quadratic is not None:
+            kfactor = kfactor + jnp.einsum("i,j,ijn->n", c, c, self._quadratic)
+        return kfactor
+
+    def __call__(self, fk_tables, params):
+        if self.sm_predictions is not None:
+            sm_predictions, pdf = self.sm_predictions, self.pdf_grid
+        else:
+            pdf = self._pdf_grid_func(params[: self.n_pdf_params])
+            sm_predictions = self._pred_func(pdf, fk_tables)
+        return sm_predictions * self.smeft_kfactor(params), pdf
+
+
+def smeft_forward_map(
+    _pred_data, pdf_model, FIT_XGRID, smeft_corrections, fast_kernel_arrays
+):
+    """Reportengine provider that builds the SMEFT forward map.
+
+    Selected with ``forward_map_type: smeft``, see
+    ``colibriConfig.produce_forward_map``. The K-factors are configured with
+    the ``smeft_settings`` runcard key.
+
+    Parameters
+    ----------
+    _pred_data : callable
+        Prediction function of the form ``pred_func(pdf, fk_tables) -> predictions``.
+    pdf_model : object
+        The PDF model object; must expose ``param_names`` and ``grid_values_func``.
+    FIT_XGRID : array-like
+        The x-grid on which the PDF is evaluated.
+    smeft_corrections : colibri.smeft.SMEFTCorrections
+        SMEFT responses for the fitted data.
+    fast_kernel_arrays : tuple
+        FK arrays, only used to precompute the SM predictions when the PDF
+        model has no parameters (e.g. ``fixed_pdf``).
+    """
+    return SMEFTForwardMap(
+        pred_func=_pred_data,
+        pdf_model=pdf_model,
+        pdf_grid_func=pdf_model.grid_values_func(FIT_XGRID),
+        smeft_corrections=smeft_corrections,
+        fk_tables=fast_kernel_arrays,
     )

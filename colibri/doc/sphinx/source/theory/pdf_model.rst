@@ -68,21 +68,16 @@ Prediction Construction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 To compute physical observables (structure functions, cross sections, etc.), PDFs must
-be convolved with perturbative coefficient functions. In Colibri, this is handled via
-the ``pred_and_pdf_func`` method, which takes the :math:`x`-grid and a forward map from
-the PDF to the physical observable, and produces a function taking as input the PDF
-parameters and a tuple of fast-kernel arrays:
+be convolved with perturbative coefficient functions. In Colibri, this is the job of the
+forward map (see :ref:`forward_map`), which maps the fit parameters and the fast-kernel
+arrays to the predictions:
 
 .. math::
     (\boldsymbol{\theta}, FK) \to (\text{predictions}, f_{\rm grid}(\boldsymbol{\theta}))
 
-This function evaluates the PDF on the grid via ``grid_values_func``, and feeds the
-resulting :math:`N_{\rm fl} \times N_{\rm x}` array into the supplied ``forward_map``,
-to yield a 1D vector of theory predictions for all data points. 
-
-.. note::
-    Although the prediction function is already implemented, the user is allowed to override
-    it in their own PDF application if the specific model needs extra features.
+It evaluates the PDF on the grid via ``grid_values_func``, and convolves the
+resulting :math:`N_{\rm fl} \times N_{\rm x}` array with the FK tables,
+to yield a 1D vector of theory predictions for all data points.
 
 Design Rationale and Benefits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

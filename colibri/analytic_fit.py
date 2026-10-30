@@ -91,8 +91,8 @@ def analytic_fit(
     central_covmat_index,
     forward_map,
     analytic_settings,
-    prior_settings,
     fast_kernel_arrays,
+    prior_settings=None,
     extra_prior_settings=None,
 ):
     """
@@ -115,8 +115,9 @@ def analytic_fit(
     analytic_settings: dict
         Settings for the analytic fit.
 
-    prior_settings: PriorSettings
-        Settings for the prior of the PDF parameters.
+    prior_settings: PriorSettings, optional
+        Settings for the prior of the PDF parameters. Only needed if the PDF
+        model has parameters (not e.g. with ``fixed_pdf``).
 
     fast_kernel_arrays: tuple
         Tuple containing the fast kernel arrays.
@@ -192,7 +193,16 @@ def analytic_fit(
 
     # Bounds of the PDF parameters, from prior_settings
     n_pdf = forward_map.n_pdf_params
-    if prior_settings.prior_distribution == "n_sigma_prior":
+    if n_pdf == 0:
+        prior_lower, prior_upper = jnp.empty(0), jnp.empty(0)
+
+    elif prior_settings is None:
+        raise ValueError(
+            f"The PDF model has parameters {list(forward_map.pdf_param_names)}: "
+            "set their prior with prior_settings."
+        )
+
+    elif prior_settings.prior_distribution == "n_sigma_prior":
         nsigma = prior_settings.prior_distribution_specs["n_sigma_value"]
 
         log.info(f"Using +- {nsigma} sigma of covmat")

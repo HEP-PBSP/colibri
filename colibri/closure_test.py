@@ -1,9 +1,7 @@
 import jax.numpy as jnp
 import logging
 
-from validphys import convolution
-
-from colibri.utils import pdf_model_from_colibri_model
+from colibri.utils import lhapdf_grid_values, pdf_model_from_colibri_model
 
 log = logging.getLogger(__name__)
 
@@ -34,13 +32,7 @@ def closure_test_pdf_grid(
         pdf = closure_test_colibri_model_pdf(closure_test_model_settings, FIT_XGRID)
         # return the pdf by adding a dimension to simulate the number of replicas
         return jnp.array([pdf])
-    else:
-        grid = jnp.array(
-            convolution.evolution.grid_values(
-                closure_test_pdf, convolution.FK_FLAVOURS, FIT_XGRID, [Q0]
-            ).squeeze(-1)
-        )
-    return grid
+    return lhapdf_grid_values(closure_test_pdf, FIT_XGRID, Q0)
 
 
 def closure_test_central_pdf_grid(closure_test_pdf_grid):

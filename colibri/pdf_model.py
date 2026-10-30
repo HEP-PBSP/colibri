@@ -5,17 +5,25 @@ This module implements an abstract class PDFModel which is filled by the various
 
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Callable
 
 import jax.numpy as jnp
 from jax.typing import ArrayLike
 
+log = logging.getLogger(__name__)
+
 
 class PDFModel(ABC):
     """An abstract class describing the key features of a PDF model."""
 
     name = "Abstract PDFModel"
+
+    #: Whether the fit writes the PDF to exportgrids, which evolve_fit turns
+    #: into an LHAPDF set. Subclasses set it to False to skip this, e.g.
+    #: FixedPDFModel, whose PDF is already an LHAPDF set.
+    export_grids = True
 
     @property
     @abstractmethod
@@ -60,3 +68,136 @@ class PDFModel(ABC):
                 return func
         """
         pass
+
+
+class FixedPDFModel(PDFModel):
+    """
+    A PDF model with no free parameters: one member of an LHAPDF set,
+    evaluated at the parametrisation scale Q0.
+
+    Used to fit only the extra parameters of a forward map (e.g. SMEFT Wilson
+    coefficients) with the PDF fixed. Selected in the runcard with the
+    ``fixed_pdf`` key.
+
+    Parameters
+    ----------
+    pdf_name: str
+        Name of the LHAPDF set.
+
+    Q0: float
+        Scale at which the PDF is evaluated.
+
+    member: int, default 0
+        Member of the set to use (0 is the central value).
+    """
+
+    name = "Fixed PDF model"
+
+    # The PDF is already an LHAPDF set: there is nothing to export or evolve
+    export_grids = False
+
+    def __init__(self, pdf_name: str, Q0: float, member: int = 0):
+        # Only plain data is stored so that the model can be pickled with dill
+        self.pdf_name = str(pdf_name)
+        self.Q0 = float(Q0)
+        self.member = int(member)
+
+    @property
+    def param_names(self) -> list:
+        return []
+
+    def grid_values_func(self, xgrid: ArrayLike) -> Callable[[jnp.array], jnp.ndarray]:
+        """The grid is computed once here; the returned function ignores params."""
+        from validphys.core import PDF
+
+        from colibri.utils import lhapdf_grid_values
+
+        grid = lhapdf_grid_values(PDF(self.pdf_name), xgrid, self.Q0)[self.member]
+
+        def pdf_func(params):
+            return grid
+
+        return pdf_func
+
+
+def no_pdf_model():
+    """Provider used when no PDF model is defined (base colibri, no ``fixed_pdf``)."""
+    return None
+
+
+def fixed_pdf_model(
+    fixed_pdf,
+    Q0,
+    output_path,
+    replica_index=None,
+    positivity_penalty_settings=None,
+    integrability_settings=None,
+    dump_model=True,
+):
+    """
+    Builds the :class:`FixedPDFModel` for the ``fixed_pdf`` LHAPDF set.
+
+    Parameters
+    ----------
+    fixed_pdf: validphys.core.PDF
+
+    Q0: float
+
+    output_path: pathlib.Path
+        The model is dumped here as ``pdf_model.pkl`` (needed by the scripts).
+
+    replica_index: int, optional
+        MC replica index from the command line (``-rep N``). If given, replica
+        N of the set is used; this requires a Monte Carlo PDF set. Otherwise the
+        central member (0) is used.
+
+    positivity_penalty_settings, integrability_settings: optional
+        Only used to warn that the penalties are constant with a fixed PDF.
+
+    dump_model: bool, default True
+    """
+    n_members = int(fixed_pdf.info["NumMembers"])
+
+    if replica_index is None:
+        member = 0
+    elif fixed_pdf.error_type != "replicas":
+        raise ValueError(
+            f"Running with -rep {replica_index} uses replica {replica_index} of "
+            f"fixed_pdf, but {fixed_pdf.name} is not a Monte Carlo set (error type "
+            f"'{fixed_pdf.error_type}')."
+        )
+    else:
+        member = int(replica_index)
+
+    if not 0 <= member < n_members:
+        raise ValueError(
+            f"Member {member} not available in {fixed_pdf.name}, which has "
+            f"members 0 to {n_members - 1}."
+        )
+
+    log.info(f"Using fixed PDF {fixed_pdf.name}, member {member}, at Q0 = {Q0} GeV.")
+
+    if positivity_penalty_settings and positivity_penalty_settings.get(
+        "positivity_penalty"
+    ):
+        log.warning(
+            "The PDF is fixed: the positivity penalty is a constant and has no effect "
+            "on the fit. Consider setting positivity_penalty: false."
+        )
+    if integrability_settings is not None and integrability_settings.integrability:
+        log.warning(
+            "The PDF is fixed: the integrability penalty is a constant and has no "
+            "effect on the fit. Consider setting integrability: false."
+        )
+
+    model = FixedPDFModel(fixed_pdf.name, Q0, member)
+
+    if dump_model:
+        import dill
+
+        # Written and read back (utils.get_pdf_model) by colibri only, like
+        # the pdf_model.pkl of any other PDF model.
+        with open(output_path / "pdf_model.pkl", "wb") as file:
+            dill.dump(model, file)  # nosemgrep
+
+    return model

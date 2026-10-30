@@ -1,17 +1,26 @@
 """
 colibri.tests.test_forward_map
 
-Tests for the ForwardMap abstract base class, FKTableForwardMap, and the
-forward_map provider function.
+Tests for the ForwardMap abstract base class, FKTableForwardMap, SMEFTForwardMap
+and the forward map provider functions.
 """
 
 import pytest
 import numpy as np
+import jax
 import jax.numpy as jnp
 from unittest.mock import Mock
 from numpy.testing import assert_array_almost_equal
 
-from colibri.forward_map import ForwardMap, FKTableForwardMap, forward_map
+from colibri.checks import check_pdf_model_is_linear
+from colibri.forward_map import (
+    ForwardMap,
+    FKTableForwardMap,
+    SMEFTForwardMap,
+    fktable_forward_map,
+    smeft_forward_map,
+)
+from colibri.smeft import SMEFTCorrections
 from colibri.tests.conftest import (
     TEST_FK_ARRAYS,
     TEST_PDF_GRID,
@@ -21,6 +30,9 @@ from colibri.tests.conftest import (
     TEST_XGRID,
     MOCK_PDF_MODEL,
 )
+
+# colibri runs in float64; the linearity check fails with float32 round-off
+jax.config.update("jax_enable_x64", True)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -148,18 +160,22 @@ def test_fktable_forward_map_stores_pdf_param_names():
     assert fm.n_pdf_params == 3
 
 
-def test_fktable_forward_map_extra_param_names():
-    """FKTableForwardMap must accept and store extra_param_names."""
-    pdf_grid_func = _make_pdf_grid_func(TEST_PDF_GRID)
+def test_fktable_forward_map_has_no_extra_params():
+    """The default forward map fits the PDF parameters only."""
     fm = FKTableForwardMap(
         pred_func=_simple_pred_func,
         pdf_model=_mock_pdf_model(["a", "b"]),
-        pdf_grid_func=pdf_grid_func,
-        extra_param_names=["norm"],
+        pdf_grid_func=_make_pdf_grid_func(TEST_PDF_GRID),
     )
-    assert fm.param_names == ["a", "b", "norm"]
-    assert fm.n_pdf_params == 2
-    assert list(fm.extra_param_names) == ["norm"]
+    assert fm.param_names == ["a", "b"]
+    assert list(fm.extra_param_names) == []
+    with pytest.raises(TypeError):
+        FKTableForwardMap(  # pylint: disable=unexpected-keyword-arg
+            pred_func=_simple_pred_func,
+            pdf_model=_mock_pdf_model(["a"]),
+            pdf_grid_func=_make_pdf_grid_func(TEST_PDF_GRID),
+            extra_param_names=["norm"],
+        )
 
 
 def test_fktable_forward_map_stores_pred_func():
@@ -309,13 +325,13 @@ def test_fktable_forward_map_correct_values():
 
 
 # ---------------------------------------------------------------------------
-# forward_map provider function
+# fktable_forward_map provider function
 # ---------------------------------------------------------------------------
 
 
 def test_forward_map_provider_returns_fktable_forward_map():
-    """forward_map() must return an FKTableForwardMap instance."""
-    result = forward_map(
+    """fktable_forward_map() must return an FKTableForwardMap instance."""
+    result = fktable_forward_map(
         _pred_data=_simple_pred_func, pdf_model=MOCK_PDF_MODEL, FIT_XGRID=TEST_XGRID
     )
     assert isinstance(result, FKTableForwardMap)
@@ -323,10 +339,10 @@ def test_forward_map_provider_returns_fktable_forward_map():
 
 def test_forward_map_provider_infers_pdf_param_names():
     """
-    forward_map() must set pdf_param_names equal to pdf_model.param_names,
+    fktable_forward_map() must set pdf_param_names equal to pdf_model.param_names,
     and n_pdf_params must equal len(pdf_model.param_names).
     """
-    result = forward_map(
+    result = fktable_forward_map(
         _pred_data=_simple_pred_func, pdf_model=MOCK_PDF_MODEL, FIT_XGRID=TEST_XGRID
     )
     assert result.pdf_param_names == MOCK_PDF_MODEL.param_names
@@ -334,16 +350,16 @@ def test_forward_map_provider_infers_pdf_param_names():
 
 
 def test_forward_map_provider_stores_pred_func():
-    """forward_map() must wire _pred_data into the FKTableForwardMap."""
-    result = forward_map(
+    """fktable_forward_map() must wire _pred_data into the FKTableForwardMap."""
+    result = fktable_forward_map(
         _pred_data=_simple_pred_func, pdf_model=MOCK_PDF_MODEL, FIT_XGRID=TEST_XGRID
     )
     assert result._pred_func is _simple_pred_func
 
 
 def test_forward_map_provider_binds_pdf_grid_func():
-    """forward_map() must call pdf_model.grid_values_func(FIT_XGRID) and store the result."""
-    result = forward_map(
+    """fktable_forward_map() must call pdf_model.grid_values_func(FIT_XGRID) and store the result."""
+    result = fktable_forward_map(
         _pred_data=_simple_pred_func, pdf_model=MOCK_PDF_MODEL, FIT_XGRID=TEST_XGRID
     )
     assert callable(result._pdf_grid_func)
@@ -351,10 +367,10 @@ def test_forward_map_provider_binds_pdf_grid_func():
 
 def test_forward_map_provider_functional():
     """
-    The FKTableForwardMap built by forward_map() must produce correct results
+    The FKTableForwardMap built by fktable_forward_map() must produce correct results
     when called.
     """
-    fm = forward_map(
+    fm = fktable_forward_map(
         _pred_data=_simple_pred_func, pdf_model=MOCK_PDF_MODEL, FIT_XGRID=TEST_XGRID
     )
     params = jnp.array([1.0, 2.0])
@@ -367,30 +383,205 @@ def test_forward_map_provider_functional():
 
 def test_forward_map_provider_with_different_param_counts():
     """
-    forward_map() must correctly handle pdf_models with different numbers of
+    fktable_forward_map() must correctly handle pdf_models with different numbers of
     parameters.
     """
     for n in [1, 3, 7]:
         mock_model = Mock()
         mock_model.param_names = [f"p_{i}" for i in range(n)]
-        fm = forward_map(
+        fm = fktable_forward_map(
             _pred_data=_simple_pred_func, pdf_model=mock_model, FIT_XGRID=TEST_XGRID
         )
         assert fm.pdf_param_names == mock_model.param_names
         assert fm.n_pdf_params == n
 
 
-def test_forward_map_provider_with_extra_param_names():
-    """
-    forward_map() must forward extra_param_names to FKTableForwardMap
-    and expose them via param_names.
-    """
-    extra = ["norm", "scale"]
-    fm = forward_map(
+# ---------------------------------------------------------------------------
+# SMEFTForwardMap
+# ---------------------------------------------------------------------------
+
+
+def _smeft_corrections(linear, quadratic=None, names=None):
+    linear = np.asarray(linear, dtype=float)
+    n_params = linear.shape[0]
+    return SMEFTCorrections(
+        parameter_names=tuple(names or [f"c{i}" for i in range(n_params)]),
+        linear=linear,
+        quadratic=quadratic,
+    )
+
+
+def _smeft_fm(corrections, pdf_param_names=("a", "b")):
+    return SMEFTForwardMap(
+        pred_func=_simple_pred_func,
+        pdf_model=_mock_pdf_model(list(pdf_param_names)),
+        pdf_grid_func=_make_pdf_grid_func(TEST_PDF_GRID),
+        smeft_corrections=corrections,
+    )
+
+
+def _sm_predictions():
+    return _simple_pred_func(TEST_PDF_GRID, TEST_FK_ARRAYS)
+
+
+def test_smeft_forward_map_param_names():
+    """SMEFT parameters are appended to the PDF parameters as extra parameters."""
+    linear = np.zeros((2, TEST_N_DATA))
+    fm = _smeft_fm(_smeft_corrections(linear, names=["OtG", "Y"]))
+    assert fm.param_names == ["a", "b", "OtG", "Y"]
+    assert fm.n_pdf_params == 2
+    assert list(fm.extra_param_names) == ["OtG", "Y"]
+
+
+def test_smeft_forward_map_zero_coefficients_give_sm():
+    """With all Wilson coefficients at zero the SM predictions are recovered."""
+    rng = np.random.default_rng(0)
+    linear = rng.normal(size=(2, TEST_N_DATA))
+    quadratic = rng.normal(size=(2, 2, TEST_N_DATA))
+    fm = _smeft_fm(_smeft_corrections(linear, quadratic=quadratic))
+
+    predictions, pdf = fm(TEST_FK_ARRAYS, jnp.array([1.0, 2.0, 0.0, 0.0]))
+
+    assert_array_almost_equal(predictions, _sm_predictions())
+    assert_array_almost_equal(pdf, TEST_PDF_GRID)
+
+
+def test_smeft_forward_map_linear_correction():
+    """Predictions are T_SM * (1 + sum_i c_i L_i)."""
+    rng = np.random.default_rng(1)
+    linear = rng.normal(size=(2, TEST_N_DATA))
+    fm = _smeft_fm(_smeft_corrections(linear))
+    c = np.array([0.3, -1.2])
+
+    predictions, _ = fm(TEST_FK_ARRAYS, jnp.concatenate([jnp.array([1.0, 2.0]), c]))
+
+    expected = _sm_predictions() * (1 + c @ linear)
+    np.testing.assert_allclose(predictions, expected, rtol=1e-6)
+
+
+def test_smeft_forward_map_quadratic_correction():
+    """Predictions are T_SM * (1 + c.L + c.Q.c) when quadratic responses exist."""
+    rng = np.random.default_rng(2)
+    linear = rng.normal(size=(2, TEST_N_DATA))
+    quadratic = rng.normal(size=(2, 2, TEST_N_DATA))
+    fm = _smeft_fm(_smeft_corrections(linear, quadratic=quadratic))
+    c = np.array([0.5, 2.0])
+
+    predictions, _ = fm(TEST_FK_ARRAYS, jnp.concatenate([jnp.array([1.0, 2.0]), c]))
+
+    quad = np.einsum("i,j,ijn->n", c, c, quadratic)
+    expected = _sm_predictions() * (1 + c @ linear + quad)
+    np.testing.assert_allclose(predictions, expected, rtol=1e-6)
+
+
+def test_smeft_forward_map_is_jittable():
+    """The SMEFT forward map can be traced by jax.jit with dynamic FK tables."""
+    linear = np.ones((1, TEST_N_DATA))
+    fm = _smeft_fm(_smeft_corrections(linear))
+    params = jnp.array([1.0, 2.0, 0.5])
+
+    jitted, _ = jax.jit(fm)(TEST_FK_ARRAYS, params)
+    eager, _ = fm(TEST_FK_ARRAYS, params)
+
+    np.testing.assert_allclose(jitted, eager, rtol=1e-6)
+
+
+def test_smeft_forward_map_provider():
+    """smeft_forward_map() builds an SMEFTForwardMap bound to the PDF model grid."""
+    linear = np.zeros((1, TEST_N_DATA))
+    fm = smeft_forward_map(
         _pred_data=_simple_pred_func,
         pdf_model=MOCK_PDF_MODEL,
         FIT_XGRID=TEST_XGRID,
-        extra_param_names=extra,
+        smeft_corrections=_smeft_corrections(linear, names=["OtG"]),
+        fast_kernel_arrays=TEST_FK_ARRAYS,
     )
-    assert fm.param_names == MOCK_PDF_MODEL.param_names + extra
-    assert list(fm.extra_param_names) == extra
+    assert isinstance(fm, SMEFTForwardMap)
+    assert fm.param_names == MOCK_PDF_MODEL.param_names + ["OtG"]
+
+    predictions, pdf = fm(TEST_FK_ARRAYS, jnp.array([1.0, 2.0, 0.0]))
+    assert predictions.shape == (TEST_N_DATA,)
+    assert pdf.shape == (TEST_N_FL, TEST_N_XGRID)
+
+
+# ---------------------------------------------------------------------------
+# SMEFTForwardMap with a fixed PDF (PDF model without parameters)
+# ---------------------------------------------------------------------------
+
+
+def _fixed_smeft_fm(corrections, fk_tables=TEST_FK_ARRAYS):
+    return SMEFTForwardMap(
+        pred_func=_simple_pred_func,
+        pdf_model=_mock_pdf_model([]),
+        pdf_grid_func=_make_pdf_grid_func(TEST_PDF_GRID),
+        smeft_corrections=corrections,
+        fk_tables=fk_tables,
+    )
+
+
+def test_fixed_pdf_smeft_forward_map_precomputes_sm():
+    """Without PDF parameters the SM predictions and PDF grid are computed once."""
+    fm = _fixed_smeft_fm(_smeft_corrections(np.ones((1, TEST_N_DATA))))
+
+    assert fm.param_names == ["c0"]
+    assert fm.n_pdf_params == 0
+    assert_array_almost_equal(fm.sm_predictions, _sm_predictions())
+    assert_array_almost_equal(fm.pdf_grid, TEST_PDF_GRID)
+
+
+def test_fitted_pdf_smeft_forward_map_does_not_precompute():
+    fm = _smeft_fm(_smeft_corrections(np.ones((1, TEST_N_DATA))))
+    assert fm.sm_predictions is None
+    assert fm.pdf_grid is None
+
+
+def test_fixed_pdf_smeft_forward_map_predictions():
+    """Predictions are T_SM * (1 + c.L + c.Q.c) with the precomputed T_SM."""
+    rng = np.random.default_rng(4)
+    linear = rng.normal(size=(2, TEST_N_DATA))
+    quadratic = rng.normal(size=(2, 2, TEST_N_DATA))
+    fixed = _fixed_smeft_fm(_smeft_corrections(linear, quadratic=quadratic))
+    params = np.array([0.4, -1.3])
+
+    preds_fixed, pdf_fixed = fixed(TEST_FK_ARRAYS, jnp.array(params))
+
+    c = params
+    quad = np.einsum("i,j,ijn->n", c, c, quadratic)
+    expected = _sm_predictions() * (1 + c @ linear + quad)
+    np.testing.assert_allclose(preds_fixed, expected, rtol=1e-6)
+    assert_array_almost_equal(pdf_fixed, TEST_PDF_GRID)
+
+
+def test_fixed_pdf_smeft_forward_map_ignores_fk_tables():
+    fm = _fixed_smeft_fm(_smeft_corrections(np.ones((1, TEST_N_DATA))))
+    params = jnp.array([0.5])
+    np.testing.assert_allclose(
+        fm(None, params)[0], fm(TEST_FK_ARRAYS, params)[0], rtol=1e-12
+    )
+
+
+def test_fixed_pdf_smeft_forward_map_needs_fk_tables():
+    with pytest.raises(ValueError, match="fk_tables"):
+        _fixed_smeft_fm(_smeft_corrections(np.ones((1, TEST_N_DATA))), fk_tables=None)
+
+
+def test_fixed_pdf_smeft_forward_map_is_linear():
+    """Linear-only K-factors with a fixed PDF pass the analytic-fit linearity check."""
+    rng = np.random.default_rng(5)
+    fm = _fixed_smeft_fm(_smeft_corrections(rng.normal(size=(2, TEST_N_DATA))))
+    check_pdf_model_is_linear(fm, TEST_FK_ARRAYS)
+
+
+def test_smeft_forward_map_provider_fixed_pdf():
+    """With a PDF model without parameters the provider precomputes the SM."""
+    model = _mock_pdf_model([])
+    model.grid_values_func = lambda xgrid: _make_pdf_grid_func(TEST_PDF_GRID)
+    fm = smeft_forward_map(
+        _pred_data=_simple_pred_func,
+        pdf_model=model,
+        FIT_XGRID=TEST_XGRID,
+        smeft_corrections=_smeft_corrections(np.zeros((1, TEST_N_DATA))),
+        fast_kernel_arrays=TEST_FK_ARRAYS,
+    )
+    assert isinstance(fm, SMEFTForwardMap)
+    assert_array_almost_equal(fm.sm_predictions, _sm_predictions())

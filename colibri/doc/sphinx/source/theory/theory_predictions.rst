@@ -1,8 +1,8 @@
 .. _theory_predictions:
 
-===========
-Forward Map
-===========
+===================
+Theory predictions
+===================
 
 Colibri provides a flexible platform for fitting PDF models to data involving
 at least one incoming proton. The data is modeled in the framework of collinear

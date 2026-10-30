@@ -222,10 +222,6 @@ def test_produce_flavour_indices_rejects_unknown_flavour():
         BASE_CONFIG.produce_flavour_indices(["unknown"])
 
 
-def test_produce_pdf_model_defaults_to_none():
-    assert BASE_CONFIG.produce_pdf_model() is None
-
-
 @patch("colibri.config.log.warning")
 def test_parse_prior_settings(mock_warning):
     # Define the settings input
@@ -755,6 +751,167 @@ def test_parse_blackjax_settings_with_unknown_keys(mock_warning, mock_exists, tm
 
     assert blackjax_settings == expected_settings
     assert mock_warning.called
+
+
+# -----------------------------
+#   forward map selection
+# -----------------------------
+
+
+def test_produce_forward_map():
+    """produce_forward_map returns an explicit node for every known type."""
+    for forward_map_type in ("fktable", "smeft"):
+        node = BASE_CONFIG.produce_forward_map(forward_map_type)
+        assert type(node) == reportengine.configparser.ExplicitNode
+
+    with pytest.raises(ConfigError):
+        BASE_CONFIG.produce_forward_map("unknown")
+
+
+def test_produce_forward_map_selects_provider():
+    from colibri import forward_map
+
+    assert BASE_CONFIG.produce_forward_map().value is forward_map.fktable_forward_map
+    assert (
+        BASE_CONFIG.produce_forward_map("smeft").value is forward_map.smeft_forward_map
+    )
+
+
+# -----------------------------
+#   parse_smeft_settings
+# -----------------------------
+
+SMEFT_SETTINGS = {
+    "parameters": [
+        {"name": "OtG"},
+        {"name": "Y", "linear_combination": {"Olq1": 1.5, "Oed": -6}},
+    ],
+}
+
+
+def test_parse_smeft_settings():
+    res = BASE_CONFIG.parse_smeft_settings(SMEFT_SETTINGS)
+
+    assert res == {
+        "backend": "simunet",
+        "parameters": [
+            {"name": "OtG", "linear_combination": {"OtG": 1.0}},
+            {"name": "Y", "linear_combination": {"Olq1": 1.5, "Oed": -6.0}},
+        ],
+    }
+
+
+@patch("colibri.config.log.warning")
+def test_parse_smeft_settings_unknown_key_warns(mock_warning):
+    BASE_CONFIG.parse_smeft_settings({**SMEFT_SETTINGS, "unknown": 1})
+    args, _ = mock_warning.call_args
+    assert isinstance(args[0], ConfigError)
+
+
+@patch("colibri.config.log.warning")
+def test_parse_smeft_settings_unknown_parameter_key_warns(mock_warning):
+    res = BASE_CONFIG.parse_smeft_settings(
+        {"parameters": [{"name": "OtG", "unknown": 1}]}
+    )
+    assert res["parameters"] == [{"name": "OtG", "linear_combination": {"OtG": 1.0}}]
+    args, _ = mock_warning.call_args
+    assert isinstance(args[0], ConfigError)
+    assert "OtG" in str(args[0])
+
+
+@pytest.mark.parametrize(
+    "update, match",
+    [
+        ({"backend": "nope"}, "Unknown SMEFT backend"),
+        ({"parameters": []}, "non-empty 'parameters'"),
+        ({"parameters": [{"linear_combination": {"OtG": 1.0}}]}, "with a 'name'"),
+        (
+            {"parameters": [{"name": "Y", "linear_combination": [1, 2]}]},
+            "must be a mapping",
+        ),
+        ({"parameters": [{"name": "OtG"}, {"name": "OtG"}]}, "Duplicate"),
+    ],
+)
+def test_parse_smeft_settings_invalid(update, match):
+    settings = {**SMEFT_SETTINGS, **update}
+    with pytest.raises(ConfigError, match=match):
+        BASE_CONFIG.parse_smeft_settings(settings)
+
+
+# -----------------------------
+#   fixed PDF
+# -----------------------------
+
+
+def test_parse_fixed_pdf_is_an_lhapdf_set():
+    with patch.object(BASE_CONFIG, "parse_pdf", return_value="pdf") as mock_parse:
+        assert BASE_CONFIG.parse_fixed_pdf("NNPDF40_nnlo_as_01180") == "pdf"
+    mock_parse.assert_called_once_with("NNPDF40_nnlo_as_01180")
+
+
+def test_produce_pdf_model_selects_provider():
+    from colibri import pdf_model
+
+    assert BASE_CONFIG.produce_pdf_model().value is pdf_model.no_pdf_model
+    assert BASE_CONFIG.produce_pdf_model(fixed_pdf="a pdf").value is (
+        pdf_model.fixed_pdf_model
+    )
+
+
+# -----------------------------
+#   smeft_order in dataset_inputs
+# -----------------------------
+
+
+@patch("validphys.config.log.warning")
+def test_parse_dataset_input_smeft_order(mock_warning):
+    from validphys.core import DataSetInput
+
+    res = BASE_CONFIG.parse_dataset_input(
+        {
+            "dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC",
+            "variant": "legacy",
+            "smeft_order": "EFT_NLO",
+        }
+    )
+
+    assert type(res) is DataSetInput
+    assert res.name == "ATLAS_TTBAR_13TEV_TOT_X-SEC"
+    assert res.variant == ("legacy",)
+    assert res.smeft_order == "EFT_NLO"
+    # smeft_order is not reported as an unknown dataset key
+    mock_warning.assert_not_called()
+
+
+def test_parse_dataset_input_without_smeft_order():
+    res = BASE_CONFIG.parse_dataset_input(
+        {"dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC", "variant": "legacy"}
+    )
+    assert not hasattr(res, "smeft_order")
+
+
+def test_parse_dataset_input_invalid_smeft_order():
+    with pytest.raises(ConfigError, match="smeft_order"):
+        BASE_CONFIG.parse_dataset_input(
+            {"dataset": "ATLAS_TTBAR_13TEV_TOT_X-SEC", "smeft_order": 1}
+        )
+
+
+@patch("colibri.config.log.warning")
+def test_produce_forward_map_warns_on_unused_smeft_order(mock_warning):
+    from validphys.core import DataSetInput
+
+    dsinput = DataSetInput(
+        name="DS", cfac=(), frac=1, weight=1, custom_group="unset", variant=None
+    )
+    dsinput.smeft_order = "EFT_LO"
+    inputs = [dsinput]
+
+    BASE_CONFIG.produce_forward_map("smeft", dataset_inputs=inputs)
+    mock_warning.assert_not_called()
+
+    BASE_CONFIG.produce_forward_map("fktable", dataset_inputs=inputs)
+    mock_warning.assert_called_once()
 
 
 # -----------------------------

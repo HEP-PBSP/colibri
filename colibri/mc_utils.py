@@ -122,6 +122,15 @@ def write_exportgrid_mc(
     if not os.path.exists(rep_path):
         os.mkdir(rep_path)
 
+    if not getattr(pdf_model, "export_grids", True):
+        log.info(
+            f"PDF model {type(pdf_model).__name__} has export_grids=False: "
+            "no exportgrid written."
+        )
+        return
+
+    log.info(f"Writing exportgrid for replica {replica_index}")
+
     fit_name = str(output_path).split("/")[-1]
 
     # Create the exportgrid

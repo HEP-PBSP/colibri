@@ -10,15 +10,22 @@ import hashlib
 import logging
 import os
 import shutil
+from collections.abc import Mapping
 
 import jax
 import jax.numpy as jnp
 from colibri import commondata_utils
 from colibri import covmats as colibri_covmats
+from colibri import forward_map as colibri_forward_map
+from colibri import pdf_model as colibri_pdf_model
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 from colibri.core import IntegrabilitySettings, PriorSettings
+from colibri.smeft import (
+    SMEFT_BACKENDS,
+    smeft_orders,
+)
 from mpi4py import MPI
-from reportengine.configparser import ConfigError, explicit_node
+from reportengine.configparser import ConfigError, element_of, explicit_node
 from validphys import covmats
 from validphys.config import Config, Environment
 from validphys.fkparser import load_fktable
@@ -733,6 +740,146 @@ class colibriConfig(Config):
 
         return optimizer_settings
 
+    def parse_smeft_settings(self, settings):
+        """
+        Parses the smeft_settings namespace from the runcard into a dict with
+        keys ``backend`` and ``parameters``. Each parameter
+        is ``{"name": str, "linear_combination": {operator: coefficient}}``,
+        with ``linear_combination`` defaulting to ``{name: 1.0}``. Only used
+        with ``forward_map_type: smeft``.
+        The datasets receiving a SMEFT correction are selected with the
+        ``smeft_order`` key in ``dataset_inputs`` (see parse_dataset_input).
+
+        Example
+        -------
+        ::
+
+            smeft_settings:
+              backend: simunet          # source of the K-factors (default: simunet)
+              parameters:
+                - {name: OtG}
+                - name: Y
+                  linear_combination: {Olq1: 1.51606, Oed: -6.0606}
+        """
+        known_keys = {"backend", "parameters"}
+        kdiff = settings.keys() - known_keys
+        for k in kdiff:
+            log.warning(
+                ConfigError(f"Key '{k}' in smeft_settings not known.", k, known_keys)
+            )
+
+        backend = settings.get("backend", "simunet")
+        if backend not in SMEFT_BACKENDS:
+            raise ConfigError(
+                f"Unknown SMEFT backend '{backend}'.", backend, SMEFT_BACKENDS.keys()
+            )
+
+        # Fit parameters
+        raw_parameters = settings.get("parameters")
+        if not raw_parameters:
+            raise ConfigError(
+                "smeft_settings must define a non-empty 'parameters' list."
+            )
+
+        parameters = []
+        for par in raw_parameters:
+            if not isinstance(par, dict) or "name" not in par:
+                raise ConfigError(
+                    f"Each entry of smeft_settings 'parameters' must be a mapping with a 'name', got {par}."
+                )
+            par_keys = {"name", "linear_combination"}
+            for k in par.keys() - par_keys:
+                log.warning(
+                    ConfigError(
+                        f"Key '{k}' in smeft_settings parameter '{par['name']}' not known.",
+                        k,
+                        par_keys,
+                    )
+                )
+            linear_combination = par.get("linear_combination", {})
+            if not isinstance(linear_combination, dict):
+                raise ConfigError(
+                    f"'linear_combination' of SMEFT parameter '{par['name']}' must be a mapping."
+                )
+            name = str(par["name"])
+            parameters.append(
+                {
+                    "name": name,
+                    "linear_combination": {
+                        str(op): float(coeff)
+                        for op, coeff in (linear_combination or {name: 1.0}).items()
+                    },
+                }
+            )
+
+        names = [p["name"] for p in parameters]
+        duplicates = {n for n in names if names.count(n) > 1}
+        if duplicates:
+            raise ConfigError(f"Duplicate SMEFT parameter names: {sorted(duplicates)}")
+
+        return {
+            "backend": backend,
+            "parameters": parameters,
+        }
+
+    @element_of("dataset_inputs")
+    def parse_dataset_input(self, dataset: Mapping, allow_legacy_names: bool = True):
+        """
+        As validphys' parse_dataset_input, plus the optional ``smeft_order`` key:
+        the perturbative order of the SMEFT K-factors (e.g. ``EFT_LO`` or
+        ``EFT_NLO`` for SIMUnet). Datasets with the key receive a SMEFT
+        correction when ``forward_map_type: smeft``; the others are SM only.
+
+        Example
+        -------
+        ::
+
+            dataset_inputs:
+            - {dataset: ATLAS_TTBAR_13TEV_TOT_X-SEC, variant: legacy, smeft_order: EFT_NLO}
+            - {dataset: SLAC_NC_NOTFIXED_P_EM-F2, variant: legacy_dw}
+        """
+        if not isinstance(dataset, Mapping) or "smeft_order" not in dataset:
+            return super().parse_dataset_input(dataset, allow_legacy_names)
+
+        dataset = dict(dataset)
+        smeft_order = dataset.pop("smeft_order")
+        if not isinstance(smeft_order, str):
+            raise ConfigError(
+                f"'smeft_order' must be a string (e.g. EFT_NLO), got {smeft_order!r} "
+                f"({dataset.get('dataset')})."
+            )
+        dataset_input = super().parse_dataset_input(dataset, allow_legacy_names)
+        # validphys' DataSetInput has no field for it: attach it as an attribute
+        dataset_input.smeft_order = smeft_order
+        return dataset_input
+
+    @explicit_node
+    def produce_forward_map(
+        self, forward_map_type: str = "fktable", dataset_inputs=None
+    ):
+        """
+        Produces the forward_map node in the reportengine dag, according to
+        the ``forward_map_type`` runcard key:
+
+        - ``fktable`` (default): colibri.forward_map.fktable_forward_map
+        - ``smeft``: colibri.forward_map.smeft_forward_map, requires ``smeft_settings``
+        """
+        if forward_map_type != "smeft" and smeft_orders(dataset_inputs or []):
+            log.warning(
+                "Some dataset_inputs have a smeft_order, but forward_map_type is not "
+                "smeft: no SMEFT correction is applied."
+            )
+
+        if forward_map_type == "fktable":
+            return colibri_forward_map.fktable_forward_map
+        elif forward_map_type == "smeft":
+            return colibri_forward_map.smeft_forward_map
+        raise ConfigError(
+            f"Unknown forward_map_type: {forward_map_type}",
+            forward_map_type,
+            ["fktable", "smeft"],
+        )
+
     @explicit_node
     def produce_commondata_tuple(self, closure_test_level=False):
         """
@@ -793,8 +940,20 @@ class colibriConfig(Config):
 
         return None
 
-    def produce_pdf_model(self):
+    def parse_fixed_pdf(self, name):
+        """LHAPDF set used as a fixed PDF (see produce_pdf_model)."""
+        return self.parse_pdf(name)
+
+    @explicit_node
+    def produce_pdf_model(self, fixed_pdf=None):
         """
-        Returns None as the pdf_model is not used in the colibri module.
+        Produces the pdf_model node. Base colibri has no PDF model of its own:
+
+        - if ``fixed_pdf`` is given, the PDF is fixed to that LHAPDF set (the
+          central member, or replica N when run with ``-rep N``), see colibri.pdf_model.fixed_pdf_model. Combined with
+          ``forward_map_type: smeft`` this gives a SMEFT-only fit.
+        - otherwise None. PDF models override this method in their config.
         """
-        return None
+        if fixed_pdf is None:
+            return colibri_pdf_model.no_pdf_model
+        return colibri_pdf_model.fixed_pdf_model
