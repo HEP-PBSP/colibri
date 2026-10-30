@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 def monte_carlo_fit(
     mc_log_likelihood,
-    pdf_initial_parameters,
+    initial_parameters,
     optimizer_provider,
     early_stopper,
     max_epochs,
@@ -38,8 +38,9 @@ def monte_carlo_fit(
     mc_log_likelihood: tuple
         Tuple containing the training and validation likelihoods.
 
-    pdf_initial_parameters: jnp.array
-        Initial parameters for the Monte Carlo fit.
+    initial_parameters: jnp.array
+        Initial values of all the fit parameters (PDF and extra parameters),
+        see colibri.param_initialisation.
 
     optimizer_provider: optax._src.base.GradientTransformationExtraArgs
         Optax optimizer.
@@ -78,7 +79,7 @@ def monte_carlo_fit(
     t0 = time.time()
 
     gd_result = run_gradient_descent(
-        initial_parameters=pdf_initial_parameters.copy(),
+        initial_parameters=initial_parameters.copy(),
         training_loss_fn=loss_training,
         validation_loss_fn=loss_validation,
         optimizer=optimizer_provider,

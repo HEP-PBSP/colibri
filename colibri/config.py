@@ -535,6 +535,77 @@ class colibriConfig(Config):
 
         return PriorSettings(**prior_settings)
 
+    def parse_extra_prior_settings(self, settings):
+        """
+        Parses the extra_prior_settings namespace: the prior of the extra
+        parameters of the forward map (e.g. SMEFT Wilson coefficients), which
+        ``prior_settings`` does not cover. Same structure as ``prior_settings``;
+        only ``uniform_parameter_prior`` is supported.
+
+        Example
+        -------
+        ::
+
+            extra_prior_settings:
+              prior_distribution: uniform_parameter_prior
+              prior_distribution_specs:
+                bounds: {norm: [0.5, 1.5]}      # or min_val / max_val
+
+        Returns
+        -------
+        PriorSettings
+        """
+        known_keys = {"prior_distribution", "prior_distribution_specs"}
+        for k in settings.keys() - known_keys:
+            log.warning(
+                ConfigError(
+                    f"Key '{k}' in extra_prior_settings not known.", k, known_keys
+                )
+            )
+
+        prior_distribution = settings.get(
+            "prior_distribution", "uniform_parameter_prior"
+        )
+        if prior_distribution != "uniform_parameter_prior":
+            raise ConfigError(
+                f"extra_prior_settings: prior_distribution '{prior_distribution}' is "
+                "not supported, only uniform_parameter_prior.",
+                prior_distribution,
+                ["uniform_parameter_prior"],
+            )
+
+        specs = settings.get("prior_distribution_specs")
+        if not isinstance(specs, dict) or not (
+            "bounds" in specs or {"min_val", "max_val"} <= specs.keys()
+        ):
+            raise ConfigError(
+                "extra_prior_settings must have prior_distribution_specs with "
+                "either 'bounds' or 'min_val' and 'max_val'."
+            )
+
+        return PriorSettings(
+            prior_distribution=prior_distribution, prior_distribution_specs=specs
+        )
+
+    def parse_extra_param_initialiser_settings(self, settings):
+        """
+        Parses the extra_param_initialiser_settings namespace: the initialiser of
+        the extra parameters of the forward map, with the same options as
+        ``param_initialiser_settings``. The default type is ``zeros``.
+
+        Example
+        -------
+        ::
+
+            extra_param_initialiser_settings:
+              type: uniform
+              min_val: 0.9
+              max_val: 1.1
+        """
+        if not isinstance(settings, dict):
+            raise ConfigError("extra_param_initialiser_settings must be a mapping.")
+        return {"type": "zeros", **settings}
+
     def parse_analytic_settings(
         self,
         settings,
