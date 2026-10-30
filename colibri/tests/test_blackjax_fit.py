@@ -62,7 +62,7 @@ blackjax_settings = {
 
 
 @pytest.mark.parametrize("pos_penalty", [True, False])
-def test_blackjax_fit(pos_penalty):
+def test_blackjax_fit(pos_penalty, tmp_path):
     forward_map = FKTableForwardMap(
         lambda pdf, fk: jnp.zeros(len(MOCK_PDF_MODEL.param_names)),
         pdf_model=MOCK_PDF_MODEL,
@@ -88,14 +88,14 @@ def test_blackjax_fit(pos_penalty):
         fit_result = blackjax_fit(
             forward_map,
             bayesian_prior,
-            blackjax_settings,
+            {**blackjax_settings, "log_dir": str(tmp_path / "test_logs")},
             mock_log_likelihood,
         )
 
     assert isinstance(fit_result, BlackJAXFit)
 
 
-def test_blackjax_fit_truncates_posterior_and_warns(caplog):
+def test_blackjax_fit_truncates_posterior_and_warns(caplog, tmp_path):
     # --- build a forward_map with the right param_names ---
     mock_forward_map = Mock()
     mock_forward_map.param_names = ["param1", "param2"]
@@ -114,7 +114,7 @@ def test_blackjax_fit_truncates_posterior_and_warns(caplog):
         "log_precision": 1.0,  # skip while-loop
         "n_posterior_samples": 10,  # deliberately too large
         "posterior_resampling_seed": 123,
-        "log_dir": "test_logs",
+        "log_dir": str(tmp_path / "test_logs"),
     }
 
     mock_log_likelihood = LogLikelihood(

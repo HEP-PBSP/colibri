@@ -808,6 +808,17 @@ def test_parse_smeft_settings_unknown_key_warns(mock_warning):
     assert isinstance(args[0], ConfigError)
 
 
+@patch("colibri.config.log.warning")
+def test_parse_smeft_settings_unknown_parameter_key_warns(mock_warning):
+    res = BASE_CONFIG.parse_smeft_settings(
+        {"parameters": [{"name": "OtG", "unknown": 1}]}
+    )
+    assert res["parameters"] == [{"name": "OtG", "linear_combination": {"OtG": 1.0}}]
+    args, _ = mock_warning.call_args
+    assert isinstance(args[0], ConfigError)
+    assert "OtG" in str(args[0])
+
+
 @pytest.mark.parametrize(
     "update, match",
     [
@@ -830,6 +841,12 @@ def test_parse_smeft_settings_invalid(update, match):
 # -----------------------------
 #   fixed PDF
 # -----------------------------
+
+
+def test_parse_fixed_pdf_is_an_lhapdf_set():
+    with patch.object(BASE_CONFIG, "parse_pdf", return_value="pdf") as mock_parse:
+        assert BASE_CONFIG.parse_fixed_pdf("NNPDF40_nnlo_as_01180") == "pdf"
+    mock_parse.assert_called_once_with("NNPDF40_nnlo_as_01180")
 
 
 def test_produce_pdf_model_selects_provider():

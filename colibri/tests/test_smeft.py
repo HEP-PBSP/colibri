@@ -173,6 +173,18 @@ def test_smeft_corrections_wrong_shape(fake_backends, monkeypatch):
         smeft_corrections(data, _dataset_inputs("SMEFT_DS"), _settings())
 
 
+def test_smeft_corrections_wrong_quadratic_shape(fake_backends, monkeypatch):
+    def bad_responses(self, dataset, order, parameters):
+        n = dataset.commondata.ndata
+        return np.zeros((len(parameters), n)), np.zeros((len(parameters), n))
+
+    monkeypatch.setattr(FakeBackend, "dataset_responses", bad_responses)
+    data = _mock_data(_mock_dataset("SMEFT_DS", ndata=3))
+
+    with pytest.raises(ValueError, match="Quadratic SMEFT responses"):
+        smeft_corrections(data, _dataset_inputs("SMEFT_DS"), _settings())
+
+
 # ---------------------------------------------------------------------------
 # SIMUnet backend
 # ---------------------------------------------------------------------------
