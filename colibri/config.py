@@ -93,10 +93,10 @@ class Environment(Environment):
                 except shutil.SameFileError:
                     pass
 
-                # Generate md5 hash of the filter.yml file
+                # Record a compatibility checksum, not a security guarantee.
                 output_filename = self.output_path / "md5"
                 with open(self.output_path / "filter.yml", "rb") as f:
-                    hash_md5 = hashlib.md5(f.read()).hexdigest()
+                    hash_md5 = hashlib.md5(f.read(), usedforsecurity=False).hexdigest()
                 with open(output_filename, "w") as g:
                     g.write(hash_md5)
 
@@ -325,6 +325,72 @@ class colibriConfig(Config):
 
         return blackjax_settings
 
+    def parse_nuts_settings(self, settings, output_path):
+        """
+        Parse settings for a BlackJAX NUTS fit.
+
+        Parameters
+        ----------
+        settings: dict
+            The nuts_settings namespace from the runcard.
+        output_path: pathlib.Path
+            Fit output directory.
+
+        Returns
+        -------
+        dict
+            Validated settings with defaults.
+        """
+        from colibri.nuts_fit import (
+            _NUTS_DEFAULTS,
+            _validate_nuts_settings,
+        )
+
+        if not isinstance(settings, dict):
+            raise ConfigError(
+                "nuts_settings must be a mapping.",
+                "nuts_settings",
+            )
+
+        defaults = {
+            **_NUTS_DEFAULTS,
+            "log_dir": str(output_path / "nuts_logs"),
+        }
+        known_keys = set(defaults)
+
+        for key in settings.keys() - known_keys:
+            log.warning(
+                ConfigError(
+                    f"Key '{key}' in nuts_settings not known.",
+                    key,
+                    known_keys,
+                )
+            )
+
+        parsed = {
+            name: settings.get(name, default) for name, default in defaults.items()
+        }
+
+        try:
+            _validate_nuts_settings(parsed)
+        except ValueError as error:
+            raise ConfigError(
+                str(error),
+                "nuts_settings",
+            ) from error
+
+        if not isinstance(parsed["log_dir"], (str, os.PathLike)):
+            raise ConfigError(
+                "log_dir must be a filesystem path.",
+                "log_dir",
+            )
+
+        parsed["log_dir"] = os.fspath(parsed["log_dir"])
+        if not parsed["log_dir"]:
+            raise ConfigError("log_dir cannot be empty.", "log_dir")
+
+        return parsed
+
     def parse_positivity_penalty_settings(self, settings):
         """
         Parses the positivity_penalty_settings namespace from the runcard,
@@ -475,6 +541,77 @@ class colibriConfig(Config):
         )
 
         return PriorSettings(**prior_settings)
+
+    def parse_extra_prior_settings(self, settings):
+        """
+        Parses the extra_prior_settings namespace: the prior of the extra
+        parameters of the forward map (e.g. SMEFT Wilson coefficients), which
+        ``prior_settings`` does not cover. Same structure as ``prior_settings``;
+        only ``uniform_parameter_prior`` is supported.
+
+        Example
+        -------
+        ::
+
+            extra_prior_settings:
+              prior_distribution: uniform_parameter_prior
+              prior_distribution_specs:
+                bounds: {norm: [0.5, 1.5]}      # or min_val / max_val
+
+        Returns
+        -------
+        PriorSettings
+        """
+        known_keys = {"prior_distribution", "prior_distribution_specs"}
+        for k in settings.keys() - known_keys:
+            log.warning(
+                ConfigError(
+                    f"Key '{k}' in extra_prior_settings not known.", k, known_keys
+                )
+            )
+
+        prior_distribution = settings.get(
+            "prior_distribution", "uniform_parameter_prior"
+        )
+        if prior_distribution != "uniform_parameter_prior":
+            raise ConfigError(
+                f"extra_prior_settings: prior_distribution '{prior_distribution}' is "
+                "not supported, only uniform_parameter_prior.",
+                prior_distribution,
+                ["uniform_parameter_prior"],
+            )
+
+        specs = settings.get("prior_distribution_specs")
+        if not isinstance(specs, dict) or not (
+            "bounds" in specs or {"min_val", "max_val"} <= specs.keys()
+        ):
+            raise ConfigError(
+                "extra_prior_settings must have prior_distribution_specs with "
+                "either 'bounds' or 'min_val' and 'max_val'."
+            )
+
+        return PriorSettings(
+            prior_distribution=prior_distribution, prior_distribution_specs=specs
+        )
+
+    def parse_extra_param_initialiser_settings(self, settings):
+        """
+        Parses the extra_param_initialiser_settings namespace: the initialiser of
+        the extra parameters of the forward map, with the same options as
+        ``param_initialiser_settings``. The default type is ``zeros``.
+
+        Example
+        -------
+        ::
+
+            extra_param_initialiser_settings:
+              type: uniform
+              min_val: 0.9
+              max_val: 1.1
+        """
+        if not isinstance(settings, dict):
+            raise ConfigError("extra_param_initialiser_settings must be a mapping.")
+        return {"type": "zeros", **settings}
 
     def parse_analytic_settings(
         self,

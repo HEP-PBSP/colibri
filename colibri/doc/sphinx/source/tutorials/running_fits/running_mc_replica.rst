@@ -104,6 +104,12 @@ can do so:
     means or standard deviations, default values of **0.0** and **1.0**
     will be used respectively.
 
+.. note::
+    ``param_initialiser_settings`` covers the PDF parameters only. If the
+    forward map has extra parameters (e.g. SMEFT Wilson coefficients), they
+    are initialised by ``extra_param_initialiser_settings``, with the same
+    options, and to zero by default. See :ref:`extra_parameters_prior`.
+
 
 Using data batching
 ^^^^^^^^^^^^^^^^^^^

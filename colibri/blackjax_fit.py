@@ -43,7 +43,7 @@ blackjax_logger.addHandler(handler)
 
 def blackjax_fit(
     forward_map,
-    bayesian_prior,
+    fit_prior,
     blackjax_settings,
     log_likelihood,
 ):
@@ -55,8 +55,9 @@ def blackjax_fit(
     forward_map: ForwardMap
         The forward map whose ``param_names`` enumerate all fit parameters.
 
-    bayesian_prior: BayesianPrior, @jax.jit CompiledFunction
-        The prior function for the model.
+    fit_prior: BayesianPrior
+        Prior of all the fit parameters (PDF and extra parameters), see
+        colibri.bayes_prior.fit_prior.
 
     blackjax_settings: dict
         Settings for the BlackJAX Nested Sampling fit.
@@ -79,10 +80,10 @@ def blackjax_fit(
     n_live = blackjax_settings["n_live"]
     n_delete = int(blackjax_settings["delete_fraction"] * n_live)
 
-    inital_particles = bayesian_prior.sample(rng_key, n_live)
+    inital_particles = fit_prior.sample(rng_key, n_live)
 
     algo = blackjax.nss(
-        logprior_fn=bayesian_prior.log_prob,
+        logprior_fn=fit_prior.log_prob,
         loglikelihood_fn=log_likelihood,
         num_delete=n_delete,
         num_inner_steps=int(blackjax_settings["repeats"] * n_dims),

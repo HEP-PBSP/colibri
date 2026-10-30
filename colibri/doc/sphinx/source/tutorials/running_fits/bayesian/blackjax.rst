@@ -34,7 +34,7 @@ and so all the settings described there can be used (e.g. global bounds).
 * ``n_posterior_samples``: Number of posterior samples ('replicas') drawn (*resampled*) from the posterior distribution. The default is 1000. See :ref:`this tutorial <resampling_script>` for details on resampling.
 * ``n_live``: Number of live points at any given time. More live points results in a better estimate of the error.
 * ``repeats``: Number of slice-sampling steps per update, in units of the number of parameters (the sampler takes ``repeats`` x ``n_params`` inner steps).
-* ``delete_fraction``: Fraction of live points allowed to be deleted. The more deleted points, the higher the risk of getting stuck at a local minimum, but the lower the memory usage. This setting is analogous to ``min_live_points`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``delete_fraction`` of 0.5 is equivalent to 250 ``min_live_points``.
+* ``delete_fraction``: Fraction of live points allowed to be deleted. The more deleted points, the higher the risk of getting stuck at a local minimum, but the lower the memory usage. This setting is analogous to ``min_num_live_points`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``delete_fraction`` of 0.5 is equivalent to 250 ``min_num_live_points``.
 * ``log_precision``: Termination ratio. This setting is analogous to ``frac_remain`` in an :ref:`UltraNest fit <ultranest_fit>`, in that a ``log_precision`` of -3 would be equivalent to a ``frac_remain`` of 0.001.
 * ``sampler_plot``: ``true`` produces diagnostic plots of the posterior.
 * ``posterior_resampling_seed``: Random seed used when resampling posterior samples. Fixing this seed ensures reproducible posterior replicas for a given nested sampling run.

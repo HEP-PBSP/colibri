@@ -328,7 +328,7 @@ def likelihood_float_type(
     forward_map,
     pdf_model,
     FIT_XGRID,
-    bayesian_prior,
+    fit_prior,
     output_path,
     central_covmat_index,
     fast_kernel_arrays,
@@ -347,7 +347,7 @@ def likelihood_float_type(
         predictions, pdf = forward_map(fast_kernel_arrays, params)
         return -0.5 * loss_function(central_values, predictions, inv_covmat)
 
-    params = bayesian_prior.prior_transform(
+    params = fit_prior.prior_transform(
         jax.random.uniform(jax.random.PRNGKey(0), shape=(len(forward_map.param_names),))
     )
 
