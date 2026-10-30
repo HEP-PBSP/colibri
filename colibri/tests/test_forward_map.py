@@ -170,7 +170,7 @@ def test_fktable_forward_map_has_no_extra_params():
     assert fm.param_names == ["a", "b"]
     assert list(fm.extra_param_names) == []
     with pytest.raises(TypeError):
-        FKTableForwardMap(
+        FKTableForwardMap(  # pylint: disable=unexpected-keyword-arg
             pred_func=_simple_pred_func,
             pdf_model=_mock_pdf_model(["a"]),
             pdf_grid_func=_make_pdf_grid_func(TEST_PDF_GRID),

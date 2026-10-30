@@ -195,7 +195,9 @@ def fixed_pdf_model(
     if dump_model:
         import dill
 
+        # Written and read back (utils.get_pdf_model) by colibri only, like
+        # the pdf_model.pkl of any other PDF model.
         with open(output_path / "pdf_model.pkl", "wb") as file:
-            dill.dump(model, file)
+            dill.dump(model, file)  # nosemgrep
 
     return model

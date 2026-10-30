@@ -51,7 +51,6 @@ def test_grid_values_func():
 import pathlib
 from unittest.mock import Mock, patch
 
-import dill
 import numpy as np
 import pytest
 
@@ -91,12 +90,6 @@ def test_export_grids_flag():
     assert TestPDFModel(n_parameters=0).export_grids is True
 
 
-def test_fixed_pdf_model_pickles():
-    model = FixedPDFModel(FIXED_PDF_NAME, Q0=1.65, member=3)
-    loaded = dill.loads(dill.dumps(model))
-    assert vars(loaded) == vars(model)
-
-
 def test_no_pdf_model():
     assert no_pdf_model() is None
 
@@ -115,8 +108,12 @@ def test_fixed_pdf_model_provider_central(tmp_path):
 
     assert isinstance(model, FixedPDFModel)
     assert (model.pdf_name, model.Q0, model.member) == (FIXED_PDF_NAME, 1.65, 0)
-    with open(tmp_path / "pdf_model.pkl", "rb") as f:
-        assert vars(dill.load(f)) == vars(model)
+
+    # The dumped model is read back by the scripts with get_pdf_model
+    from colibri.utils import get_pdf_model
+
+    with patch("colibri.utils.get_fit_path", return_value=tmp_path):
+        assert vars(get_pdf_model("fit")) == vars(model)
 
 
 def test_fixed_pdf_model_provider_replica(tmp_path):
