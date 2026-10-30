@@ -236,11 +236,13 @@ def _join_initial_parameters(forward_map, pdf_parameters, extra_parameters):
             f"{len(forward_map.extra_param_names)} extra parameters."
         )
 
+    # Use the default float type, so that integer values from a custom
+    # initialiser do not truncate the other part.
+    dtype = jnp.result_type(float)
+    pdf_parameters = pdf_parameters.astype(dtype)
     if extra_parameters.size == 0:
         return pdf_parameters
-    return jnp.concatenate(
-        [pdf_parameters, extra_parameters.astype(pdf_parameters.dtype)]
-    )
+    return jnp.concatenate([pdf_parameters, extra_parameters.astype(dtype)])
 
 
 def initial_parameters(forward_map, pdf_initial_parameters, extra_initial_parameters):

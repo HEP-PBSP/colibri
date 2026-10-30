@@ -44,6 +44,8 @@ def uniform_prior_bounds(param_names, specs, settings_name="prior_distribution_s
         Lower and upper bounds, in the order of ``param_names``.
     """
     param_names = list(param_names)
+    if not param_names:
+        return jnp.empty(0), jnp.empty(0)
 
     if "bounds" in specs:
         bounds_dict = specs["bounds"]

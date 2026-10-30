@@ -426,3 +426,15 @@ def test_fit_prior_silent_when_nuts_compatible(caplog):
             extra_parameters_prior(fm, EXTRA_SETTINGS),
         )
     assert "NUTS" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "specs",
+    [{"bounds": {"a": [0.0, 1.0]}}, {"min_val": -1.0, "max_val": 1.0}],
+)
+def test_uniform_prior_bounds_empty_parameter_list(specs):
+    from colibri.bayes_prior import uniform_prior_bounds
+
+    mins, maxs = uniform_prior_bounds([], specs)
+    assert mins.shape == (0,)
+    assert maxs.shape == (0,)

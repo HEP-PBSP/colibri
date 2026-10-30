@@ -459,3 +459,21 @@ def test_all_initial_parameters():
     assert result.shape == (3,)
     assert jnp.all(jnp.abs(result[:2]) <= 1.0)
     assert 5.0 <= result[2] <= 6.0
+
+
+def test_initial_parameters_integer_parts_are_not_truncated():
+    """Integer values from a custom initialiser give float parameters."""
+    fm = _fm_with_extras()
+    result = initial_parameters(fm, jnp.array([0, 1]), jnp.array([0.5]))
+    assert jnp.issubdtype(result.dtype, jnp.floating)
+    np.testing.assert_array_equal(result, jnp.array([0.0, 1.0, 0.5]))
+
+    result = initial_parameters(fm, jnp.array([0.5, 1.5]), jnp.array([2]))
+    assert jnp.issubdtype(result.dtype, jnp.floating)
+    np.testing.assert_array_equal(result, jnp.array([0.5, 1.5, 2.0]))
+
+
+def test_initial_parameters_without_extras_integer_pdf_part_is_float():
+    fm = _fm_with_extras(extra_names=())
+    result = initial_parameters(fm, jnp.array([1, 2]), jnp.array([]))
+    assert jnp.issubdtype(result.dtype, jnp.floating)
