@@ -13,8 +13,14 @@ rescaled by SMEFT K-factors:
 
 where :math:`L_i` (and, optionally, :math:`Q_{ij}`) are the SMEFT responses
 normalised to the SM prediction they were computed with. The Wilson
-coefficients are appended to the PDF parameters, so they appear in the
-priors, initialisation and fit outputs under the names given in the runcard.
+coefficients are the *extra* parameters of the forward map: they are appended
+to the PDF parameters, and appear in the fit outputs under the names given in
+the runcard.
+
+The prior and initialisation of the Wilson coefficients are set separately
+from those of the PDF parameters (see :ref:`extra_parameters_prior`), so any
+PDF model app, including one that overrides ``bayesian_prior`` or
+``pdf_initial_parameters``, can be used with the SMEFT forward map unchanged.
 
 Setting up a SMEFT fit
 ----------------------
@@ -55,9 +61,21 @@ The SMEFT forward map (see :ref:`forward_map`) is selected with
   operators. The fitted value is the coefficient of that operator or
   combination; a parameter is rescaled through its ``linear_combination``.
 
-Since the fit parameters include the Wilson coefficients, per-parameter prior
-bounds or initialiser bounds must list them too, e.g.
-``prior_distribution_specs: {bounds: {..., OtG: [-5, 5], Y: [-5, 5]}}``.
+The prior of the Wilson coefficients is uniform, set with
+``extra_prior_settings``; their initial values (Monte Carlo and Hessian fits)
+are set with ``extra_param_initialiser_settings`` and default to zero.
+``prior_settings`` and ``param_initialiser_settings`` cover the PDF parameters
+only:
+
+.. code-block:: yaml
+
+    extra_prior_settings:
+      prior_distribution_specs:
+        bounds: {OtG: [-5, 5], Y: [-5, 5]}    # or min_val / max_val
+
+    extra_param_initialiser_settings:         # optional, default: zeros
+      type: uniform
+      bounds: {OtG: [-1, 1], Y: [-1, 1]}
 
 K-factor backends
 -----------------
@@ -109,8 +127,7 @@ To fit only the Wilson coefficients, fix the PDF to any LHAPDF set with the
     forward_map_type: smeft
     smeft_settings: {...}
 
-    prior_settings:
-      prior_distribution: uniform_parameter_prior
+    extra_prior_settings:
       prior_distribution_specs: {min_val: -5, max_val: 5}
 
     actions_:
@@ -118,7 +135,8 @@ To fit only the Wilson coefficients, fix the PDF to any LHAPDF set with the
 
 - The PDF model then has no parameters: the fit parameters are only the
   Wilson coefficients, and the SM predictions are computed once at the start
-  instead of at every likelihood evaluation.
+  instead of at every likelihood evaluation. ``prior_settings`` and
+  ``param_initialiser_settings`` are not needed.
 - With linear K-factors (all SIMUnet ones) the predictions are linear in the
   coefficients, so ``run_analytic_fit`` gives the exact Gaussian posterior.
 - The central member of the set is used. A Monte Carlo fit run with ``-rep N``

@@ -46,7 +46,7 @@ forward_map_type: smeft                # Default: fktable (SM predictions only).
 
 smeft_settings:
   backend: simunet                     # Source of the K-factors.
-  parameters:                          # Fit parameters, appended to the PDF parameters.
+  parameters:                          # Extra fit parameters, appended to the PDF parameters.
   - {name: OtG}                        # A single operator.
   - name: Y                            # A linear combination of operators.
     linear_combination: {Olq1: 1.51606, Oed: -6.0606, Oeu: 12.1394, Olu: 6.0606, Old: -3.0394, Oqe: 3.0394}
@@ -74,10 +74,10 @@ t0pdfset: NNPDF40_nnlo_as_01180        # The PDF used to build the t0 covariance
 # Methodology specs
 ###################
 
-prior_settings:
+prior_settings:                        # Prior of the PDF parameters.
   prior_distribution: uniform_parameter_prior
   prior_distribution_specs:
-    bounds:                            # One entry per fit parameter, Wilson coefficients included.
+    bounds:
       alpha_gluon: [-0.1, 1]
       beta_gluon: [9, 13]
       alpha_up: [0.4, 0.9]
@@ -91,6 +91,10 @@ prior_settings:
       norm_sigma: [0.1, 0.5]
       alpha_sigma: [-0.2, 0.1]
       beta_sigma: [1.2, 3]
+
+extra_prior_settings:                  # Uniform prior of the Wilson coefficients.
+  prior_distribution_specs:
+    bounds:
       OtG: [-2, 2]
       Y: [-0.2, 0.2]
 

@@ -52,7 +52,9 @@ parameters.
 
 The fit uses the product of the two priors, so any PDF prior, including the
 one of a PDF model app, can be combined with any extra parameters. The
-analytic fit takes its uniform prior bounds from the same two places.
+analytic fit takes its uniform prior bounds from the same two places. If the
+PDF model has no parameters (e.g. ``fixed_pdf``), ``prior_settings`` and
+``param_initialiser_settings`` can be left out.
 
 Likewise, for the fits that need a starting point (Monte Carlo and Hessian),
 ``param_initialiser_settings`` initialises the PDF parameters, and

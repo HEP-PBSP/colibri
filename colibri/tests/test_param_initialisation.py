@@ -395,6 +395,25 @@ def test_pdf_initial_parameters_without_pdf_model_is_empty():
     assert pdf_initial_parameters(None, {"type": "zeros"}).shape == (0,)
 
 
+def test_pdf_initial_parameters_without_pdf_parameters_needs_no_settings():
+    assert pdf_initial_parameters(None).shape == (0,)
+    assert pdf_initial_parameters(_pdf_model([])).shape == (0,)
+
+
+def test_pdf_initial_parameters_pdf_parameters_need_settings():
+    with pytest.raises(ValueError, match="param_initialiser_settings"):
+        pdf_initial_parameters(_pdf_model())
+
+
+def test_all_initial_parameters_extra_only():
+    fm = _fm_with_extras(pdf_names=())
+    fm.pdf_model = None
+    result = all_initial_parameters(
+        fm, extra_param_initialiser_settings={"type": "zeros"}
+    )
+    assert result.shape == (1,)
+
+
 def test_extra_initial_parameters_default_zeros():
     fm = _fm_with_extras(extra_names=("c1", "c2"))
     np.testing.assert_array_equal(extra_initial_parameters(fm), jnp.zeros(2))

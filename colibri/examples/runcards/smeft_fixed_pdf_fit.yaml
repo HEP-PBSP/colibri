@@ -71,11 +71,11 @@ t0pdfset: NNPDF40_nnlo_as_01180        # The PDF used to build the t0 covariance
 # Methodology specs
 ###################
 
-prior_settings:
-  prior_distribution: uniform_parameter_prior
-  prior_distribution_specs:            # The analytic fit needs global bounds. The samplers also
-    min_val: -2                        # accept per-parameter bounds:
-    max_val: 2                         #   bounds: {OtG: [-2, 2], Y: [-0.2, 0.2]}
+# The PDF has no parameters: no prior_settings or param_initialiser_settings
+# needed, only those of the Wilson coefficients.
+extra_prior_settings:                  # Uniform prior of the Wilson coefficients.
+  prior_distribution_specs:
+    bounds: {OtG: [-2, 2], Y: [-0.2, 0.2]}   # Or global min_val / max_val.
 
 # With linear K-factors and a fixed PDF the predictions are linear in the
 # coefficients, so the analytic fit gives the exact Gaussian posterior.

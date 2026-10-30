@@ -20,7 +20,7 @@ def hessian_fit(
     optimizer_provider,
     max_epochs,
     hessian_settings,
-    param_initialiser_settings,
+    param_initialiser_settings=None,
     extra_param_initialiser_settings=None,
     record_every=50,
     threshold_chi2=10.0,
@@ -40,8 +40,9 @@ def hessian_fit(
         The maximum number of epochs to be used in the gradient descent.
     hessian_settings: dict
         Dictionary containing the settings for the Hessian fit.
-    param_initialiser_settings: dict
-        Dictionary containing the settings for the parameter initialisation.
+    param_initialiser_settings: dict, optional
+        Settings for the initialisation of the PDF parameters. Only needed if
+        the PDF model has parameters.
     extra_param_initialiser_settings: dict, optional
         Initialiser of the extra parameters of the forward map (zeros by default).
     record_every: int, default = 50

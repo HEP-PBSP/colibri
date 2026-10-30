@@ -226,6 +226,17 @@ def test_bayesian_prior_without_pdf_model_is_empty():
     assert prior.prior_transform(jnp.zeros(0)).shape == (0,)
 
 
+def test_bayesian_prior_without_pdf_parameters_needs_no_settings():
+    prior = bayesian_prior(None, _pdf_model([]))
+    assert prior.prior_transform(jnp.zeros(0)).shape == (0,)
+    assert bayesian_prior(None, None).sample(jax.random.PRNGKey(0), 3).shape == (3, 0)
+
+
+def test_bayesian_prior_pdf_parameters_need_settings():
+    with pytest.raises(ValueError, match="prior_settings"):
+        bayesian_prior(None, _pdf_model())
+
+
 def test_bayesian_prior_warns_about_bounds_of_non_pdf_parameters(caplog):
     settings = PriorSettings(
         prior_distribution="uniform_parameter_prior",
