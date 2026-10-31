@@ -28,7 +28,8 @@ adding the following arguments to the runcard:
     record_every: 100
 
 This above example will save the parameter values every 100 epochs. These are saved
-for each replica in the file ``fit_directory/replica_n/parameters/``.
+for each replica in the file ``fit_directory/replica_n/parameters/``: ``params_<e>.npz``
+holds the parameters after ``e`` epochs, ``params_0.npz`` the initial ones.
 
 
 Step 2: Save the parameters during training

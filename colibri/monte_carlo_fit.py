@@ -64,8 +64,9 @@ def monte_carlo_fit(
         Whether to monitor the parameters during the Monte Carlo fit.
 
     record_every: int, default 50
-        Frequency (in epochs) at which to record losses parameters of
-        model. If record_parameters is False, only losses are recorded.
+        Frequency (in epochs) at which to record the losses and, if record_parameters
+        is True, the parameters: those after 0, record_every, 2 * record_every, ...
+        epochs (see ``run_gradient_descent``).
 
     Returns
     -------
@@ -177,10 +178,11 @@ def run_monte_carlo_fit(
         + f"/replica_{replica_index}/"
         + f"/mc_result_replica_{replica_index}.csv"
     )
-    # Save the training and validation loss
+    # Save the training and validation loss, recorded every `record_every` epochs
+    record_every = mc_fit.monte_carlo_specs["record_every"]
     df = pd.DataFrame(
         {
-            "epochs": range(len(mc_fit.training_loss)),
+            "epochs": range(0, len(mc_fit.training_loss) * record_every, record_every),
             "training_loss": mc_fit.training_loss,
             "validation_loss": mc_fit.validation_loss,
         }
@@ -192,8 +194,7 @@ def run_monte_carlo_fit(
     )
 
     if record_parameters:
-        # Save the parameters by epoch if recorded
-        record_every = mc_fit.monte_carlo_specs["record_every"]
+        # Save the parameters by epoch if recorded: params_<e> after e epochs
         parameters_by_epoch = mc_fit.parameters_by_epoch
         params_path = (
             str(output_path) + f"/fit_replicas/replica_{replica_index}/parameters/"

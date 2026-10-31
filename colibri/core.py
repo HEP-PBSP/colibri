@@ -185,7 +185,8 @@ class MonteCarloFit:
     optimized_parameters: jnp.array
         Array containing the optimized parameters.
     parameters_by_epoch: jnp.array
-        Array containing the parameters of the model recorded during training.
+        The parameters recorded during training: entry i holds the parameters after
+        i * record_every epochs, the initial parameters for i = 0.
     """
 
     monte_carlo_specs: dict
@@ -210,7 +211,8 @@ class GradientDescentResult:
     specs: dict
         Dictionary of settings used for the run (epochs, batch size, etc.).
     parameters_by_epoch: jnp.array
-        Array containing the parameters of the model recorded during training.
+        The parameters recorded during training: entry i holds the parameters after
+        i * record_every epochs, the initial parameters for i = 0.
     """
 
     optimized_parameters: Any

@@ -5,7 +5,9 @@ Tests for the generic gradient descent training loop in `gradient_descent.py`.
 """
 
 import jax.numpy as jnp
+import numpy as np
 import optax
+import pytest
 from flax.training.early_stopping import EarlyStopping
 
 from colibri.gradient_descent import run_gradient_descent, GradientDescentResult
@@ -131,3 +133,34 @@ def test_run_gradient_descent_record_every_behavior():
     assert result.validation_loss.size == 3
     # Monotonic non-increasing validation loss across recorded epochs
     assert jnp.all(result.validation_loss[1:] <= result.validation_loss[:-1] + 1e-10)
+
+
+@pytest.mark.parametrize("record_every, epochs", [(2, [0, 2, 4, 6]), (4, [0, 4])])
+def test_run_gradient_descent_records_parameters_after_completed_epochs(
+    record_every, epochs
+):
+    """Snapshot i holds the parameters after i * record_every epochs, the initial ones
+    for i = 0, as n3fit saves them."""
+    target, initial, learning_rate = -1.0, 5.0, 0.25
+
+    def loss(params, _batch=None):
+        return (params - target) ** 2
+
+    result = run_gradient_descent(
+        initial_parameters=jnp.array(initial),
+        training_loss_fn=loss,
+        validation_loss_fn=loss,
+        optimizer=optax.sgd(learning_rate=learning_rate),
+        early_stopper=EarlyStopping(min_delta=0.0, patience=100),
+        max_epochs=6,
+        record_every=record_every,
+        record_parameters=True,
+    )
+
+    # SGD on (p - target)^2: p_{n+1} - target = (1 - 2 lr) (p_n - target)
+    def after(n):
+        return target + (initial - target) * (1 - 2 * learning_rate) ** n
+
+    np.testing.assert_allclose(
+        result.parameters_by_epoch, [after(n) for n in epochs], rtol=1e-6
+    )

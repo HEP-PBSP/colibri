@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 
 import jax.numpy as jnp
 import numpy as np
+import pandas as pd
 from numpy.testing import assert_allclose
 
 from colibri.monte_carlo_fit import MonteCarloFit, monte_carlo_fit, run_monte_carlo_fit
@@ -76,7 +77,7 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
 
     # Define mock ultranest fit
     mock_monte_carlo_fit = Mock()
-    mock_monte_carlo_fit.monte_carlo_specs = {}
+    mock_monte_carlo_fit.monte_carlo_specs = {"record_every": 50}
     mock_monte_carlo_fit.training_loss = jnp.array([0.1, 0.2, 0.3])
     mock_monte_carlo_fit.validation_loss = jnp.array([0.2, 0.3, 0.4])
     mock_monte_carlo_fit.optimized_parameters = jnp.array([0.0, 0.0])
@@ -98,3 +99,7 @@ def test_run_monte_carlo_fit(mock_write_exportgrid, tmp_path):
     # Assertions - check if files are created in the output path
     assert (tmp_path / "fit_replicas/replica_1/mc_loss.csv").exists()
     assert (tmp_path / "fit_replicas/replica_1/mc_result_replica_1.csv").exists()
+
+    # The losses are recorded every record_every epochs
+    mc_loss = pd.read_csv(tmp_path / "fit_replicas/replica_1/mc_loss.csv")
+    assert list(mc_loss["epochs"]) == [0, 50, 100]

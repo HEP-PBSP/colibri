@@ -8,7 +8,8 @@ Design goals:
  - Handle batching externally: caller supplies an iterator over batch indices.
  - Optional early stopping via a flax EarlyStopping-like object with an
    .update(val_loss) -> object and .should_stop boolean attribute.
- - Record losses every `record_every` epochs.
+ - Record losses every `record_every` epochs and, optionally, the parameters after
+   every `record_every` completed epochs (the initial ones included).
 """
 
 from __future__ import annotations
@@ -69,11 +70,14 @@ def run_gradient_descent(
         If None, we pass a sentinel EMPTY_BATCH to training_loss_fn.
 
     record_every : int, default 50
-        Record losses every this many epochs. If `record_parameters` is True,
-        parameters of the model are also recorded.
+        Record the losses at epochs 0, record_every, 2 * record_every, ...: the
+        training loss computed during the epoch (for a full batch, at the parameters
+        the epoch starts from) and the validation loss after the epoch's update.
 
     record_parameters : bool, default False
-        Whether to record parameters every `record_every` epochs.
+        Whether to also record the parameters after every `record_every` completed
+        epochs: snapshot i holds the parameters after i * record_every epochs, the
+        initial parameters for i = 0 (n3fit's convention).
     """
 
     params = initial_parameters
@@ -94,7 +98,8 @@ def run_gradient_descent(
 
     train_losses = []
     val_losses = []
-    parameters_by_epoch = [] if record_parameters else None
+    # Snapshot i: the parameters after i * record_every epochs, the initial ones for i = 0.
+    parameters_by_epoch = [params] if record_parameters else None
 
     if data_batch is None:
         # single fake iterator repeatedly yielding EMPTY_BATCH
@@ -129,10 +134,9 @@ def run_gradient_descent(
             train_losses.append(epoch_train_loss)
             val_losses.append(epoch_val_loss)
 
-        if record_parameters:
-            if epoch % record_every == 0:
-                log.info(f"Recording parameters at epoch {epoch}")
-                parameters_by_epoch.append(params)
+        if record_parameters and (epoch + 1) % record_every == 0:
+            log.info(f"Recording parameters after epoch {epoch + 1}")
+            parameters_by_epoch.append(params)
 
         if early_stopper.should_stop:
             log.info(f"Early stopping at epoch {epoch}")
@@ -147,5 +151,5 @@ def run_gradient_descent(
             "batch_size": batch_size,
             "record_every": record_every,
         },
-        parameters_by_epoch=jnp.array(parameters_by_epoch),
+        parameters_by_epoch=jnp.array(parameters_by_epoch) if record_parameters else None,
     )
