@@ -10,6 +10,7 @@ import jax.numpy as jnp
 import pytest
 from numpy.testing import assert_allclose
 
+from colibri.core import CentralCovmatIndex
 from colibri.hessian_fit import HessianFit, hessian_fit, run_hessian_fit
 from colibri.tests.conftest import MOCK_PDF_MODEL, TEST_FORWARD_MAP_DIS
 
@@ -41,6 +42,12 @@ class MockEarlyStopper:
 # Simple concave log-likelihood around 0 so chi2(p) = ||p||^2
 log_likelihood = lambda p: -0.5 * jnp.sum(p**2)
 
+# Only its size (ndata = 4) is used by hessian_fit, to normalise the training loss
+NDATA = 4
+CENTRAL_COVMAT_INDEX = CentralCovmatIndex(
+    central_values=jnp.zeros(NDATA), covmat=jnp.eye(NDATA), central_values_idx=jnp.arange(NDATA)
+)
+
 
 def test_hessian_fit_runs_and_shapes():
     hessian_settings = {
@@ -55,6 +62,7 @@ def test_hessian_fit_runs_and_shapes():
     result = hessian_fit(
         forward_map=TEST_FORWARD_MAP_DIS,
         log_likelihood=log_likelihood,
+        central_covmat_index=CENTRAL_COVMAT_INDEX,
         optimizer_provider=MockOptimizerProvider(),
         max_epochs=5,
         hessian_settings=hessian_settings,
@@ -94,6 +102,7 @@ def test_run_hessian_fit_exports(mock_write_exportgrid, tmp_path):
     fit_result = hessian_fit(
         forward_map=TEST_FORWARD_MAP_DIS,
         log_likelihood=log_likelihood,
+        central_covmat_index=CENTRAL_COVMAT_INDEX,
         optimizer_provider=MockOptimizerProvider(),
         max_epochs=1,
         hessian_settings=hessian_settings,
@@ -129,6 +138,7 @@ def test_hessian_fit_raises_when_require_local_min_fails():
         hessian_fit(
             forward_map=TEST_FORWARD_MAP_DIS,
             log_likelihood=log_likelihood,
+            central_covmat_index=CENTRAL_COVMAT_INDEX,
             optimizer_provider=MockOptimizerProvider(),
             max_epochs=1,
             hessian_settings=hessian_settings,
@@ -151,6 +161,7 @@ def test_hessian_fit_logs_warning_on_local_min_check_failed(caplog):
         res = hessian_fit(
             forward_map=TEST_FORWARD_MAP_DIS,
             log_likelihood=log_likelihood,
+            central_covmat_index=CENTRAL_COVMAT_INDEX,
             optimizer_provider=MockOptimizerProvider(),
             max_epochs=1,
             hessian_settings=hessian_settings,
@@ -181,6 +192,7 @@ def test_hessian_fit_logs_critical_on_non_pd_hessian(caplog):
         hessian_fit(
             forward_map=TEST_FORWARD_MAP_DIS,
             log_likelihood=bad_loglike,
+            central_covmat_index=CENTRAL_COVMAT_INDEX,
             optimizer_provider=MockOptimizerProvider(),
             max_epochs=1,
             hessian_settings=hessian_settings,
@@ -212,8 +224,30 @@ def test_hessian_fit_raises_on_nonfinite_min_chi2():
         hessian_fit(
             forward_map=TEST_FORWARD_MAP_DIS,
             log_likelihood=nan_loglike,
+            central_covmat_index=CENTRAL_COVMAT_INDEX,
             optimizer_provider=MockOptimizerProvider(),
             max_epochs=1,
             hessian_settings=hessian_settings,
             param_initialiser_settings=param_initialiser_settings,
         )
+
+
+def test_hessian_fit_training_loss_is_chi2_per_point():
+    # Parameters stay at the initial ones (mock optimizer), so every recorded training
+    # loss is chi2 / ndata at those parameters, while min_chi2 is the total chi2.
+    hessian_settings = {"iter_init": 1, "tolerance": 1.0, "n_eigvec": 2, "rng_seed": 0}
+    param_initialiser_settings = {"type": "normal", "means": 1.0, "stds": 0.0}
+
+    res = hessian_fit(
+        forward_map=TEST_FORWARD_MAP_DIS,
+        log_likelihood=log_likelihood,
+        central_covmat_index=CENTRAL_COVMAT_INDEX,
+        optimizer_provider=MockOptimizerProvider(),
+        max_epochs=3,
+        hessian_settings=hessian_settings,
+        param_initialiser_settings=param_initialiser_settings,
+        record_every=1,
+    )
+
+    assert_allclose(res.min_chi2, N_PARAMS, rtol=1e-12)
+    assert_allclose(res.training_loss, N_PARAMS / NDATA, rtol=1e-12)

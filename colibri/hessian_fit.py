@@ -17,6 +17,7 @@ log = logging.getLogger(__name__)
 def hessian_fit(
     forward_map,
     log_likelihood,
+    central_covmat_index,
     optimizer_provider,
     max_epochs,
     hessian_settings,
@@ -32,6 +33,9 @@ def hessian_fit(
         for initialization and result labeling.
     log_likelihood: callable
         The log-likelihood function to be maximized.
+    central_covmat_index: commondata_utils.CentralCovmatIndex
+        The data the likelihood is built from; its size normalises the training
+        loss, which is chi2 / ndata (recorded in ``training_loss``).
     optimizer_provider: optax.GradientTransformation
         The optimizer to be used in the gradient descent.
     max_epochs: int
@@ -50,6 +54,14 @@ def hessian_fit(
     # run_gradient_descent expects a data batch object, but we don't use it here
     def train_chi2(params, batch):
         return -2 * log_likelihood(params)
+
+    # Descend chi2 / ndata, like the Monte Carlo fit, so the same optimizer settings
+    # behave the same way; min_chi2, the stationarity check and the Hessian use the
+    # total chi2.
+    ndata = central_covmat_index.central_values.shape[0]
+
+    def train_loss(params, batch):
+        return train_chi2(params, batch) / ndata
 
     def valid_chi2(params):
         return jnp.nan
@@ -79,7 +91,7 @@ def hessian_fit(
         # Delegate to generic gradient descent
         gd_result_iter = run_gradient_descent(
             initial_parameters=initial_parameters,
-            training_loss_fn=train_chi2,
+            training_loss_fn=train_loss,
             validation_loss_fn=valid_chi2,
             optimizer=optimizer_provider,
             early_stopper=early_stopper,
@@ -111,7 +123,13 @@ def hessian_fit(
     # giving the optimized parameters and idx=0 (not used)
     # Note the 0.5 factor because we absorb the 1/2 of the taylor expansion
     # in the definition of the Hessian
-    hessian = 0.5 * jax.hessian(lambda p: train_chi2(p, 0))(parameters_min)
+    # Built one row at a time from Hessian-vector products: jax.hessian pushes all
+    # parameter directions through the forward map at once and runs out of memory on
+    # large datasets.
+    def hvp(v):
+        return jax.jvp(jax.grad(lambda p: train_chi2(p, 0)), (parameters_min,), (v,))[1]
+
+    hessian = 0.5 * jax.lax.map(hvp, jnp.eye(parameters_min.shape[0]))
 
     # Verify hessian is positive definite
     eigvals_hess = jnp.linalg.eigvalsh(hessian)
