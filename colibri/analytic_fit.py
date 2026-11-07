@@ -101,16 +101,7 @@ def analytic_evidence_uniform_prior(sol_covmat, sol_mean, max_logl, a_vec, b_vec
 def _combined_dis_fk_matrix(data, FIT_XGRID):
     """
     Builds the raw (un-whitened) combined DIS FK matrix entering ``data``,
-    padded onto the full (N_FLAVOURS, len(FIT_XGRID)) basis -- i.e. exactly
-    the object diagnosed by ``colibri.compute_svd.compute_svd`` (full-basis
-    version). Used here to regularise the *forward operator* itself via
-    TSVD before it is composed with the (much lower-dimensional) PDF
-    parametrisation.
-
-    Hadronic FK tables are skipped (with a warning): they enter
-    predictions bilinearly in the PDF and are not part of a linear forward
-    operator, so an analytic fit could not have included them in the first
-    place (``check_pdf_model_is_linear`` would already have failed).
+    padded onto the full (N_FLAVOURS, len(FIT_XGRID)) basis 
 
     Parameters
     ----------
@@ -167,15 +158,7 @@ def _build_whitened_linear_system(
 ):
     """
     Builds the whitened linear system X_tilde w ~ Y_tilde entering the
-    analytic fit's chi2, including the FK-level TSVD regularisation
-    (``analytic_settings["tsvd_n_components"]``) if set. Factored out so it
-    can be shared between ``analytic_fit`` (the actual solve) and
-    ``compute_lcurve`` (an L-curve diagnostic over a grid of L2/Tikhonov
-    regularisation strengths, applied on top of whatever TSVD truncation is
-    already set here).
-
-    See ``analytic_fit``'s docstring for the meaning of T(w) = T(0) + X w,
-    Y = D - T(0), and of the FK-level TSVD regularisation.
+    analytic fit's chi2, used by analytic_fit and compute_lcurve.
 
     Returns
     -------
@@ -184,12 +167,11 @@ def _build_whitened_linear_system(
     parameters : list of str
         forward_map.param_names.
     B : np.ndarray, shape (N_FLAVOURS * len(FIT_XGRID), n_params)
-        Basis-to-grid matrix: column i is the flattened (N_fl, Nx) PDF
-        grid produced by the model for unit parameter vector e_i. Always
-        computed (independently of whether TSVD is enabled), so that
-        grid-space regularisation penalties (e.g. in ``compute_lcurve``)
-        can be built via L_eff = L_grid @ B regardless of the TSVD
-        setting.
+        Basis-to-grid matrix.
+    n_fl : int
+        Number of flavours of the PDF grid.
+    n_x : int
+        Number of x-points of the PDF grid.
     """
     # Ensure that the PDF model is linear before running the fit.
     log.info("Checking that the PDF model is linear...")
@@ -219,12 +201,14 @@ def _build_whitened_linear_system(
         )
     n_grid = n_fl * n_x
 
-    # B: (n_grid, n_params) basis-to-grid matrix; columns are pdf(e_i),
-    # flattened in the same (N_fl, Nx) convention as the FK operator.
-    # Computed unconditionally (cheap -- pdf_grids is already in memory)
-    # since grid-space regularisation (compute_lcurve) needs it whether or
-    # not TSVD is also enabled.
-    B = np.asarray(pdf_grids).reshape(n_params, n_grid).T
+    # Grid of the model at zero parameters (phi_0 for the wmin model).
+    intercept_grid_flat = np.asarray(intercept_pdf).reshape(n_grid)
+
+    # B: (n_grid, n_params) basis-to-grid matrix
+    B = (
+        np.asarray(pdf_grids).reshape(n_params, n_grid).T
+        - intercept_grid_flat[:, None]
+    )
 
     central_values = central_covmat_index.central_values
     covmat = central_covmat_index.covmat
@@ -236,8 +220,6 @@ def _build_whitened_linear_system(
         Y = central_values - intercept
         X = predictions.T - intercept[:, None]
     else:
-        intercept_grid_flat = np.asarray(intercept_pdf).reshape(n_grid)
-
         fk_flat = _combined_dis_fk_matrix(data, FIT_XGRID)  # (Ndat, n_grid)
 
         max_components = min(fk_flat.shape)
@@ -276,13 +258,18 @@ def _build_whitened_linear_system(
 
         # Sanity check: with no truncation (k == max_components) this should
         # reproduce the un-regularised intercept/X from forward_map to high
-        # precision -- logged here to help validate the FK/pdf padding and
-        # dataset-ordering conventions line up.
+        # precision -- logged here to help validate the FK/pdf padding,
+        # dataset-ordering conventions and the intercept removal in B.
+        # TODO: move to a test
         if tsvd_n_components == max_components:
-            diff = np.max(np.abs(intercept_trunc_np - np.asarray(intercept)))
+            diff_int = np.max(np.abs(intercept_trunc_np - np.asarray(intercept)))
+            diff_X = np.max(
+                np.abs(X_trunc_np - np.asarray(predictions.T - intercept[:, None]))
+            )
             log.info(
-                f"TSVD self-consistency check (k=max_components): max "
-                f"|intercept_trunc - intercept| = {diff:.3e} (should be ~0)."
+                f"TSVD self-consistency check (k=max_components): "
+                f"max |intercept_trunc - intercept| = {diff_int:.3e}, "
+                f"max |X_trunc - X| = {diff_X:.3e} (both should be ~0)."
             )
 
         X = jnp.asarray(X_trunc_np)
@@ -303,26 +290,7 @@ def _build_whitened_linear_system(
 def _second_order_roughening_matrix(FIT_XGRID, n_fl):
     """
     Builds the block-diagonal (per flavour) second-order roughening matrix
-    L_grid acting on a flattened (n_fl, len(FIT_XGRID)) PDF grid, i.e. the
-    spacing-corrected generalisation of the constant-spacing L2 stencil of
-    eq. (4.28) in Aster, Borchers & Thurber, "Parameter Estimation and
-    Inverse Problems" (2013).
-
-    For a non-uniform grid x_0, ..., x_{Nx-1}, the interior rows use the
-    standard three-point finite-difference approximation to f''(x_i):
-
-        f''(x_i) ~ 2 * [ f_{i-1} / (h_i^- (h_i^- + h_i^+))
-                          - f_i   / (h_i^- h_i^+)
-                          + f_{i+1} / (h_i^+ (h_i^- + h_i^+)) ]
-
-    where h_i^- = x_i - x_{i-1} and h_i^+ = x_{i+1} - x_i. This reduces
-    exactly to the constant-spacing [1, -2, 1] stencil of eq. (4.28) when
-    the grid is uniform (h_i^- = h_i^+ = h for all i, up to the overall
-    1/h^2 normalisation).
-
-    No cross-flavour differencing is applied (flavours are not neighbours
-    in x), so the full operator is block-diagonal across the n_fl
-    flavours, each block being the (Nx - 2, Nx) stencil above.
+    L_grid acting on a flattened (n_fl, len(FIT_XGRID)) PDF grid.
 
     Parameters
     ----------
@@ -367,48 +335,7 @@ def compute_lcurve(
     lcurve_settings=None,
 ):
     """
-    Computes the L-curve for second-order Tikhonov regularisation (eq. 4.25
-    and 4.28 in Aster, Borchers & Thurber), applied *on top* of whatever
-    FK-level TSVD truncation is set via
-    ``analytic_settings["tsvd_n_components"]`` (if any). This is purely a
-    diagnostic to help choose a regularisation strength lambda by eye
-    (looking for the "corner" of the L-curve) -- it does not change the
-    actual fit result computed by ``analytic_fit``.
-
-    Where the roughness penalty lives
-    ----------------------------------
-    The fit still solves for the n_params (e.g. 43) basis-function
-    weights w -- that does not change. However "smoothness" is only a
-    meaningful notion on the reconstructed (N_FLAVOURS, Nx) PDF grid
-    (consecutive weights are not, in general, neighbours; consecutive
-    x-grid points are). So the roughening matrix L_grid (see
-    ``_second_order_roughening_matrix``) is built directly on that grid,
-    exactly like the FK-level TSVD operator is, and then pulled back onto
-    the weights via the same basis-to-grid matrix B used for TSVD:
-
-        L_eff = L_grid @ B,   shape (N_FLAVOURS * (Nx - 2), n_params)
-
-    so that the penalised quantity is the seminorm of the *reconstructed
-    grid*, ||L_grid @ (B w)||_2 = ||L_eff @ w||_2, restricted to the part
-    of the grid spanned by the fit's own parametrisation (the fixed
-    intercept T(0)/pdf(0) is not part of what is optimised over, so it is
-    excluded from the penalty).
-
-    For each lambda in a grid, the regularised solution solves the
-    (n_params x n_params) normal equations directly (cheap, since
-    n_params is small -- no need for the GSVD machinery of section 4.4,
-    which exists purely for computational efficiency on much larger
-    problems than this one):
-
-        (X_tilde^T X_tilde + lambda^2 L_eff^T L_eff) w_lambda = X_tilde^T Y_tilde
-
-    and this function records:
-
-    - residual_norm(lambda) = ||Y_tilde - X_tilde w_lambda||
-    - seminorm(lambda) = ||L_eff w_lambda||
-
-    Writes ``<output_path>/lcurve/lcurve.txt`` with columns
-    "lambda,residual_norm,seminorm".
+    Computes the L-curve for second-order Tikhonov regularisation .
 
     Parameters
     ----------
@@ -423,15 +350,8 @@ def compute_lcurve(
         Optional dict with keys:
 
         - "n_lambda" (int, default 100): number of lambda values.
-        - "lambda_min" (float, default S[-1] * 1e-3): smallest lambda.
-        - "lambda_max" (float, default S[0] * 1e3): largest lambda.
-
-        where S are the singular values of X_tilde. lambda values are
-        log-spaced between lambda_min and lambda_max (see
-        ``compute_lcurve``'s module-level discussion for why a grid of
-        lambda is needed at all: the L-curve is the parametric curve
-        traced out by lambda, not a single computable point). Can be set
-        directly in the runcard.
+        - "lambda_min" (float, default from generalized singular values): smallest lambda.
+        - "lambda_max" (float, default from generalized singular values): largest lambda.
 
     Returns
     -------
@@ -464,19 +384,6 @@ def compute_lcurve(
     XtY = X_tilde.T @ Y_tilde  # (n_params,), fixed across lambda
     LtL = L_eff.T @ L_eff  # (n_params, n_params), fixed across lambda
 
-    # lambda grid defaults: the natural scale for lambda is set by the
-    # *generalized* singular values gamma_i (section 4.4 of Aster, Borchers
-    # & Thurber), i.e. the square roots of the generalized eigenvalues of
-    # the pencil (X_tilde^T X_tilde, L_eff^T L_eff): X^TX v = gamma^2 L^TL v.
-    # Using only X_tilde's own singular values (as an earlier version of
-    # this function did) ignores L_eff's scale entirely -- and L_eff, built
-    # from second-derivative finite differences 1/h^2 on a possibly very
-    # non-uniform FIT_XGRID (tiny h near small x), can have a wildly
-    # different magnitude than X_tilde. Getting this wrong means the swept
-    # lambda range can land entirely in one asymptotic tail of the true
-    # L-curve, missing the corner (and both flat segments) completely --
-    # producing a curve that looks like a single steep drop in the wrong
-    # place rather than a proper "L".
     try:
         gen_eigvals = sla.eigh(XtX, LtL, eigvals_only=True)
         gen_eigvals = np.clip(gen_eigvals, 1e-300, None)
@@ -554,6 +461,7 @@ def analytic_fit(
     The linear problem to solve is through minimisation of the chi2:
     chi2 = (D - (T(0) + X w))^T Sigma^-1 (D - (T(0) + X w)) = (Y - X w)^T Sigma^-1 (Y - X w)
     with Y = D - T(0).
+
 
     Parameters
     ----------
