@@ -127,25 +127,25 @@ def run(
         sample_key,
         final_states,
         ess_value,
-    )
+    ).position
 
     # Preserve sequential likelihood evaluation from the existing fit.
     log_likelihoods = jnp.asarray([log_likelihood(point) for point in full_samples])
 
-    best_index = jnp.argmax(final_states.loglikelihood)
+    best_index = jnp.argmax(final_states.particles.loglikelihood)
 
     return SamplerOutput(
         samples=full_samples,
         log_likelihoods=log_likelihoods,
-        max_loglikelihood=final_states.loglikelihood[best_index],
+        max_loglikelihood=final_states.particles.loglikelihood[best_index],
         logz=logzs.mean(),
         logz_err=logzs.std(),
         result={
             "ess": ess_value,
-            "best_point": final_states.particles[best_index],
-            "nested_particles": final_states.particles,
-            "nested_loglikelihood": final_states.loglikelihood,
-            "nested_loglikelihood_birth": (final_states.loglikelihood_birth),
+            "best_point": final_states.particles.position[best_index],
+            "nested_particles": final_states.particles.position,
+            "nested_loglikelihood": final_states.particles.loglikelihood,
+            "nested_loglikelihood_birth": (final_states.particles.loglikelihood_birth),
         },
     )
 

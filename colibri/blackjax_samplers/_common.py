@@ -15,7 +15,8 @@ COMMON_SETTINGS = {
 
 @dataclass(frozen=True)
 class SamplerOutput:
-    """Results returned by a sampler before common fit processing.
+    """
+    Results returned by a sampler before common fit processing.
 
     samples:
         Equal-weight physical parameter draws, with shape

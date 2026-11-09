@@ -252,7 +252,8 @@ def run(
     *,
     param_names,
 ):
-    """Return full physical NUTS chains and deterministically thinned replicas.
+    """
+    Return full physical NUTS chains and deterministically thinned replicas.
 
     Settings are validated by the shared BlackJAX provider before sampling.
     Diagnostics use all post-warmup draws, before replica thinning.

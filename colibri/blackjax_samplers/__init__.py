@@ -1,11 +1,6 @@
 """Registry of BlackJAX sampler implementations."""
 
-from importlib import import_module
-
-SAMPLERS = {
-    "nested_sampling": "colibri.blackjax_samplers.nested_sampling",
-    "nuts": "colibri.blackjax_samplers.nuts",
-}
+SAMPLERS = ("nested_sampling", "nuts")
 
 
 def get_sampler(algorithm="nested_sampling"):
@@ -13,7 +8,14 @@ def get_sampler(algorithm="nested_sampling"):
     if not isinstance(algorithm, str) or algorithm not in SAMPLERS:
         choices = ", ".join(SAMPLERS)
         raise ValueError(
-            f"Unknown BlackJAX algorithm {algorithm!r}. " f"Choose from: {choices}."
+            f"Unknown BlackJAX algorithm {algorithm!r}. Choose from: {choices}."
         )
 
-    return import_module(SAMPLERS[algorithm])
+    if algorithm == "nested_sampling":
+        from . import nested_sampling
+
+        return nested_sampling
+
+    from . import nuts
+
+    return nuts
