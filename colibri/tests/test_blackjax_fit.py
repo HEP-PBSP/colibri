@@ -5,11 +5,15 @@ Tests for the BlackJAX fitting module.
 
 from unittest.mock import Mock, patch
 
+import anesthetic
+import numpy as np
+
 import jax
 import jax.numpy as jnp
 import pytest
 from types import SimpleNamespace
 
+from colibri.blackjax_samplers import nested_sampling
 from colibri.blackjax_samplers._common import SamplerOutput
 
 from colibri.tests.conftest import (
@@ -264,3 +268,128 @@ def test_non_root_rank_only_writes_replicas(
     )
 
     assert not (tmp_path / "logs").exists()
+
+
+@pytest.mark.parametrize(
+    "overrides, message",
+    [
+        ({"samples": jnp.ones(2)}, "invalid posterior sample dimensions"),
+        ({"samples": jnp.ones((2, 3))}, "invalid posterior sample dimensions"),
+        ({"samples": jnp.empty((0, 2))}, "invalid posterior sample dimensions"),
+        ({"log_likelihoods": jnp.ones(3)}, "log likelihoods do not match"),
+        ({"max_loglikelihood": jnp.ones(1)}, "must be a scalar"),
+        ({"samples": jnp.array([[jnp.nan, 0.0], [0.0, 0.0]])}, "non-finite posterior"),
+        ({"log_likelihoods": jnp.array([jnp.inf, -1.0])}, "non-finite posterior"),
+        ({"max_loglikelihood": jnp.nan}, "non-finite posterior"),
+        ({"resampled_posterior": jnp.ones((1, 2))}, "replicas have invalid dimensions"),
+        (
+            {"resampled_posterior": jnp.array([[0.0, jnp.nan], [0.0, 0.0]])},
+            "replicas are non-finite",
+        ),
+    ],
+)
+def test_blackjax_rejects_invalid_sampler_results(overrides, message):
+    output = SamplerOutput(
+        **{
+            "samples": jnp.ones((2, 2)),
+            "log_likelihoods": jnp.array([-2.0, -1.0]),
+            "max_loglikelihood": -1.0,
+            **overrides,
+        }
+    )
+    with (
+        patch("colibri.blackjax_samplers.nested_sampling.run", return_value=output),
+        pytest.raises(RuntimeError, match=message),
+    ):
+        blackjax_fit(
+            SimpleNamespace(param_names=["a", "b"]),
+            bayesian_prior,
+            blackjax_settings,
+            SimpleNamespace(ndata=2),
+        )
+
+
+@pytest.mark.parametrize(
+    "param_names, ndata, message",
+    [
+        ([], 2, "at least one fit parameter"),
+        (["a", "b"], 0, "at least one datapoint"),
+        (["a", "b"], -1, "at least one datapoint"),
+    ],
+)
+def test_blackjax_rejects_empty_fit_before_sampling(param_names, ndata, message):
+    with patch("colibri.blackjax_samplers.nested_sampling.run") as sample_run:
+        with pytest.raises(ValueError, match=message):
+            blackjax_fit(
+                SimpleNamespace(param_names=param_names),
+                bayesian_prior,
+                blackjax_settings,
+                SimpleNamespace(ndata=ndata),
+            )
+    sample_run.assert_not_called()
+
+
+@pytest.mark.parametrize("name", ["repeats", "delete_fraction", "log_precision"])
+@pytest.mark.parametrize("value", [True, "invalid", float("nan"), float("inf")])
+def test_nested_sampling_rejects_nonfinite_or_nonnumeric_settings(name, value):
+    with pytest.raises(ValueError, match=f"{name} must be a finite number"):
+        nested_sampling.validate({**nested_sampling.SETTINGS, name: value})
+
+
+@pytest.mark.parametrize(
+    "overrides, message",
+    [
+        ({"n_live": True}, "n_live must be an integer"),
+        ({"n_live": 2.5}, "n_live must be an integer"),
+        ({"n_live": 1}, "n_live must be an integer"),
+        ({"repeats": 0}, "repeats must be at least one"),
+        ({"delete_fraction": 1}, "strictly between zero and one"),
+        ({"n_live": 2, "delete_fraction": 0.1}, "delete at least one live point"),
+    ],
+)
+def test_nested_sampling_rejects_unusable_population_settings(overrides, message):
+    with pytest.raises(ValueError, match=message):
+        nested_sampling.validate({**nested_sampling.SETTINGS, **overrides})
+
+
+def test_nested_sampling_rejects_zero_effective_draws():
+    def likelihood(parameters):
+        return -jnp.sum(parameters**2)
+
+    likelihood.ndata = 2
+    with (
+        patch("colibri.blackjax_samplers.nested_sampling.ess", return_value=0),
+        patch("colibri.blackjax_samplers.nested_sampling.sample") as draw_samples,
+        pytest.raises(RuntimeError, match="no effective posterior draws"),
+    ):
+        blackjax_fit(
+            SimpleNamespace(param_names=["a", "b"]),
+            bayesian_prior,
+            blackjax_settings,
+            likelihood,
+        )
+    draw_samples.assert_not_called()
+
+
+def test_nested_sampling_logs_round_trip(tmp_path):
+    positions = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+    log_likelihoods = np.array([-3.0, -2.0, -1.0])
+    birth_likelihoods = np.array([-np.inf, -4.0, -3.0])
+    fit = SimpleNamespace(
+        param_names=["a", "b"],
+        blackjax_result={
+            "nested_particles": positions,
+            "nested_loglikelihood": log_likelihoods,
+            "nested_loglikelihood_birth": birth_likelihoods,
+        },
+    )
+    log_dir = tmp_path / "new" / "nested_logs"
+    # Export twice to check that an existing output directory is supported.
+    nested_sampling.export_logs(fit, str(log_dir))
+    nested_sampling.export_logs(fit, log_dir)
+
+    restored = anesthetic.read_csv(log_dir / "nested_samples.csv")
+    assert isinstance(restored, anesthetic.NestedSamples)
+    np.testing.assert_allclose(restored[fit.param_names].to_numpy(), positions)
+    np.testing.assert_allclose(restored["logL"].to_numpy(), log_likelihoods)
+    np.testing.assert_allclose(restored["logL_birth"].to_numpy(), birth_likelihoods)
