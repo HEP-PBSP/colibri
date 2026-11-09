@@ -14,6 +14,8 @@ import pandas as pd
 from blackjax.diagnostics import effective_sample_size
 from scipy.stats import norm, rankdata
 
+from colibri.bayes_prior import UNCONSTRAINED_FUNCTIONS, has_unconstrained
+
 from ._common import SamplerOutput
 
 log = logging.getLogger(__name__)
@@ -255,16 +257,13 @@ def run(
     Settings are validated by the shared BlackJAX provider before sampling.
     Diagnostics use all post-warmup draws, before replica thinning.
     """
-    bayesian_prior = prior
-    required = (
-        "from_unconstrained",
-        "log_prob_unconstrained",
-        "sample_unconstrained",
-    )
-    if any(not callable(getattr(bayesian_prior, name, None)) for name in required):
+    fit_prior = prior
+    if not has_unconstrained(fit_prior):
         raise ValueError(
-            "NUTS requires an unconstrained prior implementation. "
-            "Currently supported: uniform_parameter_prior."
+            "NUTS requires an unconstrained prior implementation "
+            f"({', '.join(UNCONSTRAINED_FUNCTIONS)}). The built-in priors "
+            "(uniform_parameter_prior, prior_from_gauss_posterior) provide it; "
+            "see the log of fit_prior for the part of the prior that lacks it."
         )
 
     param_names = list(param_names)
@@ -284,14 +283,12 @@ def run(
 
     @jax.jit
     def logdensity(position):
-        parameters = bayesian_prior.from_unconstrained(position)
-        return bayesian_prior.log_prob_unconstrained(position) + log_likelihood(
-            parameters
-        )
+        parameters = fit_prior.from_unconstrained(position)
+        return fit_prior.log_prob_unconstrained(position) + log_likelihood(parameters)
 
     init_key, warmup_key, sample_key = jax.random.split(rng_key, 3)
 
-    initial_positions = bayesian_prior.sample_unconstrained(init_key, num_chains)
+    initial_positions = fit_prior.sample_unconstrained(init_key, num_chains)
     if initial_positions.shape != (num_chains, num_parameters):
         raise ValueError("Initial prior draws do not match forward_map.param_names.")
 
@@ -397,14 +394,14 @@ def run(
 
     flat_unconstrained = unconstrained.reshape(-1, num_parameters)
     full_samples = jax.block_until_ready(
-        jax.vmap(bayesian_prior.from_unconstrained)(flat_unconstrained)
+        jax.vmap(fit_prior.from_unconstrained)(flat_unconstrained)
     )
 
     # Remove the transformed prior, including its Jacobian, to obtain
     # physical log-likelihood values without another forward evaluation.
     log_likelihoods = jax.block_until_ready(
         logdensity_draws.reshape(-1)
-        - jax.vmap(bayesian_prior.log_prob_unconstrained)(flat_unconstrained)
+        - jax.vmap(fit_prior.log_prob_unconstrained)(flat_unconstrained)
     )
 
     if not bool(

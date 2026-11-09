@@ -48,9 +48,11 @@ def test_time_log_likelihood_default_sizes(
 ):
     """Test time_log_likelihood with default batch sizes."""
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        # Mock pdf_initial_parameters to return simple arrays
-        mock_init.side_effect = lambda _, __, idx: jnp.array([0.1 * idx, 0.2 * idx])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        # Mock all_initial_parameters to return simple arrays
+        mock_init.side_effect = lambda _, __, ___, idx: jnp.array(
+            [0.1 * idx, 0.2 * idx]
+        )
 
         sizes, times = time_log_likelihood(
             mock_log_likelihood,
@@ -95,8 +97,10 @@ def test_time_log_likelihood_custom_sizes(
 
     custom_sizes = [5, 20, 50]
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, idx: jnp.array([0.1 * idx, 0.2 * idx])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda _, __, ___, idx: jnp.array(
+            [0.1 * idx, 0.2 * idx]
+        )
 
         sizes, times = time_log_likelihood(
             mock_log_likelihood,
@@ -119,8 +123,10 @@ def test_time_log_likelihood_generates_correct_number_of_samples(
     custom_sizes = [2, 5]
     max_size = max(custom_sizes)
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, idx: jnp.array([float(idx), float(idx)])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda _, __, ___, idx: jnp.array(
+            [float(idx), float(idx)]
+        )
 
         time_log_likelihood(
             mock_log_likelihood,
@@ -130,12 +136,12 @@ def test_time_log_likelihood_generates_correct_number_of_samples(
             batch_sample_sizes=custom_sizes,
         )
 
-        # Check that pdf_initial_parameters was called max_size times
+        # Check that all_initial_parameters was called max_size times
         assert mock_init.call_count == max_size
 
         # Check that it was called with correct replica indices
         expected_calls = [
-            call(TEST_FORWARD_MAP_DIS, mock_param_initialiser_settings, i)
+            call(TEST_FORWARD_MAP_DIS, mock_param_initialiser_settings, None, i)
             for i in range(max_size)
         ]
         mock_init.assert_has_calls(expected_calls)
@@ -154,8 +160,8 @@ def test_time_log_likelihood_vectorization(
 
         return jnp.sum(params, axis=-1) if params.ndim > 1 else jnp.sum(params)
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
 
         time_log_likelihood(
             counting_likelihood,
@@ -173,8 +179,8 @@ def test_time_log_likelihood_csv_format(
 ):
     """Test that CSV is written with correct format."""
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
 
         _, __ = time_log_likelihood(
             mock_log_likelihood,
@@ -213,8 +219,8 @@ def test_time_log_likelihood_none_uses_defaults(
     mock_log_likelihood, mock_param_initialiser_settings, tmp_output_path, caplog
 ):
     """Test that passing None for batch_sample_sizes uses default sizes."""
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
         with caplog.at_level(logging.INFO):
             sizes, _ = time_log_likelihood(
                 mock_log_likelihood,
@@ -237,8 +243,8 @@ def test_time_log_likelihood_handles_exception_during_warmup(
     def failing_likelihood(_):
         raise RuntimeError("Simulated warm-up failure")
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
 
         with caplog.at_level(logging.ERROR):
             with pytest.raises(RuntimeError, match="Simulated warm-up failure"):
@@ -260,8 +266,8 @@ def test_time_log_likelihood_handles_exception_during_timing(
     Test that exceptions during timing are caught and logged properly.
     """
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
 
         original_block = jax.block_until_ready
         block_calls = {"n": 0}
@@ -299,8 +305,8 @@ def test_time_log_likelihood_successful_partial_run(
 
     n_repeats = 100  # must match implementation
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
 
         original_block = jax.block_until_ready
         block_calls = {"n": 0}
@@ -335,8 +341,8 @@ def test_time_log_likelihood_all_sizes_successful(
 ):
     """Test the success path where all sizes complete successfully."""
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
 
         with caplog.at_level(logging.INFO):
             sizes, times = time_log_likelihood(
@@ -362,8 +368,8 @@ def test_time_log_likelihood_relative_time_calculation(
 ):
     """Test that relative times are calculated correctly."""
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
 
         _, __ = time_log_likelihood(
             mock_log_likelihood,
@@ -408,8 +414,8 @@ def test_time_log_likelihood_jax_block_until_ready(
         ready_calls.append(x)
         return original_block(x)
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
 
         with patch("jax.block_until_ready", side_effect=tracking_block):
 
@@ -432,8 +438,8 @@ def test_time_log_likelihood_with_single_batch_size(
 ):
     """Test with only a single batch size."""
 
-    with patch("colibri.time_likelihood.pdf_initial_parameters") as mock_init:
-        mock_init.side_effect = lambda _, __, ___: jnp.array([0.1, 0.2])
+    with patch("colibri.time_likelihood.all_initial_parameters") as mock_init:
+        mock_init.side_effect = lambda *args: jnp.array([0.1, 0.2])
 
         sizes, times = time_log_likelihood(
             mock_log_likelihood,

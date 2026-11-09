@@ -85,7 +85,7 @@ def test_standard_likelihood_reuses_validation_positivity(split):
     ):
         result = monte_carlo_fit(
             mc_log_likelihood=(training, validation),
-            pdf_initial_parameters=np.ones(N_PARAMS),
+            initial_parameters=np.ones(N_PARAMS),
             optimizer_provider=MockOptimizerProvider(),
             early_stopper=MockEarlyStopper(),
             max_epochs=3,
@@ -104,7 +104,7 @@ def test_monte_carlo_fit_runs_without_errors(split):
 
     result = monte_carlo_fit(
         mc_log_likelihood=(training, validation),
-        pdf_initial_parameters=np.zeros((N_PARAMS,)),
+        initial_parameters=np.zeros((N_PARAMS,)),
         optimizer_provider=MockOptimizerProvider(),
         early_stopper=MockEarlyStopper(),
         max_epochs=100,

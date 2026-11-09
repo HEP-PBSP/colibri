@@ -1,50 +1,53 @@
+"""
+colibri.param_initialisation.py
+
+Initial values of the fit parameters, for the fits that need a starting point
+(Monte Carlo and Hessian fits).
+
+The fit parameters are the PDF parameters followed by the extra parameters of
+the forward map (see ``forward_map.ForwardMap``). The two parts are
+initialised separately, each by its own provider:
+
+- ``pdf_initial_parameters``: the PDF parameters of ``pdf_model``. By
+  default, from ``param_initialiser_settings``.
+- ``extra_initial_parameters``: the extra parameters of the forward map. By
+  default, from ``extra_param_initialiser_settings`` (zeros if not set).
+
+Apps can override either provider, as long as it returns values for its own
+part of the parameters only. ``initial_parameters`` joins them, and is what
+the fits use.
+"""
+
+import logging
+
 import jax
 import jax.numpy as jnp
-import logging
 
 log = logging.getLogger(__name__)
 
+INITIALISER_TYPES = ("zeros", "normal", "uniform")
 
-def pdf_initial_parameters(forward_map, param_initialiser_settings, replica_index=-1):
+
+def _initial_values(param_names, param_initialiser_settings, key_fn):
     """
-    This function provides initial parameters for the forward map.
+    Initial values for ``param_names`` according to ``param_initialiser_settings``.
 
-    Parameters
-    ----------
-    forward_map: forward_map.ForwardMap
-        The forward map whose .param_names (PDF parameters + any extra parameters)
-        are used to determine the size and ordering of the initialised array.
-
-    param_initialiser_settings: dict
-        The settings for the initialiser.
-
-    replica_index: int
-        The index of the replica.
-        Default is -1, in case no replica index is provided.
-
-    Returns
-    -------
-    initial_values: jnp.array
-        The initial values for the parameters.
+    ``key_fn`` returns the random key, given the ``random_seed`` of the settings
+    (None if not set). It is only called for random initialisers.
     """
-    if param_initialiser_settings["type"] not in ("zeros", "normal", "uniform"):
+    param_names = list(param_names)
+
+    if param_initialiser_settings["type"] not in INITIALISER_TYPES:
         log.warning(
-            f"MC initialiser type {param_initialiser_settings['type']} not recognised, using default: 'zeros' instead."
+            f"Initialiser type {param_initialiser_settings['type']} not recognised, using default: 'zeros' instead."
         )
 
         param_initialiser_settings["type"] = "zeros"
 
     if param_initialiser_settings["type"] == "zeros":
-        return jnp.array([0.0] * len(forward_map.param_names))
+        return jnp.array([0.0] * len(param_names))
 
-    if "random_seed" in param_initialiser_settings:
-        random_seed = jax.random.PRNGKey(
-            param_initialiser_settings["random_seed"] + replica_index
-        )
-    else:
-        random_seed = jax.random.PRNGKey(replica_index)
-
-    param_names = forward_map.param_names
+    random_seed = key_fn(param_initialiser_settings.get("random_seed"))
 
     if param_initialiser_settings["type"] == "normal":
         means_setting = param_initialiser_settings.get("means", 0.0)
@@ -128,9 +131,148 @@ def pdf_initial_parameters(forward_map, param_initialiser_settings, replica_inde
 
         initial_values = jax.random.uniform(
             key=random_seed,
-            shape=(len(forward_map.param_names),),
+            shape=(len(param_names),),
             minval=min_val,
             maxval=max_val,
         )
 
         return initial_values
+
+
+def pdf_initial_parameters(pdf_model, param_initialiser_settings, replica_index=-1):
+    """
+    Initial values of the PDF parameters (``pdf_model.param_names``).
+
+    PDF model apps can override this provider; the extra parameters of the
+    forward map are initialised separately (see ``extra_initial_parameters``).
+
+    Parameters
+    ----------
+    pdf_model: pdf_model.PDFModel or None
+        The PDF model. None means there are no PDF parameters.
+
+    param_initialiser_settings: dict
+        The settings for the initialiser.
+
+    replica_index: int
+        The index of the replica.
+        Default is -1, in case no replica index is provided.
+
+    Returns
+    -------
+    initial_values: jnp.array
+        The initial values for the PDF parameters.
+    """
+
+    def key_fn(seed):
+        if seed is None:
+            return jax.random.PRNGKey(replica_index)
+        return jax.random.PRNGKey(seed + replica_index)
+
+    pdf_param_names = pdf_model.param_names if pdf_model is not None else []
+    return _initial_values(pdf_param_names, param_initialiser_settings, key_fn)
+
+
+def extra_initial_parameters(
+    forward_map, extra_param_initialiser_settings=None, replica_index=-1
+):
+    """
+    Initial values of the extra parameters of the forward map
+    (``forward_map.extra_param_names``), from
+    ``extra_param_initialiser_settings``. The options are those of
+    ``param_initialiser_settings``; the default is zeros. Apps can override
+    this provider.
+
+    The random key differs from the one of the PDF parameters, so that the
+    two are independent.
+
+    Parameters
+    ----------
+    forward_map: forward_map.ForwardMap
+
+    extra_param_initialiser_settings: dict, optional
+        Parsed ``extra_param_initialiser_settings`` (see colibriConfig).
+
+    replica_index: int
+        The index of the replica.
+
+    Returns
+    -------
+    jnp.array
+        The initial values for the extra parameters (empty if there are none).
+    """
+    extra_param_names = list(forward_map.extra_param_names)
+    if not extra_param_names:
+        return jnp.array([])
+
+    settings = {"type": "zeros", **(extra_param_initialiser_settings or {})}
+
+    def key_fn(seed):
+        key = jax.random.PRNGKey((seed or 0) + replica_index)
+        return jax.random.fold_in(key, 1)
+
+    return _initial_values(extra_param_names, settings, key_fn)
+
+
+def _join_initial_parameters(forward_map, pdf_parameters, extra_parameters):
+    """
+    Joins the initial PDF and extra parameters, checking that each part has
+    the size expected by the forward map.
+    """
+    pdf_parameters = jnp.atleast_1d(jnp.asarray(pdf_parameters))
+    extra_parameters = jnp.atleast_1d(jnp.asarray(extra_parameters))
+
+    if pdf_parameters.shape != (forward_map.n_pdf_params,):
+        raise ValueError(
+            f"pdf_initial_parameters returned {pdf_parameters.shape[0]} values, but "
+            f"the forward map has {forward_map.n_pdf_params} PDF parameters. The "
+            "PDF initialiser must cover the PDF parameters only: the extra "
+            "parameters of the forward map are initialised separately."
+        )
+    if extra_parameters.shape != (len(forward_map.extra_param_names),):
+        raise ValueError(
+            f"extra_initial_parameters returned {extra_parameters.shape[0]} "
+            f"values, but the forward map has "
+            f"{len(forward_map.extra_param_names)} extra parameters."
+        )
+
+    # Use the default float type, so that integer values from a custom
+    # initialiser do not truncate the other part.
+    dtype = jnp.result_type(float)
+    pdf_parameters = pdf_parameters.astype(dtype)
+    if extra_parameters.size == 0:
+        return pdf_parameters
+    return jnp.concatenate([pdf_parameters, extra_parameters.astype(dtype)])
+
+
+def initial_parameters(forward_map, pdf_initial_parameters, extra_initial_parameters):
+    """
+    Initial values of all the fit parameters, in the order of
+    ``forward_map.param_names``: the PDF parameters (``pdf_initial_parameters``)
+    followed by the extra parameters (``extra_initial_parameters``).
+    """
+    return _join_initial_parameters(
+        forward_map, pdf_initial_parameters, extra_initial_parameters
+    )
+
+
+def all_initial_parameters(
+    forward_map,
+    param_initialiser_settings,
+    extra_param_initialiser_settings=None,
+    replica_index=-1,
+):
+    """
+    As ``initial_parameters``, for code that needs several initialisations
+    (e.g. one per Hessian fit iteration). Uses colibri's PDF initialiser, on
+    the PDF model of the forward map.
+    """
+    return _join_initial_parameters(
+        forward_map,
+        pdf_initial_parameters(
+            forward_map.pdf_model, param_initialiser_settings, replica_index
+        ),
+        extra_initial_parameters(
+            forward_map, extra_param_initialiser_settings, replica_index
+        ),
+    )

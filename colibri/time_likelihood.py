@@ -12,7 +12,7 @@ import csv
 import jax
 import jax.numpy as jnp
 import numpy as np
-from colibri.param_initialisation import pdf_initial_parameters
+from colibri.param_initialisation import all_initial_parameters
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ def time_log_likelihood(
     forward_map,
     output_path,
     batch_sample_sizes=None,
+    extra_param_initialiser_settings=None,
 ):
     """
     Time the vectorized log likelihood across different batch sizes.
@@ -37,6 +38,8 @@ def time_log_likelihood(
         The forward map whose .param_names are used for parameter initialization.
     batch_sample_sizes : sequence of int, optional
         Batch sizes (number of parameter vectors per batch) to time
+    extra_param_initialiser_settings : dict, optional
+        Initialiser of the extra parameters of the forward map.
     output_path : pathlib.PosixPath
         Path to the output folder where log_likelihood_times.csv will be saved
     """
@@ -68,8 +71,11 @@ def time_log_likelihood(
 
     all_samples = []
     for replica_idx in range(max_size):
-        params = pdf_initial_parameters(
-            forward_map, param_initialiser_settings, replica_idx
+        params = all_initial_parameters(
+            forward_map,
+            param_initialiser_settings,
+            extra_param_initialiser_settings,
+            replica_idx,
         )
         all_samples.append(np.asarray(params))
 

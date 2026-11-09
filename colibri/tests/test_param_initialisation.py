@@ -18,16 +18,16 @@ from colibri.param_initialisation import pdf_initial_parameters
 
 logging.basicConfig(level=logging.DEBUG)
 
-# Mock forward map (3 params: 2 PDF + 1 extra, but treated uniformly here)
-forward_map = MagicMock()
-forward_map.param_names = ["param1", "param2", "param3"]
+# Mock PDF model with 3 parameters
+pdf_model = MagicMock()
+pdf_model.param_names = ["param1", "param2", "param3"]
 
 
 def test_zeros_initializer():
     settings = {"type": "zeros"}
     replica_index = 0
-    result = pdf_initial_parameters(forward_map, settings, replica_index)
-    expected_result = jnp.array([0.0] * len(forward_map.param_names))
+    result = pdf_initial_parameters(pdf_model, settings, replica_index)
+    expected_result = jnp.array([0.0] * len(pdf_model.param_names))
     np.testing.assert_array_equal(result, expected_result)
 
 
@@ -41,11 +41,11 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     mock_normal.return_value = jnp.array([0.1, -0.1, 0.2])
 
     with caplog.at_level("WARNING"):
-        result = pdf_initial_parameters(forward_map, settings, replica_index)
+        result = pdf_initial_parameters(pdf_model, settings, replica_index)
 
     mock_PRNGKey.assert_called_once_with(42)
     mock_normal.assert_called_once_with(
-        key=jax.random.PRNGKey(42), shape=(len(forward_map.param_names),)
+        key=jax.random.PRNGKey(42), shape=(len(pdf_model.param_names),)
     )
 
     assert "param_initialiser_settings: No 'means' or 'stds' provided." in caplog.text
@@ -56,7 +56,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     replica_index = 1
     mock_normal.return_value = jnp.array([0.5, -0.5, 0.0])
 
-    result = pdf_initial_parameters(forward_map, settings, replica_index)
+    result = pdf_initial_parameters(pdf_model, settings, replica_index)
 
     mock_PRNGKey.assert_called_with(1)
 
@@ -83,7 +83,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        result = pdf_initial_parameters(forward_map, settings_both, replica_index=0)
+        result = pdf_initial_parameters(pdf_model, settings_both, replica_index=0)
 
     # No warning should be issued when both are provided
     assert len(caplog.records) == 0
@@ -107,7 +107,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        pdf_initial_parameters(forward_map, settings_means_dict_only, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_means_dict_only, replica_index=0)
 
     assert "'means' provided without 'stds'" in caplog.text
     assert "Using default std=1.0 for all parameters." in caplog.text
@@ -121,7 +121,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        pdf_initial_parameters(forward_map, settings_means_scalar_only, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_means_scalar_only, replica_index=0)
 
     assert "'means' provided without 'stds'" in caplog.text
     assert "Using default std=1.0 for all parameters." in caplog.text
@@ -135,7 +135,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        pdf_initial_parameters(forward_map, settings_stds_dict_only, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_stds_dict_only, replica_index=0)
 
     assert "'stds' provided without 'means'" in caplog.text
     assert "Using default mean=0.0 for all parameters." in caplog.text
@@ -149,7 +149,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        pdf_initial_parameters(forward_map, settings_stds_scalar_only, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_stds_scalar_only, replica_index=0)
 
     assert "'stds' provided without 'means'" in caplog.text
     assert "Using default mean=0.0 for all parameters." in caplog.text
@@ -170,7 +170,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        result = pdf_initial_parameters(forward_map, settings_scalars, replica_index=0)
+        result = pdf_initial_parameters(pdf_model, settings_scalars, replica_index=0)
 
     # No warning should be issued when both are provided
     assert len(caplog.records) == 0
@@ -198,7 +198,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
 
     with caplog.at_level("WARNING"):
         caplog.clear()
-        result = pdf_initial_parameters(forward_map, settings_mixed, replica_index=0)
+        result = pdf_initial_parameters(pdf_model, settings_mixed, replica_index=0)
 
     # No warning should be issued
     assert len(caplog.records) == 0
@@ -225,7 +225,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     with pytest.raises(
         ValueError, match="'means' dict must have one entry per parameter"
     ):
-        pdf_initial_parameters(forward_map, settings_few_means, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_few_means, replica_index=0)
 
     # Too few stds in dict
     settings_few_stds = {
@@ -238,7 +238,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     with pytest.raises(
         ValueError, match="'stds' dict must have one entry per parameter"
     ):
-        pdf_initial_parameters(forward_map, settings_few_stds, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_few_stds, replica_index=0)
 
     # Invalid type for means
     settings_invalid_means = {
@@ -248,7 +248,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     }
 
     with pytest.raises(TypeError, match="'means' must be dict or scalar"):
-        pdf_initial_parameters(forward_map, settings_invalid_means, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_invalid_means, replica_index=0)
 
     # Invalid type for stds
     settings_invalid_stds = {
@@ -258,7 +258,7 @@ def test_normal_initializer(mock_normal, mock_PRNGKey, caplog):
     }
 
     with pytest.raises(TypeError, match="'stds' must be dict or scalar"):
-        pdf_initial_parameters(forward_map, settings_invalid_stds, replica_index=0)
+        pdf_initial_parameters(pdf_model, settings_invalid_stds, replica_index=0)
 
 
 @patch("jax.random.PRNGKey")
@@ -268,12 +268,12 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     replica_index = 1
     mock_uniform.return_value = jnp.array([0.5, -0.5, 0.0])
 
-    result = pdf_initial_parameters(forward_map, settings, replica_index)
+    result = pdf_initial_parameters(pdf_model, settings, replica_index)
 
     mock_PRNGKey.assert_called_once_with(43)
     mock_uniform.assert_called_once_with(
         key=jax.random.PRNGKey(43),
-        shape=(len(forward_map.param_names),),
+        shape=(len(pdf_model.param_names),),
         minval=-1.0,
         maxval=1.0,
     )
@@ -297,7 +297,7 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     # Mock return value to match param count
     mock_uniform.return_value = jnp.array([0.1, 1.5, 0.0])
 
-    result_bounds = pdf_initial_parameters(forward_map, settings_bounds, replica_index)
+    result_bounds = pdf_initial_parameters(pdf_model, settings_bounds, replica_index)
 
     np.testing.assert_array_equal(result_bounds, jnp.array([0.1, 1.5, 0.0]))
 
@@ -308,7 +308,7 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     assert called_kwargs["key"] == jax.random.PRNGKey(43)
 
     # Check the 'shape' argument matches
-    assert called_kwargs["shape"] == (len(forward_map.param_names),)
+    assert called_kwargs["shape"] == (len(pdf_model.param_names),)
 
     # Use numpy/jax testing utilities for arrays
     np.testing.assert_array_equal(called_kwargs["minval"], jnp.array([-1.0, 0.0, -0.5]))
@@ -328,7 +328,7 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     }
 
     with pytest.raises(ValueError, match="Missing bounds for parameters"):
-        pdf_initial_parameters(forward_map, settings_missing_bounds, 1)
+        pdf_initial_parameters(pdf_model, settings_missing_bounds, 1)
 
     # ---- Test missing min_val/max_val and bounds ----
     settings_invalid = {
@@ -340,57 +340,140 @@ def test_uniform_initializer(mock_uniform, mock_PRNGKey):
     with pytest.raises(
         ValueError, match="param_initialiser_settings must define either"
     ):
-        pdf_initial_parameters(forward_map, settings_invalid, 1)
+        pdf_initial_parameters(pdf_model, settings_invalid, 1)
 
 
 def test_invalid_initializer_type():
     settings = {"type": "invalid_type"}
     replica_index = 0
     with unittest.TestCase().assertLogs(level="WARNING") as log:
-        result = pdf_initial_parameters(forward_map, settings, replica_index)
+        result = pdf_initial_parameters(pdf_model, settings, replica_index)
         # Asserting that at least one warning was logged
         assert log.output
-    expected_result = jnp.array([0.0] * len(forward_map.param_names))
+    expected_result = jnp.array([0.0] * len(pdf_model.param_names))
     np.testing.assert_array_equal(result, expected_result)
 
 
-def test_extra_params_included_in_initialization():
-    """When forward_map has extra_param_names, initialization covers all params."""
-    fm_with_extras = MagicMock()
-    fm_with_extras.param_names = ["pdf_p1", "pdf_p2", "norm"]
+# ---------------------------------------------------------------------------
+# Extra parameters of the forward map
+# ---------------------------------------------------------------------------
 
-    # zeros mode: all three params initialized to zero
-    result = pdf_initial_parameters(fm_with_extras, {"type": "zeros"})
-    assert len(result) == 3
-    np.testing.assert_array_equal(result, jnp.zeros(3))
+from colibri.param_initialisation import (
+    all_initial_parameters,
+    extra_initial_parameters,
+    initial_parameters,
+)
 
-    # uniform mode with global bounds: length matches all three params
+
+def _fm_with_extras(pdf_names=("pdf_p1", "pdf_p2"), extra_names=("norm",)):
+    fm = MagicMock()
+    fm.pdf_param_names = list(pdf_names)
+    fm.extra_param_names = list(extra_names)
+    fm.param_names = list(pdf_names) + list(extra_names)
+    fm.n_pdf_params = len(pdf_names)
+    fm.pdf_model = _pdf_model(pdf_names)
+    return fm
+
+
+def _pdf_model(names=("pdf_p1", "pdf_p2")):
+    model = MagicMock()
+    model.param_names = list(names)
+    return model
+
+
+def test_pdf_initial_parameters_covers_pdf_parameters_only():
+    bounds = {"pdf_p1": (-1.0, 1.0), "pdf_p2": (-1.0, 1.0)}  # no bound for "norm"
     result = pdf_initial_parameters(
-        fm_with_extras,
-        {"type": "uniform", "random_seed": 0, "min_val": -1.0, "max_val": 1.0},
-        replica_index=0,
-    )
-    assert len(result) == 3
-
-    # normal mode with scalar means/stds: length matches all three params
-    result = pdf_initial_parameters(
-        fm_with_extras,
-        {"type": "normal", "means": 0.0, "stds": 1.0, "random_seed": 0},
-        replica_index=0,
-    )
-    assert len(result) == 3
-
-    # uniform mode with per-parameter bounds including the extra param
-    bounds = {"pdf_p1": (-1.0, 1.0), "pdf_p2": (-1.0, 1.0), "norm": (0.5, 1.5)}
-    result = pdf_initial_parameters(
-        fm_with_extras,
+        _pdf_model(),
         {"type": "uniform", "random_seed": 0, "bounds": bounds},
         replica_index=0,
     )
-    assert len(result) == 3
+    assert result.shape == (2,)
 
-    # backward compatibility: no extra params -> length matches pdf params only
-    fm_no_extras = MagicMock()
-    fm_no_extras.param_names = ["pdf_p1", "pdf_p2"]
-    result = pdf_initial_parameters(fm_no_extras, {"type": "zeros"})
-    assert len(result) == 2
+
+def test_pdf_initial_parameters_without_pdf_model_is_empty():
+    assert pdf_initial_parameters(None, {"type": "zeros"}).shape == (0,)
+
+
+def test_extra_initial_parameters_default_zeros():
+    fm = _fm_with_extras(extra_names=("c1", "c2"))
+    np.testing.assert_array_equal(extra_initial_parameters(fm), jnp.zeros(2))
+    np.testing.assert_array_equal(
+        extra_initial_parameters(fm, {"type": "zeros"}),
+        jnp.zeros(2),
+    )
+
+
+def test_extra_initial_parameters_empty_without_extras():
+    assert extra_initial_parameters(_fm_with_extras(extra_names=())).shape == (0,)
+
+
+def test_extra_initial_parameters_uniform_bounds():
+    fm = _fm_with_extras(extra_names=("c1", "c2"))
+    settings = {
+        "type": "uniform",
+        "random_seed": 1,
+        "bounds": {"c1": (10.0, 11.0), "c2": (-3.0, -2.0)},
+    }
+    values = extra_initial_parameters(fm, settings, replica_index=2)
+    assert 10.0 <= values[0] <= 11.0
+    assert -3.0 <= values[1] <= -2.0
+    # Different replicas get different values
+    other = extra_initial_parameters(fm, settings, replica_index=3)
+    assert not np.allclose(values, other)
+
+
+def test_initial_parameters_joins_pdf_and_extra():
+    fm = _fm_with_extras()
+    result = initial_parameters(fm, jnp.array([1.0, 2.0]), jnp.array([3.0]))
+    np.testing.assert_array_equal(result, jnp.array([1.0, 2.0, 3.0]))
+
+
+def test_initial_parameters_without_extras_is_pdf_part():
+    fm = _fm_with_extras(extra_names=())
+    pdf = jnp.array([1.0, 2.0])
+    np.testing.assert_array_equal(initial_parameters(fm, pdf, jnp.array([])), pdf)
+
+
+def test_initial_parameters_rejects_pdf_part_of_wrong_size():
+    """A PDF initialiser covering all parameters is caught with a clear error."""
+    fm = _fm_with_extras()
+    with pytest.raises(ValueError, match="PDF parameters only"):
+        initial_parameters(fm, jnp.zeros(3), jnp.zeros(1))
+
+
+def test_initial_parameters_rejects_extra_part_of_wrong_size():
+    fm = _fm_with_extras()
+    with pytest.raises(ValueError, match="the forward map has 1 extra parameters"):
+        initial_parameters(fm, jnp.zeros(2), jnp.zeros(2))
+
+
+def test_all_initial_parameters():
+    fm = _fm_with_extras()
+    result = all_initial_parameters(
+        fm,
+        {"type": "uniform", "random_seed": 0, "min_val": -1.0, "max_val": 1.0},
+        {"type": "uniform", "min_val": 5.0, "max_val": 6.0},
+        replica_index=1,
+    )
+    assert result.shape == (3,)
+    assert jnp.all(jnp.abs(result[:2]) <= 1.0)
+    assert 5.0 <= result[2] <= 6.0
+
+
+def test_initial_parameters_integer_parts_are_not_truncated():
+    """Integer values from a custom initialiser give float parameters."""
+    fm = _fm_with_extras()
+    result = initial_parameters(fm, jnp.array([0, 1]), jnp.array([0.5]))
+    assert jnp.issubdtype(result.dtype, jnp.floating)
+    np.testing.assert_array_equal(result, jnp.array([0.0, 1.0, 0.5]))
+
+    result = initial_parameters(fm, jnp.array([0.5, 1.5]), jnp.array([2]))
+    assert jnp.issubdtype(result.dtype, jnp.floating)
+    np.testing.assert_array_equal(result, jnp.array([0.5, 1.5, 2.0]))
+
+
+def test_initial_parameters_without_extras_integer_pdf_part_is_float():
+    fm = _fm_with_extras(extra_names=())
+    result = initial_parameters(fm, jnp.array([1, 2]), jnp.array([]))
+    assert jnp.issubdtype(result.dtype, jnp.floating)

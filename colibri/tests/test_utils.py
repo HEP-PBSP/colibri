@@ -359,7 +359,7 @@ def test_likelihood_float_type(
         forward_map=forward_map,
         pdf_model=MOCK_PDF_MODEL,
         FIT_XGRID=FIT_XGRID,
-        bayesian_prior=mock_bayesian_prior,
+        fit_prior=mock_bayesian_prior,
         output_path=output_path,
         central_covmat_index=MOCK_CENTRAL_COVMAT_INDEX,
         fast_kernel_arrays=fast_kernel_arrays,

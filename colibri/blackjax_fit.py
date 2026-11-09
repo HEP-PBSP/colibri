@@ -27,11 +27,11 @@ rank = MPI.COMM_WORLD.Get_rank()
 
 def blackjax_fit(
     forward_map,
-    bayesian_prior,
+    fit_prior,
     blackjax_settings,
     log_likelihood,
 ):
-    """Run the selected sampler and construct a common fit result."""
+    """Run the selected sampler with the joint PDF and extra-parameter prior."""
     algorithm = blackjax_settings.get(
         "algorithm",
         "nested_sampling",
@@ -70,7 +70,7 @@ def blackjax_fit(
 
     output = sampler.run(
         jax.random.PRNGKey(settings["blackjax_seed"]),
-        bayesian_prior,
+        fit_prior,
         log_likelihood,
         settings,
         param_names=param_names,
