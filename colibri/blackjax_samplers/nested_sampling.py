@@ -95,7 +95,10 @@ def run(
         desc="Dead points",
         unit=" dead points",
     ) as progress:
-        while not (state.logZ_live - state.logZ < settings["log_precision"]):
+        while not (
+            state.integrator.logZ_live - state.integrator.logZ
+            < settings["log_precision"]
+        ):
             (state, rng_key), dead_points = one_step((state, rng_key))
             dead.append(dead_points)
             progress.update(n_delete)
