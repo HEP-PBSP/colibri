@@ -31,6 +31,7 @@ class LogLikelihood(object):
         penalty_posdata,
         positivity_penalty_settings,
         integrability_penalty,
+        l2_penalty
     ):
         """
         Parameters
@@ -60,6 +61,7 @@ class LogLikelihood(object):
         self.penalty_posdata = penalty_posdata
         self.positivity_penalty_settings = positivity_penalty_settings
         self.integrability_penalty = integrability_penalty
+        self.l2_penalty = l2_penalty
 
         self.forward_map = forward_map
 
@@ -192,8 +194,15 @@ class LogLikelihood(object):
             axis=-1,
         )
 
+        l2_penalty = jnp.sum(
+            self.l2_penalty(
+                pdf,
+            ),
+            axis=-1
+        )
+
         loss = -0.5 * (
-            chi2(central_values, predictions, inv_covmat) + pos_penalty + integ_penalty
+            chi2(central_values, predictions, inv_covmat) + pos_penalty + integ_penalty + l2_penalty
         )
         return (loss, pos_pass) if return_pos else loss
 
@@ -207,6 +216,7 @@ def log_likelihood(
     _penalty_posdata,
     positivity_penalty_settings,
     integrability_penalty,
+    l2_penalty,
 ):
     """
     Instantiates the LogLikelihood class.
@@ -223,6 +233,7 @@ def log_likelihood(
         _penalty_posdata,
         positivity_penalty_settings,
         integrability_penalty,
+        l2_penalty,
     )
 
 

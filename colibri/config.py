@@ -485,6 +485,47 @@ class colibriConfig(Config):
 
         return IntegrabilitySettings(**integrability_settings)
 
+    def parse_l2_regularisation_settings(self, settings):
+        """
+        Parses l2_regularisation_settings namespace from the runcard.
+        """
+        known_keys = {
+            "l2_regularisation",
+            "l2_lambda",
+        }
+
+        kdiff = settings.keys() - known_keys
+        
+        for k in kdiff:
+            # raise error if key not in known keys
+            raise (
+                ConfigError(
+                    f"Key '{k}' in l2_regularisation_settings not known.",
+                    k,
+                    known_keys,
+                )
+            )
+
+        l2_regularisation_settings = {}
+
+        l2_regularisation_settings["l2_regularisation"] = settings.get("l2_regularisation", False)
+
+        l2_regularisation_settings["l2_lambda"] = settings.get("l2_lambda", 0.0)
+
+        if l2_regularisation_settings["l2_regularisation"] == True:
+            log.info(f"L2 regularisation applied with lambda = {l2_regularisation_settings["l2_lambda"]}")
+
+        return l2_regularisation_settings
+
+    def produce_l2_regularisation_settings(self):
+        """
+        Default l2 regularisation settings, used when the runcard does not
+        contain an l2_regularisation_settings block.
+        """
+        return {"l2_regularisation": False, "l2_lambda": 0.0}
+
+
+
     def parse_prior_settings(self, settings):
         """
         Parses the prior_settings namespace from the runcard,

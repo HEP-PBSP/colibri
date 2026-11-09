@@ -6,6 +6,7 @@ Module for the Lagrange penalties terms added to the Likelihood / Loss function.
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from colibri.theory_predictions import pred_funcs_from_dataset, OP
 from colibri.utils import mask_fktable_array, closest_indices
@@ -200,3 +201,73 @@ def integrability_penalty(integrability_settings, FIT_XGRID):
         return penalty
 
     return integ_penalty
+
+def l2_penalty(l2_regularisation_settings, FIT_XGRID):
+    """
+    Compute l2 regularisation penalty to be added to the loss function.
+    
+    Parameters
+    ----------
+    
+    Returns
+    -------
+    
+    """
+
+    # If l2 regularisation is set to False, the penalty is set to 0
+
+    if not l2_regularisation_settings["l2_regularisation"]:
+        return lambda pdf: jnp.array([0])
+
+    l2_lambda = l2_regularisation_settings["l2_lambda"]
+
+
+    def _second_order_roughening_matrix(FIT_XGRID):
+        """
+        Builds the block-diagonal (per flavour) second-order roughening matrix
+        L_grid acting on a flattened (n_fl, len(FIT_XGRID)) PDF grid.
+
+        Parameters
+        ----------
+        FIT_XGRID : array-like
+            The (possibly non-uniform) x-grid, length Nx.
+
+        Returns
+        -------
+        np.ndarray of shape (Nx - 2, Nx)
+        """
+        x = np.asarray(FIT_XGRID, dtype=float)
+        n_x = len(x)
+
+        if n_x < 3:
+            raise ValueError("FIT_XGRID must have at least 3 points for a second-order penalty.")
+
+        L2 = np.zeros((n_x - 2, n_x))
+        for i in range(1, n_x - 1):
+            h_minus = x[i] - x[i - 1]
+            h_plus = x[i + 1] - x[i]
+            L2[i - 1, i - 1] = 2.0 / (h_minus * (h_minus + h_plus))
+            L2[i - 1, i] = -2.0 / (h_minus * h_plus)
+            L2[i - 1, i + 1] = 2.0 / (h_plus * (h_minus + h_plus))
+
+        # row-major flattening used everywhere else (B, the FK operator, etc.)
+        return L2
+
+    L2 = jnp.asarray(_second_order_roughening_matrix(FIT_XGRID)) # (Nx-2, Nx)
+
+    def _l2_penalty(pdf):
+        """
+        Parameters
+        ----------
+        pdf: jnp.ndarray
+            PDF grid of shape (Nfl, Nx).
+
+        Returns
+        -------
+        jnp.ndarray
+            Array of shape (Nfl,)
+        """
+        rough = pdf @ L2.T # (Nfl, Nx-2)
+        return l2_lambda**2 * jnp.sum(rough**2, axis=-1)
+
+    return _l2_penalty
