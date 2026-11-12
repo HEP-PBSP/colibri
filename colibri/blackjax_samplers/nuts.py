@@ -12,35 +12,26 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from blackjax.diagnostics import effective_sample_size
-from mpi4py import MPI
 from scipy.stats import norm, rankdata
 
 from colibri.bayes_prior import UNCONSTRAINED_FUNCTIONS, has_unconstrained
-from colibri.core import NUTSFit
-from colibri.export_results import (
-    export_bayes_results,
-    plot_bayes_plots,
-    write_replicas,
-)
+
+from ._common import SamplerOutput
 
 log = logging.getLogger(__name__)
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-
-_NUTS_DEFAULTS = {
-    "nuts_seed": 0,
+SETTINGS = {
     "num_chains": 4,
     "num_warmup": 1000,
     "num_samples": 2000,
     "target_acceptance_rate": 0.8,
     "max_num_doublings": 10,
-    "n_posterior_samples": 1000,
-    "sampler_plot": True,
 }
 
+RESULT_FILENAME = "nuts_result"
 
-def _validate_nuts_settings(settings):
+
+def validate(settings):
     """Validate NUTS counts, seeds and acceptance settings."""
     count_keys = (
         "num_chains",
@@ -60,14 +51,6 @@ def _validate_nuts_settings(settings):
     if settings["num_samples"] < 4:
         raise ValueError("num_samples must be at least four per chain.")
 
-    seed = settings["nuts_seed"]
-    if (
-        isinstance(seed, bool)
-        or not isinstance(seed, Integral)
-        or not 0 <= seed < 2**32
-    ):
-        raise ValueError("nuts_seed must be an integer in [0, 2**32).")
-
     target = settings["target_acceptance_rate"]
     if (
         isinstance(target, bool)
@@ -78,9 +61,6 @@ def _validate_nuts_settings(settings):
         raise ValueError(
             "target_acceptance_rate must be strictly between zero and one."
         )
-
-    if not isinstance(settings["sampler_plot"], bool):
-        raise ValueError("sampler_plot must be a boolean.")
 
 
 def _thin_chains(chain_samples, n_posterior_samples):
@@ -264,37 +244,21 @@ def _nuts_diagnostics(
     }
 
 
-def nuts_fit(
-    forward_map,
-    fit_prior,
-    nuts_settings,
+def run(
+    rng_key,
+    prior,
     log_likelihood,
+    settings,
+    *,
+    param_names,
 ):
     """
-    Run a Bayesian fit using BlackJAX NUTS.
+    Return full physical NUTS chains and deterministically thinned replicas.
 
-    Parameters
-    ----------
-    forward_map: ForwardMap
-        Forward map defining all parameter names and their ordering.
-    fit_prior: BayesianPrior
-        Prior of all the fit parameters (PDF and extra parameters), see
-        colibri.bayes_prior.fit_prior. It must provide the unconstrained
-        transformation functions.
-    nuts_settings: dict
-        Settings for initialization, warmup, sampling and replica selection.
-    log_likelihood: Callable
-        Deterministic differentiable likelihood with an ``ndata`` attribute.
-
-    Returns
-    -------
-    NUTSFit
-        Full posterior, selected replicas, metrics and diagnostics.
-
+    Settings are validated by the shared BlackJAX provider before sampling.
+    Diagnostics use all post-warmup draws, before replica thinning.
     """
-    settings = {**_NUTS_DEFAULTS, **nuts_settings}
-    _validate_nuts_settings(settings)
-
+    fit_prior = prior
     if not has_unconstrained(fit_prior):
         raise ValueError(
             "NUTS requires an unconstrained prior implementation "
@@ -303,7 +267,7 @@ def nuts_fit(
             "see the log of fit_prior for the part of the prior that lacks it."
         )
 
-    param_names = list(forward_map.param_names)
+    param_names = list(param_names)
     num_parameters = len(param_names)
     if num_parameters == 0:
         raise ValueError("NUTS requires at least one fit parameter.")
@@ -316,14 +280,13 @@ def nuts_fit(
     num_draws = settings["num_samples"]
 
     log.info("Running NUTS with backend: %s", jax.default_backend())
-    log.info("NUTS initialization seed: %d", settings["nuts_seed"])
+    log.info("NUTS initialization seed: %d", settings["blackjax_seed"])
 
     @jax.jit
     def logdensity(position):
         parameters = fit_prior.from_unconstrained(position)
         return fit_prior.log_prob_unconstrained(position) + log_likelihood(parameters)
 
-    rng_key = jax.random.PRNGKey(settings["nuts_seed"])
     init_key, warmup_key, sample_key = jax.random.split(rng_key, 3)
 
     initial_positions = fit_prior.sample_unconstrained(init_key, num_chains)
@@ -484,8 +447,6 @@ def nuts_fit(
     resampled_posterior = _thin_chains(chain_samples, selected_count)
 
     best_index = jnp.argmax(log_likelihoods)
-    min_chi2 = -2 * log_likelihoods[best_index]
-    avg_chi2 = -2 * jnp.mean(log_likelihoods)
 
     log.info(
         "NUTS finished: warmup %.2f s, sampling %.2f s, divergences %d.",
@@ -499,40 +460,28 @@ def nuts_fit(
             "before using the posterior."
         )
 
-    return NUTSFit(
-        nuts_specs=settings,
-        nuts_result={
+    return SamplerOutput(
+        samples=full_samples,
+        log_likelihoods=log_likelihoods,
+        max_loglikelihood=log_likelihoods[best_index],
+        resampled_posterior=resampled_posterior,
+        result={
             "chain_samples": chain_samples,
             "sampler_info": sampler_info,
             "step_sizes": step_sizes,
             "inverse_mass_matrices": inverse_mass_matrices,
             "best_point": full_samples[best_index],
-            "max_loglikelihood": log_likelihoods[best_index],
             "diagnostics": diagnostics,
-            "logZ": None,
-            "logZ_err": None,
-        },
-        param_names=param_names,
-        resampled_posterior=resampled_posterior,
-        full_posterior_samples=full_samples,
-        ndata=ndata,
-        bayesian_metrics={
-            "bayes_complexity": avg_chi2 - min_chi2,
-            "avg_chi2": avg_chi2,
-            "avg_chi2_reduced": avg_chi2 / ndata,
-            "min_chi2": min_chi2,
-            "min_chi2_reduced": min_chi2 / ndata,
-            "logz": None,
         },
     )
 
 
-def _export_nuts_logs(fit, log_dir):
+def export_logs(fit, log_dir):
     """Write complete chains and transition diagnostics."""
     log_dir = Path(log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
 
-    chains = np.asarray(fit.nuts_result["chain_samples"])
+    chains = np.asarray(fit.blackjax_result["chain_samples"])
     num_chains, num_draws, num_parameters = chains.shape
 
     samples = pd.DataFrame(
@@ -548,7 +497,7 @@ def _export_nuts_logs(fit, log_dir):
     transitions = pd.DataFrame(
         {
             name: np.asarray(values).reshape(-1)
-            for name, values in fit.nuts_result["sampler_info"].items()
+            for name, values in fit.blackjax_result["sampler_info"].items()
         },
         index=samples.index,
     )
@@ -556,44 +505,8 @@ def _export_nuts_logs(fit, log_dir):
 
     with (log_dir / "nuts_diagnostics.json").open("w") as stream:
         json.dump(
-            fit.nuts_result["diagnostics"],
+            fit.blackjax_result["diagnostics"],
             stream,
             indent=2,
             allow_nan=False,
         )
-
-
-def run_nuts_fit(
-    nuts_fit,
-    nuts_settings,
-    output_path,
-    pdf_model,
-):
-    """
-    Export the results of a NUTS fit.
-
-    Parameters
-    ----------
-    nuts_fit: NUTSFit
-        Results produced by the NUTS provider.
-    nuts_settings: dict
-        Settings including the log directory and plotting option.
-    output_path: pathlib.Path
-        Fit output directory.
-    pdf_model: PDFModel
-        Model used to write PDF replicas.
-
-    """
-    if rank == 0:
-        log_dir = Path(nuts_settings["log_dir"])
-        _export_nuts_logs(nuts_fit, log_dir)
-        export_bayes_results(nuts_fit, output_path, "nuts_result")
-
-        if nuts_settings["sampler_plot"]:
-            plot_bayes_plots(
-                nuts_fit,
-                output_path,
-                str(log_dir.resolve()),
-            )
-
-    write_replicas(nuts_fit, output_path, pdf_model)
