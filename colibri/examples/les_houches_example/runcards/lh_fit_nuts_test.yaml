@@ -79,16 +79,27 @@ prior_settings:
       beta_sigma: [1.2, 3]
 
 blackjax_settings:
+    # Shared settings
+    blackjax_seed: 0                   # Random seed for initialisation and sampling
+    n_posterior_samples: 100           # Total number of output PDF replicas
+    posterior_resampling_seed: 52      # Nested sampling resampling seed; unused by NUTS,
+                                      # which selects replicas by deterministic thinning
+    sampler_plot: true                # Generate posterior plots
+
+    # NUTS 
     algorithm: nuts
-    blackjax_seed: 0
-    num_chains: 4
-    num_warmup: 1000
-    num_samples: 2000
-    target_acceptance_rate: 0.9
-    max_num_doublings: 10
-    n_posterior_samples: 100
-    posterior_resampling_seed: 52
-    sampler_plot: true
+    num_chains: 4                     # Number of independent Markov chains
+    num_warmup: 1000                  # Adaptation steps per chain; discarded
+    num_samples: 2000                 # Posterior draws per chain after warmup
+    target_acceptance_rate: 0.9        # Target acceptance rate during adaptation
+    max_num_doublings: 10             # Maximum trajectory tree depth per NUTS step
+
+    # Nested sampling
+    # algorithm: nested_sampling
+    # n_live: 500                      # Number of live points exploring parameter space
+    # repeats: 3                       # Inner sampling steps per parameter
+    # delete_fraction: 0.5             # Fraction of live points replaced per iteration
+    # log_precision: -3                # Stop when log(Z_live) - log(Z_accumulated) < -3
 
 actions_:
-- run_blackjax_fit                # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
+- run_blackjax_fit                    # Run the sampler selected by algorithm
